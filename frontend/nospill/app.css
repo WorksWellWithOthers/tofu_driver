@@ -233,6 +233,10 @@
   overflow: hidden;
 }
 
+.nospill-merch-preview .nospill-merch-partner-link {
+  margin-top: 4px;
+}
+
 .nospill-merch-preview img {
   width: 100%;
   height: auto;
@@ -636,6 +640,13 @@
   border-radius: 8px;
   color: #eaf5ed;
   background: rgba(85, 217, 138, 0.09);
+}
+
+.nospill-panel-helper {
+  margin: 0;
+  color: #bbc7c0;
+  font-size: 0.9rem;
+  line-height: 1.45;
 }
 
 .nospill-merch-item {

@@ -92,10 +92,13 @@ speed, maps, GPS coordinates, street names, route traces, or leaderboard-style l
 
 ## Merch Configuration
 
+- The landing page may link to Super Cute Collectibles as the physical merch fulfillment partner.
 - Future merch links live in `MERCH_LINKS` inside `frontend/nospill/app.js`.
 - Visible merch labels live in `MERCH_LABELS` inside `frontend/nospill/app.js`.
 - Locked merch links are not rendered in the visible UI before unlock.
 - `null` links show `Unlocked, merch coming soon.`
+- External merch links must use `target="_blank"` and `rel="noopener noreferrer"`.
+- Super Cute Collectibles does not verify scores in the current MVP.
 - Real gated merch later requires backend-issued unlock tokens, customer tags, or another server-side access-control mechanism.
 
 ## Current Source Files

@@ -49,11 +49,13 @@ globalThis.buildShareCardData = buildShareCardData;
 globalThis.buildShareText = buildShareText;
 globalThis.loadClubState = loadClubState;
 globalThis.saveClubState = saveClubState;
+globalThis.renderMerchPanel = renderMerchPanel;
 globalThis.APP_BRAND = APP_BRAND;
 globalThis.CHALLENGE_NAME = CHALLENGE_NAME;
 globalThis.CLUB_NAME = CLUB_NAME;
 globalThis.TOP_BADGE = TOP_BADGE;
 globalThis.MERCH_LABELS = MERCH_LABELS;
+globalThis.MERCH_LINKS = MERCH_LINKS;
 globalThis.SHARE_CONFIG = SHARE_CONFIG;
 globalThis.STORAGE_KEY = STORAGE_KEY;`,
     context,
@@ -132,7 +134,7 @@ function testTofuDriverBrandHierarchy() {
   assert(html.includes('A smooth-driving challenge where your goal is simple'));
   assert(html.includes('No speed leaderboards. No maps. No racing. Just control.'));
   assert(html.includes('How it works'));
-  assert(html.includes('Secret merch unlocks'));
+  assert(html.includes('Secret Merch'));
   assert(html.includes('No speed rankings.'));
   assert(html.includes('No route sharing.'));
   assert(!html.includes('<title>No-Spill Club</title>'));
@@ -163,16 +165,31 @@ function testTofuDriverArtworkIsIsolatedAndAccessible() {
   assert(html.includes('alt="No-Spill Club 95% Delivered Tofu Driver shirt"'));
 }
 
+function testSuperCuteCollectiblesLandingAndMerchCopy() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('Super Cute Collectibles'));
+  assert(html.includes('Secret shirts and drops are fulfilled through Super Cute Collectibles.'));
+  assert(html.includes('Physical merch is fulfilled by Super Cute Collectibles.'));
+  assert(html.includes('Visit Super Cute Collectibles'));
+  assert(html.includes('href="https://supercutecollectibles.com/"'));
+  assert(html.includes('target="_blank"'));
+  assert(html.includes('rel="noopener noreferrer"'));
+  assert(!html.includes('Official driving verifier'));
+  assert(!html.includes('Certified by Super Cute Collectibles'));
+}
+
 function testNoSpillClientDoesNotUploadRawRunData() {
-  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(!/\bfetch\s*\(/.test(source));
-  assert(!source.includes('XMLHttpRequest'));
-  assert(!source.includes('sendBeacon'));
-  assert(!source.includes('serviceWorker'));
-  assert(!source.includes('/summary/'));
-  assert(!source.includes('/catalog/'));
-  assert(!source.includes('/card/'));
-  assert(!source.includes('cavrino.com/nospill'));
+  for (const filePath of [NOSPILL_HTML, NOSPILL_JS]) {
+    const source = fs.readFileSync(filePath, 'utf8');
+    assert(!/\bfetch\s*\(/.test(source));
+    assert(!source.includes('XMLHttpRequest'));
+    assert(!source.includes('sendBeacon'));
+    assert(!source.includes('serviceWorker'));
+    assert(!source.includes('/summary/'));
+    assert(!source.includes('/catalog/'));
+    assert(!source.includes('/card/'));
+    assert(!source.includes('cavrino.com/nospill'));
+  }
 }
 
 function testNoSpillLiveSummaryAndShareAvoidSensitiveDetails() {
@@ -193,6 +210,8 @@ function testNoSpillLiveSummaryAndShareAvoidSensitiveDetails() {
   assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(shareText));
   assert(!shareText.includes('4.2'));
   assert(!shareText.includes('cavrino.com/nospill'));
+  assert(!shareText.includes('Super Cute Collectibles'));
+  assert(!shareText.includes('supercutecollectibles.com'));
 }
 
 function testShareConfigAndCardData() {
@@ -213,6 +232,8 @@ function testShareConfigAndCardData() {
   assert(!defaultText.includes('4.2 mi'));
   assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(defaultText));
   assert(!defaultText.includes('cavrino.com/nospill'));
+  assert(!defaultText.includes('Super Cute Collectibles'));
+  assert(!defaultText.includes('supercutecollectibles.com'));
 
   const clubText = context.buildShareText(sampleShareSummary({
     unlockedBadges: ['nospill_club'],
@@ -260,6 +281,25 @@ function testShareConfigAndCardData() {
     includeDistanceInShare: true,
   });
   assert.strictEqual(distanceCardData.distanceLabel, '4.2 mi');
+}
+
+function testLockedMerchLinksAreNotShownBeforeUnlock() {
+  const context = loadNoSpillContext();
+  context.MERCH_LINKS.nospill_club = 'https://supercutecollectibles.com/products/nospill-club';
+  vm.runInContext(`
+elements = { merchGrid: { innerHTML: "" } };
+renderMerchPanel({ unlockedMilestones: {} });
+globalThis.lockedMerchHtml = elements.merchGrid.innerHTML;
+renderMerchPanel({ unlockedMilestones: { nospill_club: "2026-06-14T00:00:00.000Z" } });
+globalThis.unlockedMerchHtml = elements.merchGrid.innerHTML;
+`, context);
+
+  assert(context.lockedMerchHtml.includes('<strong>Locked</strong>'));
+  assert(!context.lockedMerchHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
+  assert(!context.lockedMerchHtml.includes('Buy unlocked gear'));
+  assert(context.unlockedMerchHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
+  assert(context.unlockedMerchHtml.includes('target="_blank" rel="noopener noreferrer"'));
+  assert(context.unlockedMerchHtml.includes('Buy unlocked gear'));
 }
 
 function testPrivateQualifiedSummaryMayShowDistance() {
@@ -473,9 +513,11 @@ function run() {
   testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
   testTofuDriverBrandHierarchy();
   testTofuDriverArtworkIsIsolatedAndAccessible();
+  testSuperCuteCollectiblesLandingAndMerchCopy();
   testNoSpillClientDoesNotUploadRawRunData();
   testNoSpillLiveSummaryAndShareAvoidSensitiveDetails();
   testShareConfigAndCardData();
+  testLockedMerchLinksAreNotShownBeforeUnlock();
   testPrivateQualifiedSummaryMayShowDistance();
   testMountAxisMapping();
   testMappedMotionUsesSelectedMountConfig();

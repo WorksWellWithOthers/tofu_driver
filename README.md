@@ -11,6 +11,7 @@ The app is intentionally lightweight:
 - no payment flow
 - no upload of raw motion or GPS samples
 - local results stored only in browser `localStorage`
+- secret shirts and future physical merch fulfilled through Super Cute Collectibles
 
 ## Project Layout
 

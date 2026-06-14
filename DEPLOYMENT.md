@@ -92,6 +92,10 @@ frontend/nospill/assets/tofu-driver-shirt-1.png
 Update the file in `frontend/nospill/assets/`, confirm `frontend/nospill/index.html` references that
 served path, then redeploy the Cloud Run service.
 
+The landing page also links to Super Cute Collectibles as the physical merch fulfillment partner.
+Actual unlock-gated product URLs still live in `MERCH_LINKS` inside `frontend/nospill/app.js`, and
+external merch links should use `rel="noopener noreferrer"`.
+
 Manual checks:
 
 - Open the app on iPhone Safari over HTTPS.

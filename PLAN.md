@@ -11,6 +11,8 @@
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
+- The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
+- Unlock-gated merch product links still live in `MERCH_LINKS`.
 
 ## Recommended Next Steps
 
@@ -25,6 +27,7 @@
 
 - Should saved local sessions migrate if the storage key changes?
 - Should merch unlocks remain local-only for the MVP?
+- Which Super Cute Collectibles product URLs should be added to `MERCH_LINKS` after unlock-gated products exist?
 - Should Qualified Run verification remain share-private by default?
 - Should the app add a backend later for accounts, badges, or server-issued merch unlocks?
 
