@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="robots" content="noindex,nofollow,noarchive" />
+  <title>Tofu Driver</title>
+  <link rel="stylesheet" href="/static/nospill/app.css?v=20260614e" />
+</head>
+<body class="nospill-page">
+  <main class="nospill-app" id="nospill-app">
+    <header class="nospill-header" aria-label="Tofu Driver">
+      <div>
+        <p class="nospill-kicker">Don't spill the cup.</p>
+        <h1>Tofu Driver</h1>
+      </div>
+      <div class="nospill-water-mark" aria-hidden="true">
+        <span></span>
+      </div>
+    </header>
+
+    <section class="nospill-panel nospill-landing" id="landing-view" aria-labelledby="landing-title">
+      <section class="nospill-brand-hero" aria-labelledby="landing-title">
+        <div class="nospill-hero-art">
+          <img src="/static/nospill/assets/tofu-driver-logo.png" alt="Tofu Driver mascot logo" />
+        </div>
+        <div class="nospill-hero-copy">
+          <p class="nospill-kicker">The Cup Test</p>
+          <h2 id="landing-title">Don't spill the cup.</h2>
+          <p>
+            A smooth-driving challenge where your goal is simple: deliver the cup without spilling it.
+          </p>
+          <p class="nospill-hero-tagline">Not faster. Smoother.</p>
+          <p class="nospill-hero-safety">
+            No speed leaderboards. No maps. No racing. Just control.
+          </p>
+          <div class="nospill-hero-actions">
+            <button class="nospill-primary" id="intro-cta-button" type="button">
+              Take the Cup Test
+            </button>
+            <a class="nospill-secondary nospill-link-button" href="#how-it-works">
+              How it works
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <section class="nospill-section nospill-how" id="how-it-works" aria-labelledby="how-title">
+        <p class="nospill-kicker">How it works</p>
+        <h3 id="how-title">Smooth inputs keep the cup full.</h3>
+        <div class="nospill-step-grid">
+          <div>
+            <span>01</span>
+            <strong>Mount your phone</strong>
+          </div>
+          <div>
+            <span>02</span>
+            <strong>Start while parked</strong>
+          </div>
+          <div>
+            <span>03</span>
+            <strong>Drive legally and smoothly</strong>
+          </div>
+          <div>
+            <span>04</span>
+            <strong>Preserve the virtual cup</strong>
+          </div>
+          <div>
+            <span>05</span>
+            <strong>Unlock milestones</strong>
+          </div>
+        </div>
+      </section>
+
+      <section class="nospill-section nospill-merch-preview" aria-labelledby="preview-title">
+        <div>
+          <p class="nospill-kicker">Secret merch unlocks</p>
+          <h3 id="preview-title">Earned, not given.</h3>
+          <p>
+            Unlock secret merch by completing qualified smooth-driving challenges.
+          </p>
+        </div>
+        <img src="/static/nospill/assets/no-spill-95-delivered-badge.png" alt="No-Spill Club 95% Delivered badge" />
+      </section>
+
+      <section class="nospill-safety-strip" aria-label="Safety positioning">
+        <span>No speed rankings.</span>
+        <span>No route sharing.</span>
+        <span>No maps.</span>
+        <span>Smoothness only.</span>
+      </section>
+
+      <div class="nospill-setup is-hidden" id="setup-flow">
+        <section class="nospill-section" aria-labelledby="safety-title">
+          <h3 id="safety-title">Safety Checklist</h3>
+          <div class="nospill-checklist" id="safety-checklist">
+            <label>
+              <input type="checkbox" data-safety-check="parked" />
+              <span>Start and stop while parked.</span>
+            </label>
+            <label>
+              <input type="checkbox" data-safety-check="mounted" />
+              <span>Mount your phone securely.</span>
+            </label>
+            <label>
+              <input type="checkbox" data-safety-check="legal" />
+              <span>Use only where legal. Drive legally only.</span>
+            </label>
+            <label>
+              <input type="checkbox" data-safety-check="audio" />
+              <span>Use audio feedback so you do not look at the screen while driving.</span>
+            </label>
+          </div>
+          <p class="nospill-note">
+            Tofu Driver rewards smoothness, not speed. Higher speed does not improve your score.
+          </p>
+        </section>
+
+        <section class="nospill-section" aria-labelledby="mode-title">
+          <h3 id="mode-title">Mode</h3>
+          <div class="nospill-segmented" role="radiogroup" aria-label="Run mode">
+            <button class="is-active" type="button" role="radio" aria-checked="true" data-mode="basic">
+              Basic Mode
+            </button>
+            <button type="button" role="radio" aria-checked="false" data-mode="qualified">
+              Qualified Run
+            </button>
+          </div>
+          <p class="nospill-mode-copy" id="mode-copy">
+            Basic Mode does not use location. Sensor data remains local and can unlock only basic local milestones.
+          </p>
+        </section>
+
+        <section class="nospill-section" aria-labelledby="mount-title">
+        <h3 id="mount-title">Mount Orientation</h3>
+        <p class="nospill-mode-copy">
+          Device sensors measure movement relative to the phone, so mount orientation matters.
+        </p>
+        <p class="nospill-mode-copy">
+          Recommended: phone flat, screen up, top pointed toward the windshield.
+        </p>
+        <p class="nospill-mode-copy">
+          If using an upright windshield mount, choose Upright so braking and acceleration are read from the correct axis.
+        </p>
+
+        <div class="nospill-mount-options" role="radiogroup" aria-label="Mount orientation">
+          <button class="nospill-mount-option is-active" type="button" role="radio" aria-checked="true" data-mount-mode="flat">
+            <strong>Flat</strong>
+            <span>Recommended. Screen up, top toward windshield. Dash tray or flat mount.</span>
+          </button>
+          <button class="nospill-mount-option" type="button" role="radio" aria-checked="false" data-mount-mode="upright">
+            <strong>Upright</strong>
+            <span>Screen facing driver. Windshield or dash mount.</span>
+          </button>
+          <button class="nospill-mount-option" type="button" role="radio" aria-checked="false" data-mount-mode="custom">
+            <strong>Custom / Diagnose</strong>
+            <span>Choose device axes and invert them if your mount is unusual.</span>
+          </button>
+        </div>
+
+        <p class="nospill-status" id="mount-status" role="status" aria-live="polite">
+          Flat mount maps side-to-side from device X and braking/acceleration from device Y.
+        </p>
+
+        <div class="nospill-axis-panel is-hidden" id="upright-axis-panel">
+          <label class="nospill-toggle">
+            <input type="checkbox" id="upright-longitudinal-invert" />
+            <span>Invert upright braking/acceleration axis</span>
+          </label>
+        </div>
+
+        <div class="nospill-axis-panel is-hidden" id="custom-axis-panel">
+          <p>
+            While parked or moving very slowly in a safe place, gently accelerate/brake and confirm which axis changes.
+          </p>
+          <button class="nospill-secondary" id="axis-preview-button" type="button">
+            Enable Axis Preview
+          </button>
+          <div class="nospill-axis-bars" aria-label="Live device acceleration axes">
+            <div class="nospill-axis-bar">
+              <span>X</span>
+              <div><i id="axis-bar-x"></i></div>
+              <output id="axis-value-x">0.00G</output>
+            </div>
+            <div class="nospill-axis-bar">
+              <span>Y</span>
+              <div><i id="axis-bar-y"></i></div>
+              <output id="axis-value-y">0.00G</output>
+            </div>
+            <div class="nospill-axis-bar">
+              <span>Z</span>
+              <div><i id="axis-bar-z"></i></div>
+              <output id="axis-value-z">0.00G</output>
+            </div>
+          </div>
+          <div class="nospill-axis-controls">
+            <label>
+              <span>Lateral axis</span>
+              <select id="custom-lateral-axis">
+                <option value="x">Device X</option>
+                <option value="y">Device Y</option>
+                <option value="z">Device Z</option>
+              </select>
+            </label>
+            <label class="nospill-toggle">
+              <input type="checkbox" id="custom-lateral-invert" />
+              <span>Invert lateral axis</span>
+            </label>
+            <label>
+              <span>Braking/acceleration axis</span>
+              <select id="custom-longitudinal-axis">
+                <option value="x">Device X</option>
+                <option value="y" selected>Device Y</option>
+                <option value="z">Device Z</option>
+              </select>
+            </label>
+            <label class="nospill-toggle">
+              <input type="checkbox" id="custom-longitudinal-invert" />
+              <span>Invert braking/acceleration axis</span>
+            </label>
+          </div>
+        </div>
+        </section>
+
+        <section class="nospill-section" aria-labelledby="difficulty-title">
+        <h3 id="difficulty-title">Cup</h3>
+        <div class="nospill-choice-row" role="radiogroup" aria-label="Cup difficulty">
+          <button type="button" role="radio" aria-checked="false" data-difficulty="comfort">
+            Comfort
+            <span>0.20G</span>
+          </button>
+          <button class="is-active" type="button" role="radio" aria-checked="true" data-difficulty="standard">
+            Standard
+            <span>0.30G</span>
+          </button>
+          <button type="button" role="radio" aria-checked="false" data-difficulty="beginner">
+            Beginner
+            <span>0.40G</span>
+          </button>
+        </div>
+        </section>
+
+        <section class="nospill-section nospill-safety-copy" aria-label="Privacy and qualified run notes">
+          <p>Basic Mode does not use location.</p>
+          <p>
+            Qualified Run uses location only to verify distance, movement, and route complexity.
+            It does not show a live map, street names, route trace, or road leaderboard.
+          </p>
+          <p>Raw GPS and motion streams are not sent to a server for this MVP.</p>
+        </section>
+
+        <div class="nospill-controls">
+          <div class="nospill-audio-settings" aria-label="Audio coach settings">
+            <label class="nospill-toggle">
+              <input type="checkbox" id="audio-toggle" checked />
+              <span>Audio coach</span>
+            </label>
+            <div class="nospill-audio-volume">
+              <span>Audio coach volume</span>
+              <div class="nospill-volume-options" role="radiogroup" aria-label="Audio coach volume">
+                <button type="button" role="radio" aria-checked="false" data-audio-level="muted">Muted</button>
+                <button class="is-active" type="button" role="radio" aria-checked="true" data-audio-level="normal">Normal</button>
+                <button type="button" role="radio" aria-checked="false" data-audio-level="loud">Loud</button>
+              </div>
+            </div>
+          </div>
+          <button class="nospill-primary" id="start-button" type="button" disabled>
+            Start &amp; Calibrate
+          </button>
+        </div>
+
+        <div class="nospill-status" id="landing-status" role="status" aria-live="polite">
+          Complete the safety checklist to begin.
+        </div>
+      </div>
+    </section>
+
+    <section class="nospill-panel nospill-run is-hidden" id="run-view" aria-labelledby="run-title">
+      <div class="nospill-run-top">
+        <div>
+          <p class="nospill-kicker" id="run-mode-label">Basic Mode</p>
+          <h2 id="run-title">Water Left</h2>
+        </div>
+        <output class="nospill-water-percent" id="water-percent">100.0%</output>
+      </div>
+
+      <canvas id="cup-canvas" class="nospill-canvas" width="640" height="640" aria-label="Virtual cup G-ball visualization"></canvas>
+
+      <div class="nospill-run-metrics" aria-label="Run status">
+        <div>
+          <span>Duration</span>
+          <strong id="duration-value">0:00</strong>
+        </div>
+        <div>
+          <span>Harsh inputs</span>
+          <strong id="harsh-value">0</strong>
+        </div>
+        <div>
+          <span>Input pressure</span>
+          <strong id="g-value">0.00G</strong>
+        </div>
+      </div>
+
+      <div class="nospill-status" id="run-status" role="status" aria-live="polite">
+        Calibrating neutral phone position.
+      </div>
+
+      <div class="nospill-controls">
+        <div class="nospill-audio-settings" aria-label="Running audio coach settings">
+          <label class="nospill-toggle">
+            <input type="checkbox" id="audio-toggle-running" checked />
+            <span>Audio coach</span>
+          </label>
+          <div class="nospill-audio-volume">
+            <span>Audio coach volume</span>
+            <div class="nospill-volume-options" role="radiogroup" aria-label="Running audio coach volume">
+              <button type="button" role="radio" aria-checked="false" data-audio-level-running="muted">Muted</button>
+              <button class="is-active" type="button" role="radio" aria-checked="true" data-audio-level-running="normal">Normal</button>
+              <button type="button" role="radio" aria-checked="false" data-audio-level-running="loud">Loud</button>
+            </div>
+          </div>
+        </div>
+        <button class="nospill-danger" id="end-button" type="button">
+          End Run
+        </button>
+      </div>
+      <p class="nospill-note">Do not look at the screen while driving. End the run only after stopping.</p>
+    </section>
+
+    <section class="nospill-panel nospill-unsupported is-hidden" id="unsupported-view" aria-labelledby="unsupported-title">
+      <p class="nospill-kicker">Sensor unavailable</p>
+      <h2 id="unsupported-title">This browser cannot score The Cup Test.</h2>
+      <p id="unsupported-copy">
+        Tofu Driver needs DeviceMotion sensor data. Try a modern mobile browser on HTTPS.
+      </p>
+      <button class="nospill-secondary" id="unsupported-back-button" type="button">
+        Back
+      </button>
+    </section>
+
+    <section class="nospill-panel nospill-summary is-hidden" id="summary-view" aria-labelledby="summary-title">
+      <div class="nospill-summary-head">
+        <div class="nospill-summary-brand">
+          <img src="/static/nospill/assets/tofu-driver-logo.png" alt="Tofu Driver mascot logo" />
+          <div>
+            <p class="nospill-kicker" id="summary-status-label">Practice Only</p>
+            <h2 id="summary-title">Run Summary</h2>
+          </div>
+        </div>
+        <output class="nospill-water-percent" id="summary-water">100.0%</output>
+      </div>
+
+      <div class="nospill-summary-grid" id="summary-grid"></div>
+
+      <section class="nospill-section is-hidden" id="route-context" aria-labelledby="route-context-title">
+        <h3 id="route-context-title">Route Context</h3>
+        <div class="nospill-route-grid" id="route-grid"></div>
+      </section>
+
+      <section class="nospill-section" aria-labelledby="milestone-title">
+        <h3 id="milestone-title">Milestone</h3>
+        <p class="nospill-milestone" id="milestone-output">No milestone unlocked this run.</p>
+      </section>
+
+      <section class="nospill-section" aria-labelledby="merch-title">
+        <h3 id="merch-title">Unlocked Gear</h3>
+        <div class="nospill-merch-grid" id="merch-grid"></div>
+      </section>
+
+      <section class="nospill-section" aria-labelledby="share-title">
+        <h3 id="share-title">Share Card</h3>
+        <canvas id="share-canvas" class="nospill-share-canvas" width="1080" height="1350" aria-label="Shareable Tofu Driver result card"></canvas>
+        <div class="nospill-controls nospill-share-actions">
+          <button class="nospill-primary" id="share-button" type="button">Share Result</button>
+          <button class="nospill-secondary" id="copy-button" type="button">Copy Summary</button>
+          <button class="nospill-secondary" id="download-button" type="button">Download Card</button>
+        </div>
+      </section>
+
+      <div class="nospill-controls">
+        <button class="nospill-secondary" id="save-button" type="button">Save Summary Locally</button>
+        <button class="nospill-primary" id="new-run-button" type="button">New Run</button>
+      </div>
+      <div class="nospill-status" id="summary-status" role="status" aria-live="polite"></div>
+    </section>
+  </main>
+
+  <script src="/static/nospill/app.js?v=20260614e"></script>
+</body>
+</html>

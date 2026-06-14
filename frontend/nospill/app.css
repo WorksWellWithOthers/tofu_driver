@@ -1,0 +1,719 @@
+.nospill-page {
+  margin: 0;
+  min-height: 100vh;
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 18px),
+    linear-gradient(180deg, #030404 0%, #0b0d0e 52%, #030404 100%);
+  color: #f4f7ef;
+  font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.nospill-page button,
+.nospill-page input,
+.nospill-page select {
+  font: inherit;
+}
+
+.nospill-app {
+  width: min(100%, 680px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 18px 14px calc(28px + env(safe-area-inset-bottom));
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 18%),
+    linear-gradient(90deg, rgba(244, 247, 239, 0.045), transparent 34%, rgba(244, 247, 239, 0.03)),
+    #090b0b;
+}
+
+.nospill-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 2px 18px;
+}
+
+.nospill-header h1,
+.nospill-hero-copy h2,
+.nospill-panel h2,
+.nospill-panel h3 {
+  margin: 0;
+  letter-spacing: 0;
+}
+
+.nospill-header h1 {
+  font-size: 1.55rem;
+  line-height: 1.05;
+}
+
+.nospill-kicker {
+  margin: 0 0 7px;
+  color: #9ee9bf;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nospill-water-mark {
+  width: 58px;
+  height: 58px;
+  border: 1px solid rgba(110, 198, 255, 0.42);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #101516;
+}
+
+.nospill-water-mark span {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background:
+    linear-gradient(180deg, rgba(110, 198, 255, 0.96) 0 54%, rgba(85, 217, 138, 0.92) 55% 100%);
+  box-shadow: 0 0 20px rgba(110, 198, 255, 0.26);
+}
+
+.nospill-panel {
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+  padding: 18px;
+  background:
+    linear-gradient(180deg, rgba(244, 247, 239, 0.06), transparent 32%),
+    #101516;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.28);
+}
+
+.nospill-landing,
+.nospill-run,
+.nospill-summary {
+  display: grid;
+  gap: 18px;
+}
+
+.nospill-brand-hero {
+  display: grid;
+  gap: 18px;
+  align-items: center;
+  padding: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 247, 239, 0.14);
+  border-radius: 8px;
+  background:
+    linear-gradient(115deg, rgba(244, 247, 239, 0.08), transparent 36%),
+    repeating-linear-gradient(135deg, rgba(244, 247, 239, 0.04) 0 2px, transparent 2px 18px),
+    #050606;
+}
+
+.nospill-hero-art {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f4f7ef;
+}
+
+.nospill-hero-art img {
+  width: min(88%, 360px);
+  height: auto;
+  display: block;
+}
+
+.nospill-hero-copy h2,
+.nospill-panel h2 {
+  font-size: 1.9rem;
+  line-height: 1.04;
+}
+
+.nospill-brand-hero .nospill-hero-copy h2 {
+  max-width: 10ch;
+  color: #ffffff;
+  font-size: 3.1rem;
+  line-height: 0.94;
+  text-transform: uppercase;
+}
+
+.nospill-hero-copy p,
+.nospill-section p,
+.nospill-note,
+.nospill-status,
+.nospill-mode-copy {
+  color: #bbc7c0;
+  font-size: 0.96rem;
+  line-height: 1.5;
+}
+
+.nospill-hero-copy p {
+  margin: 12px 0 0;
+}
+
+.nospill-hero-tagline {
+  color: #f4f7ef !important;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-hero-safety {
+  padding-top: 12px;
+  border-top: 1px solid rgba(244, 247, 239, 0.13);
+}
+
+.nospill-hero-actions,
+.nospill-step-grid,
+.nospill-safety-strip,
+.nospill-setup {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-hero-actions {
+  margin-top: 16px;
+}
+
+.nospill-link-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+}
+
+.nospill-section {
+  display: grid;
+  gap: 12px;
+}
+
+.nospill-section h3 {
+  font-size: 0.92rem;
+  line-height: 1.25;
+  color: #f4f7ef;
+}
+
+.nospill-how,
+.nospill-merch-preview,
+.nospill-safety-strip {
+  padding: 14px;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  background: rgba(5, 6, 6, 0.72);
+}
+
+.nospill-how h3,
+.nospill-merch-preview h3 {
+  font-size: 1.2rem;
+}
+
+.nospill-step-grid div {
+  min-height: 76px;
+  display: grid;
+  align-content: space-between;
+  gap: 10px;
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+  padding: 12px;
+  background: #0b0f10;
+}
+
+.nospill-step-grid span,
+.nospill-safety-strip span {
+  color: #9ee9bf;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-step-grid strong {
+  color: #f4f7ef;
+  font-size: 0.98rem;
+  line-height: 1.24;
+}
+
+.nospill-merch-preview {
+  overflow: hidden;
+}
+
+.nospill-merch-preview img {
+  width: 100%;
+  height: auto;
+  display: block;
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+}
+
+.nospill-safety-strip {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.nospill-safety-strip span {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  border-left: 3px solid rgba(85, 217, 138, 0.75);
+  padding: 8px 10px;
+  color: #f4f7ef;
+  background: rgba(244, 247, 239, 0.04);
+}
+
+.nospill-checklist {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-checklist label,
+.nospill-toggle {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: #edf2e9;
+}
+
+.nospill-checklist input,
+.nospill-toggle input {
+  width: 22px;
+  height: 22px;
+  accent-color: #55d98a;
+  flex: 0 0 auto;
+}
+
+.nospill-segmented,
+.nospill-choice-row,
+.nospill-mount-options,
+.nospill-audio-settings,
+.nospill-controls,
+.nospill-share-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-segmented {
+  grid-template-columns: 1fr 1fr;
+  padding: 4px;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  background: #090c0d;
+}
+
+.nospill-volume-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  background: #090c0d;
+}
+
+.nospill-choice-row {
+  grid-template-columns: 1fr;
+}
+
+.nospill-segmented button,
+.nospill-choice-row button,
+.nospill-mount-option,
+.nospill-volume-options button,
+.nospill-primary,
+.nospill-secondary,
+.nospill-danger {
+  min-height: 48px;
+  border: 1px solid rgba(244, 247, 239, 0.13);
+  border-radius: 8px;
+  padding: 11px 13px;
+  color: #f4f7ef;
+  background: #151b1c;
+  cursor: pointer;
+}
+
+.nospill-segmented button,
+.nospill-choice-row button,
+.nospill-mount-option {
+  text-align: left;
+  color: #c6d0ca;
+}
+
+.nospill-segmented button {
+  text-align: center;
+}
+
+.nospill-volume-options button {
+  min-height: 38px;
+  padding: 8px 7px;
+  color: #c6d0ca;
+  font-size: 0.84rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.nospill-choice-row button {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nospill-mount-option {
+  display: grid;
+  gap: 5px;
+}
+
+.nospill-mount-option strong {
+  color: #f4f7ef;
+  font-size: 0.98rem;
+  line-height: 1.2;
+}
+
+.nospill-mount-option span {
+  color: #9aa7a0;
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.nospill-segmented button.is-active,
+.nospill-choice-row button.is-active,
+.nospill-mount-option.is-active,
+.nospill-volume-options button.is-active {
+  border-color: rgba(85, 217, 138, 0.72);
+  color: #f4f7ef;
+  background: rgba(85, 217, 138, 0.13);
+}
+
+.nospill-primary {
+  border-color: rgba(85, 217, 138, 0.84);
+  color: #06100b;
+  background: #55d98a;
+  font-weight: 900;
+}
+
+.nospill-primary:disabled {
+  border-color: rgba(244, 247, 239, 0.08);
+  color: #7d8983;
+  background: #171c1d;
+  cursor: not-allowed;
+}
+
+.nospill-secondary {
+  background: #171c1d;
+  color: #edf2e9;
+}
+
+.nospill-danger {
+  border-color: rgba(255, 110, 110, 0.66);
+  color: #ffe8e8;
+  background: rgba(255, 110, 110, 0.14);
+}
+
+.nospill-controls {
+  align-items: center;
+}
+
+.nospill-audio-settings {
+  min-width: 0;
+}
+
+.nospill-audio-volume {
+  display: grid;
+  gap: 7px;
+}
+
+.nospill-audio-volume > span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-safety-copy {
+  padding: 12px;
+  border: 1px solid rgba(240, 185, 90, 0.28);
+  border-radius: 8px;
+  background: rgba(240, 185, 90, 0.08);
+}
+
+.nospill-safety-copy p {
+  margin: 0;
+}
+
+.nospill-axis-panel {
+  display: grid;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  background: #0b0f10;
+}
+
+.nospill-axis-panel p {
+  margin: 0;
+}
+
+.nospill-axis-bars,
+.nospill-axis-controls {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-axis-bar {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 64px;
+  align-items: center;
+  gap: 10px;
+  min-height: 34px;
+}
+
+.nospill-axis-bar span,
+.nospill-axis-controls label > span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-axis-bar div {
+  position: relative;
+  height: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 999px;
+  background: #070a0a;
+}
+
+.nospill-axis-bar div::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(244, 247, 239, 0.26);
+}
+
+.nospill-axis-bar i {
+  position: absolute;
+  top: 2px;
+  left: 50%;
+  width: 0;
+  height: 8px;
+  border-radius: 999px;
+  background: #55d98a;
+}
+
+.nospill-axis-bar output {
+  color: #edf2e9;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-align: right;
+}
+
+.nospill-axis-controls label {
+  display: grid;
+  gap: 7px;
+}
+
+.nospill-axis-controls select {
+  min-height: 44px;
+  border: 1px solid rgba(244, 247, 239, 0.13);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #f4f7ef;
+  background: #151b1c;
+}
+
+.nospill-note {
+  margin: 0;
+}
+
+.nospill-status {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border: 1px solid rgba(110, 198, 255, 0.24);
+  border-radius: 8px;
+  background: rgba(110, 198, 255, 0.08);
+}
+
+.nospill-run-top,
+.nospill-summary-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.nospill-summary-brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nospill-summary-brand img {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  border: 1px solid rgba(244, 247, 239, 0.16);
+  border-radius: 8px;
+  object-fit: cover;
+  background: #f4f7ef;
+}
+
+.nospill-water-percent {
+  color: #f4f7ef;
+  font-size: 2.3rem;
+  font-weight: 950;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.nospill-canvas,
+.nospill-share-canvas {
+  width: 100%;
+  display: block;
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+  background: #070a0a;
+}
+
+.nospill-canvas {
+  aspect-ratio: 1 / 1;
+  max-height: min(66vh, 520px);
+}
+
+.nospill-share-canvas {
+  aspect-ratio: 4 / 5;
+}
+
+.nospill-run-metrics,
+.nospill-summary-grid,
+.nospill-route-grid,
+.nospill-merch-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-run-metrics {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nospill-run-metrics div,
+.nospill-summary-grid div,
+.nospill-route-grid div,
+.nospill-merch-item {
+  min-width: 0;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  padding: 11px;
+  background: #0b0f10;
+}
+
+.nospill-run-metrics span,
+.nospill-summary-grid span,
+.nospill-route-grid span,
+.nospill-merch-item span {
+  display: block;
+  margin-bottom: 5px;
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-run-metrics strong,
+.nospill-summary-grid strong,
+.nospill-route-grid strong,
+.nospill-merch-item strong {
+  display: block;
+  color: #f4f7ef;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.nospill-milestone {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid rgba(85, 217, 138, 0.32);
+  border-radius: 8px;
+  color: #eaf5ed;
+  background: rgba(85, 217, 138, 0.09);
+}
+
+.nospill-merch-item {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-merch-item.is-locked {
+  opacity: 0.62;
+}
+
+.nospill-merch-link {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(85, 217, 138, 0.82);
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #06100b;
+  background: #55d98a;
+  font-weight: 900;
+  text-decoration: none;
+}
+
+.nospill-is-good {
+  color: #9ee9bf;
+}
+
+.nospill-is-warn {
+  color: #f0c576;
+}
+
+.nospill-is-bad {
+  color: #ff9b9b;
+}
+
+.is-hidden {
+  display: none !important;
+}
+
+@media (min-width: 520px) {
+  .nospill-app {
+    padding-top: 28px;
+  }
+
+  .nospill-choice-row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nospill-brand-hero {
+    grid-template-columns: minmax(190px, 0.85fr) minmax(0, 1fr);
+  }
+
+  .nospill-hero-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .nospill-choice-row button {
+    display: grid;
+  }
+
+  .nospill-controls,
+  .nospill-share-actions {
+    grid-template-columns: auto 1fr;
+  }
+
+  .nospill-summary-grid,
+  .nospill-route-grid,
+  .nospill-merch-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nospill-step-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .nospill-safety-strip {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
