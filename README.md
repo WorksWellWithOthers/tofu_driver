@@ -18,6 +18,8 @@ The app is intentionally lightweight:
 - `frontend/nospill/app.css`: app styling
 - `frontend/nospill/app.js`: motion, scoring, sharing, and local storage logic
 - `frontend/nospill/assets/`: app raster artwork
+- `Dockerfile`: Nginx container used for Cloud Run source deploys
+- `nginx.conf`: static-file routing and security headers for Cloud Run
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
 - `DESIGN.md`: product and privacy contract
 - `PLAN.md`: next implementation steps
@@ -32,4 +34,3 @@ node test_frontend_nospill.js
 
 Open `frontend/nospill/index.html` in a browser for static inspection. Device motion behavior needs
 a real mobile browser over HTTPS for full testing.
-# tofu_driver

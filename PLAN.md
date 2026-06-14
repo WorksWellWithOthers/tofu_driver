@@ -5,22 +5,24 @@
 - The MVP app has been moved into its own standalone folder.
 - The current app is still source-located at `frontend/nospill/` for now.
 - The app is static and browser-only.
+- The app deploys to Cloud Run service `tofu-driver` in project `tofu-driver` with an Nginx static container.
+- Cloud Run domain mappings exist for `tofudriver.com` and `www.tofudriver.com`; DNS/certificate propagation may still need verification after record changes.
 - Basic Mode uses device motion only.
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
+- The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 
 ## Recommended Next Steps
 
 1. Rename `frontend/nospill/` to a product-native path such as `frontend/tofu-driver/`.
 2. Update `test_frontend_nospill.js` to use the new path or rename it to `test_frontend_tofu_driver.js`.
 3. Add a simple local static server command to `README.md`.
-4. Decide the first deployment target.
-5. Replace MVP raster assets with production-ready artwork when available.
-6. Re-test on real iPhone Safari and Android Chrome over HTTPS.
+4. Confirm custom-domain DNS records and certificate provisioning for `tofudriver.com`.
+5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
+6. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 
-- Should the public URL be `tofudriver.com`, a static host subpath, or both?
 - Should saved local sessions migrate if the storage key changes?
 - Should merch unlocks remain local-only for the MVP?
 - Should Qualified Run verification remain share-private by default?

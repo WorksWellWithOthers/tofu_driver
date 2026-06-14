@@ -153,14 +153,14 @@ function testTofuDriverBrandHierarchy() {
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const logoPath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-logo.png');
-  const badgePath = path.join(NOSPILL_ASSETS_DIR, 'no-spill-95-delivered-badge.png');
+  const shirtPath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-shirt-1.png');
 
   assert(fs.existsSync(logoPath), 'Tofu Driver logo asset should exist');
-  assert(fs.existsSync(badgePath), 'No-Spill Club badge asset should exist');
+  assert(fs.existsSync(shirtPath), 'No-Spill Club shirt preview asset should exist');
   assert(html.includes('/static/nospill/assets/tofu-driver-logo.png'));
-  assert(html.includes('/static/nospill/assets/no-spill-95-delivered-badge.png'));
+  assert(html.includes('/static/nospill/assets/tofu-driver-shirt-1.png'));
   assert(html.includes('alt="Tofu Driver mascot logo"'));
-  assert(html.includes('alt="No-Spill Club 95% Delivered badge"'));
+  assert(html.includes('alt="No-Spill Club 95% Delivered Tofu Driver shirt"'));
 }
 
 function testNoSpillClientDoesNotUploadRawRunData() {
