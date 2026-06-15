@@ -59,6 +59,10 @@ Canonical references:
 7. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
 8. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
+Do not build advanced systems next. The next implementation milestone is `Implement First Loop
+Contract`; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
+features stay deferred until the first 10 minutes are playtested.
+
 Deferred until after the First Loop Contract is playtested:
 
 - Routes
@@ -69,12 +73,27 @@ Deferred until after the First Loop Contract is playtested:
 - License
 - monetization/social/profile features
 
+## Resolved Decisions
+
+- Fresh Tofu Shop state should start with one ready Delivery Order.
+- Fresh Tofu Shop state should start with one running Prep Counter.
+- Fresh Tofu Shop state should start with Tofu Stock so the first order can be fulfilled
+  immediately.
+- Tofu Stock is an ingredient/runway resource, not the purchase currency.
+- Tips are the early purchase currency.
+- Fulfill Shop Order is the early money-conversion action.
+- Don't Spill the Cup is optional for ordinary Tofu Shop progression.
+
 ## Open Questions
 
-- Should the first Tofu Shop session start with one Delivery Order available?
-- Should the first Tofu Shop session start with one Prep Counter available?
-- Do the draft first-loop target numbers in `BALANCE_AND_PROGRESSION.md` feel good in simulation?
-- Which advanced shop systems should stay hidden until the first loop is complete?
+- Is 1 order every 40 seconds the right early Prep Counter pace?
+- Should the first meaningful purchase usually be Prep Counter, Tofu Press, or Steady Pressing?
+- Should Steady Pressing cost 20 Tips, or should the first upgrade happen after exactly two
+  fulfilled orders?
+- When should Passport become a visible tab instead of a teaser?
+- How many active buttons should be visible before minute 10?
+- Should Pack Tofu remain forever, or become less visible once Tofu Press production is stable?
+- Should the first License Exam target be 4 hours, 6 hours, or later after playtesting?
 - Should saved local sessions migrate if the storage key changes?
 - Should merch unlocks remain local-only for the MVP?
 - Which Super Cute Collectibles product URLs should be added after products exist?
