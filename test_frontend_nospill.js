@@ -85,6 +85,7 @@ globalThis.loadClubState = loadClubState;
 globalThis.saveClubState = saveClubState;
 globalThis.renderMerchPanel = renderMerchPanel;
 globalThis.renderDeliveryWall = renderDeliveryWall;
+globalThis.renderGameDashboard = renderGameDashboard;
 globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
 globalThis.renderDiscordCtas = renderDiscordCtas;
 globalThis.APP_BRAND = APP_BRAND;
@@ -210,6 +211,7 @@ function testTofuDriverBrandHierarchy() {
     html.indexOf('id="unsupported-view"'),
   );
   assert(!runViewHtml.includes('Pack Tofu'));
+  assert(!runViewHtml.includes('game-pack-tofu-button'));
   assert(!runViewHtml.includes('data-shop-upgrade'));
   assert(html.includes("Don't spill the cup."));
   assert(html.includes('Not faster. Smoother.'));
@@ -232,6 +234,85 @@ function testTofuDriverBrandHierarchy() {
   assert.strictEqual(context.MERCH_LABELS.nospill_club, 'No-Spill Club Tee');
   assert.strictEqual(context.MERCH_LABELS.perfect_pour, 'Perfect Pour Decal');
   assert.strictEqual(context.MERCH_LABELS.smooth_driver, 'Tofu Driver Delivery Crew');
+}
+
+function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const dashboardIndex = html.indexOf('nospill-game-dashboard');
+  const setupIndex = html.indexOf('id="setup-flow"');
+  const runIndex = html.indexOf('id="run-view"');
+  assert(dashboardIndex > 0, 'Today delivery dashboard should exist');
+  assert(dashboardIndex < setupIndex, 'Today delivery dashboard should appear before setup controls');
+  assert(dashboardIndex < runIndex, 'Today delivery dashboard should appear before active run view');
+  assert(html.includes('Today&rsquo;s Delivery'));
+  assert(html.includes('Every drive is a delivery. Preserve the cargo'));
+  assert(html.includes('id="game-daily-cargo"'));
+  assert(html.includes('id="game-daily-goal"'));
+  assert(html.includes('id="game-daily-reward"'));
+  assert(html.includes('id="game-driver-license"'));
+  assert(html.includes('Level 1 &middot; Rookie Carrier'));
+  assert(html.includes('id="game-total-xp"'));
+  assert(html.includes('0 XP'));
+  assert(html.includes('id="game-gear-progress"'));
+  assert(html.includes('0/3'));
+  assert(html.includes('No stamps yet. Complete your first delivery.'));
+  assert(html.includes('First Delivery locked'));
+  assert(html.includes('Daily Delivery Complete locked'));
+  assert(html.includes('No-Spill Club locked'));
+  assert(html.includes('Perfect Pour locked'));
+  assert(html.includes('id="game-shop-stock"'));
+  assert(html.includes('id="game-shop-reputation"'));
+  assert(html.includes('id="game-shop-level"'));
+
+  const context = loadNoSpillContext();
+  vm.runInContext(`
+function makeNode() {
+  return { textContent: "", innerHTML: "", disabled: null };
+}
+elements = {
+  gameDailyTitle: makeNode(),
+  gameDailyFlavor: makeNode(),
+  gameDailyCargo: makeNode(),
+  gameDailyGoal: makeNode(),
+  gameDailyReward: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gameShopTeaser: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gamePackTofuButton: makeNode(),
+};
+renderGameDashboard(defaultGameState());
+globalThis.dashboardDriverLicense = elements.gameDriverLicense.textContent;
+globalThis.dashboardTotalXp = elements.gameTotalXP.textContent;
+globalThis.dashboardGear = elements.gameGearProgress.textContent;
+globalThis.dashboardPassport = elements.gamePassportEmpty.textContent;
+globalThis.dashboardPassportPreview = elements.gamePassportPreview.innerHTML;
+globalThis.dashboardStock = elements.gameShopStock.textContent;
+globalThis.dashboardReputation = elements.gameShopReputation.textContent;
+globalThis.dashboardShopLevel = elements.gameShopLevel.textContent;
+globalThis.dashboardPackDisabled = elements.gamePackTofuButton.disabled;
+appState.running = true;
+renderGameDashboard(defaultGameState());
+globalThis.activeDashboardPackDisabled = elements.gamePackTofuButton.disabled;
+`, context);
+
+  assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
+  assert.strictEqual(context.dashboardTotalXp, '0 XP');
+  assert.strictEqual(context.dashboardGear, '0/3');
+  assert.strictEqual(context.dashboardPassport, 'No stamps yet. Complete your first delivery.');
+  assert(context.dashboardPassportPreview.includes('First Delivery locked'));
+  assert.strictEqual(context.dashboardStock, '0');
+  assert.strictEqual(context.dashboardReputation, '0');
+  assert.strictEqual(context.dashboardShopLevel, 'Level 1');
+  assert.strictEqual(context.dashboardPackDisabled, false);
+  assert.strictEqual(context.activeDashboardPackDisabled, true);
 }
 
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
@@ -952,6 +1033,24 @@ function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
   assert(!text.includes('discord.gg'));
 }
 
+function testResultScreenShowsGameSummarySections() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(html.includes('id="delivery-summary-grid"'));
+  assert(html.includes('Delivery Complete'));
+  [
+    '"Cargo Condition"',
+    '"XP Gained"',
+    '"Skill XP Gained"',
+    '"Stamp Earned"',
+    '"Daily Delivery Result"',
+    '"Shop Rewards"',
+    '"No-Spill Club Gear"',
+    '"Next Delivery Goal"',
+    '"No new stamp"',
+  ].forEach((needle) => assert(source.includes(needle), `${needle} missing`));
+}
+
 function testLocationPermissionFlowRemainsOptIn() {
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(source.includes('if (appState.mode === "qualified") startLocationWatch();'));
@@ -1233,6 +1332,7 @@ function run() {
   testNoSitemapOrRobotsRevealNoSpill();
   testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
   testTofuDriverBrandHierarchy();
+  testFirstTimeGameDashboardIsVisibleBeforeSetup();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
   testDiscordCtaConfigAndRendering();
@@ -1254,6 +1354,7 @@ function run() {
   testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();
   testDeliveryWallKeepsLockedMerchLinksHidden();
   testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
+  testResultScreenShowsGameSummarySections();
   testLocationPermissionFlowRemainsOptIn();
   testPrivateQualifiedSummaryMayShowDistance();
   testMountAxisMapping();

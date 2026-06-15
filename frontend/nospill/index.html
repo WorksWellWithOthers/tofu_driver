@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>Tofu Driver</title>
-  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615f" />
+  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615g" />
 </head>
 <body class="nospill-page">
   <main class="nospill-app" id="nospill-app">
@@ -42,6 +42,100 @@
               How it works
             </a>
           </div>
+        </div>
+      </section>
+
+      <section class="nospill-section nospill-game-dashboard" aria-labelledby="today-delivery-title">
+        <div class="nospill-game-head">
+          <div>
+            <p class="nospill-kicker">Today&rsquo;s Delivery</p>
+            <h3 id="today-delivery-title">Silken Tofu</h3>
+            <p id="game-daily-flavor">
+              Every drive is a delivery. Preserve the cargo, level up your smoothness, and unlock secret gear.
+            </p>
+          </div>
+          <button class="nospill-primary" id="game-cta-button" type="button">
+            Take the Cup Test
+          </button>
+        </div>
+
+        <div class="nospill-game-grid" aria-label="Today's delivery mission">
+          <div>
+            <span>Cargo</span>
+            <strong id="game-daily-cargo">Silken Tofu</strong>
+          </div>
+          <div>
+            <span>Goal</span>
+            <strong id="game-daily-goal">Finish with 85%+ cargo condition.</strong>
+          </div>
+          <div>
+            <span>Reward</span>
+            <strong id="game-daily-reward">Daily Delivery stamp and smoothness XP</strong>
+          </div>
+          <div>
+            <span>Daily Progress</span>
+            <strong id="game-daily-progress">Not delivered yet</strong>
+          </div>
+        </div>
+
+        <div class="nospill-game-grid" aria-label="Driver status">
+          <div>
+            <span>Driver License</span>
+            <strong id="game-driver-license">Level 1 &middot; Rookie Carrier</strong>
+          </div>
+          <div>
+            <span>Total XP</span>
+            <strong id="game-total-xp">0 XP</strong>
+          </div>
+          <div>
+            <span>Current Streak</span>
+            <strong id="game-streak">0 days</strong>
+          </div>
+          <div>
+            <span>No-Spill Club Gear</span>
+            <strong id="game-gear-progress">0/3</strong>
+          </div>
+        </div>
+
+        <div class="nospill-game-grid" aria-label="Tofu Shop preview">
+          <div>
+            <span>Tofu Stock</span>
+            <strong id="game-shop-stock">0</strong>
+          </div>
+          <div>
+            <span>Reputation</span>
+            <strong id="game-shop-reputation">0</strong>
+          </div>
+          <div>
+            <span>Shop Level</span>
+            <strong id="game-shop-level">Level 1</strong>
+          </div>
+          <div>
+            <span>Next Shop Step</span>
+            <strong id="game-shop-teaser">Pack tofu while parked.</strong>
+          </div>
+        </div>
+
+        <div class="nospill-game-passport" aria-label="Delivery Passport preview">
+          <div>
+            <h4>Delivery Passport</h4>
+            <p id="game-passport-empty">No stamps yet. Complete your first delivery.</p>
+          </div>
+          <div class="nospill-passport-preview" id="game-passport-preview">
+            <span>First Delivery locked</span>
+            <span>Daily Delivery Complete locked</span>
+            <span>No-Spill Club locked</span>
+            <span>Perfect Pour locked</span>
+          </div>
+        </div>
+
+        <div class="nospill-game-shop-action">
+          <p class="nospill-panel-helper">
+            Shop Mode is for when you are parked. Do not interact while driving.
+          </p>
+          <button class="nospill-secondary" id="game-pack-tofu-button" type="button">
+            Pack Tofu
+          </button>
         </div>
       </section>
 
@@ -549,6 +643,6 @@
     </section>
   </main>
 
-  <script src="/static/nospill/app.js?v=20260615f"></script>
+  <script src="/static/nospill/app.js?v=20260615g"></script>
 </body>
 </html>

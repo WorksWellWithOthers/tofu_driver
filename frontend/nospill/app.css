@@ -193,6 +193,7 @@
 .nospill-how,
 .nospill-merch-preview,
 .nospill-discord-panel,
+.nospill-game-dashboard,
 .nospill-delivery-log,
 .nospill-tofu-shop,
 .nospill-safety-strip {
@@ -205,9 +206,82 @@
 .nospill-how h3,
 .nospill-merch-preview h3,
 .nospill-discord-panel h3,
+.nospill-game-dashboard h3,
 .nospill-delivery-log h3,
 .nospill-tofu-shop h3 {
   font-size: 1.2rem;
+}
+
+.nospill-game-dashboard {
+  border-color: rgba(85, 217, 138, 0.32);
+  background:
+    linear-gradient(180deg, rgba(85, 217, 138, 0.08), transparent 38%),
+    rgba(5, 6, 6, 0.82);
+}
+
+.nospill-game-head,
+.nospill-game-grid,
+.nospill-passport-preview,
+.nospill-game-passport,
+.nospill-game-shop-action {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-game-head {
+  gap: 12px;
+}
+
+.nospill-game-head p,
+.nospill-game-passport p {
+  margin: 0;
+}
+
+.nospill-game-grid div,
+.nospill-game-passport {
+  min-width: 0;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  padding: 11px;
+  background: #0b0f10;
+}
+
+.nospill-game-grid span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-game-grid strong {
+  display: block;
+  color: #f4f7ef;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.nospill-game-passport h4 {
+  margin: 0 0 5px;
+  color: #f4f7ef;
+  font-size: 0.92rem;
+}
+
+.nospill-passport-preview span {
+  border: 1px solid rgba(240, 185, 90, 0.32);
+  border-radius: 999px;
+  padding: 7px 9px;
+  color: #ffe2a8;
+  background: rgba(240, 185, 90, 0.09);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.nospill-game-shop-action {
+  padding: 10px 12px;
+  border: 1px solid rgba(240, 185, 90, 0.28);
+  border-radius: 8px;
+  background: rgba(240, 185, 90, 0.08);
 }
 
 .nospill-discord-panel {
@@ -867,6 +941,17 @@
 
   .nospill-hero-actions {
     grid-template-columns: 1fr 1fr;
+  }
+
+  .nospill-game-head,
+  .nospill-game-shop-action {
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .nospill-game-grid,
+  .nospill-passport-preview {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 
   .nospill-choice-row button {

@@ -11,6 +11,7 @@
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
+- The landing page now starts with a game-first Today's Delivery dashboard before dense setup controls.
 - Tofu Shop adds parked-only tofu stock, reputation, shop levels, Pack Tofu, idle production,
   upgrades, story chapters, a simple Smooth Week contract, and Delivery Wall progress.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.
@@ -26,8 +27,9 @@
 3. Add a simple local static server command to `README.md`.
 4. Confirm custom-domain DNS records and certificate provisioning for `tofudriver.com`.
 5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
-6. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
-7. Replace remaining MVP raster assets with production-ready artwork when available.
+6. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
+7. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
+8. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 

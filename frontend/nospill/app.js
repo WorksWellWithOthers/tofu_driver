@@ -3331,6 +3331,86 @@ function renderDeliveryLog(gameState = loadGameState()) {
   }
 }
 
+function stampLockLabel(gameState, stampId) {
+  const state = normalizeGameState(gameState);
+  const label = STAMP_LABELS[stampId] || stampId;
+  return `${label} ${state.stamps[stampId] ? "unlocked" : "locked"}`;
+}
+
+function nextShopStep(gameState) {
+  const state = normalizeGameState(gameState);
+  const nextUpgrade = getShopUpgradeCatalog().find(
+    (upgrade) => safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel)
+      < upgrade.maxLevel
+      && state.shop.shopLevel >= upgrade.requiredShopLevel,
+  );
+  if (!nextUpgrade) return "Complete a delivery to build the shop.";
+  const currentLevel = safeNonNegativeInteger(
+    state.shop.upgrades[nextUpgrade.id],
+    0,
+    nextUpgrade.maxLevel,
+  );
+  const cost = shopUpgradeCost(nextUpgrade, currentLevel);
+  return `${nextUpgrade.name}: ${cost.costTofuStock} tofu`;
+}
+
+function renderGameDashboard(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  const mission = getDailyDelivery(new Date());
+  const progress = levelProgress(state.totalXP);
+  const passport = deliveryPassportSummary(state);
+  const daily = state.dailyDeliveries[mission.dateKey];
+  const gear = state.merchProgress.nospillClubGear;
+  if (elements.gameDailyTitle) elements.gameDailyTitle.textContent = mission.cargo;
+  if (elements.gameDailyFlavor) {
+    elements.gameDailyFlavor.textContent =
+      `${mission.description} Every drive is a delivery. Preserve the cargo, level up your smoothness, and unlock secret gear.`;
+  }
+  if (elements.gameDailyCargo) elements.gameDailyCargo.textContent = mission.cargo;
+  if (elements.gameDailyGoal) elements.gameDailyGoal.textContent = mission.goal;
+  if (elements.gameDailyReward) elements.gameDailyReward.textContent = mission.reward;
+  if (elements.gameDailyProgress) {
+    elements.gameDailyProgress.textContent = daily && daily.completed
+      ? `Delivered today · ${formatPercent(daily.cargoCondition)}`
+      : "Not delivered yet";
+  }
+  if (elements.gameDriverLicense) {
+    elements.gameDriverLicense.textContent = `Level ${progress.level} · ${getDriverLicense(progress.level)}`;
+  }
+  if (elements.gameTotalXP) elements.gameTotalXP.textContent = `${state.totalXP} XP`;
+  if (elements.gameStreak) {
+    const current = Number(state.streak.current || 0);
+    elements.gameStreak.textContent = `${current} ${current === 1 ? "day" : "days"}`;
+  }
+  if (elements.gameGearProgress) {
+    elements.gameGearProgress.textContent = `${gear.count}/${gear.target}`;
+  }
+  if (elements.gameShopStock) elements.gameShopStock.textContent = String(state.shop.tofuStock);
+  if (elements.gameShopReputation) {
+    elements.gameShopReputation.textContent = String(state.shop.reputation);
+  }
+  if (elements.gameShopLevel) elements.gameShopLevel.textContent = `Level ${state.shop.shopLevel}`;
+  if (elements.gameShopTeaser) elements.gameShopTeaser.textContent = nextShopStep(state);
+  if (elements.gamePassportEmpty) {
+    elements.gamePassportEmpty.textContent = passport.total
+      ? `${passport.total}/${passport.totalAvailable} stamps collected.`
+      : "No stamps yet. Complete your first delivery.";
+  }
+  if (elements.gamePassportPreview) {
+    elements.gamePassportPreview.innerHTML = [
+      "first_delivery",
+      "daily_delivery_complete",
+      "nospill_club",
+      "perfect_pour",
+    ].map((id) => `<span>${escapeHtml(stampLockLabel(state, id))}</span>`).join("");
+  }
+  if (elements.gamePackTofuButton) {
+    const activeDrive = appState.running || appState.calibrating;
+    elements.gamePackTofuButton.disabled = activeDrive;
+    elements.gamePackTofuButton.textContent = activeDrive ? "Park First" : "Pack Tofu";
+  }
+}
+
 function shopStorySummary(gameState) {
   const state = normalizeGameState(gameState);
   const unlocked = SHOP_STORY_CHAPTERS.filter(
@@ -3494,6 +3574,7 @@ function renderTofuShop(gameState = loadGameState()) {
 
 function renderGamePanels(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
+  renderGameDashboard(state);
   renderDeliveryLog(state);
   renderMerchProgress(state);
   renderTofuShop(state);
@@ -3529,6 +3610,8 @@ function renderDeliverySummary(summary) {
   const coach = rewards.coach || buildCoachRecap(summary, rewards);
   const passport = rewards.passport || deliveryPassportSummary(rewards.gameState || loadGameState());
   const merch = rewards.merchProgress || normalizeGameState(loadGameState()).merchProgress;
+  const dailyDelivery = rewards.dailyDelivery || getDailyDelivery(summary.date || new Date());
+  const dailyComplete = Boolean(rewards.dailyComplete);
   const shop = rewards.shop || { tofuStockGained: 0, reputationGained: 0 };
   const shopState = shop.gameState
     ? normalizeGameState(shop.gameState).shop
@@ -3543,25 +3626,26 @@ function renderDeliverySummary(summary) {
   const stampLine = rewards.stampLabels && rewards.stampLabels.length
     ? rewards.stampLabels.join(", ")
     : "No new stamp";
+  const nextGoal = dailyComplete
+    ? "Daily delivery complete. Come back tomorrow for new cargo."
+    : `${dailyDelivery.cargo}: ${dailyDelivery.goal}`;
   elements.deliverySummaryGrid.innerHTML = [
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
     summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
     summaryMetric("Rank", summary.rank),
     summaryMetric("Driver License", `Level ${level} · ${getDriverLicense(level)}`),
     summaryMetric(
-      "Today's Delivery",
-      rewards.dailyComplete
-        ? `${rewards.dailyDelivery ? rewards.dailyDelivery.cargo : "Cargo"} delivered`
-        : `${rewards.dailyDelivery ? rewards.dailyDelivery.cargo : "Cargo"} in progress`,
+      "Daily Delivery Result",
+      dailyComplete ? `${dailyDelivery.cargo} delivered` : `${dailyDelivery.cargo} in progress`,
     ),
     summaryMetric("Main Damage Source", coach.damageSource),
     summaryMetric("Best Skill", coach.bestSkill),
     summaryMetric("Next Focus", coach.nextFocus),
-    summaryMetric("Driver XP", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
-    summaryMetric("Skill XP", skillLine),
+    summaryMetric("XP Gained", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
+    summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
     summaryMetric(
-      "Tofu Shop",
+      "Shop Rewards",
       `+${shop.tofuStockGained || 0} tofu · +${shop.reputationGained || 0} reputation`,
     ),
     summaryMetric("Shop Level", `Level ${shopState.shopLevel}`),
@@ -3572,6 +3656,7 @@ function renderDeliverySummary(summary) {
     ),
     summaryMetric("Perfect Pour Drop", merch.perfectPourDrop.unlocked ? "Unlocked" : "Locked"),
     summaryMetric("Delivery Crew", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
+    summaryMetric("Next Delivery Goal", nextGoal),
   ].join("");
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || coach.message || "";
@@ -4167,6 +4252,7 @@ function revealSetupFlow() {
 
 function bindEvents() {
   elements.introCtaButton.addEventListener("click", revealSetupFlow);
+  elements.gameCtaButton.addEventListener("click", revealSetupFlow);
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
     input.addEventListener("change", updateStartReadiness);
   });
@@ -4216,6 +4302,7 @@ function bindEvents() {
   elements.exportProgressButton.addEventListener("click", exportProgress);
   elements.importProgressButton.addEventListener("click", importProgress);
   elements.resetProgressButton.addEventListener("click", resetProgress);
+  elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
   elements.packTofuButton.addEventListener("click", handlePackTofu);
   elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
   elements.newRunButton.addEventListener("click", newRun);
@@ -4229,6 +4316,24 @@ function cacheElements() {
     summaryView: document.getElementById("summary-view"),
     setupFlow: document.getElementById("setup-flow"),
     introCtaButton: document.getElementById("intro-cta-button"),
+    gameCtaButton: document.getElementById("game-cta-button"),
+    gameDailyTitle: document.getElementById("today-delivery-title"),
+    gameDailyFlavor: document.getElementById("game-daily-flavor"),
+    gameDailyCargo: document.getElementById("game-daily-cargo"),
+    gameDailyGoal: document.getElementById("game-daily-goal"),
+    gameDailyReward: document.getElementById("game-daily-reward"),
+    gameDailyProgress: document.getElementById("game-daily-progress"),
+    gameDriverLicense: document.getElementById("game-driver-license"),
+    gameTotalXP: document.getElementById("game-total-xp"),
+    gameStreak: document.getElementById("game-streak"),
+    gameGearProgress: document.getElementById("game-gear-progress"),
+    gameShopStock: document.getElementById("game-shop-stock"),
+    gameShopReputation: document.getElementById("game-shop-reputation"),
+    gameShopLevel: document.getElementById("game-shop-level"),
+    gameShopTeaser: document.getElementById("game-shop-teaser"),
+    gamePassportEmpty: document.getElementById("game-passport-empty"),
+    gamePassportPreview: document.getElementById("game-passport-preview"),
+    gamePackTofuButton: document.getElementById("game-pack-tofu-button"),
     modeCopy: document.getElementById("mode-copy"),
     mountStatus: document.getElementById("mount-status"),
     uprightAxisPanel: document.getElementById("upright-axis-panel"),

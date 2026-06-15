@@ -24,6 +24,8 @@ a virtual cup steady while driving normally. The product rewards smoothness, not
 - Audio coach volume is selected locally from Muted, Normal, or Loud and uses smoothed gain changes.
 - The active Cup Test canvas uses a tofu cargo slosh visualization instead of a technical G-dot.
 - Tofu Shop interactions are parked-only and hidden from the active drive screen.
+- The active drive screen remains minimal: large Water Left / Cargo Condition, tofu slosh visual,
+  audio coach, and no XP, stamp, shop, upgrade, or reward actions.
 
 ## Privacy Contract
 
@@ -138,9 +140,14 @@ audio coach remains the primary eyes-off feedback while driving.
 ## Delivery Board V2
 
 Delivery Log turns each completed Cup Test into a fragile-cargo delivery summary. The landing page
-shows a Delivery Board with today's local delivery, cargo profile, goal, reward, driver license,
-numeric level, total XP, streak, No-Spill Club Gear progress, Delivery Passport progress, recent
-reward, and recent stamps.
+must make the game layer visible before the user opens setup controls. The primary first-run game
+card is `Today's Delivery`, shown near the top of the landing page with cargo, flavor text, goal,
+reward, daily progress, Driver License, level, XP, streak, No-Spill Club Gear progress, Delivery
+Passport preview, and a parked Tofu Shop preview.
+
+The secondary Delivery Board shows the same local delivery context with today's cargo profile, goal,
+reward, driver license, numeric level, total XP, streak, No-Spill Club Gear progress, Delivery
+Passport progress, recent reward, and recent stamps.
 
 Daily deliveries are selected deterministically from the local calendar date and a static cargo
 profile catalog. Cargo profiles include id, name, description, focus, goal text, reward text,
@@ -163,15 +170,20 @@ Smooth Commute, consistency, and route mastery rewards without encouraging faste
 seeking twisty roads.
 
 Driver License labels are derived from level: Rookie Carrier, Cup Courier, Smooth Driver,
-No-Spill Candidate, Certified Tofu Driver, Perfect Pour Courier, and Delivery Legend. The result
-screen also shows a constructive coach recap with main damage source, best skill, and next focus.
-Delivery Passport summarizes local stamps without duplicating them.
+No-Spill Candidate, Certified Tofu Driver, Perfect Pour Courier, and Delivery Legend. Delivery
+Passport summarizes local stamps without duplicating them and must show an empty state for first-time
+users.
+
+`Delivery Complete` is the primary post-run game summary. It must show Cargo Condition, XP gained,
+Skill XP gained, stamp result, daily delivery result, shop rewards, No-Spill Club Gear progress, and
+the next delivery goal even when a section is empty.
 
 ## Tofu Shop
 
-Tofu Shop is a cozy parked-only management layer. It appears on the landing/setup screen near the
-Delivery Board and is not shown during an active Cup Test. The UI copy must include the parked-only
-rule: `Shop Mode is for when you are parked. Do not interact while driving.`
+Tofu Shop is a cozy parked-only management layer. A compact Tofu Shop preview appears in the
+top `Today's Delivery` card, and the full shop appears near the Delivery Board. Shop actions are not
+shown during an active Cup Test. The UI copy must include the parked-only rule: `Shop Mode is for
+when you are parked. Do not interact while driving.`
 
 Shop resources are local-only:
 

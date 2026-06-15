@@ -15,6 +15,7 @@ The app is intentionally lightweight:
 - local results stored only in browser `localStorage`
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
+- game-first landing dashboard with Today's Delivery, Driver License, XP, passport, and shop preview
 - parked-only Tofu Shop resources, upgrades, story chapters, and Delivery Wall progress
 - optional Discord community CTA, hidden unless `DISCORD_CONFIG` is enabled
 
