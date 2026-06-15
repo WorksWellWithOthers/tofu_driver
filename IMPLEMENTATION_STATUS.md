@@ -88,7 +88,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Shop | Shop Level | Implemented | `getShopLevel`, shop UI | shop level tests | Balance tuning | P2 | Does not affect real driving score |
 | Shop | Pack Tofu | Implemented | `packTofu`, `handlePackTofu` | `testTofuShopStatePackIdleAndUpgradeRules` | UX tuning | P2 | Parked-only, disabled during drive |
 | Shop | Fulfill Shop Order | Implemented | `fulfillShopOrder`, `handleFulfillShopOrder`, shop UI | `testTofuShopStatePackIdleAndUpgradeRules` | Result polish | P1 | Parked-only home action, no sensors/geolocation |
-| Results | Shop Order Complete screen | Implemented | `renderShopOrderResult` | shop/order tests | Visual polish | P2 | Share actions disabled; not a driving result |
+| Results | Shop Order Complete screen | Implemented | `renderShopOrderResult`, `setSummaryMode` | `testShopOrderResultUsesCompactShopLayout`, shop/order tests | Visual polish | P2 | Share card hidden; not a driving result |
 | Shop | Live generator ticking | Implemented | `tickOpenShopGenerators`, `applyShopGeneratorTick`, per-second shop rate labels | `testTofuShopStatePackIdleAndUpgradeRules` | Mobile pacing QA | P1 | Runs only while parked/open; no backend timer |
 | Shop | Tabbed idle panels | Implemented | `SHOP_TABS`, `renderShopTabs`, `shop-tab-panel` | `testExpandedIdleShopLayerMechanics` | Mobile information density tuning | P1 | Hidden from active drive with landing view |
 | Shop | Buy multiplier controls | Implemented | `shop-buy-multiplier`, `buyShopStation`, `Buy Max` station buttons | `testExpandedIdleShopLayerMechanics` | Add per-card ETA later | P2 | Reduces repetitive clicking |
@@ -112,7 +112,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Rivals | Rival Shop Challenges | Partial | `RIVAL_CHALLENGES`, `startRivalChallenge`, Rivals panel | `testExpandedIdleShopLayerMechanics` | Add queued/claim flow | P3 | Friendly shop challenge copy only |
 | Passport | Expanded shop/passport stamps | Partial | `STAMP_LABELS`, Passport panel | `testExpandedIdleShopLayerMechanics` | Category filters and details | P3 | Local-only achievements |
 | Ledger | Delivery Ledger | Implemented | `shop.ledger`, `addLedgerEntry`, Ledger panel | `testExpandedIdleShopLayerMechanics` | Clear/filter UI later | P2 | Capped summaries only |
-| Dev QA | Unlock All Local QA | Implemented | `isDevToolsEnabled`, `unlockAllLocalQa`, Settings / QA panel | `testExpandedIdleShopLayerMechanics` | Add explicit UI reset confirmation | P3 | Marks local state untrusted; no certified proof |
+| Dev QA | Unlock All Local QA | Implemented | `isDevToolsEnabled`, `unlockAllLocalQa`, Settings `Developer Tools` section | `testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault`, `testExpandedIdleShopLayerMechanics` | Add explicit UI reset confirmation | P3 | Hidden unless dev mode is enabled; marks local state untrusted |
 
 ## Collection Layer
 
@@ -141,7 +141,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | First run | Compact first-run stats | Implemented | dashboard status fields | first-run tests | Tune density | P2 | Non-driving dashboard only |
 | First run | Locked teaser cards | Implemented | teaser copy and progressive reveal state | progressive reveal tests | Copy polish | P2 | Systems introduced parked-only |
 | Dashboard | Expanded dashboard after first delivery | Implemented | `progressiveRevealState`, `renderGamePanels` | progressive reveal tests | Polish unlocked cards | P2 | Shows updated local state |
-| Settings | Progress tools moved to Settings | Implemented | Settings / Progress Tools UI | first-run tests | UX polish | P2 | Reset/export/import are parked tools |
+| Settings | Progress tools moved to Settings | Implemented | `renderShopSettingsPanel`, Settings `Progress Tools` section | `testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault` | UX polish | P2 | Reset/export/import are parked tools; no normal-user QA copy |
 | Merch | Secret merch lower priority | Implemented | merch sections below first flow | first-run tests | Merch copy/product URLs later | P3 | Does not imply verification by partner |
 | CTA | One dominant CTA | Implemented | Next Best Action card, primary button styling | next-best-action tests | Mobile polish | P1 | No in-drive CTA clutter |
 

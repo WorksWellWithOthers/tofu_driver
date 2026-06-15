@@ -1124,6 +1124,24 @@
   background: #f4f7ef;
 }
 
+.nospill-summary-brand img:not([hidden]) + .nospill-hero-fallback,
+.nospill-summary-brand .nospill-hero-fallback[hidden] {
+  display: none;
+}
+
+.nospill-summary.is-shop-result .nospill-summary-head {
+  align-items: center;
+}
+
+.nospill-summary.is-shop-result .nospill-water-percent {
+  padding: 10px 12px;
+  border: 1px solid rgba(244, 197, 107, 0.28);
+  border-radius: 8px;
+  background: rgba(244, 197, 107, 0.1);
+  color: #f8d891;
+  font-size: 1.6rem;
+}
+
 .nospill-water-percent {
   color: #f4f7ef;
   font-size: 2.3rem;
@@ -1318,6 +1336,10 @@
   .nospill-controls,
   .nospill-share-actions {
     grid-template-columns: auto 1fr;
+  }
+
+  .nospill-summary.is-shop-result .nospill-result-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .nospill-summary-grid,

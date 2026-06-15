@@ -360,11 +360,11 @@ const SHOP_STATIONS = [
 ];
 
 const STATION_UPGRADES = [
-  { id: "tofu_press_faster", stationId: "tofu_press", name: "Faster Pressing", costTips: 60, effect: "Tofu Press rate +25%", maxLevel: 10 },
+  { id: "tofu_press_faster", stationId: "tofu_press", name: "Steady Pressing", costTips: 60, effect: "Tofu Press rate +25%", maxLevel: 10 },
   { id: "tofu_press_double", stationId: "tofu_press", name: "Double Mold", costTips: 100, effect: "Tofu Press output +50%", maxLevel: 8 },
-  { id: "prep_counter_faster", stationId: "prep_counter", name: "Faster Packaging", costTips: 120, effect: "Prep Counter rate +25%", maxLevel: 10 },
+  { id: "prep_counter_faster", stationId: "prep_counter", name: "Tidy Packaging", costTips: 120, effect: "Prep Counter rate +25%", maxLevel: 10 },
   { id: "prep_counter_double", stationId: "prep_counter", name: "Double Labels", costTips: 180, effect: "Prep Counter output +50%", maxLevel: 8 },
-  { id: "delivery_shelf_faster", stationId: "delivery_shelf", name: "Faster Handoff", costTips: 220, effect: "Delivery Shelf boost +20%", maxLevel: 8 },
+  { id: "delivery_shelf_faster", stationId: "delivery_shelf", name: "Neat Handoff", costTips: 220, effect: "Delivery Shelf boost +20%", maxLevel: 8 },
   { id: "delivery_shelf_double", stationId: "delivery_shelf", name: "Double Stack", costTips: 320, effect: "Delivery Shelf capacity +30%", maxLevel: 8 },
   { id: "shop_sign_faster", stationId: "shop_sign", name: "Brighter Sign", costTips: 360, effect: "Reputation from orders +20%", maxLevel: 8 },
   { id: "shop_sign_double", stationId: "shop_sign", name: "Word of Mouth", costTips: 520, effect: "Customer tip gain +20%", maxLevel: 8 },
@@ -436,7 +436,7 @@ const LICENSE_PERKS = [
   { id: "starter_press", name: "Start with extra Tofu Press level", costStars: 1, effect: "Future exams restart with +1 Tofu Press." },
   { id: "starter_counter", name: "Start with one Prep Counter", costStars: 1, effect: "Future exams keep Prep Counter unlocked." },
   { id: "offline_cap", name: "Higher offline cap", costStars: 1, effect: "Offline cap +1 hour." },
-  { id: "prep_slot_regen", name: "Extra Prep Slot recovery", costStars: 2, effect: "Prep Slots recover faster." },
+  { id: "prep_slot_regen", name: "Extra Prep Slot recovery", costStars: 2, effect: "Prep Slots recover more often." },
   { id: "shop_multiplier", name: "Small shop production multiplier", costStars: 2, effect: "All shop production +10%." },
 ];
 
@@ -744,6 +744,8 @@ const appState = {
   surface: "cup-test",
   shopTab: "overview",
   purchaseMultiplier: 1,
+  summaryMode: null,
+  shopResultCanFulfillAnother: false,
 };
 
 let elements = {};
@@ -5978,24 +5980,38 @@ function renderLedgerPanel(state) {
 }
 
 function renderShopSettingsPanel(state) {
+  const devTools = isDevToolsEnabled()
+    ? `
+      <section class="nospill-shop-panel" aria-labelledby="developer-tools-title">
+        <h5 id="developer-tools-title">Developer Tools</h5>
+        <p class="nospill-panel-helper">Developer QA only. Local test state is not trusted for certified unlocks.</p>
+        <div class="nospill-delivery-actions">
+          ${actionButton("Unlock All Local QA", "data-dev-unlock", "all", false, "nospill-danger")}
+          ${actionButton("Reset QA State", "data-dev-reset", "reset", false)}
+        </div>
+        <p class="nospill-panel-helper">${escapeHtml(state.shop.untrustedLocalQa ? "Current local state is marked untrusted." : "Developer tools affect only local test state.")}</p>
+      </section>
+    `
+    : "";
   return `
-    <h4>Settings / QA</h4>
-    <p class="nospill-panel-helper">Progress tools live below this shop card. Developer tools are local-only and hidden by default.</p>
-    <div class="nospill-idle-grid">
-      ${isDevToolsEnabled() ? renderIdleCard({
-        title: "Developer QA",
-        status: state.shop.untrustedLocalQa ? "Untrusted local state" : "Local only",
-        copy: "Developer QA only. Local test state is not trusted for certified merch.",
-        actions: [
-          actionButton("Unlock All Local QA", "data-dev-unlock", "all", false, "nospill-danger"),
-          actionButton("Reset QA State", "data-dev-reset", "reset", false),
-        ],
-      }) : renderIdleCard({
-        title: "Developer QA hidden",
-        status: "Off",
-        copy: "Enable with ?dev=1 or localStorage for local testing.",
-      })}
-    </div>
+    <h4>Settings</h4>
+    <p class="nospill-panel-helper">Progress is saved on this device.</p>
+    <section class="nospill-shop-panel" aria-labelledby="progress-tools-title">
+      <h5 id="progress-tools-title">Progress Tools</h5>
+      <p class="nospill-panel-helper">Export, import, or reset only Tofu Driver game state.</p>
+      <div class="nospill-delivery-actions" aria-label="Tofu Driver progress tools">
+        <button class="nospill-secondary" id="export-progress-button" type="button">
+          Export Progress
+        </button>
+        <button class="nospill-secondary" id="import-progress-button" type="button">
+          Import Progress
+        </button>
+        <button class="nospill-danger" id="reset-progress-button" type="button">
+          Reset Progress
+        </button>
+      </div>
+    </section>
+    ${devTools}
   `;
 }
 
@@ -6470,10 +6486,30 @@ function setShareActionsEnabled(enabled) {
   });
 }
 
+function setSummaryMode(mode, options = {}) {
+  appState.summaryMode = mode;
+  if (elements.summaryView) {
+    elements.summaryView.classList.toggle("is-shop-result", mode === "shop-order");
+  }
+  const hideShare = mode === "shop-order";
+  if (elements.shareCardSection) elements.shareCardSection.classList.toggle("is-hidden", hideShare);
+  [
+    elements.shareButton,
+    elements.copyButton,
+    elements.downloadButton,
+    elements.saveButton,
+  ].forEach((button) => {
+    if (button) button.classList.toggle("is-hidden", hideShare);
+  });
+  appState.shopResultCanFulfillAnother = Boolean(options.canFulfillAnother);
+}
+
 function renderShopOrderResult(result) {
   appState.lastSummary = null;
   const state = normalizeGameState(result.gameState);
   const shop = state.shop;
+  const canFulfillAnother = shop.deliveryOrders > 0;
+  setSummaryMode("shop-order", { canFulfillAnother });
   if (elements.summaryStatusLabel) {
     elements.summaryStatusLabel.textContent = "Tofu Shop";
   }
@@ -6484,7 +6520,15 @@ function renderShopOrderResult(result) {
     elements.summaryWater.textContent = `+${result.tipsGained} Tips`;
   }
   if (elements.returnDashboardButton) {
-    elements.returnDashboardButton.textContent = "Return to Tofu Shop";
+    elements.returnDashboardButton.textContent = canFulfillAnother
+      ? "Fulfill Another Shop Order"
+      : "Return to Tofu Shop";
+  }
+  if (elements.newRunButton) {
+    elements.newRunButton.textContent = canFulfillAnother
+      ? "Return to Tofu Shop"
+      : "Take Don't Spill the Cup";
+    elements.newRunButton.classList.toggle("is-hidden", false);
   }
   if (elements.backSimulatorButton) {
     elements.backSimulatorButton.classList.toggle("is-hidden", true);
@@ -6492,6 +6536,7 @@ function renderShopOrderResult(result) {
   if (elements.routeContext) elements.routeContext.classList.toggle("is-hidden", true);
   if (elements.deliverySummaryGrid) {
     elements.deliverySummaryGrid.innerHTML = [
+      summaryMetric("Order", "Packed and handed off from the counter.", "nospill-is-good"),
       summaryMetric("Tips Gained", `+${result.tipsGained}`),
       summaryMetric("Reputation Gained", `+${result.reputationGained}`),
       summaryMetric("XP Gained", `+${result.xpGained}`),
@@ -6520,6 +6565,7 @@ function escapeHtml(value) {
 
 function renderSummary(summary) {
   appState.lastSummary = summary;
+  setSummaryMode("cup-test");
   setShareActionsEnabled(true);
   const qualified = isQualifiedSession(summary);
   const summaryGameState = summary.deliveryRewards
@@ -6543,6 +6589,10 @@ function renderSummary(summary) {
     elements.returnDashboardButton.textContent = reveal.shop
       ? "Return to Tofu Shop"
       : "Return to Dashboard";
+  }
+  if (elements.newRunButton) {
+    elements.newRunButton.textContent = "Take Another Cup Test";
+    elements.newRunButton.classList.toggle("is-hidden", false);
   }
   if (elements.backSimulatorButton) {
     elements.backSimulatorButton.classList.toggle("is-hidden", !isSimulatorEnabled());
@@ -7022,6 +7072,18 @@ function handleTofuShopPanelClick(event) {
     renderGamePanels(loadGameState());
     return;
   }
+  if (target.id === "export-progress-button") {
+    exportProgress();
+    return;
+  }
+  if (target.id === "import-progress-button") {
+    importProgress();
+    return;
+  }
+  if (target.id === "reset-progress-button") {
+    resetProgress();
+    return;
+  }
   if (target.dataset.shopStation) {
     const state = loadGameState();
     const quantity = state.shop.purchaseMultiplier || appState.purchaseMultiplier || 1;
@@ -7348,6 +7410,8 @@ function scrollToDashboardTarget(target) {
 }
 
 function returnToDashboard(target = "shop") {
+  appState.summaryMode = null;
+  appState.shopResultCanFulfillAnother = false;
   refreshLandingDashboard("Review your rewards. The shop has been updated.", "shop");
   const state = loadGameState();
   const reveal = progressiveRevealState(state);
@@ -7355,13 +7419,31 @@ function returnToDashboard(target = "shop") {
 }
 
 function takeAnotherCupTest() {
+  appState.summaryMode = null;
+  appState.shopResultCanFulfillAnother = false;
   appState.lastSummary = null;
   resetSessionState();
   refreshLandingDashboard("Review setup, then start while parked.", "cup-test");
   revealSetupFlow();
 }
 
+function handlePrimaryResultAction() {
+  if (appState.summaryMode === "shop-order" && appState.shopResultCanFulfillAnother) {
+    handleFulfillShopOrder();
+    return;
+  }
+  returnToDashboard("shop");
+}
+
 function newRun() {
+  if (appState.summaryMode === "shop-order") {
+    if (appState.shopResultCanFulfillAnother) {
+      returnToDashboard("shop");
+    } else {
+      takeAnotherCupTest();
+    }
+    return;
+  }
   takeAnotherCupTest();
 }
 
@@ -7504,11 +7586,11 @@ function bindEvents() {
   elements.downloadButton.addEventListener("click", downloadShareCard);
   elements.copyButton.addEventListener("click", copyShareText);
   elements.saveButton.addEventListener("click", saveCurrentSummary);
-  elements.returnDashboardButton.addEventListener("click", () => returnToDashboard("shop"));
+  elements.returnDashboardButton.addEventListener("click", handlePrimaryResultAction);
   elements.backSimulatorButton.addEventListener("click", () => returnToDashboard("simulator"));
-  elements.exportProgressButton.addEventListener("click", exportProgress);
-  elements.importProgressButton.addEventListener("click", importProgress);
-  elements.resetProgressButton.addEventListener("click", resetProgress);
+  if (elements.exportProgressButton) elements.exportProgressButton.addEventListener("click", exportProgress);
+  if (elements.importProgressButton) elements.importProgressButton.addEventListener("click", importProgress);
+  if (elements.resetProgressButton) elements.resetProgressButton.addEventListener("click", resetProgress);
   if (elements.gamePackTofuButton) {
     elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
   }
@@ -7675,6 +7757,7 @@ function cacheElements() {
     merchGrid: document.getElementById("merch-grid"),
     deliverySummaryGrid: document.getElementById("delivery-summary-grid"),
     commuteMasteryCopy: document.getElementById("commute-mastery-copy"),
+    shareCardSection: document.getElementById("share-card-section"),
     shareCanvas: document.getElementById("share-canvas"),
     shareButton: document.getElementById("share-button"),
     downloadButton: document.getElementById("download-button"),

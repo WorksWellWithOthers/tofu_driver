@@ -21,14 +21,16 @@
   generators, and Fulfill Shop Orders without sensors or location access.
 - Tofu Shop V1 adds parked-only tofu stock, delivery orders, tips, reputation, shop levels,
   Pack Tofu, Fulfill Shop Order, capped idle production, and starter upgrades.
-- Fulfill Shop Order uses a lightweight `Shop Order Complete` result screen with driving share-card
-  actions disabled.
+- Fulfill Shop Order uses a compact `Shop Order Complete` result screen with driving share-card
+  actions hidden and shop-focused return/fulfill actions.
 - Tofu Shop Generator V2 adds visible local ticking: Tofu Press produces Tofu Stock, and Prep
   Counter converts Tofu Stock into Delivery Orders while parked or through capped offline progress.
   Generator rates are shown per second in the shop UI.
 - Tofu Shop Idle Layer V3 adds a tabbed home game surface with Overview, Production, Orders,
   Routes, Training, Garage, Crew, Shop Spirit, Upgrades, Rival Shop Challenges, Passport, License,
-  Ledger, and Settings / QA panels.
+  Ledger, and Settings panels.
+- Settings now consolidates Progress Tools. Developer Tools stay hidden unless `?dev=1` or the
+  local dev-tools flag is enabled.
 - New local shop resources include Prep Slots, Shop Reach, Shop Spirit, Cup Stability XP, Route
   Knowledge, and License Stars. They persist in `tofuDriverGameStateV1` as summarized local state.
 - Production now supports data-driven shop stations, global buy multipliers (`x1`, `x10`, `x100`,

@@ -123,6 +123,9 @@ globalThis.renderDeliveryWall = renderDeliveryWall;
 globalThis.renderGameDashboard = renderGameDashboard;
 globalThis.renderTofuShop = renderTofuShop;
 globalThis.renderCollectionPanel = renderCollectionPanel;
+globalThis.renderShopOrderResult = renderShopOrderResult;
+globalThis.renderSummary = renderSummary;
+globalThis.renderShopSettingsPanel = renderShopSettingsPanel;
 globalThis.progressiveRevealState = progressiveRevealState;
 globalThis.nextBestAction = nextBestAction;
 globalThis.surfaceFromHash = surfaceFromHash;
@@ -396,7 +399,10 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('nospill-section nospill-delivery-log is-hidden'));
   assert(html.includes('id="tofu-shop"'));
   assert(html.includes('nospill-section nospill-collection is-hidden'));
-  assert(html.includes('Settings / Progress Tools'));
+  assert(!html.includes('Settings / Progress Tools'));
+  assert(!html.includes('Developer QA hidden'));
+  assert(!html.includes('Enable with ?dev=1'));
+  assert(!html.includes('Settings / QA'));
   const firstRunMain = html.slice(dashboardIndex, html.indexOf('id="how-it-works"'));
   assert(!firstRunMain.includes('Export Progress'));
   assert(!firstRunMain.includes('Import Progress'));
@@ -1969,6 +1975,60 @@ function testExpandedIdleShopLayerMechanics() {
   assert(!/\b(?:larva|hive|queen|swarm lord|mutagen|invasion|meat)\b/i.test(source));
 }
 
+function testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(!html.includes('Settings / Progress Tools'));
+  assert(!html.includes('Developer QA hidden'));
+  assert(!html.includes('Enable with ?dev=1'));
+  assert(!html.includes('Settings / QA'));
+
+  const normalContext = loadNoSpillContext({
+    window: { location: { search: '' }, localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+const state = defaultGameState();
+globalThis.normalSettingsHtml = renderShopSettingsPanel(state);
+`, normalContext);
+  assert(normalContext.normalSettingsHtml.includes('<h4>Settings</h4>'));
+  assert(normalContext.normalSettingsHtml.includes('Progress is saved on this device.'));
+  assert(normalContext.normalSettingsHtml.includes('Progress Tools'));
+  assert(normalContext.normalSettingsHtml.includes('id="export-progress-button"'));
+  assert(normalContext.normalSettingsHtml.includes('Export Progress'));
+  assert(normalContext.normalSettingsHtml.includes('id="import-progress-button"'));
+  assert(normalContext.normalSettingsHtml.includes('Import Progress'));
+  assert(normalContext.normalSettingsHtml.includes('id="reset-progress-button"'));
+  assert(normalContext.normalSettingsHtml.includes('Reset Progress'));
+  assert(!normalContext.normalSettingsHtml.includes('Settings / QA'));
+  assert(!normalContext.normalSettingsHtml.includes('Developer QA hidden'));
+  assert(!normalContext.normalSettingsHtml.includes('Enable with ?dev=1'));
+  assert(!normalContext.normalSettingsHtml.includes('Developer Tools'));
+  assert(!normalContext.normalSettingsHtml.includes('Generators'));
+  assert(!normalContext.normalSettingsHtml.includes('Production'));
+
+  const queryDevContext = loadNoSpillContext({
+    window: { location: { search: '?dev=1' }, localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+globalThis.queryDevSettingsHtml = renderShopSettingsPanel(defaultGameState());
+`, queryDevContext);
+  assert(queryDevContext.queryDevSettingsHtml.includes('Developer Tools'));
+  assert(queryDevContext.queryDevSettingsHtml.includes('Developer QA only. Local test state is not trusted for certified unlocks.'));
+  assert(queryDevContext.queryDevSettingsHtml.includes('Unlock All Local QA'));
+  assert(queryDevContext.queryDevSettingsHtml.includes('Reset QA State'));
+
+  const flagDevContext = loadNoSpillContext({
+    window: {
+      location: { search: '' },
+      localStorage: makeLocalStorage({ tofuDriverDevToolsEnabled: 'true' }),
+    },
+  });
+  vm.runInContext(`
+globalThis.flagDevSettingsHtml = renderShopSettingsPanel(defaultGameState());
+`, flagDevContext);
+  assert(flagDevContext.flagDevSettingsHtml.includes('Developer Tools'));
+  assert(flagDevContext.flagDevSettingsHtml.includes('Unlock All Local QA'));
+}
+
 function findDailyDeliveryDate(context, missionId) {
   for (let index = 1; index <= 60; index += 1) {
     const day = String(index).padStart(2, '0');
@@ -2273,6 +2333,108 @@ function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
   assert(crewText.includes('Delivery Crew: Angry Tofu Driver.'));
   assert(!crewText.includes('Retro Arcade'));
   assert(!crewText.includes('Tofu Shop Bell'));
+}
+
+function testShopOrderResultUsesCompactShopLayout() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('id="share-card-section"'));
+  assert(html.includes('onload="this.nextElementSibling.hidden = true;"'));
+  assert(html.includes('class="nospill-hero-fallback" hidden>Tofu Driver</span>'));
+
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classes: new Set(),
+  };
+  node.classList = {
+    toggle(name, value) {
+      if (value) node.classes.add(name);
+      else node.classes.delete(name);
+    },
+    add(name) { node.classes.add(name); },
+    remove(name) { node.classes.delete(name); },
+    contains(name) { return node.classes.has(name); },
+  };
+  return node;
+}
+const state = defaultGameState();
+state.shop.deliveryOrders = 2;
+state.shop.tofuStock = 20;
+state.shop.tips = 5;
+state.shop.reputation = 2;
+saveGameState(state);
+const result = fulfillShopOrder(state, { activeDrive: false });
+elements = {
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+  routeContext: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+};
+renderGamePanels = function renderGamePanelsForShopResult() {};
+showView = function showViewForShopResult(viewName) {
+  globalThis.shopResultShownView = viewName;
+};
+renderShopOrderResult(result);
+globalThis.shopResultMode = appState.summaryMode;
+globalThis.shopResultCanFulfillAnother = appState.shopResultCanFulfillAnother;
+globalThis.shopResultViewClasses = Array.from(elements.summaryView.classes);
+globalThis.shopResultTitle = elements.summaryTitle.textContent;
+globalThis.shopResultEyebrow = elements.summaryStatusLabel.textContent;
+globalThis.shopResultCallout = elements.summaryWater.textContent;
+globalThis.shopResultDetails = elements.deliverySummaryGrid.innerHTML;
+globalThis.shopResultFlavor = elements.commuteMasteryCopy.textContent;
+globalThis.shopResultPrimary = elements.returnDashboardButton.textContent;
+globalThis.shopResultSecondary = elements.newRunButton.textContent;
+globalThis.shopShareHidden = elements.shareCardSection.classes.has("is-hidden");
+globalThis.shopShareButtonHidden = elements.shareButton.classes.has("is-hidden");
+globalThis.shopCopyButtonHidden = elements.copyButton.classes.has("is-hidden");
+globalThis.shopDownloadButtonHidden = elements.downloadButton.classes.has("is-hidden");
+globalThis.shopSaveButtonHidden = elements.saveButton.classes.has("is-hidden");
+`, context);
+
+  assert.strictEqual(context.shopResultShownView, 'summary');
+  assert.strictEqual(context.shopResultMode, 'shop-order');
+  assert.strictEqual(context.shopResultCanFulfillAnother, true);
+  assert(context.shopResultViewClasses.includes('is-shop-result'));
+  assert.strictEqual(context.shopResultEyebrow, 'Tofu Shop');
+  assert.strictEqual(context.shopResultTitle, 'Shop Order Complete');
+  assert.strictEqual(context.shopResultCallout, '+10 Tips');
+  assert(context.shopResultDetails.includes('Packed and handed off from the counter.'));
+  assert(context.shopResultDetails.includes('Tips Gained'));
+  assert(context.shopResultDetails.includes('Reputation Gained'));
+  assert(context.shopResultDetails.includes('XP Gained'));
+  assert(context.shopResultDetails.includes('Tofu Stock'));
+  assert(context.shopResultDetails.includes('Delivery Orders'));
+  assert(context.shopResultDetails.includes('Shop Level'));
+  assert(context.shopResultDetails.includes('Next Best Action'));
+  assert(context.shopResultFlavor.includes('Packed and handed off from the counter.'));
+  assert.strictEqual(context.shopResultPrimary, 'Fulfill Another Shop Order');
+  assert.strictEqual(context.shopResultSecondary, 'Return to Tofu Shop');
+  assert(!context.shopResultPrimary.includes('Cup Test'));
+  assert(!context.shopResultSecondary.includes('Cup Test'));
+  assert.strictEqual(context.shopShareHidden, true);
+  assert.strictEqual(context.shopShareButtonHidden, true);
+  assert.strictEqual(context.shopCopyButtonHidden, true);
+  assert.strictEqual(context.shopDownloadButtonHidden, true);
+  assert.strictEqual(context.shopSaveButtonHidden, true);
 }
 
 function testResultScreenShowsGameSummarySections() {
@@ -2705,12 +2867,14 @@ function run() {
   testResetExportAndImportProgressAreScopedAndValidated();
   testTofuShopStatePackIdleAndUpgradeRules();
   testExpandedIdleShopLayerMechanics();
+  testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault();
   testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();
   testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted();
   testDeliverySimulatorIsHiddenLocalAndSummarized();
   testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels();
   testUnlockShelvesStayOutOfMainShopUi();
   testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
+  testShopOrderResultUsesCompactShopLayout();
   testResultScreenShowsGameSummarySections();
   testPostRunNavigationReturnsToUpdatedDashboard();
   testLocationPermissionFlowRemainsOptIn();

@@ -296,7 +296,9 @@ Shop resources are local-only:
 Pack Tofu grants a small amount of tofu stock and is disabled while a Cup Test is active. Fulfill
 Shop Order consumes one Delivery Order and grants tips, small reputation, and small XP without using
 sensors or implying a real drive occurred. It uses a lightweight `Shop Order Complete` result screen
-with share-card actions disabled. Neither action affects driving score.
+with a compact shop-focused result layout. Ordinary shop order results hide the Share Card area,
+use `Fulfill Another Shop Order` / `Return to Tofu Shop` as the primary loop actions, and keep Cup
+Test actions secondary or absent. Neither action affects driving score.
 
 The live parked generator loop is local-only:
 
@@ -371,7 +373,7 @@ The implemented shop panels are:
 11. Passport
 12. License
 13. Ledger
-14. Settings / QA
+14. Settings
 
 Production is data-driven. Station costs use `baseCost * growthRate ^ owned`, stations support the
 global buy multiplier (`x1`, `x10`, `x100`, `Max`), and milestones at 10, 25, 50, and 100 owned
@@ -749,8 +751,10 @@ Current implementation uses this as a first pass:
   relevant resources exist.
 - Stamp details unlock after the first stamp-worthy delivery.
 - Crew and sound selection controls unlock only after character or sound-pack unlocks exist.
-- Export, import, and reset controls live in `Settings / Progress Tools`, not the first-run main
-  dashboard.
+- Export, import, and reset controls live in the `Settings` tab under `Progress Tools`, not the
+  first-run main dashboard.
+- Developer QA tools are hidden from normal users. They appear only inside `Settings` as
+  `Developer Tools` when `?dev=1` or `tofuDriverDevToolsEnabled=true` is set.
 - Active-drive screens still hide shop, crew, sound, and reward interactions.
 
 The design target is not to remove the dashboard. The target is:
