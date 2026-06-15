@@ -150,6 +150,9 @@ Current design principles:
 - first-time users should not see every system
 - returning users should see the dashboard they earned
 - progression should be bumpy and story-driven, not a flat generator list
+- Tofu Shop borrows the structure of cascading incremental games, but translates it into shop
+  stations, prepared orders, fictional route cards, License Exams, and cozy delivery-management
+  language.
 - each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
@@ -157,6 +160,9 @@ Current design principles:
   progress and ETA.
 - Tofu Stock is an ingredient/runway resource, not the purchase currency. The UI should explain how
   many orders current stock can support.
+- Larger shop order types can consume more Tofu Stock and ready Delivery Orders for better local
+  Tips/Reputation/XP rewards. This order-size ladder is the intended bridge between stockpiles and
+  higher payouts. Raw Tofu Stock should not directly multiply Tips.
 - Fulfill Shop Order requires at least one ready Delivery Order.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
 - Tips buy more production, stations, and upgrades.

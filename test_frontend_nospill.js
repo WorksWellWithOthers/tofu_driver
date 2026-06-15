@@ -71,6 +71,10 @@ globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
 globalThis.startShopGeneratorTimer = startShopGeneratorTimer;
 globalThis.orderPrepProgress = orderPrepProgress;
 globalThis.tofuStockRunway = tofuStockRunway;
+globalThis.getShopOrderTypes = getShopOrderTypes;
+globalThis.shopOrderTypeUnlocked = shopOrderTypeUnlocked;
+globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
+globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
@@ -1107,15 +1111,15 @@ globalThis.funnelOrdersAfterMax = fulfilled.gameState.shop.deliveryOrders;
 `, context);
 
   assert.strictEqual(context.funnelAction.type, 'fulfill_shop_order');
-  assert.strictEqual(context.funnelAction.title, 'Next: Fulfill Max Orders');
-  assert.strictEqual(context.funnelAction.buttonLabel, 'Fulfill Max Orders');
+  assert.strictEqual(context.funnelAction.title, 'Next: Fulfill Max Simple Orders');
+  assert.strictEqual(context.funnelAction.buttonLabel, 'Fulfill Max Simple Orders');
   assert.strictEqual(context.funnelAction.orderQuantity, 'max');
   assert.strictEqual(context.funnelBottleneck.label, 'Need Tips');
   assert(!context.funnelBottleneck.label.includes('Certified boost available'));
   assert(context.funnelBottleneck.action.includes('Fulfill shop orders'));
-  assert.strictEqual(context.funnelTopTitle, 'Next: Fulfill Max Orders');
+  assert.strictEqual(context.funnelTopTitle, 'Next: Fulfill Max Simple Orders');
   assert(context.funnelTopCopy.includes('earn Tips for stations and upgrades'));
-  assert.strictEqual(context.funnelTopButton, 'Fulfill Max Orders');
+  assert.strictEqual(context.funnelTopButton, 'Fulfill Max Simple Orders');
   assert.strictEqual(context.funnelTopAction, 'fulfill_shop_order');
   assert.strictEqual(context.funnelTopQuantity, 'max');
   assert.strictEqual(context.funnelPackText, 'Pack Tofu (backup)');
@@ -1127,17 +1131,16 @@ globalThis.funnelOrdersAfterMax = fulfilled.gameState.shop.deliveryOrders;
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
   assert(context.funnelOrdersHtml.includes('Fulfill prepared shop orders to earn Tips'));
   assert(context.funnelOrdersHtml.includes('Prep Counter uses 2 tofu stock to prepare 1 delivery order.'));
-  assert(context.funnelOrdersHtml.includes('Each fulfilled order gives 10 Tips, 1 Reputation, and 4 XP.'));
-  assert(context.funnelOrdersHtml.includes('Fulfill 1 Order'));
-  assert(context.funnelOrdersHtml.includes('Fulfill 10 Orders'));
-  assert(context.funnelOrdersHtml.includes('Fulfill Max Orders'));
+  assert(context.funnelOrdersHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
+  assert(context.funnelOrdersHtml.includes('Fulfill Simple Tofu Box'));
+  assert(context.funnelOrdersHtml.includes('Fulfill Max Simple Tofu Box x117'));
   assert(context.funnelProductionHtml.includes('Fulfill shop orders to earn Tips.'));
   assert(context.funnelUpgradeHtml.includes('Fulfill shop orders to earn Tips.'));
   assert.strictEqual(context.funnelFulfilledOk, true);
   assert.strictEqual(context.funnelFulfilledQuantity, 117);
   assert.strictEqual(context.funnelTipsAfterMax, 1170);
   assert.strictEqual(context.funnelRepAfterMax, 117);
-  assert.strictEqual(context.funnelXpAfterMax, 468);
+  assert.strictEqual(context.funnelXpAfterMax, 936);
   assert.strictEqual(context.funnelOrdersAfterMax, 0);
 }
 
@@ -1437,6 +1440,190 @@ globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.g
   assert.strictEqual(context.lowTickNonNegative, true);
 }
 
+function testShopOrderTypeProgressionAndRewards() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  const fresh = context.defaultGameState();
+  const simple = context.fulfillShopOrder(fresh, { activeDrive: false });
+  assert.strictEqual(simple.ok, true);
+  assert.strictEqual(simple.orderType.id, 'simple_tofu_box');
+  assert.strictEqual(simple.tipsGained, 10);
+  assert.strictEqual(simple.reputationGained, 1);
+  assert.strictEqual(simple.xpGained, 8);
+  assert.strictEqual(simple.deliveryOrdersUsed, 1);
+  assert.strictEqual(simple.tofuUsed, 2);
+  assert.strictEqual(simple.gameState.shop.deliveryOrders, 0);
+  assert.strictEqual(simple.gameState.shop.tofuStock, 8);
+
+  const richStock = context.defaultGameState();
+  richStock.shop.tofuStock = 1000;
+  const richSimple = context.fulfillShopOrder(richStock, { activeDrive: false });
+  assert.strictEqual(richSimple.tipsGained, 10, 'raw stock should not multiply simple order tips');
+
+  const familySource = context.defaultGameState();
+  familySource.shop.tofuStock = 100;
+  familySource.shop.deliveryOrders = 5;
+  const fiveSimple = context.fulfillShopOrders(familySource, 'max', {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+  }).gameState;
+  const familyType = context.getShopOrderTypes().find((orderType) => orderType.id === 'family_tofu_tray');
+  assert.strictEqual(context.shopOrderTypeUnlocked(familyType, fiveSimple), true);
+  fiveSimple.shop.tofuStock = 20;
+  fiveSimple.shop.deliveryOrders = 2;
+  const family = context.fulfillShopOrders(fiveSimple, 1, {
+    activeDrive: false,
+    orderTypeId: 'family_tofu_tray',
+  });
+  assert.strictEqual(family.ok, true);
+  assert.strictEqual(family.orderType.id, 'family_tofu_tray');
+  assert.strictEqual(family.tipsGained, 45);
+  assert.strictEqual(family.reputationGained, 3);
+  assert.strictEqual(family.xpGained, 24);
+  assert.strictEqual(family.deliveryOrdersUsed, 1);
+  assert.strictEqual(family.tofuUsed, 8);
+  assert.strictEqual(family.gameState.shop.tofuStock, 12);
+  assert.strictEqual(family.gameState.shop.deliveryOrders, 1);
+
+  const missingStock = JSON.parse(JSON.stringify(fiveSimple));
+  missingStock.shop.tofuStock = 4;
+  missingStock.shop.deliveryOrders = 1;
+  const blockedFamily = context.fulfillShopOrders(missingStock, 1, {
+    activeDrive: false,
+    orderTypeId: 'family_tofu_tray',
+  });
+  assert.strictEqual(blockedFamily.ok, false);
+  assert(blockedFamily.reason.includes('Need 4 more tofu stock'));
+
+  const missingReadyOrders = JSON.parse(JSON.stringify(fiveSimple));
+  missingReadyOrders.shop.tofuStock = 20;
+  missingReadyOrders.shop.deliveryOrders = 0;
+  const blockedFamilyOrders = context.fulfillShopOrders(missingReadyOrders, 1, {
+    activeDrive: false,
+    orderTypeId: 'family_tofu_tray',
+  });
+  assert.strictEqual(blockedFamilyOrders.ok, false);
+  assert(blockedFamilyOrders.reason.includes('Need 1 prepared order'));
+
+  const festivalSource = context.defaultGameState();
+  festivalSource.shop.reputation = 50;
+  festivalSource.shop.tofuStock = 20;
+  festivalSource.shop.deliveryOrders = 2;
+  const festivalType = context.getShopOrderTypes().find((orderType) => orderType.id === 'festival_bento');
+  assert.strictEqual(context.shopOrderTypeUnlocked(festivalType, festivalSource), true);
+  const festival = context.fulfillShopOrders(festivalSource, 1, {
+    activeDrive: false,
+    orderTypeId: 'festival_bento',
+  });
+  assert.strictEqual(festival.ok, true);
+  assert.strictEqual(festival.orderType.id, 'festival_bento');
+  assert.strictEqual(festival.tipsGained, 130);
+  assert.strictEqual(festival.reputationGained, 8);
+  assert.strictEqual(festival.xpGained, 70);
+  assert.strictEqual(festival.deliveryOrdersUsed, 2);
+  assert.strictEqual(festival.tofuUsed, 20);
+  assert.strictEqual(festival.gameState.shop.tofuStock, 0);
+  assert.strictEqual(festival.gameState.shop.deliveryOrders, 0);
+
+  const maxFamilySource = JSON.parse(JSON.stringify(fiveSimple));
+  maxFamilySource.shop.tofuStock = 32;
+  maxFamilySource.shop.deliveryOrders = 4;
+  const best = context.bestFulfillableShopOrderType(maxFamilySource);
+  assert.strictEqual(best.id, 'family_tofu_tray');
+  assert.strictEqual(context.maxFulfillableShopOrderQuantity(maxFamilySource, best), 4);
+  const maxFamily = context.fulfillShopOrders(maxFamilySource, 'max', { activeDrive: false });
+  assert.strictEqual(maxFamily.orderType.id, 'family_tofu_tray');
+  assert.strictEqual(maxFamily.quantity, 4);
+  assert.strictEqual(maxFamily.tipsGained, 180);
+  assert.strictEqual(maxFamily.reputationGained, 12);
+  assert.strictEqual(maxFamily.xpGained, 96);
+  assert.strictEqual(maxFamily.tofuUsed, 32);
+  assert.strictEqual(maxFamily.deliveryOrdersUsed, 4);
+
+  const nextFamily = context.nextBestAction(maxFamilySource, {
+    date: new Date('2026-06-15T12:00:00.000Z'),
+  });
+  assert.strictEqual(nextFamily.type, 'fulfill_shop_order');
+  assert.strictEqual(nextFamily.orderTypeId, 'family_tofu_tray');
+  assert.strictEqual(nextFamily.title, 'Next: Fulfill Family Tofu Tray');
+  assert(nextFamily.copy.includes('larger order'));
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+const rendered = defaultGameState();
+rendered.shop.tofuStock = 32;
+rendered.shop.deliveryOrders = 4;
+rendered.shop.lifetimeDeliveryOrders = 5;
+appState.shopTab = "orders";
+renderTofuShop(rendered);
+globalThis.orderTypePanelHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.orderTypePanelHtml.includes('Tofu Stock prepares orders. Bigger orders use more tofu and pay more Tips.'));
+  assert(context.orderTypePanelHtml.includes('Simple Tofu Box'));
+  assert(context.orderTypePanelHtml.includes('Uses 2 tofu stock and 1 ready order.'));
+  assert(context.orderTypePanelHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
+  assert(context.orderTypePanelHtml.includes('Family Tofu Tray'));
+  assert(context.orderTypePanelHtml.includes('Uses 8 tofu stock and 1 ready order.'));
+  assert(context.orderTypePanelHtml.includes('Reward: +45 Tips, +3 Reputation, +24 XP.'));
+  assert(context.orderTypePanelHtml.includes('Fulfill Max Family Tofu Tray x4'));
+  assert(!context.orderTypePanelHtml.includes('Catering Crate'));
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -1474,8 +1661,8 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
   assert.strictEqual(fulfillAction.type, 'fulfill_shop_order');
-  assert.strictEqual(fulfillAction.title, 'Next: Fulfill Max Orders');
-  assert.strictEqual(fulfillAction.buttonLabel, 'Fulfill Max Orders');
+  assert.strictEqual(fulfillAction.title, 'Next: Fulfill Max Simple Orders');
+  assert.strictEqual(fulfillAction.buttonLabel, 'Fulfill Max Simple Orders');
   assert.strictEqual(fulfillAction.orderQuantity, 'max');
 
   const funded = JSON.parse(JSON.stringify(completeDaily));
@@ -2343,7 +2530,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   assert.strictEqual(fulfilled.ok, true);
   assert.strictEqual(fulfilled.tipsGained, 10);
   assert.strictEqual(fulfilled.reputationGained, 1);
-  assert.strictEqual(fulfilled.xpGained, 4);
+  assert.strictEqual(fulfilled.xpGained, 8);
   assert.strictEqual(fulfilled.gameState.shop.deliveryOrders, 1);
   assert.strictEqual(fulfilled.gameState.shop.tips, 10);
   assert.strictEqual(fulfilled.gameState.shop.reputation, prepTick.gameState.shop.reputation + 1);
@@ -3695,6 +3882,7 @@ function run() {
   testEarlyShopResourceFunnelMakesTipsObvious();
   testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal();
   testTofuStockRunwayGuidesEarlyPurchases();
+  testShopOrderTypeProgressionAndRewards();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
