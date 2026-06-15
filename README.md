@@ -31,10 +31,14 @@ The app is intentionally lightweight:
 ## Local Checks
 
 ```bash
-node --check frontend/nospill/app.js
-node --check test_frontend_nospill.js
-node test_frontend_nospill.js
+make check
 ```
 
 Open `frontend/nospill/index.html` in a browser for static inspection. Device motion behavior needs
 a real mobile browser over HTTPS for full testing.
+
+## Deploy
+
+```bash
+make prod
+```

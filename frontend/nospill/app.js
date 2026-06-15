@@ -2251,14 +2251,6 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
   context.lineWidth = dangerRatio > 1 ? 9 : 5;
   context.stroke();
 
-  const waterArc = (clamp(waterLeft, 0, 100) / 100) * Math.PI * 2;
-  context.beginPath();
-  context.arc(trayX + 58, trayY + 58, 31, -Math.PI / 2, -Math.PI / 2 + waterArc);
-  context.strokeStyle = "rgba(85, 217, 138, 0.92)";
-  context.lineWidth = 8;
-  context.lineCap = "round";
-  context.stroke();
-
   if (visual.recentSpillParticles.length) {
     visual.recentSpillParticles.forEach((particle) => {
       const alpha = 1 - particle.age / particle.life;
@@ -2289,6 +2281,62 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
   context.save();
   context.translate(tofuX, tofuY);
   context.rotate(visual.tofuRotation);
+  context.fillStyle = "rgba(0, 0, 0, 0.32)";
+  context.beginPath();
+  context.ellipse(0, tofuHeight * 0.64, tofuWidth * 0.58, tofuHeight * 0.16, 0, 0, Math.PI * 2);
+  context.fill();
+
+  context.save();
+  context.translate(-tofuWidth * 0.68, tofuHeight * 0.2);
+  context.rotate(-0.22);
+  context.fillStyle = "#f7f3df";
+  context.strokeStyle = "#101516";
+  context.lineWidth = 6;
+  context.beginPath();
+  context.roundRect(-tofuWidth * 0.2, -tofuHeight * 0.16, tofuWidth * 0.42, tofuHeight * 0.32, 18);
+  context.fill();
+  context.stroke();
+  context.restore();
+
+  context.save();
+  context.translate(tofuWidth * 0.68, tofuHeight * 0.2);
+  context.rotate(0.22);
+  context.fillStyle = "#f7f3df";
+  context.strokeStyle = "#101516";
+  context.lineWidth = 6;
+  context.beginPath();
+  context.roundRect(-tofuWidth * 0.2, -tofuHeight * 0.16, tofuWidth * 0.42, tofuHeight * 0.32, 18);
+  context.fill();
+  context.stroke();
+  context.restore();
+
+  context.fillStyle = "#ded7bd";
+  context.strokeStyle = "#101516";
+  context.lineWidth = 7;
+  context.beginPath();
+  context.roundRect(
+    -tofuWidth * 0.52,
+    -tofuHeight * 0.42,
+    tofuWidth * 0.38,
+    tofuHeight * 0.88,
+    16,
+  );
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "#fffdf0";
+  context.strokeStyle = "#101516";
+  context.lineWidth = 7;
+  context.beginPath();
+  context.moveTo(-tofuWidth * 0.32, -tofuHeight * 0.58);
+  context.lineTo(tofuWidth * 0.4, -tofuHeight * 0.52);
+  context.quadraticCurveTo(tofuWidth * 0.58, -tofuHeight * 0.48, tofuWidth * 0.55, -tofuHeight * 0.3);
+  context.lineTo(tofuWidth * 0.48, -tofuHeight * 0.42);
+  context.lineTo(-tofuWidth * 0.5, -tofuHeight * 0.38);
+  context.quadraticCurveTo(-tofuWidth * 0.58, -tofuHeight * 0.52, -tofuWidth * 0.32, -tofuHeight * 0.58);
+  context.fill();
+  context.stroke();
+
   context.fillStyle = "#f7f3df";
   context.strokeStyle = "#101516";
   context.lineWidth = 7;
@@ -2305,25 +2353,60 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
 
   context.fillStyle = "rgba(225, 216, 190, 0.82)";
   [
-    [-0.28, -0.18],
-    [0.19, -0.22],
-    [-0.1, 0.23],
-    [0.31, 0.18],
+    [-0.34, -0.25],
+    [0.24, -0.28],
+    [-0.16, 0.28],
+    [0.34, 0.22],
+    [-0.44, 0.08],
   ].forEach(([x, y]) => {
     context.beginPath();
     context.arc(x * tofuWidth, y * tofuHeight, 5, 0, Math.PI * 2);
     context.fill();
   });
+
+  context.strokeStyle = "#101516";
+  context.lineWidth = 5;
+  context.lineCap = "round";
+  context.beginPath();
+  context.moveTo(-tofuWidth * 0.28, -tofuHeight * 0.22);
+  context.lineTo(-tofuWidth * 0.1, -tofuHeight * 0.16);
+  context.moveTo(tofuWidth * 0.1, -tofuHeight * 0.16);
+  context.lineTo(tofuWidth * 0.3, -tofuHeight * 0.24);
+  context.stroke();
+
   context.fillStyle = "#101516";
   context.beginPath();
-  context.arc(-tofuWidth * 0.16, -tofuHeight * 0.04, 5, 0, Math.PI * 2);
-  context.arc(tofuWidth * 0.16, -tofuHeight * 0.04, 5, 0, Math.PI * 2);
+  context.arc(-tofuWidth * 0.17, -tofuHeight * 0.02, 8, 0, Math.PI * 2);
+  context.arc(tofuWidth * 0.17, -tofuHeight * 0.02, 8, 0, Math.PI * 2);
+  context.fill();
+  context.fillStyle = "#f7f3df";
+  context.beginPath();
+  context.arc(-tofuWidth * 0.14, -tofuHeight * 0.05, 2.3, 0, Math.PI * 2);
+  context.arc(tofuWidth * 0.2, -tofuHeight * 0.05, 2.3, 0, Math.PI * 2);
   context.fill();
   context.strokeStyle = "#101516";
   context.lineWidth = 4;
   context.beginPath();
   context.arc(0, tofuHeight * 0.08, tofuWidth * 0.11, 0.12 * Math.PI, 0.88 * Math.PI);
   context.stroke();
+
+  context.save();
+  context.translate(0, tofuHeight * 0.42);
+  context.strokeStyle = "#101516";
+  context.lineWidth = 9;
+  context.beginPath();
+  context.arc(0, 0, tofuWidth * 0.32, Math.PI * 1.08, Math.PI * 1.92);
+  context.stroke();
+  context.beginPath();
+  context.moveTo(-tofuWidth * 0.22, -tofuHeight * 0.02);
+  context.lineTo(0, tofuHeight * 0.08);
+  context.lineTo(tofuWidth * 0.22, -tofuHeight * 0.02);
+  context.stroke();
+  context.fillStyle = "#101516";
+  context.beginPath();
+  context.arc(0, tofuHeight * 0.08, tofuWidth * 0.08, 0, Math.PI * 2);
+  context.fill();
+  context.restore();
   context.restore();
 
   context.beginPath();

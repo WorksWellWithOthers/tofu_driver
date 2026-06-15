@@ -656,10 +656,14 @@ function testTofuCargoVisualizationReplacesGenericGDot() {
   assert(source.includes('lateralG'));
   assert(source.includes('longitudinalG'));
   assert(source.includes('Cargo Condition'));
+  assert(source.includes('context.ellipse(0, tofuHeight * 0.64'));
+  assert(source.includes('tofuWidth * 0.32'));
   assert(!html.includes('Virtual cup G-ball visualization'));
   assert(!source.includes('Spill ring'));
   assert(!source.includes('dotX'));
   assert(!source.includes('dotY'));
+  assert(!source.includes('waterArc'));
+  assert(!source.includes('trayX + 58'));
 }
 
 function testTofuCargoVisualizationUsesMotionNotSpeed() {

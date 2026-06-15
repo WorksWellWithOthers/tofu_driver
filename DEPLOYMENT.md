@@ -16,14 +16,18 @@ serve HTTPS, because mobile browsers generally require HTTPS for motion/location
 ## Pre-Deploy Checks
 
 ```bash
-node --check frontend/nospill/app.js
-node --check test_frontend_nospill.js
-node test_frontend_nospill.js
+make check
 ```
 
 ## Cloud Run Deploy
 
 Deploy from the Tofu Driver repo root:
+
+```bash
+make prod
+```
+
+`make prod` runs `make check` first, then deploys with the default values:
 
 ```bash
 PROJECT_ID="tofu-driver"
@@ -38,6 +42,12 @@ gcloud run deploy "$SERVICE" \
   --port=80 \
   --min-instances=0 \
   --max-instances=2
+```
+
+Override values when needed:
+
+```bash
+make prod PROJECT_ID="tofu-driver" REGION="us-central1" SERVICE="tofu-driver"
 ```
 
 The source deploy uses `Dockerfile` and `nginx.conf`. The app should not require Cloud SQL, Redis,

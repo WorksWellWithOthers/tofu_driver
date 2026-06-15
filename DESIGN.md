@@ -88,8 +88,11 @@ route traces, or raw GPS points.
 
 ## Live Tofu Cargo Visualization
 
-The live drive canvas shows tofu cargo moving inside a tray/delivery box. It uses the same local,
-filtered lateral and longitudinal G values used by scoring:
+The live drive canvas shows a Tofu Driver cargo mascot moving inside a tray/delivery box. It
+replaced the technical G-dot and does not use a standalone green corner indicator. The centered
+tray boundary and rim communicate safe/near-spill state instead.
+
+The visualization uses the same local, filtered lateral and longitudinal G values used by scoring:
 
 - lateral G moves the tofu side-to-side
 - longitudinal G moves it forward/back
