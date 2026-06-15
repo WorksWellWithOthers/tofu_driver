@@ -11,12 +11,16 @@
 - Qualified Run Mode is opt-in and may request location only after explicit start.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
+- Fresh shop state starts with Tofu Stock, one ready Delivery Order, and a running Prep Counter so
+  the first order can be fulfilled immediately.
+- Fractional Delivery Order progress is shown as ready orders plus Prep Counter preparation
+  progress/ETA, not as a raw decimal order count.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
   Reputation, and XP.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
   players back to fulfilling shop orders.
 - Pack Tofu is a backup/manual Tofu Stock action, and Don't Spill the Cup is an optional certified
-  boost rather than the normal shop bottleneck.
+  boost rather than the normal shop bottleneck during order prep or Tip shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
@@ -34,18 +38,16 @@ Canonical references:
 
 ## Recommended Next Steps
 
-1. Implement First Loop Contract:
-   align fresh starting state to the progression contract.
-2. Ensure Fulfill Shop Order is immediately available.
-3. Implement first upgrade timing around 1 to 2 minutes.
-4. Implement First Shop Order stamp behavior and reveal.
-5. Hide or down-rank advanced systems during the first 10 minutes.
-6. Add balance tests for the first loop:
-   first order immediately available, first order rewards, first upgrade timing, visible `/sec`
-   rate improvement, Tip-source disabled button reasons, and no resource-negative states.
-7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-8. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-9. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+1. Finish First Loop Contract pacing:
+   tune first order rewards and first upgrade timing around 1 to 2 minutes.
+2. Implement First Shop Order stamp behavior and reveal polish.
+3. Hide or down-rank advanced systems during the first 10 minutes.
+4. Add balance tests for the first loop:
+   first order rewards, first upgrade timing, visible `/sec` rate improvement, Tip-source disabled
+   button reasons, Prep Counter wait state, and no resource-negative states.
+5. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+6. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+7. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Later systems:
 

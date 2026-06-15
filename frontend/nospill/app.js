@@ -221,7 +221,7 @@ const SHOP_GENERATOR_SAVE_MS = 5000;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
 const PREP_COUNTER_CONSUME_PER_ORDER = 2;
-const PREP_COUNTER_BASE_ORDERS_PER_SECOND = 1 / 60;
+const PREP_COUNTER_BASE_ORDERS_PER_SECOND = 1 / 40;
 const SHOP_ORDER_TIPS_REWARD = 10;
 const SHOP_ORDER_REPUTATION_REWARD = 1;
 const SHOP_ORDER_XP_REWARD = 4;
@@ -1353,8 +1353,8 @@ function addLedgerEntry(gameState, type, text, date = new Date()) {
 
 function defaultShopState() {
   return {
-    tofuStock: 0,
-    deliveryOrders: 0,
+    tofuStock: 10,
+    deliveryOrders: 1,
     tips: 0,
     reputation: 0,
     prepSlots: PREP_SLOT_BASE_MAX,
@@ -1372,7 +1372,7 @@ function defaultShopState() {
     lifetimeLicenseExams: 0,
     upgrades: {},
     stationUpgrades: normalizeCatalogCounts({}, STATION_UPGRADES, 100),
-    stations: normalizeCatalogCounts({ tofu_press: 1 }, SHOP_STATIONS, 100000),
+    stations: normalizeCatalogCounts({ tofu_press: 1, prep_counter: 1 }, SHOP_STATIONS, 100000),
     routes: normalizeRouteState({}),
     garage: normalizeCatalogCounts({}, GARAGE_UPGRADES, 100),
     crew: normalizeCatalogCounts({}, CREW_ROLES, 1000),
@@ -1408,7 +1408,7 @@ function defaultShopState() {
 function defaultShopGenerators() {
   return {
     tofuPress: { unlocked: true, level: 1 },
-    prepCounter: { unlocked: false, level: 0 },
+    prepCounter: { unlocked: true, level: 1 },
   };
 }
 
@@ -2398,6 +2398,43 @@ function formatShopBalance(value, carry = 0) {
   return String(roundTo(total, 2));
 }
 
+function readyDeliveryOrders(shop) {
+  return Math.floor(safeNonNegativeNumber(shop && shop.deliveryOrders, 0, 1000000));
+}
+
+function orderPrepProgress(gameState) {
+  const state = normalizeGameState(gameState);
+  const rates = getShopGeneratorRates(state);
+  const carry = safeNonNegativeNumber(state.shop.generatorCarry && state.shop.generatorCarry.deliveryOrders, 0, 0.999);
+  const progress = Math.max(0, Math.min(0.999, carry));
+  const ready = readyDeliveryOrders(state.shop);
+  const running = rates.prepOrdersPerSecond > 0 && rates.prepStatus === "Running";
+  const waitingForTofu = rates.prepStatus === "Waiting for tofu stock";
+  const prepOwned = safeNonNegativeInteger(state.shop.stations.prep_counter, 0, 100000);
+  const etaSeconds = running && progress < 1
+    ? Math.ceil((1 - progress) / rates.prepOrdersPerSecond)
+    : null;
+  let message = `Next order is ${Math.floor(progress * 100)}% prepared.`;
+  if (ready > 0) {
+    message = `Next order is ${Math.floor(progress * 100)}% prepared. Ready orders can be fulfilled now.`;
+  } else if (running && etaSeconds !== null) {
+    message = `Next order is ${Math.floor(progress * 100)}% prepared. About ${etaSeconds} seconds remaining.`;
+  } else if (waitingForTofu) {
+    message = "Prep Counter needs more Tofu Stock.";
+  } else if (prepOwned < 1 || !state.shop.generators.prepCounter.unlocked) {
+    message = "Buy or start Prep Counter to prepare orders.";
+  }
+  return {
+    ready,
+    progress,
+    progressPercent: Math.floor(progress * 100),
+    etaSeconds,
+    running,
+    waitingForTofu,
+    message,
+  };
+}
+
 function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {}) {
   const state = normalizeGameState(gameState);
   const shop = state.shop;
@@ -2766,11 +2803,13 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   if (options.activeDrive) {
     return { ok: false, reason: "Shop actions unlock after you finish and park.", gameState: next };
   }
+  const readyOrders = readyDeliveryOrders(next.shop);
   const quantity = requestedQuantity === "max"
-    ? safeNonNegativeInteger(next.shop.deliveryOrders, 0, 100000)
+    ? readyOrders
     : Math.max(1, safeNonNegativeInteger(requestedQuantity, 1, 100));
-  if (quantity < 1 || next.shop.deliveryOrders < quantity) {
-    return { ok: false, reason: "No Delivery Orders ready. Prep Counter needs delivery orders first.", gameState: next };
+  if (quantity < 1 || readyOrders < quantity) {
+    const prep = orderPrepProgress(next);
+    return { ok: false, reason: `Need 1 prepared order. ${prep.message}`, gameState: next };
   }
   const signBonus = 1 + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
   const garageBonus = safeNonNegativeInteger(next.shop.garage.delivery_mat, 0, 100) >= 3 ? 1 : 0;
@@ -2778,7 +2817,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   const reputationGained = Math.round((SHOP_ORDER_REPUTATION_REWARD * quantity + garageBonus) * signBonus);
   const xpGained = SHOP_ORDER_XP_REWARD * quantity;
   const previousShopLevel = next.shop.shopLevel;
-  next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders - quantity);
+  next.shop.deliveryOrders = Math.max(0, safeNonNegativeNumber(next.shop.deliveryOrders, 0) - quantity);
   next.shop.tips = safeNonNegativeInteger(next.shop.tips + tipsGained);
   next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + tipsGained);
   next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + reputationGained);
@@ -5470,6 +5509,7 @@ function nextBestAction(gameState, options = {}) {
     || Number(state.shop.tips || 0) > 0;
   const lowTofuStock = Number(state.shop.tofuStock || 0) < 10;
   const upgrade = affordableShopUpgrade(state);
+  const prep = orderPrepProgress(state);
   if (activeDrive) {
     return {
       type: "active_drive",
@@ -5479,9 +5519,8 @@ function nextBestAction(gameState, options = {}) {
       disabled: true,
     };
   }
-  if (shopUnlocked && Number(state.shop.deliveryOrders || 0) > 0) {
-    const orderCount = Math.floor(Number(state.shop.deliveryOrders || 0));
-    const multipleOrders = orderCount > 1;
+  if (shopUnlocked && prep.ready > 0) {
+    const multipleOrders = prep.ready > 1;
     return {
       type: "fulfill_shop_order",
       title: multipleOrders ? "Next: Fulfill Max Orders" : "Next: Fulfill Shop Order",
@@ -5489,6 +5528,25 @@ function nextBestAction(gameState, options = {}) {
       buttonLabel: multipleOrders ? "Fulfill Max Orders" : "Fulfill Shop Order",
       orderQuantity: multipleOrders ? "max" : "1",
       disabled: false,
+    };
+  }
+  if (upgrade) {
+    return {
+      type: "buy_upgrade",
+      title: "Next: Buy an Upgrade",
+      copy: "Upgrade the shop to improve parked production.",
+      buttonLabel: "View Upgrades",
+      disabled: false,
+      upgradeId: upgrade.id,
+    };
+  }
+  if (shopUnlocked && prep.ready < 1 && prep.running && Number(state.shop.tofuStock || 0) >= PREP_COUNTER_CONSUME_PER_ORDER) {
+    return {
+      type: "wait_prep_counter",
+      title: "Next: Wait for Prep Counter",
+      copy: "Your Prep Counter is turning Tofu Stock into the next prepared order.",
+      buttonLabel: "Preparing Order",
+      disabled: true,
     };
   }
   if (!shopActionStarted) {
@@ -5507,16 +5565,6 @@ function nextBestAction(gameState, options = {}) {
       copy: "Tofu Stock is low. Pack a few blocks or let the Tofu Press work.",
       buttonLabel: "Pack Tofu",
       disabled: false,
-    };
-  }
-  if (upgrade) {
-    return {
-      type: "buy_upgrade",
-      title: "Next: Buy an Upgrade",
-      copy: "Upgrade the shop to improve parked production.",
-      buttonLabel: "View Upgrades",
-      disabled: false,
-      upgradeId: upgrade.id,
     };
   }
   if (!dailyComplete) {
@@ -5919,32 +5967,37 @@ function renderProductionPanel(state) {
 }
 
 function renderOrdersPanel(state) {
-  const canFulfill = state.shop.deliveryOrders > 0;
-  const orderReason = canFulfill ? "" : "No Delivery Orders ready";
-  const tenReason = state.shop.deliveryOrders < 10
-    ? `Need ${10 - Math.floor(state.shop.deliveryOrders)} more Delivery Orders`
+  const prep = orderPrepProgress(state);
+  const canFulfill = prep.ready > 0;
+  const orderReason = canFulfill ? "" : `Need 1 prepared order. ${prep.message}`;
+  const tenReason = prep.ready < 10
+    ? `Need ${10 - prep.ready} more ready Delivery Orders`
     : "";
-  const maxOrders = Math.floor(state.shop.deliveryOrders);
-  const showTen = state.shop.deliveryOrders >= 10;
-  const showMax = maxOrders > 1;
+  const showTen = prep.ready >= 10;
+  const showMax = prep.ready > 1;
   return `
     <h4>Orders</h4>
     <p class="nospill-panel-helper">Fulfill prepared shop orders to earn Tips. Tips buy stations and upgrades.</p>
     <div class="nospill-idle-grid">
       ${renderIdleCard({
         title: "Simple Tofu Box",
-        status: `${state.shop.deliveryOrders} ready`,
+        status: `Ready Orders: ${prep.ready}`,
         copy: canFulfill
-          ? `Each order gives ${SHOP_ORDER_TIPS_REWARD} Tips, ${SHOP_ORDER_REPUTATION_REWARD} Reputation, and ${SHOP_ORDER_XP_REWARD} XP.`
-          : "No Delivery Orders ready. Prep Counter needs tofu stock.",
+          ? `Prep Counter uses ${PREP_COUNTER_CONSUME_PER_ORDER} tofu stock to prepare 1 delivery order. Each fulfilled order gives ${SHOP_ORDER_TIPS_REWARD} Tips, ${SHOP_ORDER_REPUTATION_REWARD} Reputation, and ${SHOP_ORDER_XP_REWARD} XP.`
+          : `Prep Counter uses ${PREP_COUNTER_CONSUME_PER_ORDER} tofu stock to prepare 1 delivery order. ${prep.message}`,
         actions: [
           actionButton("Fulfill 1 Order", "data-fulfill-orders", "1", !canFulfill, "nospill-primary", orderReason),
           showTen ? actionButton("Fulfill 10 Orders", "data-fulfill-orders", "10", false) : "",
           showMax ? actionButton("Fulfill Max Orders", "data-fulfill-orders", "max", false, "nospill-primary") : "",
-          !showTen && state.shop.deliveryOrders > 0 && state.shop.deliveryOrders < 10
+          !showTen && prep.ready > 0 && prep.ready < 10
             ? `<small class="nospill-action-reason">${escapeHtml(tenReason)}</small>`
             : "",
         ],
+      })}
+      ${renderIdleCard({
+        title: "Preparing Next Order",
+        status: `${prep.progressPercent}% prepared`,
+        copy: `${prep.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${PREP_COUNTER_CONSUME_PER_ORDER}.`,
       })}
     </div>
   `;
@@ -6188,9 +6241,13 @@ function renderShopSettingsPanel(state) {
 
 function currentBottleneck(gameState) {
   const state = normalizeGameState(gameState);
-  if (state.shop.deliveryOrders > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Fulfill shop orders to earn Tips." };
-  if (state.shop.deliveryOrders > 0) return { id: "orders_ready", label: "Orders ready", action: "Fulfill shop orders for Tips." };
-  if (state.shop.deliveryOrders < 1) return { id: "orders", label: "No Delivery Orders", action: "Wait for Prep Counter or improve order production." };
+  const prep = orderPrepProgress(state);
+  if (prep.ready > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Fulfill shop orders to earn Tips." };
+  if (prep.ready > 0) return { id: "orders_ready", label: "Orders ready", action: "Fulfill shop orders for Tips." };
+  if (prep.ready < 1 && prep.running && state.shop.tofuStock >= PREP_COUNTER_CONSUME_PER_ORDER) {
+    return { id: "preparing_order", label: "Preparing Delivery Order", action: "Wait for Prep Counter." };
+  }
+  if (prep.ready < 1) return { id: "orders", label: "No Delivery Orders", action: prep.message };
   if (state.shop.tofuStock < 5) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Pack Tofu" };
   if (state.shop.prepSlots < 1) return { id: "prep_slots", label: "Prep Slots recovering", action: "Wait for prep capacity" };
   if (SHOP_STATIONS.some((station) => stationIsUnlocked(station, state) && state.shop.tips >= stationCost(station, state.shop.stations[station.id]))) {
@@ -6206,6 +6263,7 @@ function renderTofuShop(gameState = loadGameState()) {
   const shop = state.shop;
   const progress = shopLevelProgress(shop.reputation);
   const generatorRates = getShopGeneratorRates(state);
+  const prep = orderPrepProgress(state);
   if (elements.shopLevelBadge) {
     elements.shopLevelBadge.textContent = reveal.shop ? `Shop Level ${shop.shopLevel}` : "Locked";
   }
@@ -6216,7 +6274,7 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopDeliveryOrders) {
     elements.shopDeliveryOrders.textContent = reveal.shop
-      ? formatShopBalance(shop.deliveryOrders, shop.generatorCarry && shop.generatorCarry.deliveryOrders)
+      ? `${prep.ready} ready`
       : "Locked";
   }
   if (elements.shopTips) {
@@ -6261,7 +6319,7 @@ function renderTofuShop(gameState = loadGameState()) {
       : "Locked";
   }
   if (elements.shopPrepStatus) {
-    elements.shopPrepStatus.textContent = reveal.shop ? generatorRates.prepStatus : "Locked";
+    elements.shopPrepStatus.textContent = reveal.shop ? prep.message : "Locked";
   }
   if (elements.shopPrepSlots) {
     elements.shopPrepSlots.textContent = reveal.shop
@@ -6288,14 +6346,14 @@ function renderTofuShop(gameState = loadGameState()) {
     elements.packTofuButton.textContent = activeDrive
       ? "Park First"
       : reveal.shop
-        ? shop.deliveryOrders > 0 || shop.tofuStock >= 25
+        ? prep.ready > 0 || shop.tofuStock >= 10
           ? "Pack Tofu (backup)"
           : "Pack Tofu"
         : "Start the Shop";
   }
   if (elements.fulfillShopOrderButton) {
     const activeDrive = appState.running || appState.calibrating;
-    const canFulfill = reveal.shop && shop.deliveryOrders > 0 && !activeDrive;
+    const canFulfill = reveal.shop && prep.ready > 0 && !activeDrive;
     elements.fulfillShopOrderButton.disabled = !canFulfill;
     elements.fulfillShopOrderButton.textContent = activeDrive
       ? "Park First"
@@ -6311,9 +6369,9 @@ function renderTofuShop(gameState = loadGameState()) {
   if (elements.fulfillShopOrderHelper) {
     elements.fulfillShopOrderHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
-      : shop.deliveryOrders > 0
+      : prep.ready > 0
         ? "Turn prepared orders into Tips, Reputation, and XP."
-        : "Prep Counter needs delivery orders first.";
+        : `Need 1 prepared order. ${prep.message}`;
   }
   if (elements.shopUpgradeList) {
     const upgrades = visibleStationUpgrades(state);

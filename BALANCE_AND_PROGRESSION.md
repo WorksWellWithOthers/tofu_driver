@@ -269,7 +269,7 @@ productionPerSecond = baseProduction * owned * multipliers
 | Generator | Unlock Requirement | Produces | Consumes | Base Cost | Cost Growth | Base Production / sec | Intended Role | First-Session Visibility |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Press | Available at start | Tofu Stock | None | 15 Tips after first owned station | 1.15 | 0.05 Tofu Stock/sec | First visible generator | Visible immediately |
-| Prep Counter | Target: first session; current code gates by stock/level/station purchase | Delivery Orders | 2 Tofu Stock/order | 25 Tips | 1.16 | 0.0167 orders/sec | Converts stock into playable orders | Should be visible as next goal |
+| Prep Counter | Available at start | Delivery Orders | 2 Tofu Stock/order | 25 Tips | 1.16 | 0.025 orders/sec | Converts stock into playable orders | Visible immediately |
 | Delivery Shelf | Shop Level 2 | Prep Counter boost | Tips, Prep Slots | 90 Tips | 1.17 | Boost only | Makes order production smoother | Teaser after Prep Counter |
 | Shop Sign | Reputation 10 | Reputation/passive presentation | Tips, Prep Slots | 140 Tips | 1.18 | Small reputation effect | Unlocks customer layer | Hidden until reputation matters |
 | Regular Customers | Shop Sign 1 | Tips over time | Delivery Orders | 240 Tips | 1.20 | Small Tips/sec | First passive Tips loop | Mid first hour |
@@ -279,8 +279,7 @@ productionPerSecond = baseProduction * owned * multipliers
 
 ## 9. Canonical Starting State
 
-This is the target starting state for the next implementation pass. It is a design contract, not a
-claim that current runtime constants already match.
+This is the target starting state and current first-loop runtime direction.
 
 | Item | Value | Reason |
 | --- | ---: | --- |
@@ -298,9 +297,8 @@ Reason: starting with 0 Prep Counters creates a dead state after the first order
 order immediately buys a Prep Counter. Starting with 1 makes the live production loop
 understandable.
 
-Current implementation gap: the runtime currently starts with one Tofu Press and no initial Delivery
-Order. `IMPLEMENTATION_STATUS.md` should keep this first-loop balance gap visible until the runtime
-matches the contract.
+Current implementation: the runtime starts with one Tofu Press, one Prep Counter, 10 Tofu Stock,
+and one ready Delivery Order.
 
 ## First Loop Economy Targets
 
@@ -320,9 +318,6 @@ These draft targets are the first simulation baseline. They are not yet confirme
 
 Current implementation gaps to track:
 
-- starting Tofu Stock target may differ from runtime
-- starting Delivery Orders target may differ from runtime
-- starting Prep Counter target may differ from runtime
 - early offline cap target is 1 hour, while current implementation is 8 hours
 - first extra Tofu Press currently follows station growth from the 15 Tips base cost, so its displayed
   next cost may be higher than the draft target after the free starting station
@@ -555,6 +550,7 @@ become meaningful.
 Expected bottlenecks and Next Best Action:
 
 - Delivery Orders ready and Tips low: fulfill shop orders
+- fractional Delivery Orders in progress: show ready orders plus Prep Counter progress/ETA
 - no Delivery Orders: improve Prep Counter or wait for orders
 - low Tofu Stock: buy/improve Tofu Press
 - not enough Tips: fulfill shop orders
@@ -569,6 +565,11 @@ not have to choose among several equal-weight CTAs.
 Certified Cup Test should be presented as an optional boost/status path, not as the normal shop
 bottleneck. It may be visible as secondary copy, but the early shop loop should prioritize the
 resource conversion path first.
+
+Delivery Orders may be fractional internally as generator carry, but player-facing UI should render
+them as ready orders plus preparation progress. `Fulfill Shop Order` requires at least 1 ready order.
+For example, internal `0.3` order progress should appear as `0 ready` and `30% prepared`, with an
+ETA when the Prep Counter is running.
 
 ## 13. Offline Progress Contract
 

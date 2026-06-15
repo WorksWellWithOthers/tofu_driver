@@ -69,6 +69,7 @@ globalThis.calculateShopGeneratorEarnings = calculateShopGeneratorEarnings;
 globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
 globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
 globalThis.startShopGeneratorTimer = startShopGeneratorTimer;
+globalThis.orderPrepProgress = orderPrepProgress;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
@@ -476,10 +477,10 @@ globalThis.activeDashboardActionDisabled = elements.gameCtaButton.disabled;
 `, context);
 
   assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
-  assert.strictEqual(context.dashboardActionTitle, 'Next: Start the Tofu Shop');
-  assert(context.dashboardActionCopy.includes('Pack your first order at home'));
-  assert.strictEqual(context.dashboardActionLabel, 'Start the Shop');
-  assert.strictEqual(context.dashboardActionType, 'start_shop');
+  assert.strictEqual(context.dashboardActionTitle, 'Next: Fulfill Shop Order');
+  assert(context.dashboardActionCopy.includes('earn Tips for stations and upgrades'));
+  assert.strictEqual(context.dashboardActionLabel, 'Fulfill Shop Order');
+  assert.strictEqual(context.dashboardActionType, 'fulfill_shop_order');
   assert.strictEqual(context.dashboardTotalXp, '0 XP');
   assert.strictEqual(context.dashboardGear, '0/3');
   assert.strictEqual(context.dashboardTeasersHidden, false);
@@ -790,10 +791,10 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.firstShopSectionHidden, false);
   assert.strictEqual(context.firstCollectionSectionHidden, true);
   assert.strictEqual(context.firstPackDisabled, false);
-  assert.strictEqual(context.firstPackText, 'Pack Tofu');
+  assert.strictEqual(context.firstPackText, 'Pack Tofu (backup)');
   assert(context.firstPackHelper.includes('Add a little Tofu Stock while parked'));
-  assert.strictEqual(context.firstFulfillDisabled, true);
-  assert(context.firstFulfillHelper.includes('Prep Counter needs delivery orders first'));
+  assert.strictEqual(context.firstFulfillDisabled, false);
+  assert(context.firstFulfillHelper.includes('Turn prepared orders into Tips'));
   assert(context.firstGeneratorHtml.includes('Tofu Press'));
   assert(context.firstGeneratorHtml.includes('+0.05 tofu/sec'));
   assert(context.firstGeneratorHtml.includes('Buy Tofu Press'));
@@ -1124,7 +1125,8 @@ globalThis.funnelOrdersAfterMax = fulfilled.gameState.shop.deliveryOrders;
   assert(context.funnelOverviewHtml.includes('Optional Certified Boost'));
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
   assert(context.funnelOrdersHtml.includes('Fulfill prepared shop orders to earn Tips'));
-  assert(context.funnelOrdersHtml.includes('Each order gives 10 Tips, 1 Reputation, and 4 XP.'));
+  assert(context.funnelOrdersHtml.includes('Prep Counter uses 2 tofu stock to prepare 1 delivery order.'));
+  assert(context.funnelOrdersHtml.includes('Each fulfilled order gives 10 Tips, 1 Reputation, and 4 XP.'));
   assert(context.funnelOrdersHtml.includes('Fulfill 1 Order'));
   assert(context.funnelOrdersHtml.includes('Fulfill 10 Orders'));
   assert(context.funnelOrdersHtml.includes('Fulfill Max Orders'));
@@ -1138,21 +1140,168 @@ globalThis.funnelOrdersAfterMax = fulfilled.gameState.shop.deliveryOrders;
   assert.strictEqual(context.funnelOrdersAfterMax, 0);
 }
 
+function testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+  gameDailyTitle: makeNode(),
+  gameDailyFlavor: makeNode(),
+  gameDailyCargo: makeNode(),
+  gameDailyGoal: makeNode(),
+  gameDailyReward: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+const waiting = defaultGameState();
+waiting.shop.tofuStock = 109;
+waiting.shop.deliveryOrders = 0;
+waiting.shop.generatorCarry.deliveryOrders = 0.3;
+waiting.shop.tips = 10;
+waiting.shop.reputation = 1;
+waiting.shop.stations.prep_counter = 1;
+waiting.shop.generators.prepCounter = { unlocked: true, level: 1 };
+waiting.shop.lastGeneratorTickAt = "2026-06-15T12:00:00.000Z";
+globalThis.waitingPrep = orderPrepProgress(waiting);
+globalThis.waitingAction = nextBestAction(waiting, { date: new Date("2026-06-15T12:00:00.000Z") });
+globalThis.waitingBottleneck = currentBottleneck(waiting);
+renderGameDashboard(waiting);
+globalThis.waitingTopTitle = elements.gameNextActionTitle.textContent;
+globalThis.waitingTopButton = elements.gameCtaButton.textContent;
+globalThis.waitingTopDisabled = elements.gameCtaButton.disabled;
+globalThis.waitingCertifiedHidden = elements.gameCertifiedCtaButton.classListValue;
+renderTofuShop(waiting);
+globalThis.waitingOrdersText = elements.shopDeliveryOrders.textContent;
+globalThis.waitingPrepStatus = elements.shopPrepStatus.textContent;
+globalThis.waitingPackText = elements.packTofuButton.textContent;
+globalThis.waitingFulfillDisabled = elements.fulfillShopOrderButton.disabled;
+globalThis.waitingFulfillHelper = elements.fulfillShopOrderHelper.textContent;
+appState.shopTab = "orders";
+renderTofuShop(waiting);
+globalThis.waitingOrdersHtml = elements.shopTabPanel.innerHTML;
+const blocked = fulfillShopOrders(waiting, 1, { activeDrive: false });
+globalThis.waitingBlockedOk = blocked.ok;
+globalThis.waitingBlockedReason = blocked.reason;
+const ticked = applyShopGeneratorTick(waiting, new Date("2026-06-15T12:00:30.000Z"));
+globalThis.waitingTickedOrders = ticked.gameState.shop.deliveryOrders;
+globalThis.waitingTickedCarry = ticked.gameState.shop.generatorCarry.deliveryOrders;
+globalThis.waitingTickedNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.gameState.shop.deliveryOrders >= 0;
+`, context);
+
+  assert.strictEqual(context.waitingPrep.ready, 0);
+  assert.strictEqual(context.waitingPrep.progressPercent, 30);
+  assert.strictEqual(context.waitingAction.type, 'wait_prep_counter');
+  assert.strictEqual(context.waitingAction.title, 'Next: Wait for Prep Counter');
+  assert.strictEqual(context.waitingAction.disabled, true);
+  assert.strictEqual(context.waitingBottleneck.label, 'Preparing Delivery Order');
+  assert(!context.waitingBottleneck.label.includes('Certified boost available'));
+  assert.strictEqual(context.waitingTopTitle, 'Next: Wait for Prep Counter');
+  assert.strictEqual(context.waitingTopButton, 'Preparing Order');
+  assert.strictEqual(context.waitingTopDisabled, true);
+  assert.strictEqual(context.waitingCertifiedHidden, false);
+  assert.strictEqual(context.waitingOrdersText, '0 ready');
+  assert(!context.waitingOrdersText.includes('0.3'));
+  assert(context.waitingPrepStatus.includes('Next order is 30% prepared.'));
+  assert(context.waitingPrepStatus.includes('seconds remaining'));
+  assert.strictEqual(context.waitingPackText, 'Pack Tofu (backup)');
+  assert.strictEqual(context.waitingFulfillDisabled, true);
+  assert(context.waitingFulfillHelper.includes('Need 1 prepared order.'));
+  assert(context.waitingFulfillHelper.includes('Next order is 30% prepared.'));
+  assert(context.waitingOrdersHtml.includes('Ready Orders: 0'));
+  assert(context.waitingOrdersHtml.includes('Preparing Next Order'));
+  assert(context.waitingOrdersHtml.includes('30% prepared'));
+  assert(context.waitingOrdersHtml.includes('Prep Counter uses 2 tofu stock to prepare 1 delivery order.'));
+  assert(context.waitingOrdersHtml.includes('Need 1 prepared order.'));
+  assert.strictEqual(context.waitingBlockedOk, false);
+  assert(context.waitingBlockedReason.includes('Need 1 prepared order.'));
+  assert.strictEqual(context.waitingTickedOrders, 1);
+  assert.strictEqual(context.waitingTickedCarry < 0.1, true);
+  assert.strictEqual(context.waitingTickedNonNegative, true);
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
   });
   const first = context.defaultGameState();
   const firstAction = context.nextBestAction(first, { date: new Date('2026-06-14T12:00:00.000Z') });
-  assert.strictEqual(firstAction.type, 'start_shop');
-  assert.strictEqual(firstAction.title, 'Next: Start the Tofu Shop');
-  assert.strictEqual(firstAction.buttonLabel, 'Start the Shop');
+  assert.strictEqual(firstAction.type, 'fulfill_shop_order');
+  assert.strictEqual(firstAction.title, 'Next: Fulfill Shop Order');
+  assert.strictEqual(firstAction.buttonLabel, 'Fulfill Shop Order');
 
   const startedShop = context.packTofu(first, { activeDrive: false }).gameState;
   const packAction = context.nextBestAction(startedShop, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
-  assert.strictEqual(packAction.type, 'pack_tofu');
+  assert.strictEqual(packAction.type, 'fulfill_shop_order');
 
   const incompleteDaily = context.applySimulatedDelivery(
     'shaky_practice',
@@ -1233,9 +1382,9 @@ globalThis.topActionTitle = elements.gameNextActionTitle.textContent;
 globalThis.topActionButton = elements.gameCtaButton.textContent;
 globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
 `, context);
-  assert.strictEqual(context.topActionTitle, 'Next: Start the Tofu Shop');
-  assert.strictEqual(context.topActionButton, 'Start the Shop');
-  assert.strictEqual(context.topActionType, 'start_shop');
+  assert.strictEqual(context.topActionTitle, 'Next: Fulfill Shop Order');
+  assert.strictEqual(context.topActionButton, 'Fulfill Shop Order');
+  assert.strictEqual(context.topActionType, 'fulfill_shop_order');
 
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const actionStart = html.indexOf('class="nospill-next-action-card"');
@@ -1951,26 +2100,30 @@ function testResetExportAndImportProgressAreScopedAndValidated() {
 function testTofuShopStatePackIdleAndUpgradeRules() {
   const context = loadNoSpillContext();
   const state = context.defaultGameState();
-  assert.strictEqual(state.shop.tofuStock, 0);
-  assert.strictEqual(state.shop.deliveryOrders, 0);
+  assert.strictEqual(state.shop.tofuStock, 10);
+  assert.strictEqual(state.shop.deliveryOrders, 1);
   assert.strictEqual(state.shop.tips, 0);
   assert.strictEqual(state.shop.reputation, 0);
   assert.strictEqual(state.shop.shopLevel, 1);
   assert.strictEqual(state.shop.generators.tofuPress.unlocked, true);
+  assert.strictEqual(state.shop.generators.prepCounter.unlocked, true);
   assertAlmostEqual(context.getShopGeneratorRates(state).tofuPressPerSecond, 0.05);
 
   const activePack = context.packTofu(state, { activeDrive: true });
   assert.strictEqual(activePack.ok, false);
-  assert.strictEqual(activePack.gameState.shop.tofuStock, 0);
+  assert.strictEqual(activePack.gameState.shop.tofuStock, 10);
 
   const firstHomePack = context.packTofu(state, { activeDrive: false });
   assert.strictEqual(firstHomePack.ok, true);
-  assert.strictEqual(firstHomePack.gameState.shop.tofuStock, 1);
+  assert.strictEqual(firstHomePack.gameState.shop.tofuStock, 11);
   assert.strictEqual(firstHomePack.gameState.shop.reputation, 0);
 
-  const emptyOrder = context.fulfillShopOrder(firstHomePack.gameState, { activeDrive: false });
+  const noOrderState = context.defaultGameState();
+  noOrderState.shop.deliveryOrders = 0;
+  noOrderState.shop.generatorCarry.deliveryOrders = 0.3;
+  const emptyOrder = context.fulfillShopOrder(noOrderState, { activeDrive: false });
   assert.strictEqual(emptyOrder.ok, false);
-  assert(emptyOrder.reason.includes('Prep Counter needs delivery orders first'));
+  assert(emptyOrder.reason.includes('Need 1 prepared order'));
 
   const delivery = context.applySimulatedDelivery(
     'smooth_commute',
@@ -1994,6 +2147,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
 
   const tickState = JSON.parse(JSON.stringify(delivery.gameState));
   tickState.shop.tofuStock = 0;
+  tickState.shop.deliveryOrders = 0;
   tickState.shop.generators.prepCounter = { unlocked: false, level: 0 };
   tickState.shop.stations.prep_counter = 0;
   tickState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
@@ -2015,7 +2169,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
     new Date('2026-06-14T12:01:00.000Z'),
   );
   assert.strictEqual(prepTick.gameState.shop.generators.prepCounter.unlocked, true);
-  assert.strictEqual(prepTick.gameState.shop.deliveryOrders, 1);
+  assert.strictEqual(prepTick.gameState.shop.deliveryOrders, 2);
   assert.strictEqual(prepTick.gameState.shop.tofuStock, 11);
   assert(prepTick.earnings.tofuConsumed > 0);
 
@@ -2029,8 +2183,8 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
     consumeState,
     new Date('2026-06-14T12:01:00.000Z'),
   );
-  assert.strictEqual(consumeTick.gameState.shop.deliveryOrders, 4);
-  assert.strictEqual(consumeTick.gameState.shop.tofuStock, 5);
+  assert.strictEqual(consumeTick.gameState.shop.deliveryOrders, 7);
+  assert.strictEqual(consumeTick.gameState.shop.tofuStock, 1);
   assert(consumeTick.earnings.tofuStock < 0);
 
   const fulfilled = context.fulfillShopOrder(prepTick.gameState, { activeDrive: false });
@@ -2038,7 +2192,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   assert.strictEqual(fulfilled.tipsGained, 10);
   assert.strictEqual(fulfilled.reputationGained, 1);
   assert.strictEqual(fulfilled.xpGained, 4);
-  assert.strictEqual(fulfilled.gameState.shop.deliveryOrders, 0);
+  assert.strictEqual(fulfilled.gameState.shop.deliveryOrders, 1);
   assert.strictEqual(fulfilled.gameState.shop.tips, 10);
   assert.strictEqual(fulfilled.gameState.shop.reputation, prepTick.gameState.shop.reputation + 1);
 
@@ -2047,6 +2201,8 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   assert.strictEqual(activeOrder.gameState.shop.deliveryOrders, prepTick.gameState.shop.deliveryOrders);
 
   const waitingState = context.defaultGameState();
+  waitingState.shop.tofuStock = 0;
+  waitingState.shop.deliveryOrders = 0;
   waitingState.shop.reputation = 160;
   waitingState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
   const waitingRates = context.getShopGeneratorRates(waitingState);
@@ -2067,7 +2223,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
     new Date('2026-06-14T10:00:00.000Z'),
   );
   assert.strictEqual(offline.cappedHours, 8);
-  assert(offline.tofuStock > 0);
+  assert(offline.tofuStock >= 0);
   assert(offline.deliveryOrders > 0);
   const offlineApplied = context.applyShopGeneratorTick(
     productionState,
@@ -2075,7 +2231,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
     { maxSeconds: 8 * 3600 },
   );
   assert(offlineApplied.gameState.shop.tofuStock >= 0);
-  assert.strictEqual(offlineApplied.gameState.shop.deliveryOrders, offline.deliveryOrders);
+  assert.strictEqual(offlineApplied.gameState.shop.deliveryOrders, productionState.shop.deliveryOrders + offline.deliveryOrders);
 
   const insufficient = context.buyShopUpgrade('tofu_press', context.defaultGameState());
   assert.strictEqual(insufficient.ok, false);
@@ -3383,6 +3539,7 @@ function run() {
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();
   testTofuShopGeneratorUpgradeUiIsHonestAndProgressive();
   testEarlyShopResourceFunnelMakesTipsObvious();
+  testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
