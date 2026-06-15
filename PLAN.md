@@ -11,6 +11,8 @@
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
+- Tofu Shop adds parked-only tofu stock, reputation, shop levels, Pack Tofu, idle production,
+  upgrades, story chapters, a simple Smooth Week contract, and Delivery Wall progress.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
@@ -23,7 +25,8 @@
 3. Add a simple local static server command to `README.md`.
 4. Confirm custom-domain DNS records and certificate provisioning for `tofudriver.com`.
 5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
-6. Replace remaining MVP raster assets with production-ready artwork when available.
+6. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
+7. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 
@@ -32,6 +35,7 @@
 - Which Super Cute Collectibles product URLs should be added to `MERCH_LINKS` after unlock-gated products exist?
 - Should Qualified Run verification remain share-private by default?
 - Should the app add a backend later for accounts, badges, or server-issued merch unlocks?
+- Should Tofu Shop story chapters remain fully local-only, or eventually use backend unlock tokens?
 
 ## Non-Goals For The Current Slice
 

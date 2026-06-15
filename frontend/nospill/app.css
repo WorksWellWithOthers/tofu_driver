@@ -193,6 +193,7 @@
 .nospill-how,
 .nospill-merch-preview,
 .nospill-delivery-log,
+.nospill-tofu-shop,
 .nospill-safety-strip {
   padding: 14px;
   border: 1px solid rgba(244, 247, 239, 0.11);
@@ -202,7 +203,8 @@
 
 .nospill-how h3,
 .nospill-merch-preview h3,
-.nospill-delivery-log h3 {
+.nospill-delivery-log h3,
+.nospill-tofu-shop h3 {
   font-size: 1.2rem;
 }
 
@@ -225,8 +227,11 @@
 
 .nospill-delivery-mission,
 .nospill-delivery-grid div,
+.nospill-shop-grid div,
 .nospill-merch-progress-grid div,
-.nospill-delivery-summary-grid div {
+.nospill-delivery-summary-grid div,
+.nospill-upgrade-item,
+.nospill-delivery-wall-item {
   min-width: 0;
   border: 1px solid rgba(244, 247, 239, 0.11);
   border-radius: 8px;
@@ -241,8 +246,10 @@
 
 .nospill-delivery-mission span,
 .nospill-delivery-grid span,
+.nospill-shop-grid span,
 .nospill-merch-progress-grid span,
-.nospill-delivery-summary-grid span {
+.nospill-delivery-summary-grid span,
+.nospill-delivery-wall-item span {
   color: #93a099;
   font-size: 0.72rem;
   font-weight: 800;
@@ -251,8 +258,10 @@
 
 .nospill-delivery-mission strong,
 .nospill-delivery-grid strong,
+.nospill-shop-grid strong,
 .nospill-merch-progress-grid strong,
-.nospill-delivery-summary-grid strong {
+.nospill-delivery-summary-grid strong,
+.nospill-delivery-wall-item strong {
   display: block;
   color: #f4f7ef;
   font-size: 1rem;
@@ -261,17 +270,71 @@
 }
 
 .nospill-delivery-mission p,
-.nospill-delivery-mission small {
+.nospill-delivery-mission small,
+.nospill-shop-grid small,
+.nospill-upgrade-item small {
   margin: 0;
   color: #bbc7c0;
   line-height: 1.42;
 }
 
 .nospill-delivery-grid,
+.nospill-shop-grid,
 .nospill-merch-progress-grid,
-.nospill-delivery-summary-grid {
+.nospill-delivery-summary-grid,
+.nospill-delivery-actions,
+.nospill-upgrade-list,
+.nospill-delivery-wall-grid,
+.nospill-shop-action-row,
+.nospill-shop-panel {
   display: grid;
   gap: 10px;
+}
+
+.nospill-shop-safety {
+  padding: 10px 12px;
+  border: 1px solid rgba(240, 185, 90, 0.34);
+  border-radius: 8px;
+  color: #f7e4b8;
+  background: rgba(240, 185, 90, 0.08);
+}
+
+.nospill-shop-panel h4 {
+  margin: 0;
+  color: #f4f7ef;
+  font-size: 0.92rem;
+}
+
+.nospill-upgrade-item {
+  display: grid;
+  gap: 8px;
+}
+
+.nospill-upgrade-item header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nospill-upgrade-item strong {
+  color: #f4f7ef;
+}
+
+.nospill-upgrade-item button {
+  min-height: 40px;
+}
+
+.nospill-upgrade-item button:disabled,
+.nospill-secondary:disabled,
+.nospill-danger:disabled {
+  opacity: 0.58;
+  cursor: not-allowed;
+}
+
+.nospill-delivery-wall-item {
+  display: grid;
+  gap: 8px;
 }
 
 .nospill-stamp-row {
@@ -804,9 +867,16 @@
   .nospill-route-grid,
   .nospill-merch-grid,
   .nospill-delivery-grid,
+  .nospill-shop-grid,
+  .nospill-delivery-wall-grid,
   .nospill-merch-progress-grid,
-  .nospill-delivery-summary-grid {
+  .nospill-delivery-summary-grid,
+  .nospill-delivery-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .nospill-delivery-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .nospill-step-grid {

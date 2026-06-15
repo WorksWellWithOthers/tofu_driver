@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>Tofu Driver</title>
-  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615b" />
+  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615e" />
 </head>
 <body class="nospill-page">
   <main class="nospill-app" id="nospill-app">
@@ -102,7 +102,7 @@
       <section class="nospill-section nospill-delivery-log" aria-labelledby="delivery-log-title">
         <div class="nospill-delivery-log-head">
           <div>
-            <p class="nospill-kicker">Delivery Log</p>
+            <p class="nospill-kicker">Delivery Board</p>
             <h3 id="delivery-log-title">Every drive is a delivery.</h3>
           </div>
           <strong id="driver-level">Level 1</strong>
@@ -117,6 +117,10 @@
           <small id="daily-reward">Daily Delivery stamp and smoothness XP</small>
         </div>
         <div class="nospill-delivery-grid" aria-label="Delivery Log progress">
+          <div>
+            <span>Driver License</span>
+            <strong id="driver-license">Level 1 · Rookie Carrier</strong>
+          </div>
           <div>
             <span>Total XP</span>
             <strong id="driver-total-xp">0</strong>
@@ -133,10 +137,106 @@
             <span>No-Spill Club Gear</span>
             <strong id="nospill-gear-progress">0/3</strong>
           </div>
+          <div>
+            <span>Delivery Passport</span>
+            <strong id="passport-progress">0/13 stamps</strong>
+          </div>
+          <div>
+            <span>Recent Reward</span>
+            <strong id="recent-reward">No rewards yet</strong>
+          </div>
         </div>
         <div class="nospill-stamp-row" id="recent-stamps" aria-label="Recent stamps">
           <span>No stamps yet</span>
         </div>
+        <p class="nospill-panel-helper">
+          Progress is saved on this device.
+        </p>
+        <div class="nospill-delivery-actions" aria-label="Delivery Log progress tools">
+          <button class="nospill-secondary" id="export-progress-button" type="button">
+            Export Progress
+          </button>
+          <button class="nospill-secondary" id="import-progress-button" type="button">
+            Import Progress
+          </button>
+          <button class="nospill-danger" id="reset-progress-button" type="button">
+            Reset Progress
+          </button>
+        </div>
+      </section>
+
+      <section class="nospill-section nospill-tofu-shop" id="tofu-shop" aria-labelledby="tofu-shop-title">
+        <div class="nospill-delivery-log-head">
+          <div>
+            <p class="nospill-kicker">Tofu Shop</p>
+            <h3 id="tofu-shop-title">Run the shop while parked.</h3>
+          </div>
+          <strong id="shop-level-badge">Shop Level 1</strong>
+        </div>
+        <p>
+          Smooth deliveries build your reputation. Pack tofu, upgrade the shop, and fill the Delivery Wall.
+        </p>
+        <p class="nospill-panel-helper nospill-shop-safety">
+          Shop Mode is for when you are parked. Do not interact while driving.
+        </p>
+
+        <div class="nospill-shop-grid" aria-label="Tofu Shop progress">
+          <div>
+            <span>Tofu Stock</span>
+            <strong id="shop-tofu-stock">0</strong>
+          </div>
+          <div>
+            <span>Reputation</span>
+            <strong id="shop-reputation">0</strong>
+          </div>
+          <div>
+            <span>Shop Level</span>
+            <strong id="shop-level-progress">Level 1</strong>
+          </div>
+          <div>
+            <span>Idle Production</span>
+            <strong id="shop-idle-rate">0/hr</strong>
+          </div>
+        </div>
+
+        <div class="nospill-shop-action-row">
+          <button class="nospill-primary" id="pack-tofu-button" type="button">
+            Pack Tofu
+          </button>
+          <p class="nospill-panel-helper" id="pack-tofu-helper">
+            Parked-only. Packing adds tofu stock, not reputation.
+          </p>
+        </div>
+
+        <div class="nospill-shop-panel" aria-labelledby="shop-upgrades-title">
+          <h4 id="shop-upgrades-title">Upgrades</h4>
+          <div class="nospill-upgrade-list" id="shop-upgrade-list"></div>
+        </div>
+
+        <div class="nospill-shop-grid" aria-label="Tofu Shop story and contracts">
+          <div>
+            <span>Story Chapter</span>
+            <strong id="shop-story-chapter">Chapter 1: First Delivery</strong>
+            <small id="shop-story-next">Complete any delivery.</small>
+          </div>
+          <div>
+            <span>Customers</span>
+            <strong id="shop-customers-preview">Tea Master · Festival Vendor</strong>
+            <small id="shop-contract-preview">Smooth Week: 0/3</small>
+          </div>
+        </div>
+
+        <div class="nospill-shop-panel" aria-labelledby="delivery-wall-title">
+          <h4 id="delivery-wall-title">Delivery Wall</h4>
+          <p class="nospill-panel-helper">
+            Secret gear progress stays local. Physical merch is fulfilled by Super Cute Collectibles.
+          </p>
+          <div class="nospill-delivery-wall-grid" id="delivery-wall-grid"></div>
+        </div>
+
+        <p class="nospill-panel-helper" id="shop-offline-earnings">
+          While you were away: +0 tofu stock.
+        </p>
       </section>
 
       <div class="nospill-setup is-hidden" id="setup-flow">
@@ -445,6 +545,6 @@
     </section>
   </main>
 
-  <script src="/static/nospill/app.js?v=20260615b"></script>
+  <script src="/static/nospill/app.js?v=20260615e"></script>
 </body>
 </html>

@@ -2,8 +2,8 @@
 
 Tofu Driver is a browser-only smooth-driving experiment. It uses phone motion sensors to run
 `The Cup Test`: a simple challenge where the driver tries to keep a virtual cup from spilling.
-The current app layers a local-first `Delivery Log` over that challenge, where each run is framed
-as a fragile tofu cargo delivery.
+The current app layers a local-first `Delivery Log` and parked-only `Tofu Shop` over that challenge,
+where each run is framed as a fragile tofu cargo delivery and smooth deliveries build shop progress.
 
 The app is intentionally lightweight:
 
@@ -15,6 +15,7 @@ The app is intentionally lightweight:
 - local results stored only in browser `localStorage`
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
+- parked-only Tofu Shop resources, upgrades, story chapters, and Delivery Wall progress
 
 ## Project Layout
 

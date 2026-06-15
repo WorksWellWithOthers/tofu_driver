@@ -120,54 +120,189 @@ const MERCH_LABELS = {
   certified_smooth: "Certified Smooth Gear",
 };
 
-const DAILY_DELIVERIES = [
+const CARGO_PROFILES = [
   {
     id: "silken_tofu",
+    name: "Silken Tofu",
     cargo: "Silken Tofu",
+    description: "Soft tofu that rewards calm, balanced inputs.",
     focus: "Overall smoothness",
     goal: "Finish a delivery with 85%+ cargo condition.",
     reward: "Daily Delivery stamp and smoothness XP",
+    scoringEmphasis: "Total cargo condition",
+    suggestedStamp: "daily_delivery_complete",
     routeMatch: "Calm Cruise",
   },
   {
     id: "hot_tea",
+    name: "Hot Tea",
     cargo: "Hot Tea",
+    description: "A full cup that notices side-to-side motion.",
     focus: "Corner calm",
-    goal: "Keep lateral input smooth.",
+    goal: "Preserve cargo while keeping lateral input smooth.",
     reward: "Corner Calm XP",
+    scoringEmphasis: "Low lateral jerk and smooth side-to-side motion",
+    suggestedStamp: "curve_control",
     routeMatch: "Mixed Route",
   },
   {
     id: "soup_bowl",
+    name: "Soup Bowl",
     cargo: "Soup Bowl",
+    description: "A warm bowl that rewards gentle starts and stops.",
     focus: "Brake and throttle restraint",
     goal: "Avoid harsh braking and acceleration spikes.",
     reward: "Brake Feather and Throttle Control XP",
+    scoringEmphasis: "Harsh braking and acceleration control",
+    suggestedStamp: "passenger_approved",
     routeMatch: "City Delivery",
   },
   {
     id: "egg_carton",
+    name: "Egg Carton",
     cargo: "Egg Carton",
+    description: "Fragile cargo that rewards no-panic inputs.",
     focus: "No panic inputs",
     goal: "Keep total harsh inputs low.",
     reward: "Passenger Comfort XP",
+    scoringEmphasis: "Very low spike count",
+    suggestedStamp: "no_panic_inputs",
     routeMatch: "Calm Cruise",
   },
   {
     id: "glass_bottle",
+    name: "Glass Bottle",
     cargo: "Glass Bottle",
+    description: "Tall cargo that rewards consistency over the full session.",
     focus: "Consistency",
     goal: "Avoid repeated jerk and spike events.",
     reward: "Consistency XP",
+    scoringEmphasis: "Stable cargo condition over session",
+    suggestedStamp: "daily_delivery_complete",
     routeMatch: "Technical Route",
   },
   {
     id: "wedding_cake",
+    name: "Wedding Cake",
     cargo: "Wedding Cake",
+    description: "A longer delivery that rewards patience and restraint.",
     focus: "Longer smooth delivery",
     goal: "Finish a longer qualified delivery with stable cargo.",
     reward: "Long Haul progress",
+    scoringEmphasis: "Duration plus consistency, not speed",
+    suggestedStamp: "long_haul_pour",
     routeMatch: "Long Haul",
+  },
+];
+
+const DAILY_DELIVERIES = CARGO_PROFILES;
+
+const DRIVER_LICENSES = [
+  { minLevel: 1, label: "Rookie Carrier" },
+  { minLevel: 3, label: "Cup Courier" },
+  { minLevel: 6, label: "Smooth Driver" },
+  { minLevel: 10, label: "No-Spill Candidate" },
+  { minLevel: 15, label: "Certified Tofu Driver" },
+  { minLevel: 21, label: "Perfect Pour Courier" },
+  { minLevel: 30, label: "Delivery Legend" },
+];
+
+const SHOP_MAX_RESOURCE = 1000000000;
+const SHOP_OFFLINE_CAP_HOURS = 8;
+
+const SHOP_UPGRADES = [
+  {
+    id: "tofu_press",
+    name: "Tofu Press",
+    description: "A tidy prep station that makes idle tofu stock more reliable.",
+    costTofuStock: 45,
+    costReputation: 0,
+    requiredShopLevel: 1,
+    effect: "Increases idle tofu stock per hour.",
+    maxLevel: 5,
+  },
+  {
+    id: "better_boxes",
+    name: "Better Boxes",
+    description: "Cleaner delivery packaging turns completed deliveries into a little more tofu stock.",
+    costTofuStock: 75,
+    costReputation: 0,
+    requiredShopLevel: 1,
+    effect: "Adds a modest tofu stock bonus after completed deliveries.",
+    maxLevel: 4,
+  },
+  {
+    id: "shop_sign",
+    name: "Shop Sign",
+    description: "A warmer storefront helps smooth qualified deliveries build reputation.",
+    costTofuStock: 120,
+    costReputation: 0,
+    requiredShopLevel: 2,
+    effect: "Adds a modest reputation bonus for qualified smooth deliveries.",
+    maxLevel: 4,
+  },
+  {
+    id: "delivery_shelf",
+    name: "Delivery Shelf",
+    description: "Shows more of your Delivery Wall and recent stamp collection.",
+    costTofuStock: 160,
+    costReputation: 0,
+    requiredShopLevel: 2,
+    effect: "Improves Delivery Wall presentation.",
+    maxLevel: 2,
+  },
+  {
+    id: "festival_cooler",
+    name: "Festival Cooler",
+    description: "Prepares the shop for festival orders and future event drops.",
+    costTofuStock: 240,
+    costReputation: 0,
+    requiredShopLevel: 3,
+    effect: "Unlocks festival story flavor and a small idle stock bonus.",
+    maxLevel: 2,
+  },
+  {
+    id: "cup_display",
+    name: "Cup Display",
+    description: "A display spot for Perfect Pour memories and cosmetic share-card flavor.",
+    costTofuStock: 320,
+    costReputation: 0,
+    requiredShopLevel: 4,
+    effect: "Unlocks Perfect Pour display flavor.",
+    maxLevel: 1,
+  },
+];
+
+const SHOP_STORY_CHAPTERS = [
+  {
+    id: "first_delivery",
+    title: "Chapter 1: First Delivery",
+    requirement: "Complete any delivery.",
+  },
+  {
+    id: "soup_bowl_incident",
+    title: "Chapter 2: The Soup Bowl Incident",
+    requirement: "Reach Shop Level 2.",
+  },
+  {
+    id: "festival_order",
+    title: "Chapter 3: Festival Order",
+    requirement: "Reach Shop Level 3 or install the Festival Cooler.",
+  },
+  {
+    id: "wedding_cake_contract",
+    title: "Chapter 4: The Wedding Cake Contract",
+    requirement: "Earn Long Haul Pour or build Delivery Crew progress.",
+  },
+  {
+    id: "nospill_invitation",
+    title: "Chapter 5: No-Spill Invitation",
+    requirement: "Make No-Spill Club Gear progress.",
+  },
+  {
+    id: "perfect_pour_trial",
+    title: "Chapter 6: Perfect Pour Trial",
+    requirement: "Unlock Perfect Pour Drop.",
   },
 ];
 
@@ -645,6 +780,7 @@ function defaultGameState() {
     recentSessions: [],
     xpByDate: {},
     routeMastery: {},
+    shop: defaultShopState(),
   };
 }
 
@@ -681,6 +817,130 @@ function normalizeSkillXP(skillXP) {
       Math.max(0, Math.round(Number(source[skill] || 0))),
     ]),
   );
+}
+
+function safeNonNegativeNumber(value, fallback = 0, maxValue = SHOP_MAX_RESOURCE) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric) || numeric < 0) return fallback;
+  return Math.min(numeric, maxValue);
+}
+
+function safeNonNegativeInteger(value, fallback = 0, maxValue = SHOP_MAX_RESOURCE) {
+  return Math.round(safeNonNegativeNumber(value, fallback, maxValue));
+}
+
+function defaultShopState() {
+  return {
+    tofuStock: 0,
+    reputation: 0,
+    shopLevel: 1,
+    lifetimeTofuPacked: 0,
+    lifetimeReputation: 0,
+    upgrades: {},
+    storyChapters: {},
+    staff: {},
+    customers: {},
+    contracts: {
+      smooth_week: {
+        id: "smooth_week",
+        name: "Smooth Week",
+        description: "Complete 3 qualified smooth deliveries.",
+        progress: 0,
+        target: 3,
+        completed: false,
+      },
+    },
+    lastShopTickAt: "",
+    offlineEarnings: {
+      tofuStock: 0,
+      cappedHours: 0,
+    },
+  };
+}
+
+function normalizeUpgradeLevels(upgrades) {
+  const source = upgrades && typeof upgrades === "object" ? upgrades : {};
+  return Object.fromEntries(
+    SHOP_UPGRADES.map((upgrade) => {
+      const raw = source[upgrade.id];
+      const value = raw && typeof raw === "object" ? raw.level : raw;
+      return [
+        upgrade.id,
+        clamp(
+          safeNonNegativeInteger(value, 0, upgrade.maxLevel),
+          0,
+          upgrade.maxLevel,
+        ),
+      ];
+    }),
+  );
+}
+
+function normalizeShopState(shop) {
+  const defaults = defaultShopState();
+  const source = shop && typeof shop === "object" ? shop : {};
+  const reputation = safeNonNegativeInteger(source.reputation, defaults.reputation);
+  const contracts = source.contracts && typeof source.contracts === "object"
+    ? JSON.parse(JSON.stringify(source.contracts))
+    : {};
+  const smoothWeek = contracts.smooth_week && typeof contracts.smooth_week === "object"
+    ? contracts.smooth_week
+    : defaults.contracts.smooth_week;
+  return {
+    ...defaults,
+    ...source,
+    tofuStock: safeNonNegativeInteger(source.tofuStock, defaults.tofuStock),
+    reputation,
+    shopLevel: getShopLevel(reputation),
+    lifetimeTofuPacked: safeNonNegativeInteger(
+      source.lifetimeTofuPacked,
+      defaults.lifetimeTofuPacked,
+    ),
+    lifetimeReputation: Math.max(
+      reputation,
+      safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
+    ),
+    upgrades: normalizeUpgradeLevels(source.upgrades),
+    storyChapters:
+      source.storyChapters && typeof source.storyChapters === "object"
+        ? JSON.parse(JSON.stringify(source.storyChapters))
+        : {},
+    staff:
+      source.staff && typeof source.staff === "object"
+        ? JSON.parse(JSON.stringify(source.staff))
+        : {},
+    customers:
+      source.customers && typeof source.customers === "object"
+        ? JSON.parse(JSON.stringify(source.customers))
+        : {},
+    contracts: {
+      ...defaults.contracts,
+      ...contracts,
+      smooth_week: {
+        ...defaults.contracts.smooth_week,
+        ...smoothWeek,
+        progress: clamp(
+          safeNonNegativeInteger(smoothWeek.progress, 0, smoothWeek.target || 3),
+          0,
+          safeNonNegativeInteger(smoothWeek.target, 3, 100),
+        ),
+        target: safeNonNegativeInteger(smoothWeek.target, 3, 100),
+        completed: Boolean(smoothWeek.completed),
+      },
+    },
+    lastShopTickAt: typeof source.lastShopTickAt === "string" ? source.lastShopTickAt : "",
+    offlineEarnings: {
+      tofuStock: safeNonNegativeInteger(
+        source.offlineEarnings && source.offlineEarnings.tofuStock,
+        0,
+      ),
+      cappedHours: safeNonNegativeNumber(
+        source.offlineEarnings && source.offlineEarnings.cappedHours,
+        0,
+        SHOP_OFFLINE_CAP_HOURS,
+      ),
+    },
+  };
 }
 
 function normalizeGameState(stored) {
@@ -730,8 +990,10 @@ function normalizeGameState(stored) {
       source.routeMastery && typeof source.routeMastery === "object"
         ? JSON.parse(JSON.stringify(source.routeMastery))
         : {},
+    shop: normalizeShopState(source.shop),
   };
   normalized.level = levelForXP(normalized.totalXP);
+  normalized.shop = updateStoryChapters(normalized).shop;
   normalized.merchProgress.nospillClubGear.dates = [
     ...(normalized.merchProgress.nospillClubGear.dates || []),
   ];
@@ -760,6 +1022,88 @@ function saveGameState(gameState) {
   } catch (_) {
     return false;
   }
+}
+
+function resetGameState() {
+  const storage = safeLocalStorage();
+  if (!storage) return false;
+  try {
+    storage.removeItem(GAME_STORAGE_KEY);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function isValidImportedShopNumber(value, maxValue = SHOP_MAX_RESOURCE) {
+  if (value === undefined) return true;
+  const numeric = Number(value);
+  return Number.isFinite(numeric) && numeric >= 0 && numeric <= maxValue;
+}
+
+function validateImportedShopState(shop) {
+  if (shop === undefined) return true;
+  if (!shop || typeof shop !== "object" || Array.isArray(shop)) return false;
+  if (!isValidImportedShopNumber(shop.tofuStock)) return false;
+  if (!isValidImportedShopNumber(shop.reputation)) return false;
+  if (!isValidImportedShopNumber(shop.shopLevel, 1000)) return false;
+  if (!isValidImportedShopNumber(shop.lifetimeTofuPacked)) return false;
+  if (!isValidImportedShopNumber(shop.lifetimeReputation)) return false;
+  if (shop.offlineEarnings !== undefined) {
+    if (!shop.offlineEarnings || typeof shop.offlineEarnings !== "object") return false;
+    if (!isValidImportedShopNumber(shop.offlineEarnings.tofuStock)) return false;
+    if (!isValidImportedShopNumber(shop.offlineEarnings.cappedHours, SHOP_OFFLINE_CAP_HOURS)) {
+      return false;
+    }
+  }
+  if (shop.upgrades !== undefined) {
+    if (!shop.upgrades || typeof shop.upgrades !== "object" || Array.isArray(shop.upgrades)) {
+      return false;
+    }
+    for (const value of Object.values(shop.upgrades)) {
+      const level = value && typeof value === "object" ? value.level : value;
+      if (!isValidImportedShopNumber(level, 100)) return false;
+    }
+  }
+  return true;
+}
+
+function exportGameProgress(gameState = loadGameState()) {
+  const normalized = normalizeGameState(gameState);
+  const state = {
+    ...normalized,
+    shop: sanitizeShopStateForExport(normalized),
+  };
+  return JSON.stringify({
+    app: APP_BRAND,
+    key: GAME_STORAGE_KEY,
+    exportedAt: new Date().toISOString(),
+    driverLicense: getDriverLicense(normalized.level),
+    state,
+  }, null, 2);
+}
+
+function importGameProgress(jsonText) {
+  let parsed;
+  try {
+    parsed = JSON.parse(String(jsonText || ""));
+  } catch (_) {
+    return { ok: false, reason: "Progress backup was not valid JSON." };
+  }
+  if (!parsed || parsed.key !== GAME_STORAGE_KEY || typeof parsed.state !== "object") {
+    return { ok: false, reason: "Progress backup was not a Tofu Driver game backup." };
+  }
+  const text = JSON.stringify(parsed.state);
+  if (/\b(?:routeSamples|gpsSamples|motionSamples|raw|coords|coordinates|latitude|longitude|lat|lon|trace|street|map|speedLogs?)\b/i.test(text)) {
+    return { ok: false, reason: "Progress backup included unsupported raw route or sensor fields." };
+  }
+  if (!validateImportedShopState(parsed.state.shop)) {
+    return { ok: false, reason: "Progress backup included invalid Tofu Shop values." };
+  }
+  const normalized = normalizeGameState(parsed.state);
+  return saveGameState(normalized)
+    ? { ok: true, gameState: normalized, reason: "" }
+    : { ok: false, reason: "Progress backup could not be saved." };
 }
 
 function saveClubState(clubState) {
@@ -895,6 +1239,16 @@ function getDailyDelivery(date = new Date()) {
   return { ...DAILY_DELIVERIES[index], dateKey };
 }
 
+function getDriverLicense(level) {
+  const numericLevel = Math.max(1, Math.floor(Number(level || 1)));
+  return DRIVER_LICENSES.reduce(
+    (current, license) => (
+      numericLevel >= license.minLevel ? license.label : current
+    ),
+    DRIVER_LICENSES[0].label,
+  );
+}
+
 function calculateCargoCondition(session) {
   return clamp(roundTo(session && session.waterLeft, 1), 0, 100);
 }
@@ -932,7 +1286,7 @@ function classifyRouteType(summary) {
   return "Calm Cruise";
 }
 
-function evaluateDailyDelivery(mission, session) {
+function evaluateCargoMission(mission, session) {
   const cargo = calculateCargoCondition(session);
   const routeType = session.routeType || classifyRouteType(session);
   const harshInputCount = Number(session.harshInputCount || 0);
@@ -958,6 +1312,10 @@ function evaluateDailyDelivery(mission, session) {
       && (Number(session.durationSeconds || 0) >= 900 || routeType === "Long Haul");
   }
   return false;
+}
+
+function evaluateDailyDelivery(mission, session) {
+  return evaluateCargoMission(mission, session);
 }
 
 function levelXPRequirement(level) {
@@ -986,6 +1344,295 @@ function levelProgress(totalXP) {
     currentXP: remaining,
     nextXP: levelXPRequirement(level),
   };
+}
+
+function shopLevelRequirement(level) {
+  return 100 + Math.max(1, Number(level || 1)) * 50;
+}
+
+function getShopLevel(reputation) {
+  let level = 1;
+  let remaining = Math.max(0, Math.round(Number(reputation || 0)));
+  while (remaining >= shopLevelRequirement(level) && level < 1000) {
+    remaining -= shopLevelRequirement(level);
+    level += 1;
+  }
+  return level;
+}
+
+function shopLevelProgress(reputation) {
+  let level = 1;
+  let remaining = Math.max(0, Math.round(Number(reputation || 0)));
+  while (remaining >= shopLevelRequirement(level) && level < 1000) {
+    remaining -= shopLevelRequirement(level);
+    level += 1;
+  }
+  return {
+    level,
+    currentReputation: remaining,
+    nextReputation: shopLevelRequirement(level),
+  };
+}
+
+function getShopUpgradeCatalog() {
+  return SHOP_UPGRADES.map((upgrade) => ({ ...upgrade }));
+}
+
+function shopUpgradeCost(upgrade, currentLevel = 0) {
+  const level = Math.max(0, Math.round(Number(currentLevel || 0)));
+  return {
+    costTofuStock: Math.round(upgrade.costTofuStock * (1 + level * 0.65)),
+    costReputation: Math.round((upgrade.costReputation || 0) * (1 + level * 0.5)),
+  };
+}
+
+function shopUpgradeLevel(gameState, upgradeId) {
+  const shop = normalizeShopState(gameState && gameState.shop);
+  return safeNonNegativeInteger(shop.upgrades[upgradeId], 0, 100);
+}
+
+function getShopProductionRate(gameState) {
+  const state = gameState && gameState.shop ? gameState : { shop: gameState };
+  const shop = normalizeShopState(state.shop);
+  return (
+    shop.upgrades.tofu_press * 6
+    + shop.upgrades.delivery_shelf * 1
+    + shop.upgrades.festival_cooler * 2
+  );
+}
+
+function calculateOfflineShopEarnings(gameState, now = new Date()) {
+  const state = gameState && gameState.shop ? gameState : { shop: gameState };
+  const shop = normalizeShopState(state.shop);
+  const rate = getShopProductionRate({ shop });
+  const lastMs = Date.parse(shop.lastShopTickAt);
+  const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
+  if (!Number.isFinite(lastMs) || !Number.isFinite(nowMs) || nowMs <= lastMs || rate <= 0) {
+    return { tofuStock: 0, cappedHours: 0, elapsedHours: 0 };
+  }
+  const elapsedHours = (nowMs - lastMs) / 3600000;
+  const cappedHours = Math.min(SHOP_OFFLINE_CAP_HOURS, elapsedHours);
+  return {
+    tofuStock: Math.floor(rate * cappedHours),
+    cappedHours: roundTo(cappedHours, 2),
+    elapsedHours: roundTo(elapsedHours, 2),
+  };
+}
+
+function applyOfflineShopEarnings(gameState, now = new Date()) {
+  const next = normalizeGameState(gameState);
+  const nowIso = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
+  const earnings = calculateOfflineShopEarnings(next, now);
+  const hadTick = Boolean(next.shop.lastShopTickAt);
+  if (earnings.tofuStock > 0) {
+    next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + earnings.tofuStock);
+  }
+  next.shop.offlineEarnings = {
+    tofuStock: earnings.tofuStock,
+    cappedHours: earnings.cappedHours,
+  };
+  next.shop.lastShopTickAt = nowIso;
+  return {
+    gameState: next,
+    earnings,
+    changed: !hadTick || earnings.tofuStock > 0,
+  };
+}
+
+function loadGameStateWithOfflineShopEarnings(now = new Date()) {
+  const state = loadGameState();
+  const result = applyOfflineShopEarnings(state, now);
+  if (result.changed) saveGameState(result.gameState);
+  return result.gameState;
+}
+
+function packTofu(gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive) {
+    return {
+      ok: false,
+      reason: "Shop actions unlock after you finish and park.",
+      gameState: next,
+      tofuStockGained: 0,
+    };
+  }
+  const amount = 1 + Math.min(3, Math.floor(next.shop.upgrades.tofu_press / 2));
+  next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + amount);
+  next.shop.lifetimeTofuPacked = safeNonNegativeInteger(
+    next.shop.lifetimeTofuPacked + amount,
+  );
+  next.shop.lastShopTickAt = new Date().toISOString();
+  return {
+    ok: true,
+    reason: "",
+    gameState: updateStoryChapters(next),
+    tofuStockGained: amount,
+  };
+}
+
+function buyShopUpgrade(upgradeId, gameState) {
+  const next = normalizeGameState(gameState);
+  const upgrade = SHOP_UPGRADES.find((candidate) => candidate.id === upgradeId);
+  if (!upgrade) {
+    return { ok: false, reason: "Upgrade unavailable.", gameState: next };
+  }
+  const currentLevel = safeNonNegativeInteger(next.shop.upgrades[upgrade.id], 0, upgrade.maxLevel);
+  if (currentLevel >= upgrade.maxLevel) {
+    return { ok: false, reason: "Upgrade is already complete.", gameState: next };
+  }
+  if (next.shop.shopLevel < upgrade.requiredShopLevel) {
+    return { ok: false, reason: `Requires Shop Level ${upgrade.requiredShopLevel}.`, gameState: next };
+  }
+  const cost = shopUpgradeCost(upgrade, currentLevel);
+  if (next.shop.tofuStock < cost.costTofuStock) {
+    return { ok: false, reason: "Not enough tofu stock.", gameState: next };
+  }
+  if (next.shop.reputation < cost.costReputation) {
+    return { ok: false, reason: "Not enough reputation.", gameState: next };
+  }
+  next.shop.tofuStock -= cost.costTofuStock;
+  next.shop.reputation -= cost.costReputation;
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  next.shop.upgrades[upgrade.id] = currentLevel + 1;
+  next.shop.lastShopTickAt = new Date().toISOString();
+  return {
+    ok: true,
+    reason: "",
+    gameState: updateStoryChapters(next),
+    upgrade: { ...upgrade, level: currentLevel + 1 },
+  };
+}
+
+function storyChapterUnlocked(chapterId, gameState) {
+  const state = {
+    ...defaultGameState(),
+    ...gameState,
+    shop: normalizeShopState(gameState && gameState.shop),
+    stamps: gameState && gameState.stamps && typeof gameState.stamps === "object"
+      ? gameState.stamps
+      : {},
+    merchProgress:
+      gameState && gameState.merchProgress && typeof gameState.merchProgress === "object"
+        ? { ...defaultGameState().merchProgress, ...gameState.merchProgress }
+        : defaultGameState().merchProgress,
+    recentSessions: Array.isArray(gameState && gameState.recentSessions)
+      ? gameState.recentSessions
+      : [],
+  };
+  const shop = state.shop;
+  if (chapterId === "first_delivery") {
+    return Boolean(state.stamps.first_delivery) || state.recentSessions.length > 0;
+  }
+  if (chapterId === "soup_bowl_incident") return shop.shopLevel >= 2;
+  if (chapterId === "festival_order") {
+    return shop.shopLevel >= 3 || shop.upgrades.festival_cooler > 0;
+  }
+  if (chapterId === "wedding_cake_contract") {
+    return Boolean(state.stamps.long_haul_pour)
+      || Number(state.merchProgress.deliveryCrew && state.merchProgress.deliveryCrew.count || 0) >= 3
+      || shop.shopLevel >= 4;
+  }
+  if (chapterId === "nospill_invitation") {
+    return Boolean(state.stamps.nospill_club)
+      || Number(state.merchProgress.nospillClubGear && state.merchProgress.nospillClubGear.count || 0) >= 1;
+  }
+  if (chapterId === "perfect_pour_trial") {
+    return Boolean(state.stamps.perfect_pour)
+      || Boolean(state.merchProgress.perfectPourDrop && state.merchProgress.perfectPourDrop.unlocked);
+  }
+  return false;
+}
+
+function updateStoryChapters(gameState) {
+  const next = {
+    ...gameState,
+    shop: normalizeShopState(gameState && gameState.shop),
+  };
+  SHOP_STORY_CHAPTERS.forEach((chapter) => {
+    if (storyChapterUnlocked(chapter.id, next) && !next.shop.storyChapters[chapter.id]) {
+      next.shop.storyChapters[chapter.id] = {
+        title: chapter.title,
+        unlockedAt: new Date().toISOString(),
+      };
+    }
+  });
+  return next;
+}
+
+function updateContracts(sessionSummary, rewardSummary, gameState) {
+  const next = normalizeGameState(gameState);
+  const contract = next.shop.contracts.smooth_week || defaultShopState().contracts.smooth_week;
+  if (
+    isQualifiedSession(sessionSummary)
+    && calculateCargoCondition(sessionSummary) >= 90
+    && Number(rewardSummary && rewardSummary.xpMultiplier || 1) > 0
+  ) {
+    contract.progress = Math.min(Number(contract.target || 3), Number(contract.progress || 0) + 1);
+    contract.completed = contract.progress >= Number(contract.target || 3);
+  }
+  next.shop.contracts.smooth_week = contract;
+  return next;
+}
+
+function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
+  let next = normalizeGameState(gameState);
+  const session = sessionSummary || {};
+  const rewards = rewardSummary || {};
+  const cargo = calculateCargoCondition(session);
+  const qualified = isQualifiedSession(session);
+  const dailyComplete = Boolean(rewards.dailyComplete || session.dailyDeliveryComplete);
+  const perfectPour = qualified && cargo >= 100;
+  const xpMultiplier = Number(rewards.xpMultiplier || 1);
+  const extraSessionMultiplier = qualified && xpMultiplier < 1 ? 0.5 : 1;
+  const betterBoxes = safeNonNegativeInteger(next.shop.upgrades.better_boxes, 0, 4);
+  const shopSign = safeNonNegativeInteger(next.shop.upgrades.shop_sign, 0, 4);
+
+  let tofuStockGained = qualified
+    ? Math.floor(cargo)
+    : Math.min(18, Math.floor(cargo / 6));
+  if (qualified) tofuStockGained += 20;
+  if (dailyComplete) tofuStockGained += 15;
+  if (perfectPour) tofuStockGained += 50;
+  tofuStockGained += Math.floor(tofuStockGained * 0.08 * betterBoxes);
+  tofuStockGained = Math.max(0, Math.round(tofuStockGained * extraSessionMultiplier));
+  if (!qualified && Number(session.durationSeconds || 0) < 60) {
+    tofuStockGained = Math.min(tofuStockGained, 8);
+  }
+
+  let reputationGained = 0;
+  if (qualified) {
+    if (cargo >= 85) reputationGained += 12;
+    if (cargo >= 95) reputationGained += 18;
+    if (dailyComplete) reputationGained += 5;
+    if (perfectPour) reputationGained += 30;
+    if (Array.isArray(rewards.stamps)) reputationGained += Math.min(10, rewards.stamps.length * 2);
+    reputationGained += Math.floor(reputationGained * 0.1 * shopSign);
+    reputationGained = Math.max(0, Math.round(reputationGained * extraSessionMultiplier));
+  }
+
+  const previousShopLevel = next.shop.shopLevel;
+  next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + tofuStockGained);
+  next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + reputationGained);
+  next.shop.lifetimeReputation = safeNonNegativeInteger(
+    next.shop.lifetimeReputation + reputationGained,
+  );
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  next.shop.lastShopTickAt = next.shop.lastShopTickAt || new Date().toISOString();
+  next = updateContracts(session, rewards, next);
+  next = updateStoryChapters(next);
+
+  return {
+    gameState: next,
+    tofuStockGained,
+    reputationGained,
+    shopLevelBefore: previousShopLevel,
+    shopLevelAfter: next.shop.shopLevel,
+    shopLevelChanged: next.shop.shopLevel > previousShopLevel,
+  };
+}
+
+function sanitizeShopStateForExport(gameState) {
+  return normalizeShopState(gameState && gameState.shop);
 }
 
 function dateDaysApart(leftDateKey, rightDateKey) {
@@ -1169,14 +1816,96 @@ function updateCommuteMastery(session, gameState) {
     masteryLevel: Math.floor(count / 3),
   };
   next.routeMastery[fingerprint.id] = updated;
-  const message = previous.count > 0 && cargo > previousAverage
-    ? "Looks like a familiar delivery. Today was smoother than your recent average."
-    : "";
+  let message = "";
+  if (previous.count > 0 && cargo > previous.bestCargoCondition) {
+    message = "Looks like a familiar delivery. New best for this familiar route. Commute Mastery +1.";
+  } else if (previous.count > 0 && cargo > previousAverage) {
+    message = "Looks like a familiar delivery. Today was smoother than your recent average.";
+  } else if (previous.count > 0) {
+    message = "Looks like a familiar delivery.";
+  }
   return { routeMastery: next.routeMastery, message };
 }
 
 function stampLabels(ids) {
   return (ids || []).map((id) => STAMP_LABELS[id] || id);
+}
+
+function deliveryPassportSummary(gameState) {
+  const state = normalizeGameState(gameState);
+  const unlockedIds = Object.keys(state.stamps || {});
+  const recent = unlockedIds
+    .map((id) => ({ id, label: STAMP_LABELS[id] || id, date: state.stamps[id].date || "" }))
+    .sort((left, right) => String(right.date).localeCompare(String(left.date)))
+    .slice(0, 6);
+  const majorIds = [
+    "daily_delivery_complete",
+    "cup_stayed_full",
+    "smooth_commute",
+    "technical_pour",
+    "nospill_club",
+    "perfect_pour",
+  ];
+  return {
+    total: unlockedIds.length,
+    totalAvailable: Object.keys(STAMP_LABELS).length,
+    recent,
+    major: majorIds.map((id) => ({
+      id,
+      label: STAMP_LABELS[id],
+      unlocked: Boolean(state.stamps[id]),
+    })),
+  };
+}
+
+function buildCoachRecap(sessionSummary, rewardSummary = {}) {
+  const session = sessionSummary || {};
+  const skillXP = rewardSummary.skillXP || awardSkillXP(session);
+  const sortedSkills = Object.entries(skillXP).sort((left, right) => right[1] - left[1]);
+  const bestSkillId = sortedSkills.length ? sortedSkills[0][0] : "passengerComfort";
+  const harshBraking = Number(session.harshBraking || 0);
+  const harshAcceleration = Number(session.harshAcceleration || 0);
+  const lateralJerk = Number(session.lateralJerk || 0);
+  const abruptTransitions = Number(session.abruptTransitions || 0);
+  const harshInputCount = Number(session.harshInputCount || 0);
+  const cargo = calculateCargoCondition(session);
+  let damageSource = "Inconsistent inputs";
+  let nextFocus = "Keep the same calm inputs next time.";
+  let message = "Cargo loss mostly came from small input changes.";
+
+  if (!isQualifiedSession(session)) {
+    damageSource = "Short/unqualified practice session";
+    nextFocus = "Try a normal qualified delivery when parked and ready.";
+    message = "Practice complete. Qualified deliveries can add route context later.";
+  } else if (harshBraking >= Math.max(harshAcceleration, lateralJerk, abruptTransitions, 1)) {
+    damageSource = "Brake release";
+    nextFocus = "Next focus: smoother brake release.";
+    message = "Cargo loss mostly came from abrupt braking.";
+  } else if (harshAcceleration >= Math.max(harshBraking, lateralJerk, abruptTransitions, 1)) {
+    damageSource = "Harsh acceleration";
+    nextFocus = "Next focus: gentler throttle pickup.";
+    message = "Cargo loss mostly came from abrupt acceleration.";
+  } else if (lateralJerk >= Math.max(harshBraking, harshAcceleration, abruptTransitions, 1)) {
+    damageSource = "Lateral jerk";
+    nextFocus = "Next focus: smoother side-to-side inputs.";
+    message = "Cargo loss mostly came from lateral jerk.";
+  } else if (abruptTransitions >= 2 || harshInputCount >= 4) {
+    damageSource = "Repeated spikes";
+    nextFocus = "Next focus: fewer sudden input changes.";
+    message = "Cargo loss mostly came from repeated spikes.";
+  } else if (cargo >= 90) {
+    damageSource = "Cargo mostly preserved";
+    nextFocus = "Smooth commute. Try keeping the same calm inputs tomorrow.";
+    message = "Cargo stayed stable through most of the delivery.";
+  }
+
+  return {
+    damageSource,
+    bestSkill: SKILL_LABELS[bestSkillId] || "Passenger Comfort",
+    bestSkillId,
+    nextFocus,
+    message,
+  };
 }
 
 function calculateDeliveryRewards(session, gameState = defaultGameState()) {
@@ -1225,7 +1954,7 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
   }
   if (isQualifiedSession(enrichedSession) && cargoCondition >= 100) addStamp("perfect_pour");
 
-  const nextState = normalizeGameState(state);
+  let nextState = normalizeGameState(state);
   nextState.totalXP += driverXP.xpGained;
   nextState.level = levelForXP(nextState.totalXP);
   Object.entries(skillXP).forEach(([skill, value]) => {
@@ -1258,12 +1987,26 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
   }
   const mastery = updateCommuteMastery(enrichedSession, nextState);
   nextState.routeMastery = mastery.routeMastery;
+  const coach = buildCoachRecap(enrichedSession, { skillXP });
+  const passport = deliveryPassportSummary(nextState);
+  const shop = applyDeliveryToShop(
+    enrichedSession,
+    {
+      dailyComplete,
+      xpMultiplier: driverXP.xpMultiplier,
+      stamps,
+    },
+    nextState,
+  );
+  nextState = shop.gameState;
   const rewardEntry = {
     date: session.date,
     cargoCondition,
     routeType,
     xpGained: driverXP.xpGained,
     stamps: stampLabels(stamps),
+    tofuStockGained: shop.tofuStockGained,
+    reputationGained: shop.reputationGained,
   };
   nextState.recentRewards = [rewardEntry, ...nextState.recentRewards].slice(0, 12);
   nextState.recentSessions = [{
@@ -1294,12 +2037,18 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     merchProgress: nextState.merchProgress,
     commuteMasteryMessage: mastery.message,
     gameState: nextState,
+    coach,
+    passport,
+    shop,
   };
 }
 
-function buildDeliverySharePayload(session, gameState = null) {
+function buildDeliverySharePayload(session, rewardSummary = null, gameState = null) {
   const routeType = session.routeType || classifyRouteType(session);
   const cargoCondition = calculateCargoCondition(session);
+  const state = gameState || (rewardSummary && rewardSummary.gameState) || null;
+  const normalized = state ? normalizeGameState(state) : null;
+  const level = normalized ? normalized.level : null;
   const stamp = Array.isArray(session.deliveryStamps) && session.deliveryStamps.length
     ? stampLabels([session.deliveryStamps[0]])[0]
     : bestUnlockedMilestone(session);
@@ -1308,6 +2057,8 @@ function buildDeliverySharePayload(session, gameState = null) {
     status: "Delivery Complete",
     cargoCondition: formatPercent(cargoCondition),
     rank: session.rank,
+    driverLicense: level ? `Level ${level} · ${getDriverLicense(level)}` : "",
+    shopLevel: normalized ? `Shop Level ${normalized.shop.shopLevel}` : "",
     routeType,
     stamp: stamp || "",
     dailyStatus:
@@ -1317,7 +2068,7 @@ function buildDeliverySharePayload(session, gameState = null) {
           ? "Daily Delivery In Progress"
           : "",
     tagline: TAGLINE_SMOOTHER,
-    gameState,
+    gameState: state,
   };
 }
 
@@ -2477,10 +3228,17 @@ function renderDeliveryLog(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const mission = getDailyDelivery(new Date());
   const progress = levelProgress(state.totalXP);
+  const passport = deliveryPassportSummary(state);
+  const recentReward = state.recentRewards && state.recentRewards.length
+    ? state.recentRewards[0]
+    : null;
   if (elements.driverLevel) elements.driverLevel.textContent = `Level ${progress.level}`;
+  if (elements.driverLicense) {
+    elements.driverLicense.textContent = `Level ${progress.level} · ${getDriverLicense(progress.level)}`;
+  }
   if (elements.dailyCargo) elements.dailyCargo.textContent = mission.cargo;
   if (elements.dailyGoal) {
-    elements.dailyGoal.textContent = `${mission.focus}: ${mission.goal}`;
+    elements.dailyGoal.textContent = `${mission.description} ${mission.focus}: ${mission.goal}`;
   }
   if (elements.dailyReward) elements.dailyReward.textContent = mission.reward;
   if (elements.driverTotalXP) elements.driverTotalXP.textContent = String(state.totalXP);
@@ -2496,15 +3254,188 @@ function renderDeliveryLog(gameState = loadGameState()) {
     elements.nospillGearProgress.textContent = `${gear.count}/${gear.target}`;
   }
   if (elements.recentStamps) {
-    const stamps = Object.values(state.stamps || {})
-      .map((stamp) => stamp.label)
-      .filter(Boolean)
-      .slice(-6)
-      .reverse();
+    const stamps = passport.recent.map((stamp) => stamp.label);
     elements.recentStamps.innerHTML = stamps.length
       ? stamps.map((label) => `<span>${escapeHtml(label)}</span>`).join("")
       : "<span>No stamps yet</span>";
   }
+  if (elements.passportProgress) {
+    elements.passportProgress.textContent =
+      `${passport.total}/${passport.totalAvailable} stamps`;
+  }
+  if (elements.recentReward) {
+    elements.recentReward.textContent = recentReward
+      ? `+${recentReward.xpGained} XP · ${recentReward.routeType}`
+      : "No rewards yet";
+  }
+}
+
+function shopStorySummary(gameState) {
+  const state = normalizeGameState(gameState);
+  const unlocked = SHOP_STORY_CHAPTERS.filter(
+    (chapter) => state.shop.storyChapters[chapter.id],
+  );
+  const current = unlocked.length ? unlocked[unlocked.length - 1] : SHOP_STORY_CHAPTERS[0];
+  const next = SHOP_STORY_CHAPTERS.find(
+    (chapter) => !state.shop.storyChapters[chapter.id],
+  );
+  return {
+    current,
+    next,
+    unlockedCount: unlocked.length,
+    totalCount: SHOP_STORY_CHAPTERS.length,
+  };
+}
+
+function renderShopUpgrade(upgrade, gameState) {
+  const state = normalizeGameState(gameState);
+  const currentLevel = safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel);
+  const complete = currentLevel >= upgrade.maxLevel;
+  const cost = shopUpgradeCost(upgrade, currentLevel);
+  const available =
+    !complete
+    && state.shop.shopLevel >= upgrade.requiredShopLevel
+    && state.shop.tofuStock >= cost.costTofuStock
+    && state.shop.reputation >= cost.costReputation
+    && !appState.running
+    && !appState.calibrating;
+  const costText = cost.costReputation
+    ? `${cost.costTofuStock} tofu · ${cost.costReputation} reputation`
+    : `${cost.costTofuStock} tofu`;
+  const status = complete
+    ? "Complete"
+    : state.shop.shopLevel < upgrade.requiredShopLevel
+      ? `Requires Shop Level ${upgrade.requiredShopLevel}`
+      : costText;
+  return `
+    <div class="nospill-upgrade-item">
+      <header>
+        <strong>${escapeHtml(upgrade.name)} ${currentLevel ? `Lv ${currentLevel}` : ""}</strong>
+        <small>${escapeHtml(status)}</small>
+      </header>
+      <small>${escapeHtml(upgrade.description)}</small>
+      <small>${escapeHtml(upgrade.effect)}</small>
+      <button
+        class="nospill-secondary"
+        type="button"
+        data-shop-upgrade="${escapeHtml(upgrade.id)}"
+        ${available ? "" : "disabled"}
+      >
+        ${complete ? "Installed" : "Buy Upgrade"}
+      </button>
+    </div>
+  `;
+}
+
+function renderDeliveryWall(gameState = loadGameState()) {
+  if (!elements.deliveryWallGrid) return;
+  const state = normalizeGameState(gameState);
+  const progress = state.merchProgress;
+  const passport = deliveryPassportSummary(state);
+  const wallItems = [
+    {
+      id: "nospill_club",
+      label: "No-Spill Club Gear",
+      status: `${progress.nospillClubGear.count}/${progress.nospillClubGear.target}`,
+      unlocked: progress.nospillClubGear.unlocked,
+    },
+    {
+      id: "perfect_pour",
+      label: "Perfect Pour Drop",
+      status: progress.perfectPourDrop.unlocked ? "Unlocked" : "Locked",
+      unlocked: progress.perfectPourDrop.unlocked,
+    },
+    {
+      id: "smooth_driver",
+      label: "Delivery Crew",
+      status: `${progress.deliveryCrew.count}/${progress.deliveryCrew.target}`,
+      unlocked: progress.deliveryCrew.unlocked,
+    },
+    {
+      id: "passport",
+      label: "Recent Stamps",
+      status: passport.recent.length
+        ? passport.recent.map((stamp) => stamp.label).slice(0, 3).join(", ")
+        : "No stamps yet",
+      unlocked: passport.recent.length > 0,
+    },
+  ];
+  elements.deliveryWallGrid.innerHTML = wallItems.map((item) => {
+    const link = item.unlocked ? MERCH_LINKS[item.id] : null;
+    const action = link
+      ? `<a class="nospill-merch-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Buy unlocked shirt</a>`
+      : item.unlocked && item.id !== "passport"
+        ? "<strong>Unlocked, merch coming soon.</strong>"
+        : "";
+    return `
+      <div class="nospill-delivery-wall-item ${item.unlocked ? "" : "is-locked"}">
+        <span>${escapeHtml(item.label)}</span>
+        <strong>${escapeHtml(item.status)}</strong>
+        ${action}
+      </div>
+    `;
+  }).join("");
+}
+
+function renderTofuShop(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  const shop = state.shop;
+  const progress = shopLevelProgress(shop.reputation);
+  const rate = getShopProductionRate(state);
+  const story = shopStorySummary(state);
+  const smoothWeek = shop.contracts.smooth_week || defaultShopState().contracts.smooth_week;
+  if (elements.shopLevelBadge) {
+    elements.shopLevelBadge.textContent = `Shop Level ${shop.shopLevel}`;
+  }
+  if (elements.shopTofuStock) elements.shopTofuStock.textContent = String(shop.tofuStock);
+  if (elements.shopReputation) elements.shopReputation.textContent = String(shop.reputation);
+  if (elements.shopLevelProgress) {
+    elements.shopLevelProgress.textContent =
+      `Level ${progress.level} · ${progress.currentReputation}/${progress.nextReputation}`;
+  }
+  if (elements.shopIdleRate) elements.shopIdleRate.textContent = `${rate}/hr`;
+  if (elements.packTofuButton) {
+    const activeDrive = appState.running || appState.calibrating;
+    elements.packTofuButton.disabled = activeDrive;
+    elements.packTofuButton.textContent = activeDrive ? "Park First" : "Pack Tofu";
+  }
+  if (elements.packTofuHelper) {
+    elements.packTofuHelper.textContent = appState.running || appState.calibrating
+      ? "Shop actions unlock after you finish and park."
+      : "Parked-only. Packing adds tofu stock, not reputation.";
+  }
+  if (elements.shopUpgradeList) {
+    elements.shopUpgradeList.innerHTML = getShopUpgradeCatalog()
+      .map((upgrade) => renderShopUpgrade(upgrade, state))
+      .join("");
+  }
+  if (elements.shopStoryChapter) {
+    elements.shopStoryChapter.textContent = story.current.title;
+  }
+  if (elements.shopStoryNext) {
+    elements.shopStoryNext.textContent = story.next
+      ? `Next: ${story.next.requirement}`
+      : "All current chapters unlocked.";
+  }
+  if (elements.shopCustomersPreview) {
+    elements.shopCustomersPreview.textContent = "Tea Master · Festival Vendor · Neighborhood Regular";
+  }
+  if (elements.shopContractPreview) {
+    elements.shopContractPreview.textContent =
+      `${smoothWeek.name}: ${smoothWeek.progress}/${smoothWeek.target}`;
+  }
+  if (elements.shopOfflineEarnings) {
+    elements.shopOfflineEarnings.textContent =
+      `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock.`;
+  }
+  renderDeliveryWall(state);
+}
+
+function renderGamePanels(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  renderDeliveryLog(state);
+  renderMerchProgress(state);
+  renderTofuShop(state);
 }
 
 function merchProgressMetric(label, value) {
@@ -2533,6 +3464,14 @@ function renderMerchProgress(gameState = loadGameState()) {
 function renderDeliverySummary(summary) {
   if (!elements.deliverySummaryGrid) return;
   const rewards = summary.deliveryRewards || {};
+  const level = rewards.gameState ? rewards.gameState.level : loadGameState().level;
+  const coach = rewards.coach || buildCoachRecap(summary, rewards);
+  const passport = rewards.passport || deliveryPassportSummary(rewards.gameState || loadGameState());
+  const merch = rewards.merchProgress || normalizeGameState(loadGameState()).merchProgress;
+  const shop = rewards.shop || { tofuStockGained: 0, reputationGained: 0 };
+  const shopState = shop.gameState
+    ? normalizeGameState(shop.gameState).shop
+    : normalizeGameState(rewards.gameState || loadGameState()).shop;
   const skillLine = rewards.skillXP
     ? Object.entries(rewards.skillXP)
         .sort((left, right) => right[1] - left[1])
@@ -2547,22 +3486,34 @@ function renderDeliverySummary(summary) {
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
     summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
     summaryMetric("Rank", summary.rank),
+    summaryMetric("Driver License", `Level ${level} · ${getDriverLicense(level)}`),
+    summaryMetric(
+      "Today's Delivery",
+      rewards.dailyComplete
+        ? `${rewards.dailyDelivery ? rewards.dailyDelivery.cargo : "Cargo"} delivered`
+        : `${rewards.dailyDelivery ? rewards.dailyDelivery.cargo : "Cargo"} in progress`,
+    ),
+    summaryMetric("Main Damage Source", coach.damageSource),
+    summaryMetric("Best Skill", coach.bestSkill),
+    summaryMetric("Next Focus", coach.nextFocus),
     summaryMetric("Driver XP", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
     summaryMetric("Skill XP", skillLine),
     summaryMetric("Stamp Earned", stampLine),
     summaryMetric(
-      "Daily Delivery",
-      rewards.dailyComplete ? "Complete" : "In progress",
+      "Tofu Shop",
+      `+${shop.tofuStockGained || 0} tofu · +${shop.reputationGained || 0} reputation`,
     ),
+    summaryMetric("Shop Level", `Level ${shopState.shopLevel}`),
+    summaryMetric("Delivery Passport", `${passport.total}/${passport.totalAvailable} stamps`),
     summaryMetric(
       "No-Spill Club Gear",
-      rewards.merchProgress
-        ? `${rewards.merchProgress.nospillClubGear.count}/${rewards.merchProgress.nospillClubGear.target}`
-        : "0/3",
+      `${merch.nospillClubGear.count}/${merch.nospillClubGear.target}`,
     ),
+    summaryMetric("Perfect Pour Drop", merch.perfectPourDrop.unlocked ? "Unlocked" : "Locked"),
+    summaryMetric("Delivery Crew", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
   ].join("");
   if (elements.commuteMasteryCopy) {
-    elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || "";
+    elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || coach.message || "";
   }
 }
 
@@ -2621,9 +3572,8 @@ function renderSummary(summary) {
     elements.summaryStatus.textContent = `${summary.qualificationMessage}${reasons}`;
   }
   renderMerchPanel(loadClubState());
-  renderMerchProgress(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
+  renderGamePanels(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderDeliverySummary(summary);
-  renderDeliveryLog(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderShareCanvas(summary);
   showView("summary");
 }
@@ -2686,13 +3636,19 @@ function shareDistanceLabel(summary) {
 
 function buildShareCardData(summary, config = SHARE_CONFIG) {
   const shareConfig = normalizedShareConfig(config);
-  const delivery = buildDeliverySharePayload(summary);
+  const delivery = buildDeliverySharePayload(
+    summary,
+    summary.deliveryRewards || null,
+    summary.deliveryRewards ? summary.deliveryRewards.gameState : null,
+  );
   return {
     title: APP_BRAND,
     challengeName: "Delivery Complete",
     waterDelivered: delivery.cargoCondition,
     waterSpilled: formatPercent(summary.waterSpilled),
     rank: summary.rank,
+    driverLicense: delivery.driverLicense,
+    shopLevel: delivery.shopLevel,
     qualificationStatus: qualificationShareLabel(summary),
     routeLabel: delivery.routeType,
     distanceLabel: shareConfig.includeDistanceInShare ? shareDistanceLabel(summary) : "",
@@ -2721,6 +3677,8 @@ function buildShareText(summary, config = SHARE_CONFIG) {
   const lines = [
     `${APP_BRAND}: Delivery Complete. Cargo Condition: ${data.waterDelivered}. Rank: ${data.rank}. Route Type: ${data.routeLabel}.${milestoneText} ${data.tagline}`,
   ];
+  if (data.driverLicense) lines.push(`Driver License: ${data.driverLicense}.`);
+  if (data.shopLevel) lines.push(data.shopLevel);
   if (data.dailyStatus) lines.push(data.dailyStatus);
   if (data.distanceLabel) lines.push(`Distance: ${data.distanceLabel}.`);
   const shareConfig = normalizedShareConfig(config);
@@ -2767,8 +3725,10 @@ function renderShareCanvas(summary) {
   context.fillStyle = "#bbc7c0";
   context.font = "700 30px Inter, Arial, sans-serif";
   context.fillText(`Rank: ${data.rank}`, 118, 560);
-  context.fillText(`Status: ${data.qualificationStatus}`, 118, 622);
-  let detailY = 684;
+  context.fillText(`License: ${data.driverLicense || "Local Driver"}`, 118, 622);
+  context.fillText(data.shopLevel || "Shop Level 1", 118, 684);
+  context.fillText(`Status: ${data.qualificationStatus}`, 118, 746);
+  let detailY = 808;
   if (data.routeLabel) {
     context.fillText(`Route: ${data.routeLabel}`, 118, detailY);
     detailY += 62;
@@ -2816,6 +3776,9 @@ function canvasToBlob(canvas) {
 
 function setSummaryStatusMessage(message) {
   if (elements.summaryStatus) elements.summaryStatus.textContent = message;
+  if (elements.landingStatus && !appState.running && !appState.calibrating) {
+    elements.landingStatus.textContent = message;
+  }
 }
 
 async function shareCardFile(text) {
@@ -2897,6 +3860,98 @@ async function downloadShareCard() {
   link.remove();
   URL.revokeObjectURL(url);
   setSummaryStatusMessage("Card downloaded.");
+}
+
+async function exportProgress() {
+  const text = exportGameProgress(loadGameState());
+  try {
+    if (
+      typeof navigator === "undefined"
+      || !navigator.clipboard
+      || !navigator.clipboard.writeText
+    ) {
+      throw new Error("clipboard unavailable");
+    }
+    await navigator.clipboard.writeText(text);
+    setSummaryStatusMessage("Progress backup copied.");
+  } catch (_) {
+    setSummaryStatusMessage(`Copy unavailable. Progress backup: ${text}`);
+  }
+}
+
+function importProgress() {
+  if (appState.running || appState.calibrating) {
+    setSummaryStatusMessage("Progress cannot be imported during an active drive.");
+    return;
+  }
+  if (typeof window === "undefined" || typeof window.prompt !== "function") {
+    setSummaryStatusMessage("Import is unavailable in this browser.");
+    return;
+  }
+  const text = window.prompt("Paste Tofu Driver progress backup JSON:");
+  if (!text) return;
+  const result = importGameProgress(text);
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    return;
+  }
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage("Progress restored on this device.");
+}
+
+function resetProgress() {
+  if (appState.running || appState.calibrating) {
+    setSummaryStatusMessage("Progress cannot be reset during an active drive.");
+    return;
+  }
+  if (
+    typeof window !== "undefined"
+    && typeof window.confirm === "function"
+    && !window.confirm("Reset Tofu Driver progress on this device?")
+  ) {
+    return;
+  }
+  if (!resetGameState()) {
+    setSummaryStatusMessage("Progress could not be reset.");
+    return;
+  }
+  const gameState = loadGameState();
+  renderGamePanels(gameState);
+  setSummaryStatusMessage("Tofu Driver progress reset on this device.");
+}
+
+function handlePackTofu() {
+  const result = packTofu(loadGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(`Packed tofu: +${result.tofuStockGained} tofu stock.`);
+}
+
+function handleShopUpgradeClick(event) {
+  const button = event.target && event.target.closest
+    ? event.target.closest("[data-shop-upgrade]")
+    : null;
+  if (!button) return;
+  if (appState.running || appState.calibrating) {
+    setSummaryStatusMessage("Shop actions unlock after you finish and park.");
+    return;
+  }
+  const result = buyShopUpgrade(button.dataset.shopUpgrade, loadGameState());
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(`${result.upgrade.name} upgraded.`);
 }
 
 function selectedSafetyChecksComplete() {
@@ -3038,8 +4093,7 @@ function newRun() {
   renderMountControls();
   renderAudioLevelControls();
   renderMerchPanel(loadClubState());
-  renderMerchProgress(loadGameState());
-  renderDeliveryLog(loadGameState());
+  renderGamePanels(loadGameStateWithOfflineShopEarnings());
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   showView("landing");
 }
@@ -3098,6 +4152,11 @@ function bindEvents() {
   elements.downloadButton.addEventListener("click", downloadShareCard);
   elements.copyButton.addEventListener("click", copyShareText);
   elements.saveButton.addEventListener("click", saveCurrentSummary);
+  elements.exportProgressButton.addEventListener("click", exportProgress);
+  elements.importProgressButton.addEventListener("click", importProgress);
+  elements.resetProgressButton.addEventListener("click", resetProgress);
+  elements.packTofuButton.addEventListener("click", handlePackTofu);
+  elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
   elements.newRunButton.addEventListener("click", newRun);
 }
 
@@ -3147,6 +4206,7 @@ function cacheElements() {
     runStatus: document.getElementById("run-status"),
     landingStatus: document.getElementById("landing-status"),
     driverLevel: document.getElementById("driver-level"),
+    driverLicense: document.getElementById("driver-license"),
     dailyCargo: document.getElementById("daily-cargo"),
     dailyGoal: document.getElementById("daily-goal"),
     dailyReward: document.getElementById("daily-reward"),
@@ -3154,7 +4214,26 @@ function cacheElements() {
     driverNextXP: document.getElementById("driver-next-xp"),
     driverStreak: document.getElementById("driver-streak"),
     nospillGearProgress: document.getElementById("nospill-gear-progress"),
+    passportProgress: document.getElementById("passport-progress"),
+    recentReward: document.getElementById("recent-reward"),
     recentStamps: document.getElementById("recent-stamps"),
+    exportProgressButton: document.getElementById("export-progress-button"),
+    importProgressButton: document.getElementById("import-progress-button"),
+    resetProgressButton: document.getElementById("reset-progress-button"),
+    shopLevelBadge: document.getElementById("shop-level-badge"),
+    shopTofuStock: document.getElementById("shop-tofu-stock"),
+    shopReputation: document.getElementById("shop-reputation"),
+    shopLevelProgress: document.getElementById("shop-level-progress"),
+    shopIdleRate: document.getElementById("shop-idle-rate"),
+    packTofuButton: document.getElementById("pack-tofu-button"),
+    packTofuHelper: document.getElementById("pack-tofu-helper"),
+    shopUpgradeList: document.getElementById("shop-upgrade-list"),
+    shopStoryChapter: document.getElementById("shop-story-chapter"),
+    shopStoryNext: document.getElementById("shop-story-next"),
+    shopCustomersPreview: document.getElementById("shop-customers-preview"),
+    shopContractPreview: document.getElementById("shop-contract-preview"),
+    deliveryWallGrid: document.getElementById("delivery-wall-grid"),
+    shopOfflineEarnings: document.getElementById("shop-offline-earnings"),
     cupCanvas: document.getElementById("cup-canvas"),
     summaryStatusLabel: document.getElementById("summary-status-label"),
     summaryTitle: document.getElementById("summary-title"),
@@ -3188,8 +4267,7 @@ function initNoSpillApp() {
   updateStartReadiness();
   updateModeCopy();
   renderMerchPanel(clubState);
-  renderMerchProgress(loadGameState());
-  renderDeliveryLog(loadGameState());
+  renderGamePanels(loadGameStateWithOfflineShopEarnings());
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   if (!hasDeviceMotionSupport()) {
     setLandingStatus(

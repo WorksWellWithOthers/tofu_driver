@@ -7,6 +7,7 @@ a virtual cup steady while driving normally. The product rewards smoothness, not
 
 - `Tofu Driver` is the main app and brand.
 - `Delivery Log` is the local-first game layer.
+- `Tofu Shop` is the parked-only local management layer.
 - `The Cup Test` is the core smooth-driving challenge.
 - `No-Spill Club` is a rank, community tier, and merch tier, not the primary app name.
 - `Perfect Pour` is the top achievement.
@@ -22,6 +23,7 @@ a virtual cup steady while driving normally. The product rewards smoothness, not
 - The Custom / Diagnose mount preview uses local `DeviceMotionEvent` data only and does not start audio or geolocation.
 - Audio coach volume is selected locally from Muted, Normal, or Loud and uses smoothed gain changes.
 - The active Cup Test canvas uses a tofu cargo slosh visualization instead of a technical G-dot.
+- Tofu Shop interactions are parked-only and hidden from the active drive screen.
 
 ## Privacy Contract
 
@@ -81,10 +83,35 @@ Saved session summaries contain summarized values only:
 - `recentSessions`
 - `xpByDate`
 - `routeMastery`
+- `shop`
+
+The `shop` object stores summarized local management progress only:
+
+- `tofuStock`
+- `reputation`
+- `shopLevel`
+- `lifetimeTofuPacked`
+- `lifetimeReputation`
+- `upgrades`
+- `storyChapters`
+- `staff`
+- `customers`
+- `contracts`
+- `lastShopTickAt`
+- `offlineEarnings`
 
 Route mastery uses coarse fingerprints only: route type, distance bucket, duration bucket,
 turn-density bucket, and curvature bucket. It must not include coordinates, street names, maps,
 route traces, or raw GPS points.
+
+Delivery Log progress persists on the same browser, device, and domain through `localStorage`.
+There is no cross-device sync, account backup, or automatic migration between domains. Progress
+from an older host such as `cavrino.com/nospill` will not automatically appear on `tofudriver.com`
+because browser storage is scoped by origin.
+
+Users can reset only the Tofu Driver game-state key, export a JSON backup of summarized game state,
+and import a valid backup. Export/import must not include raw GPS samples, raw motion samples,
+coordinates, route traces, speed logs, street names, or maps.
 
 ## Live Tofu Cargo Visualization
 
@@ -108,16 +135,18 @@ The visualization is local-only and does not change scoring. It has a reduced-mo
 wobble and no splash particles. Cargo Condition / Water Left remains the primary visible score, and
 audio coach remains the primary eyes-off feedback while driving.
 
-## Delivery Log
+## Delivery Board V2
 
 Delivery Log turns each completed Cup Test into a fragile-cargo delivery summary. The landing page
-shows today's local daily delivery, cargo, goal, reward, driver level, total XP, streak, No-Spill
-Club Gear progress, and recent stamps.
+shows a Delivery Board with today's local delivery, cargo profile, goal, reward, driver license,
+numeric level, total XP, streak, No-Spill Club Gear progress, Delivery Passport progress, recent
+reward, and recent stamps.
 
-Daily deliveries are selected deterministically from the local calendar date and a small static
-cargo catalog. They require no server and are evaluated after the session ends. Cargo Condition is
-derived from the existing water-left score, so it remains based on smoothness, G-force, and jerk,
-not speed.
+Daily deliveries are selected deterministically from the local calendar date and a static cargo
+profile catalog. Cargo profiles include id, name, description, focus, goal text, reward text,
+scoring emphasis, and suggested stamp. They require no server and are evaluated after the session
+ends. Cargo Condition is derived from the existing water-left score, so it remains based on
+smoothness, G-force, and jerk, not speed.
 
 Route type labels are private/generic summaries:
 
@@ -132,6 +161,61 @@ Technical rewards require Mixed or Technical route context. Short, easy, straigh
 practice credit but do not unlock major merch progress. Long qualified commutes can earn Long Haul,
 Smooth Commute, consistency, and route mastery rewards without encouraging faster driving or
 seeking twisty roads.
+
+Driver License labels are derived from level: Rookie Carrier, Cup Courier, Smooth Driver,
+No-Spill Candidate, Certified Tofu Driver, Perfect Pour Courier, and Delivery Legend. The result
+screen also shows a constructive coach recap with main damage source, best skill, and next focus.
+Delivery Passport summarizes local stamps without duplicating them.
+
+## Tofu Shop
+
+Tofu Shop is a cozy parked-only management layer. It appears on the landing/setup screen near the
+Delivery Board and is not shown during an active Cup Test. The UI copy must include the parked-only
+rule: `Shop Mode is for when you are parked. Do not interact while driving.`
+
+Shop resources are local-only:
+
+- `Tofu Stock` comes from completed deliveries, the parked-only Pack Tofu action, and capped idle
+  production from upgrades.
+- `Reputation` comes from qualified smooth deliveries, daily delivery completion, stamps, and
+  No-Spill / Perfect Pour outcomes. Packing tofu and idle production do not grant meaningful
+  reputation.
+- `Shop Level` is derived from reputation with `100 + level * 50` reputation required per level.
+  Initial upgrades spend tofu stock and use reputation-derived Shop Level as the gate, so reputation
+  does not go backward.
+
+Pack Tofu grants a small amount of tofu stock and is disabled while a Cup Test is active. It does
+not affect driving score and does not grant reputation.
+
+Idle production is calculated locally from `lastShopTickAt` when the user returns. Offline tofu
+stock is capped at 8 hours and does not grant reputation. There is no backend timer or worker.
+
+The upgrade catalog is static and uses safe shop language only:
+
+- Tofu Press
+- Better Boxes
+- Shop Sign
+- Delivery Shelf
+- Festival Cooler
+- Cup Display
+
+Upgrades can improve idle stock, delivery stock, reputation presentation, Delivery Wall display, or
+story/cosmetic flavor. They must not imply faster driving, better vehicle handling, stronger brakes,
+or any racing advantage.
+
+Completed deliveries call `applyDeliveryToShop()` after scoring. Tofu stock and reputation are
+based on Cargo Condition, qualification status, daily delivery completion, stamps, and existing
+daily reward reduction. Higher speed must not increase shop rewards. Practice sessions can grant
+limited tofu stock but no reputation by default; very short/unqualified sessions are capped.
+
+Story chapters are local and short: First Delivery, The Soup Bowl Incident, Festival Order, The
+Wedding Cake Contract, No-Spill Invitation, and Perfect Pour Trial. The initial contract model uses
+one summarized Smooth Week contract. Neither story nor contracts require timed driving, faster
+driving, exact distance sharing, or seeking special roads.
+
+The Delivery Wall shows No-Spill Club Gear, Perfect Pour Drop, Delivery Crew progress, and recent
+stamps. Locked merch links are hidden. Super Cute Collectibles remains the physical fulfillment
+partner and does not verify scores in the current MVP.
 
 ## XP And Stamps
 
@@ -172,17 +256,18 @@ and other share payloads. If `includeDistanceInShare` is enabled later, distance
 only as a plain summary metric. It must not be framed competitively and must not be combined with
 speed, maps, GPS coordinates, street names, route traces, or leaderboard-style language.
 
-Share output may include Tofu Driver, Delivery Complete, Cargo Condition, rank, generic route type,
-stamp earned, daily delivery status, and `Not faster. Smoother.` It must not include speed,
-average speed, top speed, GPS, location, coordinates, maps, route traces, street names, exact
-distance by default, fastest time, high-G bragging, `cavrino.com/nospill`, or Super Cute
-Collectibles links by default.
+Share output may include Tofu Driver, Delivery Complete, Cargo Condition, rank, Driver License,
+Shop Level, generic route type, stamp earned, daily delivery status, and `Not faster. Smoother.`
+It must not include speed, average speed, top speed, GPS, location, coordinates, maps, route traces,
+street names, exact distance by default, fastest time, high-G bragging, `cavrino.com/nospill`, or
+Super Cute Collectibles links by default. Share output should not include shop click counts or idle
+production stats by default.
 
 ## Scoring Principles
 
 - Smoothness is rewarded.
 - Speed is not rewarded.
-- Higher speed must not improve score, rank, milestones, merch, or share output.
+- Higher speed must not improve score, XP, rank, stamps, shop resources, milestones, merch, or share output.
 - Safety copy must tell users not to look at the screen while driving.
 
 ## Merch Configuration
