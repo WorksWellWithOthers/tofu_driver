@@ -290,6 +290,8 @@ The live parked generator loop is local-only:
 - `Tofu Press` starts as the first home generator and produces Tofu Stock over elapsed time.
 - `Prep Counter` unlocks after enough shop progress, consumes Tofu Stock, and produces Delivery
   Orders.
+- Generator rates are displayed in per-second terms so the shop reads as a live incremental loop,
+  while the underlying math still uses elapsed timestamps and safe clamping.
 - Generator math uses timestamps, not frame count, and open-page elapsed time is clamped to avoid
   large tab-sleep jumps.
 - Offline progress is calculated locally from `lastGeneratorTickAt` / `lastShopTickAt`, capped at

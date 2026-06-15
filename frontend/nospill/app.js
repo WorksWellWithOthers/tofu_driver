@@ -218,9 +218,9 @@ const SHOP_MAX_RESOURCE = 1000000000;
 const SHOP_OFFLINE_CAP_HOURS = 8;
 const SHOP_GENERATOR_TICK_MS = 10000;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
-const TOFU_PRESS_BASE_PER_MINUTE = 3;
+const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
 const PREP_COUNTER_CONSUME_PER_ORDER = 2;
-const PREP_COUNTER_BASE_ORDERS_PER_MINUTE = 1;
+const PREP_COUNTER_BASE_ORDERS_PER_SECOND = 1 / 60;
 const SHOP_ORDER_TIPS_REWARD = 10;
 const SHOP_ORDER_REPUTATION_REWARD = 1;
 const SHOP_ORDER_XP_REWARD = 4;
@@ -1869,29 +1869,36 @@ function getShopGeneratorRates(gameState, now = new Date()) {
   const state = normalizeGameState(gameState);
   const generators = state.shop.generators;
   const boostMultiplier = activeShopBoostMultiplier(state.shop, now);
-  const tofuPressPerMinute = generators.tofuPress.unlocked
-    ? roundTo(generators.tofuPress.level * TOFU_PRESS_BASE_PER_MINUTE * boostMultiplier, 1)
+  const tofuPressPerSecond = generators.tofuPress.unlocked
+    ? generators.tofuPress.level * TOFU_PRESS_BASE_PER_SECOND * boostMultiplier
     : 0;
-  const prepOrdersPerMinute = generators.prepCounter.unlocked
-    ? generators.prepCounter.level * PREP_COUNTER_BASE_ORDERS_PER_MINUTE
+  const prepOrdersPerSecond = generators.prepCounter.unlocked
+    ? generators.prepCounter.level * PREP_COUNTER_BASE_ORDERS_PER_SECOND
     : 0;
-  const prepTofuPerMinute = prepOrdersPerMinute * PREP_COUNTER_CONSUME_PER_ORDER;
+  const prepTofuPerSecond = prepOrdersPerSecond * PREP_COUNTER_CONSUME_PER_ORDER;
   const prepStatus = !generators.prepCounter.unlocked
     ? "Locked"
     : state.shop.tofuStock >= PREP_COUNTER_CONSUME_PER_ORDER
       ? "Running"
       : "Waiting for tofu stock";
   return {
-    tofuPressPerMinute,
-    prepOrdersPerMinute,
-    prepTofuPerMinute,
+    tofuPressPerSecond,
+    prepOrdersPerSecond,
+    prepTofuPerSecond,
     prepStatus,
     boostMultiplier,
   };
 }
 
 function getShopProductionRate(gameState) {
-  return getShopGeneratorRates(gameState).tofuPressPerMinute * 60;
+  return getShopGeneratorRates(gameState).tofuPressPerSecond * 3600;
+}
+
+function formatShopRate(rate) {
+  const value = Number(rate || 0);
+  if (!Number.isFinite(value) || value <= 0) return "0";
+  if (value >= 1) return String(roundTo(value, 1));
+  return String(roundTo(value, 3));
 }
 
 function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {}) {
@@ -1918,9 +1925,8 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
     ? Math.max(0, Number(options.maxSeconds))
     : SHOP_OPEN_TICK_MAX_SECONDS;
   const elapsedSeconds = Math.min(maxSeconds, Math.max(0, (nowMs - lastMs) / 1000));
-  const elapsedMinutes = elapsedSeconds / 60;
-  const tofuProduced = Math.floor(rates.tofuPressPerMinute * elapsedMinutes);
-  const possibleOrders = Math.floor(rates.prepOrdersPerMinute * elapsedMinutes);
+  const tofuProduced = Math.floor(rates.tofuPressPerSecond * elapsedSeconds);
+  const possibleOrders = Math.floor(rates.prepOrdersPerSecond * elapsedSeconds);
   const availableTofu = safeNonNegativeInteger(shop.tofuStock + tofuProduced);
   const deliveryOrders = Math.min(
     possibleOrders,
@@ -4664,8 +4670,8 @@ function renderShopGeneratorCard(generatorId, gameState) {
     : `${cost.costTofuStock} tofu`;
   const label = generatorId === "tofuPress" ? "Tofu Press" : "Prep Counter";
   const rate = generatorId === "tofuPress"
-    ? `+${rates.tofuPressPerMinute} tofu / min`
-    : `-${rates.prepTofuPerMinute} tofu / min · +${rates.prepOrdersPerMinute} orders / min`;
+    ? `+${formatShopRate(rates.tofuPressPerSecond)} tofu / sec`
+    : `-${formatShopRate(rates.prepTofuPerSecond)} tofu / sec · +${formatShopRate(rates.prepOrdersPerSecond)} orders / sec`;
   const status = !generator.unlocked
     ? "Locked"
     : generatorId === "prepCounter"
@@ -4819,12 +4825,12 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopIdleRate) {
     elements.shopIdleRate.textContent = reveal.shop
-      ? `+${generatorRates.tofuPressPerMinute}/min`
+      ? `+${formatShopRate(generatorRates.tofuPressPerSecond)}/sec`
       : "Locked";
   }
   if (elements.shopOrderRate) {
     elements.shopOrderRate.textContent = reveal.shop && shop.generators.prepCounter.unlocked
-      ? `+${generatorRates.prepOrdersPerMinute}/min`
+      ? `+${formatShopRate(generatorRates.prepOrdersPerSecond)}/sec`
       : "Locked";
   }
   if (elements.shopPrepStatus) {

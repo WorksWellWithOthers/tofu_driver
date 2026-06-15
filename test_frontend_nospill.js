@@ -664,7 +664,7 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.firstFulfillDisabled, true);
   assert(context.firstFulfillHelper.includes('Prep Counter needs delivery orders first'));
   assert(context.firstGeneratorHtml.includes('Tofu Press'));
-  assert(context.firstGeneratorHtml.includes('+3 tofu / min'));
+  assert(context.firstGeneratorHtml.includes('+0.05 tofu / sec'));
   assert(context.firstGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
   assert(context.firstUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
   assert(context.firstCharacterHtml.includes('No one is on shift yet. Your first delivery may attract help.'));
@@ -685,7 +685,7 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.afterPackDisabled, false);
   assert.strictEqual(context.afterPackText, 'Pack Tofu');
   assert(context.afterGeneratorHtml.includes('Tofu Press'));
-  assert(context.afterGeneratorHtml.includes('+3 tofu / min'));
+  assert(context.afterGeneratorHtml.includes('+0.05 tofu / sec'));
   assert(context.afterGeneratorHtml.includes('Prep Counter'));
   assert(context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
   assert(context.afterCharacterHtml.includes('Angry Tofu Driver'));
@@ -1511,7 +1511,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   assert.strictEqual(state.shop.reputation, 0);
   assert.strictEqual(state.shop.shopLevel, 1);
   assert.strictEqual(state.shop.generators.tofuPress.unlocked, true);
-  assert.strictEqual(context.getShopGeneratorRates(state).tofuPressPerMinute, 3);
+  assertAlmostEqual(context.getShopGeneratorRates(state).tofuPressPerSecond, 0.05);
 
   const activePack = context.packTofu(state, { activeDrive: true });
   assert.strictEqual(activePack.ok, false);
@@ -1544,7 +1544,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   );
   assert.strictEqual(delivery.gameState.shop.generators.tofuPress.unlocked, true);
   assert.strictEqual(delivery.gameState.shop.generators.tofuPress.level, 1);
-  assert.strictEqual(context.getShopGeneratorRates(delivery.gameState).tofuPressPerMinute, 3);
+  assertAlmostEqual(context.getShopGeneratorRates(delivery.gameState).tofuPressPerSecond, 0.05);
 
   const tickState = JSON.parse(JSON.stringify(delivery.gameState));
   tickState.shop.tofuStock = 0;

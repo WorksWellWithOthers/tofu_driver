@@ -82,7 +82,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Shop | Pack Tofu | Implemented | `packTofu`, `handlePackTofu` | `testTofuShopStatePackIdleAndUpgradeRules` | UX tuning | P2 | Parked-only, disabled during drive |
 | Shop | Fulfill Shop Order | Implemented | `fulfillShopOrder`, `handleFulfillShopOrder`, shop UI | `testTofuShopStatePackIdleAndUpgradeRules` | Result polish | P1 | Parked-only home action, no sensors/geolocation |
 | Results | Shop Order Complete screen | Implemented | `renderShopOrderResult` | shop/order tests | Visual polish | P2 | Share actions disabled; not a driving result |
-| Shop | Live generator ticking | Implemented | `tickOpenShopGenerators`, `applyShopGeneratorTick` | `testTofuShopStatePackIdleAndUpgradeRules` | Mobile pacing QA | P1 | Runs only while parked/open; no backend timer |
+| Shop | Live generator ticking | Implemented | `tickOpenShopGenerators`, `applyShopGeneratorTick`, per-second shop rate labels | `testTofuShopStatePackIdleAndUpgradeRules` | Mobile pacing QA | P1 | Runs only while parked/open; no backend timer |
 | Shop | Capped idle production | Implemented | `calculateOfflineShopEarnings`, cap constants | idle production tests | Balance tuning | P2 | Includes tofu stock and delivery orders; no reputation |
 | Generator | Tofu Press | Implemented | `SHOP_UPGRADES`, `getShopGeneratorRates`, generator UI | generator/shop tests | Balance tuning | P2 | Produces Tofu Stock only |
 | Generator | Prep Counter | Implemented | `SHOP_UPGRADES`, `getShopGeneratorRates`, generator UI | generator/shop tests | Balance tuning | P2 | Converts Tofu Stock to Delivery Orders |

@@ -23,6 +23,7 @@
   actions disabled.
 - Tofu Shop Generator V2 adds visible local ticking: Tofu Press produces Tofu Stock, and Prep
   Counter converts Tofu Stock into Delivery Orders while parked or through capped offline progress.
+  Generator rates are shown per second in the shop UI.
 - Qualified Cup Test runs are framed as optional certified delivery boosts/status: they can grant
   bonus shop rewards and temporary Tofu Press boosts without making real driving required for
   ordinary shop progression.
