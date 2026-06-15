@@ -108,6 +108,9 @@ globalThis.renderTofuShop = renderTofuShop;
 globalThis.renderCollectionPanel = renderCollectionPanel;
 globalThis.progressiveRevealState = progressiveRevealState;
 globalThis.nextBestAction = nextBestAction;
+globalThis.surfaceFromHash = surfaceFromHash;
+globalThis.setAppSurface = setAppSurface;
+globalThis.renderSurfaceNavigation = renderSurfaceNavigation;
 globalThis.returnToDashboard = returnToDashboard;
 globalThis.takeAnotherCupTest = takeAnotherCupTest;
 globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
@@ -275,6 +278,11 @@ function testTofuDriverBrandHierarchy() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   assert(html.includes('<title>Tofu Driver</title>'));
   assert(html.includes('<h1>Tofu Driver</h1>'));
+  assert(html.includes('data-surface-target="shop"'));
+  assert(html.includes('data-surface-target="cup-test"'));
+  assert(html.includes('Run the tofu shop.'));
+  assert(html.includes("Don't Spill the Cup"));
+  assert(html.includes('Mount your phone, start while parked, and drive smoothly. Your result can boost the Tofu Shop.'));
   assert(html.includes('The Cup Test'));
   assert(html.includes('Delivery Log'));
   assert(html.includes('Every drive is a delivery.'));
@@ -306,9 +314,8 @@ function testTofuDriverBrandHierarchy() {
   assert(!runViewHtml.includes('data-character-id'));
   assert(!runViewHtml.includes('data-sound-pack-id'));
   assert(!runViewHtml.includes('Preview Sound'));
-  assert(html.includes("Don't spill the cup."));
+  assert(html.includes('A cozy delivery-management game you can play at home.'));
   assert(html.includes('Not faster. Smoother.'));
-  assert(html.includes('A smooth-driving delivery game.'));
   assert(html.includes('Start and stop while parked.'));
   assert(html.includes('How it works'));
   assert(html.includes('Secret Merch'));
@@ -437,6 +444,94 @@ globalThis.activeDashboardActionDisabled = elements.gameCtaButton.disabled;
   assert.strictEqual(context.dashboardGear, '0/3');
   assert.strictEqual(context.dashboardTeasersHidden, false);
   assert.strictEqual(context.activeDashboardActionDisabled, true);
+}
+
+function testTwoSurfaceRoutingSeparatesShopAndCupTest() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('data-app-surface="shop"'));
+  assert(html.includes('data-app-surface="cup-test"'));
+  assert(html.includes('data-surface-target="shop"'));
+  assert(html.includes('data-surface-target="cup-test"'));
+  assert(html.includes("Take Don't Spill the Cup for a certified boost")
+    || html.includes('Take the Cup Test'));
+
+  const context = loadNoSpillContext({
+    window: { location: { hash: '#/shop', search: '' }, localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function makeSection(surface) {
+  const node = { hidden: false, dataset: { appSurface: surface }, classes: new Set() };
+  node.classList = {
+    toggle(name, value) {
+      if (value) node.classes.add(name);
+      else node.classes.delete(name);
+      node.hidden = node.classes.has("is-hidden");
+    },
+    add(name) {
+      node.classes.add(name);
+      node.hidden = node.classes.has("is-hidden");
+    },
+    contains(name) {
+      return node.classes.has(name);
+    },
+  };
+  return node;
+}
+function makeNav(target) {
+  const node = {
+    dataset: { surfaceTarget: target },
+    disabled: null,
+    attrs: {},
+    classes: new Set(),
+  };
+  node.classList = {
+    toggle(name, value) {
+      if (value) node.classes.add(name);
+      else node.classes.delete(name);
+    },
+  };
+  node.setAttribute = function setAttribute(name, value) {
+    node.attrs[name] = value;
+  };
+  node.removeAttribute = function removeAttribute(name) {
+    delete node.attrs[name];
+  };
+  return node;
+}
+const shopSection = makeSection("shop");
+const cupSection = makeSection("cup-test");
+const shopNav = makeNav("shop");
+const cupNav = makeNav("cup-test");
+elements = {
+  surfaceSections: [shopSection, cupSection],
+  surfaceNavButtons: [shopNav, cupNav],
+  setupFlow: cupSection,
+  landingView: { scrollIntoView() {} },
+};
+setAppSurface("shop", { updateHash: false });
+globalThis.shopHiddenOnShop = shopSection.hidden;
+globalThis.cupHiddenOnShop = cupSection.hidden;
+globalThis.shopNavCurrent = shopNav.attrs["aria-current"];
+setAppSurface("cup-test", { updateHash: false });
+globalThis.shopHiddenOnCup = shopSection.hidden;
+globalThis.cupHiddenOnCup = cupSection.hidden;
+globalThis.cupNavCurrent = cupNav.attrs["aria-current"];
+appState.running = true;
+renderSurfaceNavigation();
+globalThis.navDisabledDuringDrive = shopNav.disabled && cupNav.disabled;
+globalThis.hashShop = surfaceFromHash("#/shop");
+globalThis.hashCup = surfaceFromHash("#/cup-test");
+`, context);
+
+  assert.strictEqual(context.hashShop, 'shop');
+  assert.strictEqual(context.hashCup, 'cup-test');
+  assert.strictEqual(context.shopHiddenOnShop, false);
+  assert.strictEqual(context.cupHiddenOnShop, true);
+  assert.strictEqual(context.shopNavCurrent, 'page');
+  assert.strictEqual(context.shopHiddenOnCup, true);
+  assert.strictEqual(context.cupHiddenOnCup, false);
+  assert.strictEqual(context.cupNavCurrent, 'page');
+  assert.strictEqual(context.navDisabledDuringDrive, true);
 }
 
 function testProgressiveRevealTeasersUnlockAfterFirstDelivery() {
@@ -1796,6 +1891,7 @@ elements = {
 };
 appState.running = false;
 appState.calibrating = false;
+appState.surface = "cup-test";
 renderSimulatorPanel();
 globalThis.simulatorSelectHtml = elements.simulatorScenarioSelect.innerHTML;
 appState.running = true;
@@ -2354,6 +2450,7 @@ function run() {
   testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
   testTofuDriverBrandHierarchy();
   testFirstTimeGameDashboardIsVisibleBeforeSetup();
+  testTwoSurfaceRoutingSeparatesShopAndCupTest();
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();

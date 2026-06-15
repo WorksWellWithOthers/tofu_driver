@@ -33,8 +33,38 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 18px;
   padding: 10px 2px 18px;
+}
+
+.nospill-surface-nav {
+  display: flex;
+  flex: 1 1 260px;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.nospill-surface-nav button {
+  border: 1px solid rgba(244, 247, 239, 0.14);
+  border-radius: 999px;
+  padding: 9px 11px;
+  color: #bbc7c0;
+  background: rgba(244, 247, 239, 0.04);
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.nospill-surface-nav button.is-active {
+  border-color: rgba(85, 217, 138, 0.54);
+  color: #06100b;
+  background: #55d98a;
+}
+
+.nospill-surface-nav button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
 }
 
 .nospill-header h1,

@@ -14,13 +14,21 @@
         <p class="nospill-kicker">Not faster. Smoother.</p>
         <h1>Tofu Driver</h1>
       </div>
+      <nav class="nospill-surface-nav" aria-label="Tofu Driver sections">
+        <button class="is-active" type="button" data-surface-target="shop" aria-current="page">
+          Tofu Shop
+        </button>
+        <button type="button" data-surface-target="cup-test">
+          Don't Spill the Cup
+        </button>
+      </nav>
       <div class="nospill-water-mark" aria-hidden="true">
         <span></span>
       </div>
     </header>
 
     <section class="nospill-panel nospill-landing" id="landing-view" aria-labelledby="landing-title">
-      <section class="nospill-brand-hero" aria-labelledby="landing-title">
+      <section class="nospill-brand-hero" aria-labelledby="landing-title" data-app-surface="shop">
         <div class="nospill-hero-art">
           <img
             src="/static/nospill/assets/tofu-driver-logo.png"
@@ -31,19 +39,19 @@
           <span class="nospill-hero-fallback" hidden>Tofu Driver</span>
         </div>
         <div class="nospill-hero-copy">
-          <p class="nospill-kicker">The Cup Test</p>
-          <h2 id="landing-title">Don't spill the cup.</h2>
+          <p class="nospill-kicker">Tofu Shop</p>
+          <h2 id="landing-title">Run the tofu shop.</h2>
           <p>
-            A smooth-driving delivery game.
+            A cozy delivery-management game you can play at home.
           </p>
           <p class="nospill-hero-tagline">Not faster. Smoother.</p>
           <p class="nospill-hero-safety">
-            Start and stop while parked. Use audio so you do not look at the screen while driving.
+            Play the shop anytime. Take Don't Spill the Cup when you're ready for a certified smooth-delivery boost.
           </p>
         </div>
       </section>
 
-      <section class="nospill-section nospill-game-dashboard" aria-labelledby="today-delivery-title">
+      <section class="nospill-section nospill-game-dashboard" aria-labelledby="today-delivery-title" data-app-surface="shop">
         <div class="nospill-game-head">
           <div>
             <p class="nospill-kicker">Today&rsquo;s Delivery</p>
@@ -117,9 +125,12 @@
         </div>
       </section>
 
-      <section class="nospill-section nospill-how" id="how-it-works" aria-labelledby="how-title">
+      <section class="nospill-section nospill-how" id="how-it-works" aria-labelledby="how-title" data-app-surface="cup-test">
         <p class="nospill-kicker">How it works</p>
-        <h3 id="how-title">Smooth inputs keep the cup full.</h3>
+        <h3 id="how-title">Don't Spill the Cup</h3>
+        <p>
+          Mount your phone, start while parked, and drive smoothly. Your result can boost the Tofu Shop.
+        </p>
         <div class="nospill-step-grid">
           <div>
             <span>01</span>
@@ -144,7 +155,7 @@
         </div>
       </section>
 
-      <section class="nospill-section nospill-merch-preview" aria-labelledby="preview-title">
+      <section class="nospill-section nospill-merch-preview" aria-labelledby="preview-title" data-app-surface="shop">
         <div>
           <p class="nospill-kicker">Secret Merch</p>
           <h3 id="preview-title">Earned, not given.</h3>
@@ -164,16 +175,16 @@
         <img src="/static/nospill/assets/tofu-driver-shirt-1.png" alt="No-Spill Club 95% Delivered Tofu Driver shirt" />
       </section>
 
-      <section class="nospill-safety-strip" aria-label="Safety positioning">
+      <section class="nospill-safety-strip" aria-label="Safety positioning" data-app-surface="cup-test">
         <span>No speed rankings.</span>
         <span>No route sharing.</span>
         <span>No maps.</span>
         <span>Smoothness only.</span>
       </section>
 
-      <div class="nospill-discord-cta is-hidden" id="landing-discord-cta"></div>
+      <div class="nospill-discord-cta is-hidden" id="landing-discord-cta" data-app-surface="shop"></div>
 
-      <section class="nospill-section nospill-simulator is-hidden" id="simulator-panel" aria-labelledby="simulator-title">
+      <section class="nospill-section nospill-simulator is-hidden" id="simulator-panel" aria-labelledby="simulator-title" data-app-surface="cup-test">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Local Test Mode</p>
@@ -204,7 +215,7 @@
         </p>
       </section>
 
-      <section class="nospill-section nospill-delivery-log is-hidden" id="delivery-board-section" aria-labelledby="delivery-log-title">
+      <section class="nospill-section nospill-delivery-log is-hidden" id="delivery-board-section" aria-labelledby="delivery-log-title" data-app-surface="shop">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Delivery Board</p>
@@ -259,7 +270,7 @@
         </p>
       </section>
 
-      <section class="nospill-section nospill-tofu-shop is-hidden" id="tofu-shop" aria-labelledby="tofu-shop-title">
+      <section class="nospill-section nospill-tofu-shop is-hidden" id="tofu-shop" aria-labelledby="tofu-shop-title" data-app-surface="shop">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Tofu Shop</p>
@@ -347,7 +358,7 @@
         </p>
       </section>
 
-      <section class="nospill-section nospill-collection is-hidden" id="delivery-crew" aria-labelledby="delivery-crew-title">
+      <section class="nospill-section nospill-collection is-hidden" id="delivery-crew" aria-labelledby="delivery-crew-title" data-app-surface="shop">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Delivery Crew</p>
@@ -390,7 +401,7 @@
         </div>
       </section>
 
-      <section class="nospill-section nospill-progress-tools" aria-labelledby="progress-tools-title">
+      <section class="nospill-section nospill-progress-tools" aria-labelledby="progress-tools-title" data-app-surface="shop">
         <details>
           <summary id="progress-tools-title">Settings / Progress Tools</summary>
           <p class="nospill-panel-helper">
@@ -410,7 +421,7 @@
         </details>
       </section>
 
-      <div class="nospill-setup is-hidden" id="setup-flow">
+      <div class="nospill-setup is-hidden" id="setup-flow" data-app-surface="cup-test">
         <section class="nospill-section" aria-labelledby="safety-title">
           <h3 id="safety-title">Safety Checklist</h3>
           <div class="nospill-checklist" id="safety-checklist">

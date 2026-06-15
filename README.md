@@ -26,6 +26,15 @@ The app is intentionally lightweight:
 - design target favors progressive reveal, earned status, and ethical cosmetics over pay-to-progress
 - optional Discord community CTA, hidden unless `DISCORD_CONFIG` is enabled
 
+## App Surfaces
+
+- `Tofu Shop` is the default home game. It uses local resources, generators, parked-only shop
+  actions, upgrades, Delivery Wall progress, and collection systems without sensors or location.
+- `Don't Spill the Cup` is the always-available challenge. It uses Basic Mode or opt-in Qualified
+  Run to produce practice results or certified smooth-delivery boosts for the shop.
+
+The static app uses hash routing for local navigation: `#/shop` and `#/cup-test`.
+
 ## Project Layout
 
 - `frontend/nospill/index.html`: app shell

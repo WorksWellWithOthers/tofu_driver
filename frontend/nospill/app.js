@@ -546,6 +546,7 @@ const appState = {
   axisPreviewBaseline: null,
   axisPreviewFiltered: null,
   shopGeneratorTimer: null,
+  surface: "shop",
 };
 
 let elements = {};
@@ -3672,6 +3673,66 @@ function showView(viewName) {
   });
   renderDiscordCtas(viewName);
   renderSimulatorPanel();
+  renderSurfaceNavigation();
+}
+
+function surfaceFromHash(hashValue = "") {
+  const value = String(hashValue || "").replace(/^#\/?/, "").toLowerCase();
+  return value === "cup-test" ? "cup-test" : "shop";
+}
+
+function surfaceHash(surface) {
+  return surface === "cup-test" ? "#/cup-test" : "#/shop";
+}
+
+function renderSurfaceNavigation() {
+  const activeDrive = appState.running || appState.calibrating;
+  if (elements.surfaceNavButtons) {
+    elements.surfaceNavButtons.forEach((button) => {
+      const active = button.dataset.surfaceTarget === appState.surface;
+      button.classList.toggle("is-active", active);
+      if (active) {
+        button.setAttribute("aria-current", "page");
+      } else {
+        button.removeAttribute("aria-current");
+      }
+      button.disabled = activeDrive;
+    });
+  }
+}
+
+function setAppSurface(surface = "shop", options = {}) {
+  const nextSurface = surface === "cup-test" ? "cup-test" : "shop";
+  appState.surface = nextSurface;
+  if (elements.surfaceSections) {
+    elements.surfaceSections.forEach((section) => {
+      const sectionSurface = section.dataset.appSurface || "shop";
+      section.classList.toggle("is-hidden", sectionSurface !== nextSurface);
+    });
+  }
+  if (elements.setupFlow) {
+    elements.setupFlow.classList.toggle("is-hidden", nextSurface !== "cup-test");
+  }
+  renderSurfaceNavigation();
+  if (
+    options.updateHash !== false
+    && typeof window !== "undefined"
+    && window.location
+    && window.location.hash !== surfaceHash(nextSurface)
+  ) {
+    window.location.hash = surfaceHash(nextSurface);
+  }
+  if (options.scroll && elements.landingView && typeof elements.landingView.scrollIntoView === "function") {
+    elements.landingView.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function initializeAppSurface() {
+  const initialSurface =
+    typeof window !== "undefined" && window.location
+      ? surfaceFromHash(window.location.hash)
+      : "shop";
+  setAppSurface(initialSurface, { updateHash: false });
 }
 
 function setLandingStatus(message) {
@@ -4977,7 +5038,10 @@ function renderSimulatorPanel() {
   if (!elements.simulatorPanel) return;
   const enabled = isSimulatorEnabled();
   const activeDrive = appState.running || appState.calibrating;
-  elements.simulatorPanel.classList.toggle("is-hidden", !enabled || activeDrive);
+  elements.simulatorPanel.classList.toggle(
+    "is-hidden",
+    !enabled || activeDrive || appState.surface !== "cup-test",
+  );
   if (!enabled) return;
   if (elements.simulatorScenarioSelect && !elements.simulatorScenarioSelect.options.length) {
     elements.simulatorScenarioSelect.innerHTML = getSimulatorScenarios()
@@ -5000,6 +5064,7 @@ function renderSimulatorPanel() {
 function renderGamePanels(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const reveal = progressiveRevealState(state);
+  const shopSurface = appState.surface === "shop";
   renderGameDashboard(state);
   renderDeliveryLog(state);
   renderMerchProgress(state);
@@ -5007,13 +5072,19 @@ function renderGamePanels(gameState = loadGameState()) {
   renderCollectionPanel(state);
   renderSimulatorPanel();
   if (elements.deliveryBoardSection) {
-    elements.deliveryBoardSection.classList.toggle("is-hidden", !reveal.firstDelivery);
+    elements.deliveryBoardSection.classList.toggle("is-hidden", !shopSurface || !reveal.firstDelivery);
   }
   if (elements.tofuShopSection) {
-    elements.tofuShopSection.classList.toggle("is-hidden", !reveal.shop);
+    elements.tofuShopSection.classList.toggle("is-hidden", !shopSurface || !reveal.shop);
   }
   if (elements.collectionSection) {
-    elements.collectionSection.classList.toggle("is-hidden", !reveal.firstDelivery);
+    elements.collectionSection.classList.toggle("is-hidden", !shopSurface || !reveal.firstDelivery);
+  }
+  if (elements.surfaceSections) {
+    elements.surfaceSections.forEach((section) => {
+      const sectionSurface = section.dataset.appSurface || "shop";
+      if (sectionSurface !== appState.surface) section.classList.add("is-hidden");
+    });
   }
 }
 
@@ -5883,9 +5954,10 @@ function saveCurrentSummary() {
   }
 }
 
-function refreshLandingDashboard(message) {
+function refreshLandingDashboard(message, surface = appState.surface || "shop") {
   renderMountControls();
   renderAudioLevelControls();
+  setAppSurface(surface, { updateHash: true });
   renderGamePanels(loadGameStateWithOfflineShopEarnings());
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   showView("landing");
@@ -5907,7 +5979,7 @@ function scrollToDashboardTarget(target) {
 }
 
 function returnToDashboard(target = "shop") {
-  refreshLandingDashboard("Review your rewards. The shop has been updated.");
+  refreshLandingDashboard("Review your rewards. The shop has been updated.", "shop");
   const state = loadGameState();
   const reveal = progressiveRevealState(state);
   scrollToDashboardTarget(target === "shop" && !reveal.shop ? "dashboard" : target);
@@ -5916,7 +5988,7 @@ function returnToDashboard(target = "shop") {
 function takeAnotherCupTest() {
   appState.lastSummary = null;
   resetSessionState();
-  refreshLandingDashboard("Review setup, then start while parked.");
+  refreshLandingDashboard("Review setup, then start while parked.", "cup-test");
   revealSetupFlow();
 }
 
@@ -5926,12 +5998,14 @@ function newRun() {
 
 function revealSetupFlow() {
   if (!elements.setupFlow) return;
+  setAppSurface("cup-test", { updateHash: true });
   elements.setupFlow.classList.remove("is-hidden");
   elements.setupFlow.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 function focusShopUpgrade(upgradeId = "") {
   if (!elements.tofuShopSection) return;
+  setAppSurface("shop", { updateHash: true });
   elements.tofuShopSection.scrollIntoView({ behavior: "smooth", block: "start" });
   if (!upgradeId || !elements.shopUpgradeList || !elements.shopUpgradeList.querySelector) return;
   const safeUpgradeId =
@@ -5976,6 +6050,23 @@ function bindEvents() {
   elements.gameCtaButton.addEventListener("click", handleNextBestAction);
   if (elements.gameCertifiedCtaButton) {
     elements.gameCertifiedCtaButton.addEventListener("click", revealSetupFlow);
+  }
+  if (elements.surfaceNavButtons) {
+    elements.surfaceNavButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        if (appState.running || appState.calibrating) return;
+        const surface = button.dataset.surfaceTarget === "cup-test" ? "cup-test" : "shop";
+        setAppSurface(surface, { updateHash: true, scroll: true });
+        renderGamePanels(loadGameState());
+      });
+    });
+  }
+  if (typeof window !== "undefined") {
+    window.addEventListener("hashchange", () => {
+      if (appState.running || appState.calibrating) return;
+      setAppSurface(surfaceFromHash(window.location.hash), { updateHash: false });
+      renderGamePanels(loadGameState());
+    });
   }
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
     input.addEventListener("change", updateStartReadiness);
@@ -6048,6 +6139,8 @@ function cacheElements() {
     unsupportedView: document.getElementById("unsupported-view"),
     summaryView: document.getElementById("summary-view"),
     setupFlow: document.getElementById("setup-flow"),
+    surfaceSections: Array.from(document.querySelectorAll("[data-app-surface]")),
+    surfaceNavButtons: Array.from(document.querySelectorAll("[data-surface-target]")),
     tofuShopSection: document.getElementById("tofu-shop"),
     deliveryBoardSection: document.getElementById("delivery-board-section"),
     collectionSection: document.getElementById("delivery-crew"),
@@ -6193,6 +6286,7 @@ function initNoSpillApp() {
   renderAudioLevelControls();
   updateStartReadiness();
   updateModeCopy();
+  initializeAppSurface();
   renderMerchPanel(clubState);
   renderGamePanels(loadGameStateWithOfflineShopEarnings());
   renderDiscordCtas("landing");

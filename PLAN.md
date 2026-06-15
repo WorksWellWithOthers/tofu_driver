@@ -11,6 +11,8 @@
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
+- The UI is split into two surfaces with hash routing: `#/shop` for Tofu Shop and `#/cup-test`
+  for Don't Spill the Cup.
 - The landing page now starts with a game-first Today's Delivery dashboard, clear goal/reward,
   and a home-shop Next Best Action before dense setup controls.
 - Home progression is now the base game: users can start the Tofu Shop, Pack Tofu, wait for
@@ -24,6 +26,8 @@
 - Qualified Cup Test runs are framed as optional certified delivery boosts/status: they can grant
   bonus shop rewards and temporary Tofu Press boosts without making real driving required for
   ordinary shop progression.
+- Don't Spill the Cup remains always available from navigation, the shop boost CTA, and post-run
+  secondary actions without requiring shop resources.
 - The Collection Layer adds cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
   for parked/result screens only.
 - Delivery Simulator is hidden by default and can be enabled locally with `?simulator=1` or

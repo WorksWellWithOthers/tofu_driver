@@ -13,6 +13,8 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Runtime | Static browser-only app | Implemented | `frontend/nospill/index.html`, `frontend/nospill/app.js`, `frontend/nospill/app.css`, `README.md` | `make check` | Rename legacy source path later | P2 | No backend required for MVP |
 | Runtime | Cloud Run deployment | Implemented | `Dockerfile`, `nginx.conf`, `Makefile`, `DEPLOYMENT.md` | `make check` before deploy | External DNS/certificate verification is outside repo | P1 | Static container only |
+| Runtime | Two app surfaces: Tofu Shop and Don't Spill the Cup | Implemented | `data-app-surface`, `data-surface-target`, `setAppSurface`, `surfaceFromHash` in `frontend/nospill/index.html` and `frontend/nospill/app.js` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile navigation polish | P1 | Shop is home play; Cup Test remains separate optional challenge |
+| Runtime | Hash routing for `#/shop` and `#/cup-test` | Implemented | `surfaceHash`, `initializeAppSurface`, `hashchange` listener in `frontend/nospill/app.js`; `README.md` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Consider clean URL routing later if hosting supports it | P2 | User-facing copy uses product names, not legacy source paths |
 | Driving | Basic Mode `DeviceMotionEvent` | Implemented | `getDeviceMotionConstructor`, `setMode`, `startRun` in `frontend/nospill/app.js` | `testLocationPermissionFlowRemainsOptIn` | Real-device browser testing | P1 | Basic Mode does not request location |
 | Driving | Qualified Run Mode opt-in location | Implemented | `startLocationWatch`, `qualificationForRoute`, `if (appState.mode === "qualified") startLocationWatch()` | `testLocationPermissionFlowRemainsOptIn`, `testQualifiedRouteAnalysisAndQualification` | Real-device HTTPS testing | P1 | Location starts only after explicit start |
 | Driving | Mount orientation mapping | Implemented | `MOUNT_PRESETS`, `computeMappedMotion`, mount controls | `testMountAxisMapping`, `testMappedMotionUsesSelectedMountConfig` | Mobile UX tuning | P2 | Local sensor mapping only |
@@ -55,6 +57,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Delivery | Today's Delivery | Implemented | `getDailyDelivery`, top dashboard UI | `testFirstTimeGameDashboardIsVisibleBeforeSetup` | Copy tuning | P1 | Local deterministic daily mission |
+| Challenge | Don't Spill the Cup challenge surface | Implemented | `how-it-works`, setup flow, safety checklist, mode controls tagged `data-app-surface="cup-test"` | `testTwoSurfaceRoutingSeparatesShopAndCupTest`, start/location tests | Mobile copy polish | P1 | Always available; does not require shop resources |
 | Delivery | Daily cargo profile catalog | Implemented | `CARGO_PROFILES`, `DAILY_DELIVERIES` | `testDailyDeliverySelectionAndEvaluation` | Add more cargo later | P2 | No speed goals |
 | Scoring | Cargo condition from water-left score | Implemented | `calculateCargoCondition`, water loss helpers | `testWaterRanksAndLossAreMotionOnly` | Tune thresholds after mobile testing | P1 | Smoothness-based |
 | Delivery | Route type labels | Implemented | `classifyRouteType` | `testRouteTypeClassification` | Tune route thresholds | P2 | Generic labels, no map/street |
@@ -71,6 +74,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Shop | Tofu Stock | Implemented | `shop.tofuStock`, shop UI | `testTofuShopStatePackIdleAndUpgradeRules` | Balance tuning | P2 | Local summarized resource |
+| Shop | Tofu Shop home surface | Implemented | hero/dashboard/shop sections tagged `data-app-surface="shop"`; default `appState.surface` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile hierarchy polish | P1 | Playable at home without sensors/location |
 | Shop | Delivery Orders | Implemented | `shop.deliveryOrders`, shop UI, `applyShopGeneratorTick` | `testTofuShopStatePackIdleAndUpgradeRules` | Balance tuning | P2 | Shop resource only; does not block The Cup Test |
 | Shop | Tips | Implemented | `shop.tips`, Fulfill Shop Order rewards | shop/order tests | Balance tuning | P2 | Home shop currency, local-only |
 | Shop | Reputation | Implemented | `shop.reputation`, `applyDeliveryToShop` | shop reward tests | Balance tuning | P2 | Comes from shop orders and smooth qualified outcomes |

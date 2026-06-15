@@ -208,11 +208,22 @@ parked at home without granting sensor or location permissions. The Tofu Shop pr
 prepares orders, and lets the player fulfill fictional shop orders locally. The physical Cup Test is
 an optional certified smooth-delivery boost and status path, not the gate for ordinary progression.
 
+The app has two clear surfaces:
+
+- `Tofu Shop`: the default home game surface. It shows resources, generators, shop actions,
+  upgrades, Delivery Wall, Passport, Delivery Crew, Sound Packs, and progress tools.
+- `Don't Spill the Cup`: the always-available challenge surface. It shows the safety checklist,
+  Basic Mode, Qualified Run, mount/orientation controls, cup difficulty, audio coach, start flow,
+  active Cup Test, and result flow.
+
+The current static frontend uses hash routing for those surfaces: `#/shop` and `#/cup-test`. Public
+navigation labels must read `Tofu Shop` and `Don't Spill the Cup`.
+
 First-run action hierarchy:
 
 - Primary: `Start the Tofu Shop`, which routes to parked shop play.
-- Secondary: `Take the Cup Test`, framed as an optional certified boost when the user is parked and
-  ready.
+- Secondary: `Take the Cup Test` / `Don't Spill the Cup`, framed as an optional certified boost when
+  the user is parked and ready.
 - Only one primary CTA should be visually dominant.
 
 Home shop progression can grant ordinary local resources:
@@ -234,6 +245,10 @@ Certified Cup Test results can grant special status and boosts:
 Certified boosts must not scale with speed, exact route, street names, maps, high-G bragging, or
 route leaderboards. Practice Mode can grant modest local progress but must not grant certified merch
 progress. Simulated deliveries remain QA-only and are not trusted certified deliveries.
+
+The Cup Test must remain always available from the surface navigation, shop boost CTA, and post-run
+secondary action. It must not require Delivery Orders, tofu stock, upgrades, accounts, or shop
+progress.
 
 Unlock presentation should split into two tracks:
 
