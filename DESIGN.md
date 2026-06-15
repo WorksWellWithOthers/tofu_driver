@@ -428,6 +428,27 @@ Suggested returning-user hierarchy after unlocks:
 5. unlocked systems
 6. settings
 
+### Next Best Action Rule
+
+The app must always make the next step obvious. Progressive reveal should reduce decision
+confusion, not just hide or show systems.
+
+Action hierarchy:
+
+1. Active drive in progress: show only active-drive controls. Do not show shop actions.
+2. First-time user with no completed deliveries: `Next: Take the Cup Test`.
+3. Today's Delivery incomplete: `Next: Take the Cup Test`.
+4. Shop unlocked and tofu stock is low: `Next: Pack Tofu`.
+5. Affordable shop upgrade exists: `Next: Buy an Upgrade`.
+6. Otherwise: `Next: Take the Cup Test`.
+
+`Take the Cup Test` owns first-run priority. `Pack Tofu` is a secondary parked shop action until the
+first delivery is complete and the shop has been introduced. If Pack Tofu is locked, the UI should
+say: `Complete your first delivery to wake up the shop.`
+
+Only one primary CTA should be visually dominant in the top action area. Secondary shop actions can
+remain visible after unlock, but they must not compete with the top next-best-action card.
+
 ### System Visibility Rule
 
 Each system should have three states:

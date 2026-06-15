@@ -231,6 +231,7 @@
 .nospill-game-head,
 .nospill-game-grid,
 .nospill-game-mission-card,
+.nospill-next-action-card,
 .nospill-passport-preview,
 .nospill-game-passport,
 .nospill-game-shop-action {
@@ -274,6 +275,28 @@
 
 .nospill-game-mission-card {
   border-color: rgba(85, 217, 138, 0.28);
+}
+
+.nospill-next-action-card {
+  border: 1px solid rgba(85, 217, 138, 0.42);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(85, 217, 138, 0.1);
+}
+
+.nospill-next-action-card h4,
+.nospill-next-action-card p {
+  margin: 0;
+}
+
+.nospill-next-action-card h4 {
+  color: #f4f7ef;
+  font-size: 1.02rem;
+}
+
+.nospill-next-action-card p:not(.nospill-kicker) {
+  color: #bbc7c0;
+  line-height: 1.42;
 }
 
 .nospill-game-mission-card span {

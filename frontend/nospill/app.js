@@ -214,6 +214,7 @@ const DRIVER_LICENSES = [
 
 const SHOP_MAX_RESOURCE = 1000000000;
 const SHOP_OFFLINE_CAP_HOURS = 8;
+const SHOP_LOW_TOFU_STOCK_THRESHOLD = 150;
 
 const SHOP_UPGRADES = [
   {
@@ -3850,10 +3851,91 @@ function nextShopStep(gameState) {
   return `${nextUpgrade.name}: ${cost.costTofuStock} tofu`;
 }
 
+function affordableShopUpgrade(gameState) {
+  const state = normalizeGameState(gameState);
+  return getShopUpgradeCatalog().find((upgrade) => {
+    const currentLevel = safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel);
+    if (currentLevel >= upgrade.maxLevel) return false;
+    if (state.shop.shopLevel < upgrade.requiredShopLevel) return false;
+    const cost = shopUpgradeCost(upgrade, currentLevel);
+    return state.shop.tofuStock >= cost.costTofuStock
+      && state.shop.reputation >= cost.costReputation;
+  }) || null;
+}
+
+function nextBestAction(gameState, options = {}) {
+  const state = normalizeGameState(gameState);
+  const activeDrive = Boolean(options.activeDrive);
+  const mission = getDailyDelivery(options.date || new Date());
+  const daily = state.dailyDeliveries[mission.dateKey];
+  const dailyComplete = Boolean(daily && daily.completed);
+  const firstDeliveryComplete = hasCompletedDelivery(state);
+  const shopUnlocked = isShopDiscovered(state);
+  const lowTofuStock = Number(state.shop.tofuStock || 0) < SHOP_LOW_TOFU_STOCK_THRESHOLD;
+  const upgrade = affordableShopUpgrade(state);
+  if (activeDrive) {
+    return {
+      type: "active_drive",
+      title: "Cup Test in Progress",
+      copy: "Keep your eyes on the road. Shop actions unlock after you finish and park.",
+      buttonLabel: "Driving",
+      disabled: true,
+    };
+  }
+  if (!firstDeliveryComplete) {
+    return {
+      type: "cup_test",
+      title: "Next: Take the Cup Test",
+      copy: "Complete your first delivery to wake up the shop.",
+      buttonLabel: "Take the Cup Test",
+      disabled: false,
+    };
+  }
+  if (!dailyComplete) {
+    return {
+      type: "cup_test",
+      title: "Next: Take the Cup Test",
+      copy: "Deliver today's cargo to earn XP, stamps, and shop rewards.",
+      buttonLabel: "Take the Cup Test",
+      disabled: false,
+    };
+  }
+  if (shopUnlocked && lowTofuStock) {
+    return {
+      type: "pack_tofu",
+      title: "Next: Pack Tofu",
+      copy: "The shop is awake. Pack tofu to prepare future deliveries.",
+      buttonLabel: "Pack Tofu",
+      disabled: false,
+    };
+  }
+  if (upgrade) {
+    return {
+      type: "buy_upgrade",
+      title: "Next: Buy an Upgrade",
+      copy: "Upgrade the shop to improve parked production.",
+      buttonLabel: "View Upgrades",
+      disabled: false,
+      upgradeId: upgrade.id,
+    };
+  }
+  return {
+    type: "cup_test",
+    title: "Next: Take the Cup Test",
+    copy: "Deliver today's cargo to earn XP, stamps, and shop rewards.",
+    buttonLabel: "Take the Cup Test",
+    disabled: false,
+  };
+}
+
 function renderGameDashboard(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const reveal = progressiveRevealState(state);
   const mission = getDailyDelivery(new Date());
+  const action = nextBestAction(state, {
+    activeDrive: appState.running || appState.calibrating,
+    date: new Date(),
+  });
   const progress = levelProgress(state.totalXP);
   const passport = deliveryPassportSummary(state);
   const daily = state.dailyDeliveries[mission.dateKey];
@@ -3866,6 +3948,16 @@ function renderGameDashboard(gameState = loadGameState()) {
   if (elements.gameDailyCargo) elements.gameDailyCargo.textContent = mission.cargo;
   if (elements.gameDailyGoal) elements.gameDailyGoal.textContent = mission.goal;
   if (elements.gameDailyReward) elements.gameDailyReward.textContent = mission.reward;
+  if (elements.gameNextActionTitle) elements.gameNextActionTitle.textContent = action.title;
+  if (elements.gameNextActionCopy) elements.gameNextActionCopy.textContent = action.copy;
+  if (elements.gameCtaButton) {
+    elements.gameCtaButton.textContent = action.buttonLabel;
+    elements.gameCtaButton.disabled = Boolean(action.disabled);
+    if (elements.gameCtaButton.dataset) {
+      elements.gameCtaButton.dataset.nextAction = action.type;
+      elements.gameCtaButton.dataset.nextUpgrade = action.upgradeId || "";
+    }
+  }
   if (elements.gameDailyProgress) {
     elements.gameDailyProgress.textContent = daily && daily.completed
       ? `Delivered today · ${formatPercent(daily.cargoCondition)}`
@@ -5032,11 +5124,41 @@ function revealSetupFlow() {
   elements.setupFlow.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+function focusShopUpgrade(upgradeId = "") {
+  if (!elements.tofuShopSection) return;
+  elements.tofuShopSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (!upgradeId || !elements.shopUpgradeList || !elements.shopUpgradeList.querySelector) return;
+  const safeUpgradeId =
+    typeof CSS !== "undefined" && CSS.escape
+      ? CSS.escape(upgradeId)
+      : String(upgradeId).replace(/"/g, "");
+  const button = elements.shopUpgradeList.querySelector(`[data-shop-upgrade="${safeUpgradeId}"]`);
+  if (button && typeof button.focus === "function") button.focus();
+}
+
+function handleNextBestAction() {
+  const actionType = elements.gameCtaButton && elements.gameCtaButton.dataset
+    ? elements.gameCtaButton.dataset.nextAction
+    : "cup_test";
+  if (actionType === "pack_tofu") {
+    handlePackTofu();
+    return;
+  }
+  if (actionType === "buy_upgrade") {
+    const upgradeId = elements.gameCtaButton.dataset.nextUpgrade || "";
+    focusShopUpgrade(upgradeId);
+    setSummaryStatusMessage("Choose an available shop upgrade while parked.");
+    return;
+  }
+  if (actionType === "active_drive") return;
+  revealSetupFlow();
+}
+
 function bindEvents() {
   if (elements.introCtaButton) {
     elements.introCtaButton.addEventListener("click", revealSetupFlow);
   }
-  elements.gameCtaButton.addEventListener("click", revealSetupFlow);
+  elements.gameCtaButton.addEventListener("click", handleNextBestAction);
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
     input.addEventListener("change", updateStartReadiness);
   });
@@ -5103,8 +5225,11 @@ function cacheElements() {
     unsupportedView: document.getElementById("unsupported-view"),
     summaryView: document.getElementById("summary-view"),
     setupFlow: document.getElementById("setup-flow"),
+    tofuShopSection: document.getElementById("tofu-shop"),
     introCtaButton: document.getElementById("intro-cta-button"),
     gameCtaButton: document.getElementById("game-cta-button"),
+    gameNextActionTitle: document.getElementById("game-next-action-title"),
+    gameNextActionCopy: document.getElementById("game-next-action-copy"),
     gameDailyTitle: document.getElementById("today-delivery-title"),
     gameDailyFlavor: document.getElementById("game-daily-flavor"),
     gameDailyCargo: document.getElementById("game-daily-cargo"),

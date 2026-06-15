@@ -101,6 +101,7 @@ globalThis.renderGameDashboard = renderGameDashboard;
 globalThis.renderTofuShop = renderTofuShop;
 globalThis.renderCollectionPanel = renderCollectionPanel;
 globalThis.progressiveRevealState = progressiveRevealState;
+globalThis.nextBestAction = nextBestAction;
 globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
 globalThis.renderDiscordCtas = renderDiscordCtas;
 globalThis.APP_BRAND = APP_BRAND;
@@ -328,6 +329,9 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('id="game-daily-cargo"'));
   assert(html.includes('id="game-daily-goal"'));
   assert(html.includes('id="game-daily-reward"'));
+  assert(html.includes('id="game-next-action-title"'));
+  assert(html.includes('Next: Take the Cup Test'));
+  assert(html.includes('Complete your first delivery to wake up the shop.'));
   assert(html.includes('id="game-driver-license"'));
   assert(html.includes('Level 1 &middot; Rookie Carrier'));
   assert(html.includes('id="game-total-xp"'));
@@ -355,7 +359,7 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   const context = loadNoSpillContext();
   vm.runInContext(`
 function makeNode() {
-  return { textContent: "", innerHTML: "", disabled: null };
+  return { textContent: "", innerHTML: "", disabled: null, dataset: {} };
 }
 elements = {
   gameDailyTitle: makeNode(),
@@ -363,6 +367,9 @@ elements = {
   gameDailyCargo: makeNode(),
   gameDailyGoal: makeNode(),
   gameDailyReward: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
   gameDailyProgress: makeNode(),
   gameDriverLicense: makeNode(),
   gameTotalXP: makeNode(),
@@ -378,6 +385,10 @@ elements = {
   gamePackTofuButton: makeNode(),
 };
 renderGameDashboard(defaultGameState());
+globalThis.dashboardActionTitle = elements.gameNextActionTitle.textContent;
+globalThis.dashboardActionCopy = elements.gameNextActionCopy.textContent;
+globalThis.dashboardActionLabel = elements.gameCtaButton.textContent;
+globalThis.dashboardActionType = elements.gameCtaButton.dataset.nextAction;
 globalThis.dashboardDriverLicense = elements.gameDriverLicense.textContent;
 globalThis.dashboardTotalXp = elements.gameTotalXP.textContent;
 globalThis.dashboardGear = elements.gameGearProgress.textContent;
@@ -396,6 +407,10 @@ globalThis.activeDashboardPackDisabled = elements.gamePackTofuButton.disabled;
 `, context);
 
   assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
+  assert.strictEqual(context.dashboardActionTitle, 'Next: Take the Cup Test');
+  assert.strictEqual(context.dashboardActionCopy, 'Complete your first delivery to wake up the shop.');
+  assert.strictEqual(context.dashboardActionLabel, 'Take the Cup Test');
+  assert.strictEqual(context.dashboardActionType, 'cup_test');
   assert.strictEqual(context.dashboardTotalXp, '0 XP');
   assert.strictEqual(context.dashboardGear, '0/3');
   assert.strictEqual(context.dashboardPassport, 'The passport opens after your first stamp-worthy delivery.');
@@ -416,7 +431,7 @@ function testProgressiveRevealTeasersUnlockAfterFirstDelivery() {
   });
   vm.runInContext(`
 function makeNode() {
-  return { textContent: "", innerHTML: "", disabled: null };
+  return { textContent: "", innerHTML: "", disabled: null, dataset: {} };
 }
 elements = {
   gameDailyTitle: makeNode(),
@@ -424,6 +439,9 @@ elements = {
   gameDailyCargo: makeNode(),
   gameDailyGoal: makeNode(),
   gameDailyReward: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
   gameDailyProgress: makeNode(),
   gameDriverLicense: makeNode(),
   gameTotalXP: makeNode(),
@@ -524,6 +542,100 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.afterPreviewDisabled, false);
   assert.strictEqual(context.activePackDisabled, true);
   assert.strictEqual(context.activePreviewDisabled, true);
+}
+
+function testNextBestActionHierarchyStaysSinglePrimary() {
+  const context = loadNoSpillContext({
+    window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
+  });
+  const first = context.defaultGameState();
+  const firstAction = context.nextBestAction(first, { date: new Date('2026-06-14T12:00:00.000Z') });
+  assert.strictEqual(firstAction.type, 'cup_test');
+  assert.strictEqual(firstAction.title, 'Next: Take the Cup Test');
+  assert.strictEqual(firstAction.buttonLabel, 'Take the Cup Test');
+
+  const incompleteDaily = context.applySimulatedDelivery(
+    'shaky_practice',
+    first,
+    { now: new Date('2026-06-14T12:00:00.000Z') },
+  ).gameState;
+  const incompleteAction = context.nextBestAction(incompleteDaily, {
+    date: new Date('2026-06-14T12:00:00.000Z'),
+  });
+  assert.strictEqual(incompleteAction.type, 'cup_test');
+  assert(incompleteAction.copy.includes("Deliver today's cargo"));
+
+  const completeDaily = context.applySimulatedDelivery(
+    'smooth_commute',
+    first,
+    { now: new Date('2026-06-14T12:00:00.000Z') },
+  ).gameState;
+  const packAction = context.nextBestAction(completeDaily, {
+    date: new Date('2026-06-14T12:00:00.000Z'),
+  });
+  assert.strictEqual(packAction.type, 'pack_tofu');
+  assert.strictEqual(packAction.title, 'Next: Pack Tofu');
+
+  const funded = JSON.parse(JSON.stringify(completeDaily));
+  funded.shop.tofuStock = 500;
+  const upgradeAction = context.nextBestAction(funded, {
+    date: new Date('2026-06-14T12:00:00.000Z'),
+  });
+  assert.strictEqual(upgradeAction.type, 'buy_upgrade');
+  assert.strictEqual(upgradeAction.title, 'Next: Buy an Upgrade');
+
+  const activeAction = context.nextBestAction(funded, {
+    activeDrive: true,
+    date: new Date('2026-06-14T12:00:00.000Z'),
+  });
+  assert.strictEqual(activeAction.type, 'active_drive');
+  assert.strictEqual(activeAction.disabled, true);
+
+  vm.runInContext(`
+function makeNode() {
+  return { textContent: "", innerHTML: "", disabled: null, dataset: {} };
+}
+elements = {
+  gameDailyTitle: makeNode(),
+  gameDailyFlavor: makeNode(),
+  gameDailyCargo: makeNode(),
+  gameDailyGoal: makeNode(),
+  gameDailyReward: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gamePackTofuButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderGameDashboard(defaultGameState());
+globalThis.topActionTitle = elements.gameNextActionTitle.textContent;
+globalThis.topActionButton = elements.gameCtaButton.textContent;
+globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
+`, context);
+  assert.strictEqual(context.topActionTitle, 'Next: Take the Cup Test');
+  assert.strictEqual(context.topActionButton, 'Take the Cup Test');
+  assert.strictEqual(context.topActionType, 'cup_test');
+
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const actionArea = html.slice(
+    html.indexOf('class="nospill-next-action-card"'),
+    html.indexOf('<div class="nospill-game-grid"', html.indexOf('class="nospill-next-action-card"')),
+  );
+  assert.strictEqual((actionArea.match(/nospill-primary/g) || []).length, 1);
+  assert(!actionArea.includes('game-pack-tofu-button'));
 }
 
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
@@ -1835,6 +1947,7 @@ function run() {
   testTofuDriverBrandHierarchy();
   testFirstTimeGameDashboardIsVisibleBeforeSetup();
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();
+  testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
   testDiscordCtaConfigAndRendering();

@@ -15,7 +15,7 @@ The app is intentionally lightweight:
 - local results stored only in browser `localStorage`
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
-- game-first landing dashboard with Today's Delivery, a clear Cup Test CTA, and progressive teaser cards
+- game-first landing dashboard with Today's Delivery, a Next Best Action CTA, and progressive teaser cards
 - parked-only Tofu Shop resources, three starter upgrades, and Delivery Wall progress
 - cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
 - hidden local Delivery Simulator for QA, enabled with `?simulator=1`
