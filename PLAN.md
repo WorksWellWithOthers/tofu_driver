@@ -43,19 +43,23 @@ Canonical references:
 
 ## Recommended Next Steps
 
-1. Finish First Loop Contract pacing:
-   tune first order rewards and first upgrade timing around 1 to 2 minutes.
-2. Implement First Shop Order stamp behavior and reveal polish.
-3. Hide or down-rank advanced systems during the first 10 minutes.
-4. Add balance tests for the first loop:
+1. Review the full progression spec in `BALANCE_AND_PROGRESSION.md` before coding more gameplay.
+2. Implement the First Loop Contract:
+   align starting state, first-order reward, first stamp reveal, first upgrade timing, stock-runway
+   recommendations, and early button visibility.
+3. Playtest and tune the first 10 minutes:
+   confirm the first order, first upgrade, first bottleneck, and first stamp are clear.
+4. Hide or down-rank advanced systems during the first 10 minutes unless the balance spec says they
+   should be visible.
+5. Add balance tests for the first loop:
    first order rewards, first upgrade timing, visible `/sec` rate improvement, Tip-source disabled
    button reasons, stock-runway recommendations, Prep Counter wait state, and no resource-negative
    states.
-5. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-6. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-7. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+6. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+7. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+8. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
-Later systems:
+Deferred until after the First Loop Contract is playtested:
 
 - Routes
 - Crew

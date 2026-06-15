@@ -38,8 +38,8 @@ The static app uses hash routing:
 - `frontend/nospill/assets/`: app raster artwork
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
-- `BALANCE_AND_PROGRESSION.md`: source of truth for Tofu Shop economy, pacing, buttons, upgrades,
-  generator ladder, and first-loop contract
+- `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
+  resources, generators, upgrades, reveal order, bottlenecks, prestige, and balance tests
 - `IMPLEMENTATION_STATUS.md`: what is actually implemented, partial, placeholder, decorative,
   documented only, or non-goal, with file/test evidence
 - `PLAN.md`: tactical next steps, questions, and non-goals

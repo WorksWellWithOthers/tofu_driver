@@ -142,11 +142,15 @@ Tofu Stock -> Delivery Orders -> Fulfill Shop Order -> Tips -> Upgrade -> First 
 
 The loop should become fun before deeper systems are expanded.
 
+Current design target is not a broad system dump. Tofu Shop should first feel like a clear,
+state-based production loop; the larger dashboard is earned as the player reaches new bottlenecks.
+
 Current design principles:
 
 - first-time users should not see every system
 - returning users should see the dashboard they earned
 - progression should be bumpy and story-driven, not a flat generator list
+- each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
 - Delivery Orders may be fractional internally, but UI should show ready orders plus preparation
