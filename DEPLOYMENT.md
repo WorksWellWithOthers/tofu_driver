@@ -53,6 +53,16 @@ make prod PROJECT_ID="tofu-driver" REGION="us-central1" SERVICE="tofu-driver"
 The source deploy uses `Dockerfile` and `nginx.conf`. The app should not require Cloud SQL, Redis,
 or any external application infrastructure.
 
+When changing `frontend/nospill/app.js` or `frontend/nospill/app.css`, bump the matching query
+string in `frontend/nospill/index.html` before deploy, for example:
+
+```html
+<link rel="stylesheet" href="/static/nospill/app.css?v=20260615a" />
+<script src="/static/nospill/app.js?v=20260615a"></script>
+```
+
+This keeps mobile browsers from reusing stale static JS/CSS after a Cloud Run revision changes.
+
 After deploy:
 
 ```bash
