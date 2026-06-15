@@ -28,7 +28,7 @@ The app is intentionally lightweight:
 - `Dockerfile`: Nginx container used for Cloud Run source deploys
 - `nginx.conf`: static-file routing and security headers for Cloud Run
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
-- `DESIGN.md`: product and privacy contract
+- `DESIGN.md`: product, privacy, and future idle incremental direction
 - `PLAN.md`: next implementation steps
 
 ## Local Checks

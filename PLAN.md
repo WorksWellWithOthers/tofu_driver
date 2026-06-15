@@ -20,6 +20,8 @@
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
 - Unlock-gated merch product links still live in `MERCH_LINKS`.
 - Discord community CTAs are implemented but hidden until `DISCORD_CONFIG` is enabled with an invite URL.
+- `DESIGN.md` now documents the future idle incremental / Tofu Shop expansion direction; those
+  systems remain future-facing unless implemented in a later pass.
 
 ## Recommended Next Steps
 
@@ -30,7 +32,9 @@
 5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
 6. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
 7. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
-8. Replace remaining MVP raster assets with production-ready artwork when available.
+8. Prototype the future idle expansion in the documented small-scope order: one fictional route,
+   one generator, three upgrades, one delivery report, and one stamp.
+9. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 

@@ -231,6 +231,405 @@ The Delivery Wall shows No-Spill Club Gear, Perfect Pour Drop, Delivery Crew pro
 stamps. Locked merch links are hidden. Super Cute Collectibles remains the physical fulfillment
 partner and does not verify scores in the current MVP.
 
+## Idle Incremental / Tofu Shop Expansion
+
+This section documents a future product direction. It is not a statement that every system below is
+implemented in the current live app.
+
+### Core Pitch
+
+Tofu Driver can evolve into a cozy idle incremental delivery-management RPG built on top of The Cup
+Test and parked-only Tofu Shop.
+
+The fantasy:
+
+- start as one nervous tofu driver
+- complete smooth deliveries
+- build a tofu shop
+- train apprentice drivers
+- automate safe routes
+- collect passport stamps
+- unlock secret merch
+- earn higher License ranks
+
+The game is about condition, smoothness, mastery, and shop growth. It is not about real-world speed.
+
+### Design Pillars
+
+1. No repetitive clicking
+
+   Avoid button-mashing. Active play should be smart setup choices, delivery planning, upgrades,
+   and post-run decisions. Do not reward tapping while driving, and do not require repeated clicking
+   to progress.
+
+2. Active first, idle soon after
+
+   The first minutes should feel tactile and rewarding. The player should complete a delivery, see a
+   result, earn resources, and buy an upgrade quickly. Automation should unlock early to remove
+   chores while preserving meaningful parked decisions.
+
+3. Unfolding mechanics
+
+   Start simple and reveal depth over time: Today's Delivery, Cup Test, tips/XP, first upgrade,
+   Tofu Shop, fictional Route Map, Passport Stamps, Auto Driver, Weather, License Exam, Prestige,
+   Rival Shops, Festival Routes, and Secret Customers.
+
+4. Cozy failure
+
+   Spills should be funny and partially rewarding. A bad delivery can earn fewer tips, lower cargo
+   condition, and a funny report, but it should not erase progress.
+
+5. Visual progress matters
+
+   Numbers are not enough. Show shop growth, car decals, passport stamps, fictional route-map
+   expansion, garage crew, delivery reports, and cup/cargo stability improvements.
+
+6. One clear bottleneck at a time
+
+   The player should know whether tofu, orders, route mastery, shop capacity, reputation, driver
+   fatigue, or license rank is slowing progress. Avoid many currencies competing at once.
+
+### Loop Structure
+
+Short loop:
+
+- start delivery
+- choose route/setup
+- run Cup Test
+- receive result
+- earn resources
+- buy upgrade
+- try again
+
+Medium loop:
+
+- shop produces tofu
+- tofu becomes delivery orders
+- player chooses routes
+- deliveries generate tips, reputation, and XP
+- automation begins
+
+Long loop:
+
+- player leaves
+- shop and safe automated drivers continue
+- offline report summarizes earnings
+- player returns to spend resources and unlock goals
+
+Meta loop:
+
+- License Exam prestige
+- partial reset
+- permanent License Stars
+- faster early game and new systems
+
+Any real-world driving contribution must remain smoothness-based and must not incentivize
+additional, faster, or riskier driving.
+
+### Resources
+
+Possible management-game resources:
+
+- Tips
+- Tofu Blocks
+- Reputation
+- XP
+- Cup Stability
+- Route Knowledge
+- Passport Stamps
+- License Stars
+
+These resources belong to the management layer. They must not make real-world driving scores easier
+through fictional upgrades unless the effect is explicitly framed as game, cosmetic, or story
+progression.
+
+### Generator / Pump System
+
+Possible generators:
+
+- Tofu Press
+- Prep Counter
+- Delivery Route
+- Training Lot
+- Garage
+- Driver Crew
+
+Avoid upgrade names and effects that imply real-world racing performance or unsafe behavior.
+
+Acceptable language:
+
+- Better Boxes
+- Tofu Press
+- Prep Counter
+- Shop Sign
+- Delivery Shelf
+- Festival Cooler
+- Cup Display
+- Training Lot
+
+Use caution or fictional-only framing for acceleration, delivery speed, braking upgrades, handling
+upgrades, route speed, and no-brake challenges.
+
+### Cup Test Design
+
+The Cup Test remains the signature mechanic. A future idle-game MVP can make it strategy-first:
+
+- choose a safe delivery strategy
+- choose focus: tips, XP, route knowledge, or stamp chance
+- receive a Perfect, Clean, Shaky, or Spilled result
+
+Do not use real-world `Fast`, `Aggressive`, `No Brake`, `Beat the clock`, or `Speed` choices in a
+way that could encourage unsafe driving. If fictional route choices exist, they should be clearly
+separated from real-world driving mode.
+
+### Route System
+
+Routes can exist as fictional game content:
+
+- Shop Street
+- Old Hill Road
+- Lantern Bridge
+- Rainy Switchback
+- Fox Shrine Road
+
+Each fictional route may have duration, tofu required, spill difficulty, tips, reputation, stamp
+pool, weather modifier, automation requirement, and unlock condition.
+
+Route names and difficulty should remain fictional game content. Real-world app mode must not tell
+users to seek specific road types, twisty roads, risky conditions, faster routes, or exact places.
+
+### Tofu Shop
+
+The Tofu Shop is the idle heart of the game. It can grow from:
+
+- one tofu press
+- one prep counter
+- one route
+
+Into:
+
+- multiple presses
+- prep staff
+- dispatch board
+- garage
+- customer board
+- festival booth
+- regional tofu network
+
+Shop mode is parked-only. Do not show clickable shop actions during active drive.
+
+### Automation
+
+Automation ladder:
+
+1. Manual delivery
+2. Auto-prep tofu
+3. Auto-repeat safe route
+4. Apprentice driver
+5. Dispatcher
+6. Auto-upgrade suggestions
+7. Auto-route assignment
+8. Prestige preview
+
+Automation removes chores, not decisions.
+
+### Prestige / License Exams
+
+License Exams are the prestige layer:
+
+- Local Delivery License
+- Mountain License
+- Night Route License
+- Festival License
+- Legend License
+- Ghost Road License
+
+License Stars are permanent prestige currency. Prestige should make replay faster, unlock new
+mechanics, and reduce repetitive chores.
+
+### Passport / Achievements
+
+Passport Stamps are the collection layer. Categories can include:
+
+- Delivery Stamps
+- Route Stamps
+- Style Stamps
+- Time Stamps
+- Secret Stamps
+
+Avoid real-world unsafe achievements such as `No Brake Delivery`, `Fast Tofu`, or similar unless
+they are clearly fictional idle-game route labels and not connected to real-world driving.
+
+Preferred achievement language:
+
+- Smooth Delivery
+- Slow and Steady
+- Zero Spill Streak
+- Passenger Approved
+- Calm Cruise
+- Perfect Pour
+
+### Delivery Reports And Ledger
+
+The game should produce charming delivery reports and offline summaries. Reports and ledger entries
+should explain:
+
+- what happened while away
+- what slowed progress
+- what unlocked
+- what to upgrade next
+- funny spill reports
+- customer rumors
+- route discoveries
+
+### UI Layout
+
+Desired home hierarchy for the expanded game:
+
+1. Today's Delivery
+2. Player Status
+3. Cup Stability / XP / License
+4. Passport Stamps
+5. Tofu Shop
+6. Fictional Route Map
+7. Garage
+8. Crew
+9. Ledger
+10. Settings
+
+Current TofuDriver.com should keep the first screen game-first and make Today's Delivery visible
+before setup controls.
+
+### Economy Rules
+
+Possible economy rules:
+
+- predictable exponential costs
+- production rates shown clearly
+- milestone boosts
+- offline caps
+- delivery reports instead of raw number dumps
+
+The first version should keep currencies minimal. Avoid adding too many currencies at once.
+
+### First 10 Minutes / First Hour
+
+The first 10 minutes should teach the core loop:
+
+- first delivery in minute 0-1
+- first upgrade by minute 1-3
+- Tofu Shop by minute 5
+- first stamp by minute 10
+
+Within the first hour, preview automation and the first License Exam goal. The player should
+understand deliveries, upgrades, shop production, stamps, and prestige without seeing every future
+system at once.
+
+### MVP Scope
+
+Future expanded MVP scope:
+
+- Today's Delivery screen
+- 5 fictional routes
+- Cup Test result system
+- Tips
+- Tofu Blocks
+- Reputation
+- XP
+- 15 upgrades
+- Tofu Shop production
+- one apprentice auto-driver
+- offline progress
+- Passport with 20 stamps
+- License Exam prestige
+- delivery reports
+- save/load
+- basic settings
+
+Do not include yet:
+
+- PvP
+- global economy
+- gacha
+- full AI simulation
+- procedural world
+- multiplayer map
+- ads
+- premium currency
+- seasonal events
+
+### Canonical Prototype
+
+The correct first prototype:
+
+1. one screen
+2. one route
+3. one cup result
+4. tips earned
+5. one tofu generator
+6. three upgrades
+7. one delivery report
+8. one stamp
+
+Question to validate: Is it satisfying to run a delivery, see the cup result, earn tips, upgrade,
+and feel better on the next run?
+
+### Build Order
+
+Proposed feature order:
+
+1. Game state model
+2. Tips and tofu resources
+3. Tofu Shop generator
+4. Manual delivery button
+5. Cup Test result calculation
+6. Delivery report
+7. Upgrade shop
+8. Fictional route map
+9. Passport stamps
+10. Route mastery
+11. Apprentice auto-driver
+12. Offline progress
+13. License Exam prestige
+14. License Star upgrades
+15. Visual polish
+16. Balance pass
+
+### Final Design Rule
+
+Every feature must answer at least one of:
+
+- Does this make deliveries more fun?
+- Does this make the tofu shop feel alive?
+- Does this create a new goal?
+- Does this automate a chore?
+- Does this reveal a mystery?
+- Does this make the player proud of progress?
+
+If not, cut it from MVP.
+
+### Explicit Safety Addendum
+
+The idle incremental game layer may use fictional delivery, route, and shop systems, but real-world
+driving mode must remain safety-first.
+
+Hard rules:
+
+- no in-drive clicking
+- no real-world speed rewards
+- no speed display as a performance metric
+- no route leaderboards
+- no public road competition
+- no `beat the clock`
+- no `drive faster`
+- no `find a harder/twistier road`
+- no high-G bragging
+- no public reporting/shaming of drivers
+- no raw GPS/motion upload by default
+
+Interaction rule: driving produces summarized delivery outcomes. Management gameplay happens while
+parked.
+
 ## XP And Stamps
 
 Driver XP is local-only and uses cargo condition, qualified-run bonus, daily delivery completion,
