@@ -64,6 +64,8 @@ Early resource-funnel rule:
 - Fulfill Shop Order converts Delivery Orders into Tips, Reputation, and XP.
 - Tips buy stations and upgrades.
 - Pack Tofu is a backup/manual stock action, not the main money action.
+- Tofu Press is valuable when Tofu Stock is the bottleneck.
+- Prep Counter is valuable when Tofu Stock is plentiful but Delivery Orders are slow.
 - Don't Spill the Cup is optional and must not override normal shop bottleneck recommendations
   when orders are ready or Tips are needed.
 
@@ -195,9 +197,12 @@ reset rule.
 - `Tips`: main purchase currency. Source: fulfilled orders, Regular Customers, fictional routes,
   certified boosts. Sink: stations, upgrades, garage, crew, routes. Should be scarce early and
   abundant later. Appears immediately. Resets on License Exam.
-- `Tofu Stock`: production resource. Source: Tofu Press, Pack Tofu, boosts, offline progress. Sink:
-  Prep Counter, shop orders, fictional routes. Should be moderately scarce early. Appears
-  immediately. Resets on License Exam.
+- `Tofu Stock`: ingredient/input resource, not the main currency. Source: Tofu Press, Pack Tofu,
+  boosts, offline progress. Sink: Prep Counter, future shop orders, fictional routes. It matters as
+  runway for order preparation: `floor(Tofu Stock / tofu per order)` tells the player how many more
+  orders current stock can support. It should feel important when stock supports fewer than 3
+  orders, neutral from 3 to 9 orders, and safe at 10+ orders. Appears immediately. Resets on License
+  Exam.
 - `Delivery Orders`: throughput resource. Source: Prep Counter and boosts. Sink: Fulfill Shop
   Order, fictional routes, friendly Rival Shop Challenges. Should be the first visible bottleneck.
   Appears immediately. Resets on License Exam.
@@ -551,8 +556,9 @@ Expected bottlenecks and Next Best Action:
 
 - Delivery Orders ready and Tips low: fulfill shop orders
 - fractional Delivery Orders in progress: show ready orders plus Prep Counter progress/ETA
-- no Delivery Orders: improve Prep Counter or wait for orders
-- low Tofu Stock: buy/improve Tofu Press
+- no Delivery Orders and healthy Tofu Stock runway: improve Prep Counter, improve Tidy Packaging,
+  or wait for orders
+- low Tofu Stock runway: Pack Tofu or buy/improve Tofu Press
 - not enough Tips: fulfill shop orders
 - low Reputation: fulfill orders or fictional routes
 - route locked: build Reputation or Shop Reach
@@ -561,6 +567,10 @@ Expected bottlenecks and Next Best Action:
 
 Only one dominant Next Best Action should appear. Secondary actions may exist, but the player should
 not have to choose among several equal-weight CTAs.
+
+Purchase recommendations should follow the current bottleneck. Do not recommend `Buy Tofu Press`
+when the player already has enough stock runway and Delivery Orders are the limiter; keep the press
+available with explanatory copy instead. When stock runway is low, promote Pack Tofu or Tofu Press.
 
 Certified Cup Test should be presented as an optional boost/status path, not as the normal shop
 bottleneck. It may be visible as secondary copy, but the early shop loop should prioritize the

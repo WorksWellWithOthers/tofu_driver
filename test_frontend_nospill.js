@@ -70,6 +70,7 @@ globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
 globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
 globalThis.startShopGeneratorTimer = startShopGeneratorTimer;
 globalThis.orderPrepProgress = orderPrepProgress;
+globalThis.tofuStockRunway = tofuStockRunway;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
@@ -1287,6 +1288,155 @@ globalThis.waitingTickedNonNegative = ticked.gameState.shop.tofuStock >= 0 && ti
   assert.strictEqual(context.waitingTickedNonNegative, true);
 }
 
+function testTofuStockRunwayGuidesEarlyPurchases() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+  gameDailyTitle: makeNode(),
+  gameDailyFlavor: makeNode(),
+  gameDailyCargo: makeNode(),
+  gameDailyGoal: makeNode(),
+  gameDailyReward: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+
+const highStock = defaultGameState();
+highStock.shop.tofuStock = 108;
+highStock.shop.deliveryOrders = 0.3;
+highStock.shop.generatorCarry.deliveryOrders = 0.3;
+highStock.shop.tips = 100;
+highStock.shop.prepSlots = 10;
+highStock.shop.lifetimeDeliveryOrders = 1;
+highStock.stamps.first_shop_order = { date: "2026-06-15T00:00:00.000Z", label: "First Shop Order" };
+globalThis.highRunway = tofuStockRunway(highStock);
+globalThis.highAction = nextBestAction(highStock, { date: new Date("2026-06-15T12:00:00.000Z") });
+globalThis.highBottleneck = currentBottleneck(highStock);
+renderGameDashboard(highStock);
+globalThis.highTopTitle = elements.gameNextActionTitle.textContent;
+globalThis.highTopCopy = elements.gameNextActionCopy.textContent;
+globalThis.highTopStation = elements.gameCtaButton.dataset.nextStation;
+renderTofuShop(highStock);
+globalThis.highGeneratorHtml = elements.shopGeneratorList.innerHTML;
+appState.shopTab = "orders";
+renderTofuShop(highStock);
+globalThis.highOrdersHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "production";
+renderTofuShop(highStock);
+globalThis.highProductionHtml = elements.shopTabPanel.innerHTML;
+
+const lowStock = defaultGameState();
+lowStock.shop.tofuStock = 1;
+lowStock.shop.deliveryOrders = 0;
+lowStock.shop.generatorCarry.deliveryOrders = 0;
+lowStock.shop.tips = 100;
+lowStock.shop.prepSlots = 10;
+lowStock.shop.lifetimeDeliveryOrders = 0;
+lowStock.shop.lifetimeTofuPacked = 1;
+lowStock.shop.lastGeneratorTickAt = "2026-06-15T12:00:00.000Z";
+globalThis.lowRunway = tofuStockRunway(lowStock);
+globalThis.lowAction = nextBestAction(lowStock, { date: new Date("2026-06-15T12:00:00.000Z") });
+globalThis.lowBottleneck = currentBottleneck(lowStock);
+const ticked = applyShopGeneratorTick(lowStock, new Date("2026-06-15T12:00:30.000Z"));
+globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.gameState.shop.deliveryOrders >= 0;
+`, context);
+
+  assert.strictEqual(context.highRunway.ordersRemaining, 54);
+  assert(context.highRunway.message.includes('Enough tofu for 54 more orders'));
+  assert.strictEqual(context.highAction.type, 'buy_station');
+  assert.strictEqual(context.highAction.stationId, 'prep_counter');
+  assert.strictEqual(context.highAction.title, 'Next: Buy Prep Counter');
+  assert(context.highAction.copy.includes('More Prep Counters prepare Delivery Orders faster'));
+  assert.strictEqual(context.highTopStation, 'prep_counter');
+  assert.strictEqual(context.highBottleneck.label, 'Preparing Delivery Order');
+  assert(context.highBottleneck.action.includes('improve Prep Counter'));
+  assert(!context.highTopTitle.includes('Tofu Press'));
+  assert(!context.highTopCopy.includes('Certified boost'));
+  assert(context.highGeneratorHtml.includes('Not urgent: you have enough tofu for now.'));
+  assert(context.highGeneratorHtml.includes('Prep Counter is the bottleneck.'));
+  assert(context.highProductionHtml.includes('Not urgent: you have enough tofu for now.'));
+  assert(context.highProductionHtml.includes('Prep Counter is the bottleneck.'));
+  assert(context.highOrdersHtml.includes('Tofu Stock becomes Delivery Orders. Delivery Orders become Tips.'));
+  assert(context.highOrdersHtml.includes('Enough tofu for 54 more orders.'));
+  assert(context.highOrdersHtml.includes('Tofu required per order: 2.'));
+
+  assert.strictEqual(context.lowRunway.isLow, true);
+  assert.strictEqual(context.lowBottleneck.label, 'Low Tofu Stock');
+  assert.strictEqual(context.lowAction.type, 'buy_station');
+  assert.strictEqual(context.lowAction.stationId, 'tofu_press');
+  assert(context.lowAction.copy.includes('Tofu Stock is low'));
+  assert.strictEqual(context.lowTickNonNegative, true);
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -1330,7 +1480,9 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
 
   const funded = JSON.parse(JSON.stringify(completeDaily));
   funded.shop.tips = 100;
+  funded.shop.tofuStock = 6;
   funded.shop.deliveryOrders = 0;
+  funded.shop.prepSlots = 0;
   funded.shop.lifetimeTofuPacked = 1;
   funded.shop.lifetimeDeliveryOrders = 1;
   funded.stamps.first_shop_order = { date: '2026-06-14T12:00:00.000Z', label: 'First Shop Order' };
@@ -2474,6 +2626,8 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
   renderedAttrs.forEach((attr) => {
     assert(delegatedAttrs.includes(attr), `visible action lacks click delegation: ${attr}`);
   });
+  assert(source.includes('elements.shopGeneratorList.addEventListener("click", handleTofuShopPanelClick)'));
+  assert(source.includes('elements.shopUpgradeList.addEventListener("click", handleTofuShopPanelClick)'));
   assert(!/\bfetch\s*\(/.test(source));
   assert(!source.includes('XMLHttpRequest'));
   assert(!source.includes('sendBeacon'));
@@ -3540,6 +3694,7 @@ function run() {
   testTofuShopGeneratorUpgradeUiIsHonestAndProgressive();
   testEarlyShopResourceFunnelMakesTipsObvious();
   testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal();
+  testTofuStockRunwayGuidesEarlyPurchases();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

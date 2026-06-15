@@ -2435,6 +2435,40 @@ function orderPrepProgress(gameState) {
   };
 }
 
+function tofuStockRunway(gameState) {
+  const state = normalizeGameState(gameState);
+  const rates = getShopGeneratorRates(state);
+  const tofuStock = safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE);
+  const ordersRemaining = Math.floor(tofuStock / PREP_COUNTER_CONSUME_PER_ORDER);
+  const secondsRemaining = rates.prepTofuPerSecond > 0
+    ? Math.floor(tofuStock / rates.prepTofuPerSecond)
+    : null;
+  let label = "Neutral";
+  let message = `Tofu Stock can support ${ordersRemaining} more order${ordersRemaining === 1 ? "" : "s"}.`;
+  if (ordersRemaining >= 10) {
+    label = "Enough";
+    message = `Enough tofu for ${ordersRemaining} more orders. Tofu Stock feeds Prep Counter, but it is not the bottleneck right now.`;
+  } else if (ordersRemaining >= 3) {
+    label = "Watch";
+    message = `Tofu Stock can support ${ordersRemaining} more orders. Keep an eye on it as Prep Counter scales.`;
+  } else if (ordersRemaining > 0) {
+    label = "Low";
+    message = `Tofu Stock is getting low: enough for ${ordersRemaining} more order${ordersRemaining === 1 ? "" : "s"}.`;
+  } else {
+    label = "Empty";
+    message = "Need more Tofu Stock. Pack tofu or buy a Tofu Press.";
+  }
+  return {
+    tofuStock,
+    ordersRemaining,
+    secondsRemaining,
+    label,
+    message,
+    isLow: ordersRemaining < 3,
+    isHealthy: ordersRemaining >= 10,
+  };
+}
+
 function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {}) {
   const state = normalizeGameState(gameState);
   const shop = state.shop;
@@ -5496,6 +5530,16 @@ function affordableShopUpgrade(gameState) {
   }) || null;
 }
 
+function affordableShopStation(gameState, stationId = "") {
+  const state = normalizeGameState(gameState);
+  return SHOP_STATIONS.find((station) => {
+    if (stationId && station.id !== stationId) return false;
+    if (!stationIsUnlocked(station, state)) return false;
+    const cost = stationCost(station, safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000));
+    return state.shop.tips >= cost && state.shop.prepSlots >= station.prepSlotCost;
+  }) || null;
+}
+
 function nextBestAction(gameState, options = {}) {
   const state = normalizeGameState(gameState);
   const activeDrive = Boolean(options.activeDrive);
@@ -5510,6 +5554,9 @@ function nextBestAction(gameState, options = {}) {
   const lowTofuStock = Number(state.shop.tofuStock || 0) < 10;
   const upgrade = affordableShopUpgrade(state);
   const prep = orderPrepProgress(state);
+  const runway = tofuStockRunway(state);
+  const prepCounterStation = affordableShopStation(state, "prep_counter");
+  const tofuPressStation = affordableShopStation(state, "tofu_press");
   if (activeDrive) {
     return {
       type: "active_drive",
@@ -5530,7 +5577,27 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
-  if (upgrade) {
+  if (shopUnlocked && prep.ready < 1 && prepCounterStation && runway.isHealthy) {
+    return {
+      type: "buy_station",
+      title: "Next: Buy Prep Counter",
+      copy: "Tofu Stock is healthy. More Prep Counters prepare Delivery Orders faster.",
+      buttonLabel: "View Production",
+      stationId: "prep_counter",
+      disabled: false,
+    };
+  }
+  if (shopUnlocked && runway.isLow && tofuPressStation) {
+    return {
+      type: "buy_station",
+      title: "Next: Buy Tofu Press",
+      copy: "Tofu Stock is low. A Tofu Press helps keep Prep Counter supplied.",
+      buttonLabel: "View Production",
+      stationId: "tofu_press",
+      disabled: false,
+    };
+  }
+  if (upgrade && !(runway.isHealthy && prep.ready < 1 && prep.running)) {
     return {
       type: "buy_upgrade",
       title: "Next: Buy an Upgrade",
@@ -5613,6 +5680,7 @@ function renderGameDashboard(gameState = loadGameState()) {
       elements.gameCtaButton.dataset.nextAction = action.type;
       elements.gameCtaButton.dataset.nextUpgrade = action.upgradeId || "";
       elements.gameCtaButton.dataset.nextOrderQuantity = action.orderQuantity || "";
+      elements.gameCtaButton.dataset.nextStation = action.stationId || "";
     }
   }
   if (elements.gameCertifiedCtaButton) {
@@ -5731,6 +5799,29 @@ function renderShopUpgrade(upgrade, gameState) {
   `;
 }
 
+function stationPurposeCopy(stationId, gameState) {
+  const state = normalizeGameState(gameState);
+  const prep = orderPrepProgress(state);
+  const runway = tofuStockRunway(state);
+  if (stationId === "tofu_press") {
+    if (runway.isHealthy) {
+      return "Not urgent: you have enough tofu for now. Tofu Press helps when Prep Counter starts using stock faster.";
+    }
+    if (runway.isLow) {
+      return "Tofu Stock is low. Pack tofu or buy a Tofu Press.";
+    }
+    return "Presses tofu for future orders.";
+  }
+  if (stationId === "prep_counter") {
+    if (runway.isHealthy && prep.ready < 1) {
+      return "Prep Counter is the bottleneck. More counters prepare orders faster.";
+    }
+    return "Turns Tofu Stock into Delivery Orders.";
+  }
+  const station = shopStationById(stationId);
+  return station ? station.description : "";
+}
+
 function renderShopGeneratorCard(generatorId, gameState) {
   const state = normalizeGameState(gameState);
   const rates = getShopGeneratorRates(state);
@@ -5756,9 +5847,7 @@ function renderShopGeneratorCard(generatorId, gameState) {
     ? generatorId === "prepCounter"
       ? "Unlocks with Tofu Stock 10 or Shop Level 2."
       : "The press is warming up. Start the shop while parked."
-    : generatorId === "tofuPress"
-      ? "Presses tofu for future orders."
-      : "Turns Tofu Stock into Delivery Orders.";
+    : stationPurposeCopy(stationId, state);
   return `
     <div class="nospill-generator-item ${unlocked ? "" : "is-locked"}">
       <header>
@@ -5953,7 +6042,7 @@ function renderProductionPanel(state) {
           title: station.name,
           status: unlocked ? `${cost} tips · ${station.prepSlotCost} Prep Slot` : "Locked",
           copy: unlocked
-            ? `Owned: ${owned}. ${station.description} Milestone x${stationMilestoneMultiplier(owned)}.`
+            ? `Owned: ${owned}. ${stationPurposeCopy(station.id, state)} Milestone x${stationMilestoneMultiplier(owned)}.`
             : station.unlock,
           locked: !unlocked,
           actions: [
@@ -5968,6 +6057,8 @@ function renderProductionPanel(state) {
 
 function renderOrdersPanel(state) {
   const prep = orderPrepProgress(state);
+  const runway = tofuStockRunway(state);
+  const rates = getShopGeneratorRates(state);
   const canFulfill = prep.ready > 0;
   const orderReason = canFulfill ? "" : `Need 1 prepared order. ${prep.message}`;
   const tenReason = prep.ready < 10
@@ -5977,6 +6068,7 @@ function renderOrdersPanel(state) {
   const showMax = prep.ready > 1;
   return `
     <h4>Orders</h4>
+    <p class="nospill-panel-helper">Tofu Stock becomes Delivery Orders. Delivery Orders become Tips.</p>
     <p class="nospill-panel-helper">Fulfill prepared shop orders to earn Tips. Tips buy stations and upgrades.</p>
     <div class="nospill-idle-grid">
       ${renderIdleCard({
@@ -5997,7 +6089,7 @@ function renderOrdersPanel(state) {
       ${renderIdleCard({
         title: "Preparing Next Order",
         status: `${prep.progressPercent}% prepared`,
-        copy: `${prep.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${PREP_COUNTER_CONSUME_PER_ORDER}.`,
+        copy: `${prep.message} ${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${PREP_COUNTER_CONSUME_PER_ORDER}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
       })}
     </div>
   `;
@@ -6242,13 +6334,14 @@ function renderShopSettingsPanel(state) {
 function currentBottleneck(gameState) {
   const state = normalizeGameState(gameState);
   const prep = orderPrepProgress(state);
+  const runway = tofuStockRunway(state);
   if (prep.ready > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Fulfill shop orders to earn Tips." };
   if (prep.ready > 0) return { id: "orders_ready", label: "Orders ready", action: "Fulfill shop orders for Tips." };
+  if (prep.ready < 1 && runway.isLow) return { id: "tofu", label: "Low Tofu Stock", action: "Pack tofu or buy Tofu Press." };
   if (prep.ready < 1 && prep.running && state.shop.tofuStock >= PREP_COUNTER_CONSUME_PER_ORDER) {
-    return { id: "preparing_order", label: "Preparing Delivery Order", action: "Wait for Prep Counter." };
+    return { id: "preparing_order", label: "Preparing Delivery Order", action: runway.isHealthy ? "Wait for Prep Counter or improve Prep Counter." : "Wait for Prep Counter." };
   }
   if (prep.ready < 1) return { id: "orders", label: "No Delivery Orders", action: prep.message };
-  if (state.shop.tofuStock < 5) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Pack Tofu" };
   if (state.shop.prepSlots < 1) return { id: "prep_slots", label: "Prep Slots recovering", action: "Wait for prep capacity" };
   if (SHOP_STATIONS.some((station) => stationIsUnlocked(station, state) && state.shop.tips >= stationCost(station, state.shop.stations[station.id]))) {
     return { id: "upgrade", label: "Station affordable", action: "Buy a shop station" };
@@ -7742,6 +7835,13 @@ function handleNextBestAction() {
     setSummaryStatusMessage("Choose an available shop upgrade while parked.");
     return;
   }
+  if (actionType === "buy_station") {
+    setAppSurface("shop", { updateHash: true, scroll: true });
+    appState.shopTab = "production";
+    renderGamePanels(currentGameState());
+    setSummaryStatusMessage("Choose the recommended shop station while parked.");
+    return;
+  }
   if (actionType === "continue_shop") {
     focusShopUpgrade("");
     setSummaryStatusMessage("Review the Tofu Shop while parked.");
@@ -7855,6 +7955,8 @@ function bindEvents() {
   elements.fulfillShopOrderButton.addEventListener("click", handleFulfillShopOrder);
   if (elements.shopTabPanel) elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick);
   if (elements.shopTabList) elements.shopTabList.addEventListener("click", handleTofuShopPanelClick);
+  if (elements.shopGeneratorList) elements.shopGeneratorList.addEventListener("click", handleTofuShopPanelClick);
+  if (elements.shopUpgradeList) elements.shopUpgradeList.addEventListener("click", handleTofuShopPanelClick);
   if (elements.shopBuyMultiplier) {
     elements.shopBuyMultiplier.addEventListener("change", handleShopMultiplierChange);
   }

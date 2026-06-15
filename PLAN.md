@@ -15,10 +15,15 @@
   the first order can be fulfilled immediately.
 - Fractional Delivery Order progress is shown as ready orders plus Prep Counter preparation
   progress/ETA, not as a raw decimal order count.
+- Tofu Stock now has player-facing runway copy: it is an input for Prep Counter, not the purchase
+  currency, and the UI can show when stock is enough for now.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
   Reputation, and XP.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
   players back to fulfilling shop orders.
+- Next Best Action follows the current bottleneck: ready orders point to fulfillment, low stock
+  points to Pack Tofu/Tofu Press, and healthy stock with slow orders points to Prep Counter/order
+  prep rather than Tofu Press.
 - Pack Tofu is a backup/manual Tofu Stock action, and Don't Spill the Cup is an optional certified
   boost rather than the normal shop bottleneck during order prep or Tip shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
@@ -44,7 +49,8 @@ Canonical references:
 3. Hide or down-rank advanced systems during the first 10 minutes.
 4. Add balance tests for the first loop:
    first order rewards, first upgrade timing, visible `/sec` rate improvement, Tip-source disabled
-   button reasons, Prep Counter wait state, and no resource-negative states.
+   button reasons, stock-runway recommendations, Prep Counter wait state, and no resource-negative
+   states.
 5. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
 6. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
 7. Rename `frontend/nospill/` to a product-native path only as a separate migration.

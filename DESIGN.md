@@ -151,11 +151,15 @@ Current design principles:
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
 - Delivery Orders may be fractional internally, but UI should show ready orders plus preparation
   progress and ETA.
+- Tofu Stock is an ingredient/runway resource, not the purchase currency. The UI should explain how
+  many orders current stock can support.
 - Fulfill Shop Order requires at least one ready Delivery Order.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
 - Tips buy more production, stations, and upgrades.
 - The early UI must teach that Tips come from fulfilled shop orders.
 - Pack Tofu is a backup/manual Tofu Stock action, not the main money action.
+- Recommendations should follow the current bottleneck: promote Tofu Press when stock is low, but
+  promote Prep Counter, order prep, or Tidy Packaging when stock is plentiful and orders are slow.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
   are needed.
