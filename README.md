@@ -1,62 +1,48 @@
 # Tofu Driver
 
-Tofu Driver is a browser-only cozy delivery-management game with an optional smooth-driving
-certification path. The base game is the parked-only `Tofu Shop`: tofu stock ticks upward,
-delivery orders get prepared, and users can fulfill shop orders at home. `The Cup Test` uses phone
-motion sensors as a certified smooth-delivery boost where the driver tries to keep a virtual cup
-from spilling.
+Tofu Driver is a static browser app with two connected experiences:
 
-The app is intentionally lightweight:
+- `Don't Spill the Cup`: the default smooth-driving challenge.
+- `Tofu Shop`: a parked-only idle/incremental shop game.
 
-- static HTML/CSS/JavaScript
-- no backend requirement for the current MVP
-- no account system
-- no payment flow
-- no upload of raw motion or GPS samples
-- local results stored only in browser `localStorage`
-- secret shirts and future physical merch fulfilled through Super Cute Collectibles
-- animated tofu cargo visualization driven by local motion data, not speed
-- story-first landing flow with Today's Delivery, one home-shop Next Best Action CTA, and optional Cup Test certification
-- parked-only Tofu Shop resources, per-second generator ticking, Fulfill Shop Order, and starter upgrades
-- home progression through Tofu Stock, Delivery Orders, Tips, Reputation, and Shop Level without sensors
-- expanded local idle layer with Prep Slots, Shop Reach, Shop Spirit, fictional route cards,
-  training drills, garage upgrades, Delivery Crew hires, friendly Rival Shop Challenges, License
-  Exams, License Stars, Passport stamps, and a capped Delivery Ledger
-- consolidated Delivery/Practice Complete result screen that returns to the updated dashboard/shop
-- Practice Mode grants modest local progress; qualified delivery criteria gate Perfect Pour and merch progress
-- cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
-- hidden local Delivery Simulator for QA, enabled with `?simulator=1`
-- design target favors progressive reveal, earned status, and ethical cosmetics over pay-to-progress
-- optional Discord community CTA, hidden unless `DISCORD_CONFIG` is enabled
+The Cup Test can provide optional certified smooth-delivery boosts for the shop, but ordinary Tofu
+Shop progression is playable at home without sensors or location.
 
-## App Surfaces
+## Privacy And Safety Stance
 
-- `Don't Spill the Cup` is the default visitor-facing surface and iconic challenge.
-- `Tofu Shop` is the home idle game. It uses local resources, generators, parked-only shop
-  actions, upgrades, fictional route cards, crew, Shop Spirit boosts, License progress, Delivery
-  Passport progress, and collection systems without sensors or location.
-- `Delivery Crew` is a separate collection surface for character and sound-pack choices once those
-  systems are relevant.
-- `Don't Spill the Cup` is the always-available challenge. It uses Basic Mode or opt-in Qualified
-  Run to produce practice results or certified smooth-delivery boosts for the shop.
+- No backend is required for the current MVP.
+- No account system.
+- No payment flow.
+- No analytics or tracking.
+- No upload of raw motion or GPS samples.
+- No upload of route traces, maps, street names, coordinates, or speed logs.
+- Basic Mode does not request location.
+- Qualified Run Mode requests location only after opt-in/start.
+- Scoring and rewards prioritize smoothness, not speed.
+- Shop, crew, sound, upgrade, and reward actions are parked-only.
 
-The static app uses hash routing for local navigation: root/no hash defaults to `#/cup-test`,
-`#/cup-test` shows the challenge, `#/shop` shows the Tofu Shop, and `#/crew` shows Delivery Crew
-collection controls when relevant.
+## App Routes
+
+The static app uses hash routing:
+
+- root/no hash defaults to `#/cup-test`
+- `#/cup-test`: Don't Spill the Cup
+- `#/shop`: Tofu Shop
+- `#/crew`: Delivery Crew collection controls when relevant
 
 ## Project Layout
 
 - `frontend/nospill/index.html`: app shell
 - `frontend/nospill/app.css`: app styling
-- `frontend/nospill/app.js`: motion, scoring, sharing, and local storage logic
+- `frontend/nospill/app.js`: motion, scoring, shop, sharing, and local storage logic
 - `frontend/nospill/assets/`: app raster artwork
-- `Dockerfile`: Nginx container used for Cloud Run source deploys
-- `nginx.conf`: static-file routing and security headers for Cloud Run
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
-- `DESIGN.md`: product, privacy, progressive reveal, ethical status, and future idle direction
-- `PLAN.md`: next implementation steps
-- `BALANCE_AND_PROGRESSION.md`: idle-game loop, economy, pacing, and balance contract
+- `DESIGN.md`: current product canon, safety/privacy contract, future direction
+- `BALANCE_AND_PROGRESSION.md`: Tofu Shop economy, pacing, and progression contract
 - `IMPLEMENTATION_STATUS.md`: implementation matrix with file/test evidence
+- `PLAN.md`: tactical next steps, questions, and non-goals
+- `DEPLOYMENT.md`: hosting/deploy instructions
+- `Dockerfile`, `nginx.conf`, `Makefile`: static container/deploy support
 
 ## Local Checks
 
@@ -64,12 +50,24 @@ collection controls when relevant.
 make check
 ```
 
+Equivalent explicit checks:
+
+```bash
+node --check frontend/nospill/app.js
+node --check test_frontend_nospill.js
+node test_frontend_nospill.js
+```
+
 Open `frontend/nospill/index.html` in a browser for static inspection. Device motion behavior needs
 a real mobile browser over HTTPS for full testing.
 
-For local game-loop QA without a real drive, append `?simulator=1` to the app URL. Simulated
-deliveries are labeled as test mode, use no sensors or location, and should not be treated as real
-merch verification.
+## Local QA Modes
+
+Append `?simulator=1` to enable the hidden local Delivery Simulator. Simulated deliveries are
+labeled as test mode, use no sensors or location, and are not trusted merch verification.
+
+Append `?dev=1` or set `tofuDriverDevToolsEnabled=true` in localStorage to expose local developer
+tools. Developer QA state is local-only and not trusted certified proof.
 
 ## Deploy
 

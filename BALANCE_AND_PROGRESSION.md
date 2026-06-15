@@ -1,8 +1,11 @@
 # Tofu Driver Balance And Progression
 
 This file is the source-of-truth contract for Tofu Shop idle-game balance, progression, unlock
-pacing, and economy design. `DESIGN.md` describes the broader product; this file defines what should
-make the shop loop fun and testable.
+pacing, and economy design. It does not define the whole Tofu Driver product canon; use `DESIGN.md`
+for surfaces, safety/privacy, and future direction.
+
+The site default route is Don't Spill the Cup (`#/cup-test`). Tofu Shop is still the base parked
+progression layer, and this file governs that shop loop.
 
 ## 1. North Star
 
@@ -18,8 +21,9 @@ The fun should come from:
 - using Don't Spill the Cup as an optional certified boost path
 - feeling smooth and cozy, not rushed
 
-Physical driving must never be required for ordinary Tofu Shop progression. Don't Spill the Cup is a
-special smooth-driving challenge and certification/status path, not the base-game gate.
+Physical driving must never be required for ordinary Tofu Shop progression. Don't Spill the Cup is
+the default visitor-facing challenge and a special certification/status path, not the base-game
+gate.
 
 ## 2. Core Loop Contract
 
@@ -373,7 +377,9 @@ Keep these minimal or hidden until the core loop is fun:
 - large Passport catalog
 - sound/character unlock economy
 
-These systems may exist in data or minimal UI, but they should not dominate first-session play.
+These systems may exist in data, local state, helper functions, tests, or minimal UI. Treat them as
+scaffolding until `IMPLEMENTATION_STATUS.md` shows complete behavior and balance tests. They should
+not dominate first-session play.
 
 ## 17. Implementation Audit
 

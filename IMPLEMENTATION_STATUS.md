@@ -4,8 +4,8 @@ This file maps the Tofu Driver design contract to actual implementation evidence
 contains both implemented behavior and future direction; this file tracks what is real in the repo
 today.
 
-Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`,
-`Rejected / Non-goal`.
+Status values: `Implemented`, `Partial`, `Placeholder`, `Decorative only`, `Documented only`,
+`Not implemented`, `Non-goal`.
 
 ## Current Runtime Core
 
@@ -70,7 +70,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Results | Post-run navigation back to Tofu Shop/dashboard | Implemented | `returnToDashboard`, result footer buttons | `testPostRunNavigationReturnsToUpdatedDashboard` | Mobile UX polish | P1 | Does not reset progress or start a run |
 | Sharing | Share card actions | Implemented | `shareResult`, `copyShareText`, `downloadShareCard` | share tests | Browser compatibility testing | P2 | Sanitized by default |
 
-## Tofu Shop V1 / Generator V2
+## Tofu Shop Current Implementation
 
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -99,7 +99,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Generator | Prep Counter | Implemented | `SHOP_UPGRADES`, `getShopGeneratorRates`, generator UI | generator/shop tests | Balance tuning | P2 | Converts Tofu Stock to Delivery Orders |
 | Upgrade | Better Boxes | Implemented | `SHOP_UPGRADES`, delivery-to-shop reward modifier | upgrade/shop reward tests | Balance tuning | P3 | Packaging language, no vehicle advantage |
 | Upgrade | Shop Sign | Implemented | `SHOP_UPGRADES`, reputation modifier | upgrade/shop reward tests | Balance tuning | P3 | Presentation/reputation only |
-| Shop | Delivery Wall shelf | Rejected / Non-goal | Visible shelf removed from `index.html`; `renderDeliveryWall` is compatibility no-op | `testUnlockShelvesStayOutOfMainShopUi` | Surface rewards through Passport/results instead | P3 | Avoids exposing a full unlock checklist |
+| Shop | Delivery Wall shelf | Non-goal | Visible shelf removed from `index.html`; `renderDeliveryWall` is compatibility no-op | `testUnlockShelvesStayOutOfMainShopUi` | Surface rewards through Passport/results instead | P3 | Avoids exposing a full unlock checklist |
 | Shop | Shop rewards after delivery | Implemented | `applyDeliveryToShop`, result grid | shop reward tests | Balance tuning | P1 | Speed does not affect rewards |
 | Certified | Certified Cup Test boosts | Implemented | `applyDeliveryToShop`, `certifiedBoost`, active shop boost | speed/shop reward tests | Balance tuning | P1 | Qualified non-simulated sessions only; speed does not scale boost |
 | Unlocks | Shop vs Certified unlock tracks | Partial | Internal merch/progress state and result summaries | share/result/merch tests | Keep visible roadmap shelves hidden; reveal rewards through stamps/results | P2 | Avoids real/fake wording and keeps certified progress separate |
@@ -181,7 +181,7 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Routes | Fictional route map | Planned | Route cards implemented; map remains in `DESIGN.md` | None | Design fictional map UI | Future | Must remain separate from real-world routing |
+| Routes | Fictional route map | Documented only | Route cards implemented; map remains in `DESIGN.md` | None | Design fictional map UI | Future | Must remain separate from real-world routing |
 | Narrative | Rich delivery reports | Partial | Capped ledger entries implemented | `testExpandedIdleShopLayerMechanics` | Add more authored report variety | P2 | No raw route/street details |
 | Economy | 15+ upgrades | Implemented | `SHOP_UPGRADES`, `STATION_UPGRADES`, `GARAGE_UPGRADES`, `LICENSE_PERKS` | `testExpandedIdleShopLayerMechanics` | Balance and display polish | P2 | Avoid vehicle/speed advantage wording |
 | Automation | Apprentice auto-driver queue | Partial | Crew counts implemented; assignment queue planned | `testExpandedIdleShopLayerMechanics` | Add timed auto route assignments | Future | Must not encourage extra real driving |
@@ -192,52 +192,40 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Narrative | Customers | Partial | `regular_customer` station implemented | `testExpandedIdleShopLayerMechanics` | Add named customers and reports | Future | No unsafe driving prompts |
 | Narrative | Contracts | Documented only | `DESIGN.md` future direction | None | Design safe contracts | Future | No timed/speed contracts |
 | Crew | Staff/crew expansion | Partial | cosmetic Delivery Crew implemented; expansion in `DESIGN.md` | collection tests | Add staff roles later | Future | Cosmetic/local only |
-| Social | Public profiles | Planned | `DESIGN.md` monetization/status section | None | Requires privacy/account design | Future | No raw route/speed/location |
+| Social | Public profiles | Documented only | `DESIGN.md` monetization/status section | None | Requires privacy/account design | Future | No raw route/speed/location |
 | Social | Delivery Chronicle | Documented only | `DESIGN.md` monetization/status section | None | Requires moderation/privacy model | Future | Asynchronous, privacy-safe only |
 | Social | Garage/crew pages | Documented only | `DESIGN.md` future social status | None | Design profile/showcase | Future | Cosmetic/status only |
-| Merch | Backend unlock tokens | Planned | `DESIGN.md`, `DEPLOYMENT.md` merch note | None | Build only after merch demand | P3 | Must reject simulator/local-only fraud |
-| Accounts | Optional Sign in with Google | Planned | open question/future account direction | None | Privacy and auth design | Future | Optional only |
-| Sync | Database sync | Planned | future backend/account direction | None | Backend design | Future | No raw GPS/motion sync |
-| Merch | Shopify gated merch | Planned | `DEPLOYMENT.md`, `MERCH_LINKS` notes | None | Product URLs + backend tokens | P3 | Earned unlocks only |
+| Merch | Backend unlock tokens | Documented only | `DESIGN.md`, `DEPLOYMENT.md` merch note | None | Build only after real merch demand | P3 | Must reject simulator/local-only fraud |
+| Accounts | Optional Sign in with Google | Documented only | open question/future account direction | None | Privacy and auth design | Future | Optional only |
+| Sync | Database sync | Documented only | future backend/account direction | None | Backend design | Future | No raw GPS/motion sync |
+| Merch | Shopify gated merch | Documented only | `DEPLOYMENT.md`, `MERCH_LINKS` notes | None | Product URLs + backend tokens | P3 | Earned unlocks only |
 | Monetization | Supporter/cosmetic purchases | Documented only | `DESIGN.md` monetization section | None | Payment/product strategy | Future | No pay-to-progress |
 
-## Non-Goals / Rejected
+## Non-Goals
 
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Accounts | Accounts for current MVP | Rejected / Non-goal | `README.md`, `PLAN.md`, `DESIGN.md` | `make check` | Revisit only as optional future | Non-goal | MVP remains local-first |
-| Social | Leaderboards | Rejected / Non-goal | `PLAN.md`, `DESIGN.md` | share/no-speed tests | None | Non-goal | Avoids public road competition |
-| Privacy | Raw route uploads | Rejected / Non-goal | privacy contract docs | storage/export tests | None | Non-goal | No raw route data |
-| Privacy | Real-time location sharing | Rejected / Non-goal | `PLAN.md` | no network/upload tests | None | Non-goal | No live location sharing |
-| Payments | Payment flow | Rejected / Non-goal | `PLAN.md`, `README.md` | `make check` | Future ethical cosmetics only | Non-goal | No payments in MVP |
-| Monetization | Pay-to-progress | Rejected / Non-goal | `DESIGN.md` monetization section | None | None | Non-goal | Earned achievements keep meaning |
-| Monetization | Paid speed/score boosts | Rejected / Non-goal | `DESIGN.md` monetization section | speed reward tests | None | Non-goal | No driving advantage |
-| Monetization | Loot boxes | Rejected / Non-goal | `DESIGN.md` monetization section | None | None | Non-goal | Avoid predatory monetization |
-| Ads | Intrusive active-drive ads | Rejected / Non-goal | `DESIGN.md` monetization section | active-drive tests | None | Non-goal | No distraction during drive |
-| Claims | Safety certification claims | Rejected / Non-goal | `AGENTS.md`, `PLAN.md` | docs review | None | Non-goal | No legal/insurance/certification claims |
-| Community | Driver shaming/reporting system | Rejected / Non-goal | `DESIGN.md`, Discord rules | Discord/share tests | None | Non-goal | No public accusation/report flow |
-| Privacy | License plate collection | Rejected / Non-goal | `DESIGN.md` safety/social guardrails | no upload tests | None | Non-goal | No incident evidence collection |
-
-## Next Build Candidates
-
-Ranked by safest value:
-
-1. QA / polish / mobile testing.
-2. Result-screen visual polish.
-3. Delivery report flavor text.
-4. One fictional route prototype.
-5. One more shop generator beyond Tofu Press and Prep Counter.
-6. Better simulator scenarios.
-7. Production asset cleanup.
-8. Backend unlock tokens only after real merch demand.
+| Accounts | Accounts for current MVP | Non-goal | `README.md`, `PLAN.md`, `DESIGN.md` | `make check` | Revisit only as optional future | Non-goal | MVP remains local-first |
+| Social | Leaderboards | Non-goal | `PLAN.md`, `DESIGN.md` | share/no-speed tests | None | Non-goal | Avoids public road competition |
+| Privacy | Raw route uploads | Non-goal | privacy contract docs | storage/export tests | None | Non-goal | No raw route data |
+| Privacy | Real-time location sharing | Non-goal | `PLAN.md` | no network/upload tests | None | Non-goal | No live location sharing |
+| Payments | Payment flow | Non-goal | `PLAN.md`, `README.md` | `make check` | Future ethical cosmetics only | Non-goal | No payments in MVP |
+| Monetization | Pay-to-progress | Non-goal | `DESIGN.md` monetization section | None | None | Non-goal | Earned achievements keep meaning |
+| Monetization | Paid speed/score boosts | Non-goal | `DESIGN.md` monetization section | speed reward tests | None | Non-goal | No driving advantage |
+| Monetization | Loot boxes | Non-goal | `DESIGN.md` monetization section | None | None | Non-goal | Avoid predatory monetization |
+| Ads | Intrusive active-drive ads | Non-goal | `DESIGN.md` monetization section | active-drive tests | None | Non-goal | No distraction during drive |
+| Claims | Safety certification claims | Non-goal | `AGENTS.md`, `PLAN.md` | docs review | None | Non-goal | No legal/insurance/certification claims |
+| Community | Driver shaming/reporting system | Non-goal | `DESIGN.md`, Discord rules | Discord/share tests | None | Non-goal | No public accusation/report flow |
+| Privacy | License plate collection | Non-goal | `DESIGN.md` safety/social guardrails | no upload tests | None | Non-goal | No incident evidence collection |
 
 ## How To Update This File
 
 - Update this file after every feature commit.
 - If a feature is implemented, include file and test evidence.
 - If a feature is future-only, mark `Documented only`.
-- If a feature is intentionally out of scope, mark `Rejected / Non-goal`.
+- If a feature is intentionally out of scope, mark `Non-goal`.
 - Use `Partial` when a thin version exists but the documented design calls for more.
-- Use `Planned` when the repo intentionally points to a future build but no runtime exists yet.
+- Use `Documented only` when the repo intentionally points to a future build but no runtime exists
+  yet.
 - Do not mark something `Implemented` just because `DESIGN.md` mentions it.
 - Keep safety and privacy notes explicit when a feature touches driving, storage, sharing, merch, or community.
