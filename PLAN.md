@@ -49,9 +49,9 @@ Canonical references:
 2. Continue implementing the First Loop Contract:
    align first stamp reveal, first upgrade timing, stock-runway recommendations, order-size card
    density, and early button visibility.
-3. Review the Order Types slice against the full progression spec:
-   Simple Tofu Box, Family Tofu Tray, Festival Bento, typed costs/rewards, Fulfill Max labeling, and
-   larger-order reveal timing.
+3. Playtest and tune the implemented Order Types slice:
+   Simple Tofu Box, Family Tofu Tray, Festival Bento, typed costs/rewards, Fulfill Max labeling,
+   disabled reasons, and larger-order reveal timing.
 4. Playtest and tune the first 10 minutes:
    confirm the first order, first upgrade, first bottleneck, and first stamp are clear.
 5. Hide or down-rank advanced systems during the first 10 minutes unless the balance spec says they

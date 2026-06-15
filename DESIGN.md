@@ -163,6 +163,9 @@ Current design principles:
 - Larger shop order types can consume more Tofu Stock and ready Delivery Orders for better local
   Tips/Reputation/XP rewards. This order-size ladder is the intended bridge between stockpiles and
   higher payouts. Raw Tofu Stock should not directly multiply Tips.
+- The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, and Festival Bento.
+  Catering Crate and larger network orders are future/hidden until the core loop and first-shop
+  pacing are proven.
 - Fulfill Shop Order requires at least one ready Delivery Order.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
 - Tips buy more production, stations, and upgrades.
