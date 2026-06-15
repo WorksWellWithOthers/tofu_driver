@@ -67,7 +67,10 @@ globalThis.getShopProductionRate = getShopProductionRate;
 globalThis.getShopGeneratorRates = getShopGeneratorRates;
 globalThis.calculateShopGeneratorEarnings = calculateShopGeneratorEarnings;
 globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
+globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
+globalThis.startShopGeneratorTimer = startShopGeneratorTimer;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
+globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.fulfillShopOrders = fulfillShopOrders;
@@ -107,6 +110,7 @@ globalThis.renderSimulatorPanel = renderSimulatorPanel;
 globalThis.buildDeliverySharePayload = buildDeliverySharePayload;
 globalThis.sanitizeShareOutput = sanitizeShareOutput;
 globalThis.loadGameState = loadGameState;
+globalThis.currentGameState = currentGameState;
 globalThis.saveGameState = saveGameState;
 globalThis.resetGameState = resetGameState;
 globalThis.exportGameProgress = exportGameProgress;
@@ -122,6 +126,7 @@ globalThis.renderMerchPanel = renderMerchPanel;
 globalThis.renderDeliveryWall = renderDeliveryWall;
 globalThis.renderGameDashboard = renderGameDashboard;
 globalThis.renderTofuShop = renderTofuShop;
+globalThis.handleTofuShopPanelClick = handleTofuShopPanelClick;
 globalThis.renderCollectionPanel = renderCollectionPanel;
 globalThis.renderShopOrderResult = renderShopOrderResult;
 globalThis.renderSummary = renderSummary;
@@ -1787,6 +1792,226 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   });
 }
 
+function testLiveIdleTickAndShopButtonReliability() {
+  const intervalCalls = [];
+  const context = loadNoSpillContext({
+    window: {
+      location: { search: '', hash: '#/shop' },
+      localStorage: makeLocalStorage(),
+      setInterval(callback, ms) {
+        intervalCalls.push({ callback, ms });
+        return intervalCalls.length;
+      },
+    },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    value: "",
+    disabled: false,
+    dataset: {},
+    classListValue: false,
+    classList: {
+      toggle(_className, value) {
+        node.classListValue = Boolean(value);
+      },
+    },
+    setAttribute(name, value) {
+      node[name] = value;
+    },
+    removeAttribute(name) {
+      delete node[name];
+    },
+  };
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+  selectedCharacterBadge: makeNode(),
+  selectedCharacterName: makeNode(),
+  selectedCharacterFlavor: makeNode(),
+  selectedSoundPackName: makeNode(),
+  selectedSoundPackFlavor: makeNode(),
+  characterList: makeNode(),
+  soundPackList: makeNode(),
+  previewSoundButton: makeNode(),
+  simulatorPanel: makeNode(),
+  simulatorScenarioSelect: { ...makeNode(), options: [] },
+  applySimulatorButton: makeNode(),
+  simulatorStatus: makeNode(),
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+  routeContext: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+const state = defaultGameState();
+state.shop.tofuStock = 10;
+state.shop.deliveryOrders = 1;
+state.shop.tips = 1000;
+state.shop.reputation = 160;
+state.shop.shopLevel = getShopLevel(state.shop.reputation);
+state.shop.prepSlots = 100;
+state.shop.lastGeneratorTickAt = "2026-06-14T12:00:00.000Z";
+state.shop.lastShopTickAt = "2026-06-14T12:00:00.000Z";
+saveGameState(state);
+renderGamePanels(state);
+globalThis.liveBeforeStock = elements.shopTofuStock.textContent;
+globalThis.liveBeforeRate = elements.shopIdleRate.textContent;
+tickOpenShopGenerators(new Date("2026-06-14T12:00:10.000Z"));
+globalThis.liveAfterTenStock = elements.shopTofuStock.textContent;
+globalThis.liveAfterTenState = currentGameState();
+tickOpenShopGenerators(new Date("2026-06-14T12:01:10.000Z"));
+globalThis.liveAfterOrders = currentGameState().shop.deliveryOrders;
+globalThis.liveAfterOrderText = elements.shopDeliveryOrders.textContent;
+globalThis.liveNonNegative = currentGameState().shop.tofuStock >= 0 && currentGameState().shop.deliveryOrders >= 0;
+const staleSaved = JSON.parse(window.localStorage.getItem(GAME_STORAGE_KEY));
+globalThis.savedBeforeClickOrders = staleSaved.shop.deliveryOrders;
+const fulfillButton = {
+  id: "",
+  dataset: { fulfillOrders: "1" },
+  closest() { return this; },
+};
+handleTofuShopPanelClick({ target: fulfillButton });
+globalThis.afterFulfillTips = currentGameState().shop.tips;
+globalThis.afterFulfillReputation = currentGameState().shop.reputation;
+globalThis.afterFulfillXp = currentGameState().totalXP;
+globalThis.afterFulfillOrders = currentGameState().shop.deliveryOrders;
+const beforeBuyOwned = currentGameState().shop.stations.tofu_press;
+const beforeBuyRate = getShopGeneratorRates(currentGameState()).tofuPressPerSecond;
+const buyButton = {
+  id: "",
+  dataset: { shopStation: "tofu_press" },
+  closest() { return this; },
+};
+handleTofuShopPanelClick({ target: buyButton });
+globalThis.beforeBuyOwned = beforeBuyOwned;
+globalThis.beforeBuyRate = beforeBuyRate;
+globalThis.afterBuyOwned = currentGameState().shop.stations.tofu_press;
+globalThis.afterBuyRate = getShopGeneratorRates(currentGameState()).tofuPressPerSecond;
+const lockedState = defaultGameState();
+lockedState.shop.currentShopTab = "production";
+appState.shopTab = "production";
+renderTofuShop(lockedState);
+globalThis.productionDisabledHtml = elements.shopTabPanel.innerHTML;
+startShopGeneratorTimer();
+startShopGeneratorTimer();
+globalThis.shopTimerId = appState.shopGeneratorTimer;
+`, context);
+
+  assert.strictEqual(context.liveBeforeRate.includes('/sec'), true);
+  assert.notStrictEqual(context.liveBeforeStock, context.liveAfterTenStock);
+  assert(Number(context.liveAfterTenStock) > Number(context.liveBeforeStock));
+  assert.strictEqual(context.liveAfterTenState.shop.generatorCarry.tofuStock > 0, true);
+  assert(context.liveAfterOrders > context.savedBeforeClickOrders);
+  assert(context.liveAfterOrderText !== 'Locked');
+  assert.strictEqual(context.liveNonNegative, true);
+  assert.strictEqual(context.afterFulfillTips > 1000, true);
+  assert.strictEqual(context.afterFulfillReputation > 160, true);
+  assert.strictEqual(context.afterFulfillXp > 0, true);
+  assert.strictEqual(context.afterFulfillOrders, context.liveAfterOrders - 1);
+  assert.strictEqual(context.afterBuyOwned, context.beforeBuyOwned + 1);
+  assert.strictEqual(context.afterBuyRate > context.beforeBuyRate, true);
+  assert(context.productionDisabledHtml.includes('disabled'));
+  assert(context.productionDisabledHtml.includes('nospill-action-reason'));
+  assert(context.productionDisabledHtml.includes('Not enough resources or locked.'));
+  assert.strictEqual(intervalCalls.length, 1);
+  assert.strictEqual(intervalCalls[0].ms, 1000);
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  const renderedAttrs = Array.from(source.matchAll(/actionButton\([^\n]+?["'](data-[a-z-]+)["']/g))
+    .map((match) => match[1]);
+  const delegatedAttrs = [
+    'data-surface-target',
+    'data-shop-station',
+    'data-shop-station-max',
+    'data-fulfill-orders',
+    'data-station-upgrade',
+    'data-shop-route',
+    'data-training-drill',
+    'data-garage-upgrade',
+    'data-crew-role',
+    'data-spirit-generator',
+    'data-spirit-boost',
+    'data-festival-boost',
+    'data-rival-challenge',
+    'data-license-exam',
+    'data-license-perk',
+    'data-dev-unlock',
+    'data-dev-reset',
+  ];
+  renderedAttrs.forEach((attr) => {
+    assert(delegatedAttrs.includes(attr), `visible action lacks click delegation: ${attr}`);
+  });
+  assert(!/\bfetch\s*\(/.test(source));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+}
+
 function testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly() {
   const context = loadNoSpillContext();
   const baseState = context.defaultGameState();
@@ -2866,6 +3091,7 @@ function run() {
   testGameProgressPersistsAcrossReloadSimulation();
   testResetExportAndImportProgressAreScopedAndValidated();
   testTofuShopStatePackIdleAndUpgradeRules();
+  testLiveIdleTickAndShopButtonReliability();
   testExpandedIdleShopLayerMechanics();
   testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault();
   testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();

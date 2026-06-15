@@ -55,6 +55,8 @@ collection controls when relevant.
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
 - `DESIGN.md`: product, privacy, progressive reveal, ethical status, and future idle direction
 - `PLAN.md`: next implementation steps
+- `BALANCE_AND_PROGRESSION.md`: idle-game loop, economy, pacing, and balance contract
+- `IMPLEMENTATION_STATUS.md`: implementation matrix with file/test evidence
 
 ## Local Checks
 

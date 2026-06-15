@@ -695,6 +695,22 @@
   flex: 1 1 120px;
 }
 
+.nospill-action-wrap {
+  flex: 1 1 120px;
+  display: grid;
+  gap: 4px;
+}
+
+.nospill-action-wrap button {
+  width: 100%;
+}
+
+.nospill-action-reason {
+  color: #9ca89b;
+  font-size: 0.72rem;
+  line-height: 1.25;
+}
+
 .nospill-collection-item {
   min-width: 0;
   border: 1px solid rgba(244, 247, 239, 0.11);

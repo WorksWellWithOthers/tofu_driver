@@ -25,7 +25,12 @@
   actions hidden and shop-focused return/fulfill actions.
 - Tofu Shop Generator V2 adds visible local ticking: Tofu Press produces Tofu Stock, and Prep
   Counter converts Tofu Stock into Delivery Orders while parked or through capped offline progress.
-  Generator rates are shown per second in the shop UI.
+  Generator rates are shown per second in the shop UI. The live loop now renders without refresh,
+  preserves fractional production carry between ticks, saves periodically, and saves/renders
+  immediately after shop actions.
+- Visible shop buttons now need to be honest: wired actions respond immediately, unaffordable or
+  locked actions are disabled with reasons, and future/decorative controls should stay disabled or
+  hidden until they are real.
 - Tofu Shop Idle Layer V3 adds a tabbed home game surface with Overview, Production, Orders,
   Routes, Training, Garage, Crew, Shop Spirit, Upgrades, Rival Shop Challenges, Passport, License,
   Ledger, and Settings panels.
@@ -66,6 +71,10 @@
   systems remain future-facing unless implemented in a later pass.
 - `DESIGN.md` now documents progressive reveal and ethical monetization/status rules: first-run
   should become story-first over time, and monetization should stay cosmetic/supporter/earned-merch.
+- `BALANCE_AND_PROGRESSION.md` tracks the intended shop loop, pacing targets, resource sources and
+  sinks, generator formulas, unlock order, and current implementation audit.
+- `IMPLEMENTATION_STATUS.md` tracks implemented, partial, documented-only, and non-goal systems with
+  file/test evidence.
 
 ## Recommended Next Steps
 
@@ -77,13 +86,15 @@
 6. Play-test the progressive reveal gates on mobile and tune when shop, passport, crew, and sound
    details should expand or appear in navigation.
 7. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
-8. Play-test Tofu Shop pacing at home and tune tofu stock, delivery order, tips, Prep Slot,
-   Shop Spirit, fictional route, crew, License Exam, and certified-boost rewards.
+8. Play-test the core Tofu Shop loop at home: visible `/sec` production, first order timing, first
+   purchase timing, and whether disabled button reasons make the next action obvious.
 9. Use Delivery Simulator scenarios for local QA of Delivery Complete, unlocks, shop rewards, and
    share sanitization before mobile road tests.
-10. Deepen the minimal V3 systems: route durations, crew assignment queues, richer ledger reports,
+10. Tune tofu stock, delivery order, tips, Prep Slot, Shop Spirit, fictional route, crew, License
+   Exam, and certified-boost rewards after the first ten minutes feel coherent.
+11. Deepen the minimal V3 systems: route durations, crew assignment queues, richer ledger reports,
    Festival Boost inventory rewards, and better License Exam balancing.
-11. Replace remaining MVP raster assets with production-ready artwork when available.
+12. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 

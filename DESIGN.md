@@ -307,13 +307,21 @@ The live parked generator loop is local-only:
   Orders.
 - Generator rates are displayed in per-second terms so the shop reads as a live incremental loop,
   while the underlying math still uses elapsed timestamps and safe clamping.
+- The open-page loop ticks locally about once per second, keeps fractional carry between ticks, and
+  renders visible resource values without requiring refresh.
+- Local state is saved periodically during live ticking and immediately after user actions.
 - Generator math uses timestamps, not frame count, and open-page elapsed time is clamped to avoid
   large tab-sleep jumps.
 - Offline progress is calculated locally from `lastGeneratorTickAt` / `lastShopTickAt`, capped at
-  8 hours, and summarized as tofu stock plus delivery orders.
+  8 hours, summarized as tofu stock plus delivery orders, and then the live tick continues from the
+  applied timestamp so offline progress is not double-counted.
 - Idle generation does not grant reputation and does not affect real-world driving score.
 
 There is no backend timer, service worker, or worker process.
+
+Visible shop buttons must be honest. A button is either wired and immediately updates local state
+and the UI, disabled with a visible reason, or hidden until the feature is ready. Decorative or
+future-scope controls must not look like active dead buttons.
 
 The implemented shop upgrade catalog is static and uses safe shop language only:
 
