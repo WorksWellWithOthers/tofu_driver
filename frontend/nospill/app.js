@@ -246,68 +246,67 @@ const SHOP_UPGRADES = [
     effect: "Adds a modest reputation bonus for qualified smooth deliveries.",
     maxLevel: 4,
   },
+];
+
+const CHARACTER_CATALOG = [
   {
-    id: "delivery_shelf",
-    name: "Delivery Shelf",
-    description: "Shows more of your Delivery Wall and recent stamp collection.",
-    costTofuStock: 160,
-    costReputation: 0,
-    requiredShopLevel: 2,
-    effect: "Improves Delivery Wall presentation.",
-    maxLevel: 2,
+    id: "angry_tofu_driver",
+    name: "Angry Tofu Driver",
+    role: "Driver",
+    unlock: "First Delivery",
+    flavor: "Tiny, furious, and extremely committed to cup stability.",
   },
   {
-    id: "festival_cooler",
-    name: "Festival Cooler",
-    description: "Prepares the shop for festival orders and future event drops.",
-    costTofuStock: 240,
-    costReputation: 0,
-    requiredShopLevel: 3,
-    effect: "Unlocks festival story flavor and a small idle stock bonus.",
-    maxLevel: 2,
+    id: "sleepy_dispatcher",
+    name: "Sleepy Dispatcher",
+    role: "Shop Staff",
+    unlock: "Shop Level 2",
+    flavor: "Somehow remembers every order while half-asleep.",
   },
   {
-    id: "cup_display",
-    name: "Cup Display",
-    description: "A display spot for Perfect Pour memories and cosmetic share-card flavor.",
-    costTofuStock: 320,
-    costReputation: 0,
-    requiredShopLevel: 4,
-    effect: "Unlocks Perfect Pour display flavor.",
-    maxLevel: 1,
+    id: "tea_master",
+    name: "Tea Master",
+    role: "Customer",
+    unlock: "Complete a Hot Tea delivery with 90%+ Cargo Condition",
+    flavor: "Judges every corner by the ripple in the cup.",
+  },
+  {
+    id: "perfect_pour_courier",
+    name: "Perfect Pour Courier",
+    role: "Legend",
+    unlock: "Perfect Pour",
+    flavor: "Arrives with the cup exactly as it left.",
   },
 ];
 
-const SHOP_STORY_CHAPTERS = [
+const SOUND_PACK_CATALOG = [
   {
-    id: "first_delivery",
-    title: "Chapter 1: First Delivery",
-    requirement: "Complete any delivery.",
+    id: "default",
+    name: "Default",
+    unlock: "Always available",
+    behavior: "Current calm UI tones.",
+    description: "Simple, quiet tones for parked and result screens.",
   },
   {
-    id: "soup_bowl_incident",
-    title: "Chapter 2: The Soup Bowl Incident",
-    requirement: "Reach Shop Level 2.",
+    id: "tofu_shop_bell",
+    name: "Tofu Shop Bell",
+    unlock: "Shop Level 2",
+    behavior: "Gentle bell on parked shop actions and delivery complete.",
+    description: "A soft shop bell for parked actions and result reveals.",
   },
   {
-    id: "festival_order",
-    title: "Chapter 3: Festival Order",
-    requirement: "Reach Shop Level 3 or install the Festival Cooler.",
+    id: "retro_arcade",
+    name: "Retro Arcade",
+    unlock: "First Stamp or 3 deliveries",
+    behavior: "Subtle retro UI blips for parked/result screens.",
+    description: "Small arcade-style blips for menus and result screens.",
   },
   {
-    id: "wedding_cake_contract",
-    title: "Chapter 4: The Wedding Cake Contract",
-    requirement: "Earn Long Haul Pour or build Delivery Crew progress.",
-  },
-  {
-    id: "nospill_invitation",
-    title: "Chapter 5: No-Spill Invitation",
-    requirement: "Make No-Spill Club Gear progress.",
-  },
-  {
-    id: "perfect_pour_trial",
-    title: "Chapter 6: Perfect Pour Trial",
-    requirement: "Unlock Perfect Pour Drop.",
+    id: "perfect_pour_chime",
+    name: "Perfect Pour Chime",
+    unlock: "Perfect Pour",
+    behavior: "Special post-run chime only after the run ends.",
+    description: "A short celebratory chime for Perfect Pour moments.",
   },
 ];
 
@@ -459,6 +458,87 @@ function computeAudioTargetGain({
 function computeAudioTargetFrequency({ totalG, thresholdG }) {
   const intensity = audioInputIntensity(totalG, thresholdG);
   return clamp(170 + Math.pow(intensity, 1.15) * 195, 170, 620);
+}
+
+function cosmeticSoundVolume(audioLevel = DEFAULT_AUDIO_LEVEL, audioEnabled = true) {
+  if (!audioEnabled) return 0;
+  const level = AUDIO_LEVELS[normalizeAudioLevel(audioLevel)];
+  if (!level || level.maxGain <= 0) return 0;
+  return clamp(level.maxGain * 0.18, 0, 0.09);
+}
+
+function soundPattern(soundPackId, eventName) {
+  const pack = SOUND_PACK_CATALOG.some((candidate) => candidate.id === soundPackId)
+    ? soundPackId
+    : "default";
+  if (eventName === "perfect_pour") return [660, 880, 990];
+  if (pack === "tofu_shop_bell") return [520, 780];
+  if (pack === "retro_arcade") return [440, 660, 880];
+  if (pack === "perfect_pour_chime") return [640, 820, 1040];
+  if (eventName === "unlock") return [480, 720];
+  return [360];
+}
+
+function playSynthToneSequence(frequencies, volume) {
+  if (typeof window === "undefined") return false;
+  const AudioContextConstructor = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextConstructor) return false;
+  try {
+    const context = new AudioContextConstructor();
+    const now = context.currentTime;
+    frequencies.forEach((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const start = now + index * 0.09;
+      const stop = start + 0.08;
+      oscillator.type = "sine";
+      oscillator.frequency.setValueAtTime(frequency, start);
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(volume, start + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(stop + 0.02);
+    });
+    window.setTimeout(() => {
+      try {
+        context.close();
+      } catch (_) {
+        // Ignore cleanup races.
+      }
+    }, Math.max(160, frequencies.length * 110));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function playCosmeticSound(eventName, gameState = loadGameState(), options = {}) {
+  if (options.activeDrive) return { played: false, reason: "active-drive" };
+  if (options.requireUserGesture && !options.userGesture) {
+    return { played: false, reason: "needs-user-gesture" };
+  }
+  const audioLevel = normalizeAudioLevel(options.audioLevel || appState.audioLevel);
+  const audioEnabled = options.audioEnabled !== undefined
+    ? Boolean(options.audioEnabled)
+    : Boolean(appState.audioEnabled);
+  const volume = cosmeticSoundVolume(audioLevel, audioEnabled);
+  if (volume <= 0) return { played: false, reason: "muted" };
+  const pack = selectedSoundPack(gameState);
+  const played = playSynthToneSequence(soundPattern(pack.id, eventName), volume);
+  return {
+    played,
+    reason: played ? "" : "audio-unavailable",
+    soundPackId: pack.id,
+  };
+}
+
+function previewSoundPack(gameState = loadGameState(), options = {}) {
+  return playCosmeticSound("preview", gameState, {
+    ...options,
+    requireUserGesture: true,
+  });
 }
 
 function vectorFromMotion(motionVector) {
@@ -786,6 +866,7 @@ function defaultGameState() {
     xpByDate: {},
     routeMastery: {},
     shop: defaultShopState(),
+    collection: defaultCollectionState(),
   };
 }
 
@@ -842,19 +923,6 @@ function defaultShopState() {
     lifetimeTofuPacked: 0,
     lifetimeReputation: 0,
     upgrades: {},
-    storyChapters: {},
-    staff: {},
-    customers: {},
-    contracts: {
-      smooth_week: {
-        id: "smooth_week",
-        name: "Smooth Week",
-        description: "Complete 3 qualified smooth deliveries.",
-        progress: 0,
-        target: 3,
-        completed: false,
-      },
-    },
     lastShopTickAt: "",
     offlineEarnings: {
       tofuStock: 0,
@@ -885,15 +953,8 @@ function normalizeShopState(shop) {
   const defaults = defaultShopState();
   const source = shop && typeof shop === "object" ? shop : {};
   const reputation = safeNonNegativeInteger(source.reputation, defaults.reputation);
-  const contracts = source.contracts && typeof source.contracts === "object"
-    ? JSON.parse(JSON.stringify(source.contracts))
-    : {};
-  const smoothWeek = contracts.smooth_week && typeof contracts.smooth_week === "object"
-    ? contracts.smooth_week
-    : defaults.contracts.smooth_week;
   return {
     ...defaults,
-    ...source,
     tofuStock: safeNonNegativeInteger(source.tofuStock, defaults.tofuStock),
     reputation,
     shopLevel: getShopLevel(reputation),
@@ -906,33 +967,6 @@ function normalizeShopState(shop) {
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
     ),
     upgrades: normalizeUpgradeLevels(source.upgrades),
-    storyChapters:
-      source.storyChapters && typeof source.storyChapters === "object"
-        ? JSON.parse(JSON.stringify(source.storyChapters))
-        : {},
-    staff:
-      source.staff && typeof source.staff === "object"
-        ? JSON.parse(JSON.stringify(source.staff))
-        : {},
-    customers:
-      source.customers && typeof source.customers === "object"
-        ? JSON.parse(JSON.stringify(source.customers))
-        : {},
-    contracts: {
-      ...defaults.contracts,
-      ...contracts,
-      smooth_week: {
-        ...defaults.contracts.smooth_week,
-        ...smoothWeek,
-        progress: clamp(
-          safeNonNegativeInteger(smoothWeek.progress, 0, smoothWeek.target || 3),
-          0,
-          safeNonNegativeInteger(smoothWeek.target, 3, 100),
-        ),
-        target: safeNonNegativeInteger(smoothWeek.target, 3, 100),
-        completed: Boolean(smoothWeek.completed),
-      },
-    },
     lastShopTickAt: typeof source.lastShopTickAt === "string" ? source.lastShopTickAt : "",
     offlineEarnings: {
       tofuStock: safeNonNegativeInteger(
@@ -945,6 +979,60 @@ function normalizeShopState(shop) {
         SHOP_OFFLINE_CAP_HOURS,
       ),
     },
+  };
+}
+
+function knownCharacterIds() {
+  return new Set(CHARACTER_CATALOG.map((character) => character.id));
+}
+
+function knownSoundPackIds() {
+  return new Set(SOUND_PACK_CATALOG.map((soundPack) => soundPack.id));
+}
+
+function normalizeIdList(value, allowedIds) {
+  const ids = Array.isArray(value) ? value : [];
+  const seen = new Set();
+  return ids.filter((id) => {
+    if (typeof id !== "string" || seen.has(id)) return false;
+    if (allowedIds && !allowedIds.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}
+
+function defaultCollectionState() {
+  return {
+    selectedCharacterId: "angry_tofu_driver",
+    unlockedCharacterIds: [],
+    selectedSoundPackId: "default",
+    unlockedSoundPackIds: ["default"],
+    seenUnlockIds: [],
+  };
+}
+
+function normalizeCollectionState(collection) {
+  const defaults = defaultCollectionState();
+  const source = collection && typeof collection === "object" ? collection : {};
+  const characterIds = knownCharacterIds();
+  const soundPackIds = knownSoundPackIds();
+  const unlockedCharacterIds = normalizeIdList(source.unlockedCharacterIds, characterIds);
+  const unlockedSoundPackIds = normalizeIdList(source.unlockedSoundPackIds, soundPackIds);
+  if (!unlockedSoundPackIds.includes("default")) unlockedSoundPackIds.unshift("default");
+  const selectedCharacterId = characterIds.has(source.selectedCharacterId)
+    ? source.selectedCharacterId
+    : defaults.selectedCharacterId;
+  const selectedSoundPackId =
+    soundPackIds.has(source.selectedSoundPackId)
+    && unlockedSoundPackIds.includes(source.selectedSoundPackId)
+      ? source.selectedSoundPackId
+      : defaults.selectedSoundPackId;
+  return {
+    selectedCharacterId,
+    unlockedCharacterIds,
+    selectedSoundPackId,
+    unlockedSoundPackIds,
+    seenUnlockIds: normalizeIdList(source.seenUnlockIds),
   };
 }
 
@@ -996,9 +1084,9 @@ function normalizeGameState(stored) {
         ? JSON.parse(JSON.stringify(source.routeMastery))
         : {},
     shop: normalizeShopState(source.shop),
+    collection: normalizeCollectionState(source.collection),
   };
   normalized.level = levelForXP(normalized.totalXP);
-  normalized.shop = updateStoryChapters(normalized).shop;
   normalized.merchProgress.nospillClubGear.dates = [
     ...(normalized.merchProgress.nospillClubGear.dates || []),
   ];
@@ -1073,6 +1161,41 @@ function validateImportedShopState(shop) {
   return true;
 }
 
+function validateImportedCollectionState(collection) {
+  if (collection === undefined) return true;
+  if (!collection || typeof collection !== "object" || Array.isArray(collection)) return false;
+  const characterIds = knownCharacterIds();
+  const soundPackIds = knownSoundPackIds();
+  if (
+    collection.selectedCharacterId !== undefined
+    && !characterIds.has(collection.selectedCharacterId)
+  ) {
+    return false;
+  }
+  if (
+    collection.selectedSoundPackId !== undefined
+    && !soundPackIds.has(collection.selectedSoundPackId)
+  ) {
+    return false;
+  }
+  const idLists = [
+    [collection.unlockedCharacterIds, characterIds],
+    [collection.unlockedSoundPackIds, soundPackIds],
+    [collection.seenUnlockIds, null],
+  ];
+  return idLists.every(([ids, allowedIds]) => (
+    ids === undefined
+    || (
+      Array.isArray(ids)
+      && ids.every((id) => (
+        typeof id === "string"
+        && id.length <= 80
+        && (!allowedIds || allowedIds.has(id))
+      ))
+    )
+  ));
+}
+
 function exportGameProgress(gameState = loadGameState()) {
   const normalized = normalizeGameState(gameState);
   const state = {
@@ -1104,6 +1227,9 @@ function importGameProgress(jsonText) {
   }
   if (!validateImportedShopState(parsed.state.shop)) {
     return { ok: false, reason: "Progress backup included invalid Tofu Shop values." };
+  }
+  if (!validateImportedCollectionState(parsed.state.collection)) {
+    return { ok: false, reason: "Progress backup included invalid collection values." };
   }
   const normalized = normalizeGameState(parsed.state);
   return saveGameState(normalized)
@@ -1399,11 +1525,7 @@ function shopUpgradeLevel(gameState, upgradeId) {
 function getShopProductionRate(gameState) {
   const state = gameState && gameState.shop ? gameState : { shop: gameState };
   const shop = normalizeShopState(state.shop);
-  return (
-    shop.upgrades.tofu_press * 6
-    + shop.upgrades.delivery_shelf * 1
-    + shop.upgrades.festival_cooler * 2
-  );
+  return shop.upgrades.tofu_press * 6;
 }
 
 function calculateOfflineShopEarnings(gameState, now = new Date()) {
@@ -1470,7 +1592,7 @@ function packTofu(gameState, options = {}) {
   return {
     ok: true,
     reason: "",
-    gameState: updateStoryChapters(next),
+    gameState: next,
     tofuStockGained: amount,
   };
 }
@@ -1503,80 +1625,9 @@ function buyShopUpgrade(upgradeId, gameState) {
   return {
     ok: true,
     reason: "",
-    gameState: updateStoryChapters(next),
+    gameState: next,
     upgrade: { ...upgrade, level: currentLevel + 1 },
   };
-}
-
-function storyChapterUnlocked(chapterId, gameState) {
-  const state = {
-    ...defaultGameState(),
-    ...gameState,
-    shop: normalizeShopState(gameState && gameState.shop),
-    stamps: gameState && gameState.stamps && typeof gameState.stamps === "object"
-      ? gameState.stamps
-      : {},
-    merchProgress:
-      gameState && gameState.merchProgress && typeof gameState.merchProgress === "object"
-        ? { ...defaultGameState().merchProgress, ...gameState.merchProgress }
-        : defaultGameState().merchProgress,
-    recentSessions: Array.isArray(gameState && gameState.recentSessions)
-      ? gameState.recentSessions
-      : [],
-  };
-  const shop = state.shop;
-  if (chapterId === "first_delivery") {
-    return Boolean(state.stamps.first_delivery) || state.recentSessions.length > 0;
-  }
-  if (chapterId === "soup_bowl_incident") return shop.shopLevel >= 2;
-  if (chapterId === "festival_order") {
-    return shop.shopLevel >= 3 || shop.upgrades.festival_cooler > 0;
-  }
-  if (chapterId === "wedding_cake_contract") {
-    return Boolean(state.stamps.long_haul_pour)
-      || Number(state.merchProgress.deliveryCrew && state.merchProgress.deliveryCrew.count || 0) >= 3
-      || shop.shopLevel >= 4;
-  }
-  if (chapterId === "nospill_invitation") {
-    return Boolean(state.stamps.nospill_club)
-      || Number(state.merchProgress.nospillClubGear && state.merchProgress.nospillClubGear.count || 0) >= 1;
-  }
-  if (chapterId === "perfect_pour_trial") {
-    return Boolean(state.stamps.perfect_pour)
-      || Boolean(state.merchProgress.perfectPourDrop && state.merchProgress.perfectPourDrop.unlocked);
-  }
-  return false;
-}
-
-function updateStoryChapters(gameState) {
-  const next = {
-    ...gameState,
-    shop: normalizeShopState(gameState && gameState.shop),
-  };
-  SHOP_STORY_CHAPTERS.forEach((chapter) => {
-    if (storyChapterUnlocked(chapter.id, next) && !next.shop.storyChapters[chapter.id]) {
-      next.shop.storyChapters[chapter.id] = {
-        title: chapter.title,
-        unlockedAt: new Date().toISOString(),
-      };
-    }
-  });
-  return next;
-}
-
-function updateContracts(sessionSummary, rewardSummary, gameState) {
-  const next = normalizeGameState(gameState);
-  const contract = next.shop.contracts.smooth_week || defaultShopState().contracts.smooth_week;
-  if (
-    isQualifiedSession(sessionSummary)
-    && calculateCargoCondition(sessionSummary) >= 90
-    && Number(rewardSummary && rewardSummary.xpMultiplier || 1) > 0
-  ) {
-    contract.progress = Math.min(Number(contract.target || 3), Number(contract.progress || 0) + 1);
-    contract.completed = contract.progress >= Number(contract.target || 3);
-  }
-  next.shop.contracts.smooth_week = contract;
-  return next;
 }
 
 function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
@@ -1623,8 +1674,6 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
   );
   next.shop.shopLevel = getShopLevel(next.shop.reputation);
   next.shop.lastShopTickAt = next.shop.lastShopTickAt || new Date().toISOString();
-  next = updateContracts(session, rewards, next);
-  next = updateStoryChapters(next);
 
   return {
     gameState: next,
@@ -1638,6 +1687,125 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
 
 function sanitizeShopStateForExport(gameState) {
   return normalizeShopState(gameState && gameState.shop);
+}
+
+function getCharacterCatalog() {
+  return CHARACTER_CATALOG.map((character) => ({ ...character }));
+}
+
+function getSoundPackCatalog() {
+  return SOUND_PACK_CATALOG.map((soundPack) => ({ ...soundPack }));
+}
+
+function collectionUnlockLabel(type, id) {
+  const catalog = type === "sound"
+    ? SOUND_PACK_CATALOG
+    : CHARACTER_CATALOG;
+  const item = catalog.find((candidate) => candidate.id === id);
+  return item ? item.name : id;
+}
+
+function selectedCharacter(gameState) {
+  const state = normalizeGameState(gameState);
+  const selected = CHARACTER_CATALOG.find(
+    (character) => character.id === state.collection.selectedCharacterId,
+  );
+  if (selected && state.collection.unlockedCharacterIds.includes(selected.id)) {
+    return { ...selected };
+  }
+  const firstUnlocked = CHARACTER_CATALOG.find(
+    (character) => state.collection.unlockedCharacterIds.includes(character.id),
+  );
+  return firstUnlocked ? { ...firstUnlocked } : null;
+}
+
+function selectedSoundPack(gameState) {
+  const state = normalizeGameState(gameState);
+  const selected = SOUND_PACK_CATALOG.find(
+    (soundPack) => soundPack.id === state.collection.selectedSoundPackId,
+  );
+  return selected ? { ...selected } : { ...SOUND_PACK_CATALOG[0] };
+}
+
+function unlockCollectionId(collection, type, id, newUnlocks) {
+  const listName = type === "sound" ? "unlockedSoundPackIds" : "unlockedCharacterIds";
+  const unlockKey = `${type}:${id}`;
+  if (!collection[listName].includes(id)) {
+    collection[listName].push(id);
+    collection.seenUnlockIds.push(unlockKey);
+    newUnlocks.push({
+      type,
+      id,
+      label: collectionUnlockLabel(type, id),
+    });
+  }
+}
+
+function evaluateCollectionUnlocks(sessionSummary, rewardSummary = {}, gameState = defaultGameState()) {
+  const next = normalizeGameState(gameState);
+  const session = sessionSummary || {};
+  const rewards = rewardSummary || {};
+  const cargo = calculateCargoCondition(session);
+  const dailyDelivery = rewards.dailyDelivery || getDailyDelivery(session.date || new Date());
+  const completedDeliveries = next.recentSessions.length;
+  const stamps = next.stamps || {};
+  const newCharacterUnlocks = [];
+  const newSoundUnlocks = [];
+
+  if (stamps.first_delivery || completedDeliveries >= 1) {
+    unlockCollectionId(next.collection, "character", "angry_tofu_driver", newCharacterUnlocks);
+  }
+  if (next.shop.shopLevel >= 2) {
+    unlockCollectionId(next.collection, "character", "sleepy_dispatcher", newCharacterUnlocks);
+  }
+  if (dailyDelivery.id === "hot_tea" && cargo >= 90) {
+    unlockCollectionId(next.collection, "character", "tea_master", newCharacterUnlocks);
+  }
+  if (stamps.perfect_pour || (isQualifiedSession(session) && cargo >= 100)) {
+    unlockCollectionId(next.collection, "character", "perfect_pour_courier", newCharacterUnlocks);
+  }
+
+  unlockCollectionId(next.collection, "sound", "default", newSoundUnlocks);
+  if (next.shop.shopLevel >= 2) {
+    unlockCollectionId(next.collection, "sound", "tofu_shop_bell", newSoundUnlocks);
+  }
+  if (Object.keys(stamps).length >= 1 || completedDeliveries >= 3) {
+    unlockCollectionId(next.collection, "sound", "retro_arcade", newSoundUnlocks);
+  }
+  if (stamps.perfect_pour || (isQualifiedSession(session) && cargo >= 100)) {
+    unlockCollectionId(next.collection, "sound", "perfect_pour_chime", newSoundUnlocks);
+  }
+
+  next.collection = normalizeCollectionState(next.collection);
+  return {
+    gameState: next,
+    newCharacterUnlocks,
+    newSoundUnlocks: newSoundUnlocks.filter((unlock) => unlock.id !== "default"),
+  };
+}
+
+function selectCharacter(characterId, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive) {
+    return { ok: false, reason: "Delivery Crew changes unlock after you finish and park.", gameState: next };
+  }
+  if (!next.collection.unlockedCharacterIds.includes(characterId)) {
+    return { ok: false, reason: "Character is still locked.", gameState: next };
+  }
+  next.collection.selectedCharacterId = characterId;
+  return { ok: true, reason: "", gameState: next };
+}
+
+function selectSoundPack(soundPackId, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive) {
+    return { ok: false, reason: "Sound Pack changes unlock after you finish and park.", gameState: next };
+  }
+  if (!next.collection.unlockedSoundPackIds.includes(soundPackId)) {
+    return { ok: false, reason: "Sound Pack is still locked.", gameState: next };
+  }
+  next.collection.selectedSoundPackId = soundPackId;
+  return { ok: true, reason: "", gameState: next };
 }
 
 function dateDaysApart(leftDateKey, rightDateKey) {
@@ -1919,7 +2087,13 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
   const dailyDelivery = getDailyDelivery(dateKey);
   const routeType = classifyRouteType(session);
   const cargoCondition = calculateCargoCondition(session);
-  const enrichedSession = { ...session, routeType, cargoCondition };
+  const enrichedSession = {
+    ...session,
+    routeType,
+    cargoCondition,
+    dailyDeliveryId: dailyDelivery.id,
+    dailyCargo: dailyDelivery.cargo,
+  };
   const dailyComplete = evaluateDailyDelivery(dailyDelivery, enrichedSession);
   const driverXP = calculateDriverXP(enrichedSession, state, dailyComplete);
   const skillXP = awardSkillXP(enrichedSession);
@@ -2028,6 +2202,12 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
   nextState.xpByDate[dateKey] = Math.round(
     Number(nextState.xpByDate[dateKey] || 0) + driverXP.xpGained,
   );
+  const collectionUnlocks = evaluateCollectionUnlocks(
+    enrichedSession,
+    { dailyDelivery, dailyComplete, stamps },
+    nextState,
+  );
+  nextState = collectionUnlocks.gameState;
 
   return {
     dailyDelivery,
@@ -2045,6 +2225,7 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     coach,
     passport,
     shop,
+    collectionUnlocks,
   };
 }
 
@@ -2054,6 +2235,7 @@ function buildDeliverySharePayload(session, rewardSummary = null, gameState = nu
   const state = gameState || (rewardSummary && rewardSummary.gameState) || null;
   const normalized = state ? normalizeGameState(state) : null;
   const level = normalized ? normalized.level : null;
+  const crew = normalized ? selectedCharacter(normalized) : null;
   const stamp = Array.isArray(session.deliveryStamps) && session.deliveryStamps.length
     ? stampLabels([session.deliveryStamps[0]])[0]
     : bestUnlockedMilestone(session);
@@ -2064,6 +2246,7 @@ function buildDeliverySharePayload(session, rewardSummary = null, gameState = nu
     rank: session.rank,
     driverLicense: level ? `Level ${level} · ${getDriverLicense(level)}` : "",
     shopLevel: normalized ? `Shop Level ${normalized.shop.shopLevel}` : "",
+    deliveryCrew: crew ? crew.name : "",
     routeType,
     stamp: stamp || "",
     dailyStatus:
@@ -2759,6 +2942,7 @@ function renderAudioLevelControls() {
 function setAudioLevel(level) {
   appState.audioLevel = normalizeAudioLevel(level);
   renderAudioLevelControls();
+  renderCollectionPanel(loadGameState());
   persistAudioLevel();
   updateAudioCoach();
 }
@@ -3411,23 +3595,6 @@ function renderGameDashboard(gameState = loadGameState()) {
   }
 }
 
-function shopStorySummary(gameState) {
-  const state = normalizeGameState(gameState);
-  const unlocked = SHOP_STORY_CHAPTERS.filter(
-    (chapter) => state.shop.storyChapters[chapter.id],
-  );
-  const current = unlocked.length ? unlocked[unlocked.length - 1] : SHOP_STORY_CHAPTERS[0];
-  const next = SHOP_STORY_CHAPTERS.find(
-    (chapter) => !state.shop.storyChapters[chapter.id],
-  );
-  return {
-    current,
-    next,
-    unlockedCount: unlocked.length,
-    totalCount: SHOP_STORY_CHAPTERS.length,
-  };
-}
-
 function renderShopUpgrade(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const currentLevel = safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel);
@@ -3523,8 +3690,6 @@ function renderTofuShop(gameState = loadGameState()) {
   const shop = state.shop;
   const progress = shopLevelProgress(shop.reputation);
   const rate = getShopProductionRate(state);
-  const story = shopStorySummary(state);
-  const smoothWeek = shop.contracts.smooth_week || defaultShopState().contracts.smooth_week;
   if (elements.shopLevelBadge) {
     elements.shopLevelBadge.textContent = `Shop Level ${shop.shopLevel}`;
   }
@@ -3550,26 +3715,101 @@ function renderTofuShop(gameState = loadGameState()) {
       .map((upgrade) => renderShopUpgrade(upgrade, state))
       .join("");
   }
-  if (elements.shopStoryChapter) {
-    elements.shopStoryChapter.textContent = story.current.title;
-  }
-  if (elements.shopStoryNext) {
-    elements.shopStoryNext.textContent = story.next
-      ? `Next: ${story.next.requirement}`
-      : "All current chapters unlocked.";
-  }
-  if (elements.shopCustomersPreview) {
-    elements.shopCustomersPreview.textContent = "Tea Master · Festival Vendor · Neighborhood Regular";
-  }
-  if (elements.shopContractPreview) {
-    elements.shopContractPreview.textContent =
-      `${smoothWeek.name}: ${smoothWeek.progress}/${smoothWeek.target}`;
-  }
   if (elements.shopOfflineEarnings) {
     elements.shopOfflineEarnings.textContent =
       `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock.`;
   }
   renderDeliveryWall(state);
+}
+
+function renderCollectionItem(item, { unlocked, selected, type, activeDrive }) {
+  const lockedCopy = type === "sound" ? "Sound Pack locked" : "Character locked";
+  const buttonLabel = selected
+    ? "Selected"
+    : unlocked
+      ? "Select"
+      : "Locked";
+  const dataAttribute = type === "sound"
+    ? `data-sound-pack-id="${escapeHtml(item.id)}"`
+    : `data-character-id="${escapeHtml(item.id)}"`;
+  return `
+    <div class="nospill-collection-item ${unlocked ? "" : "is-locked"}">
+      <header>
+        <strong>${escapeHtml(item.name)}</strong>
+        <small>${escapeHtml(type === "sound" ? "Sound Pack" : item.role)}</small>
+      </header>
+      <span>${escapeHtml(item.flavor || item.description || item.behavior)}</span>
+      <small>${escapeHtml(unlocked ? "Unlocked" : `Unlock: ${item.unlock}`)}</small>
+      <button
+        class="nospill-secondary"
+        type="button"
+        ${dataAttribute}
+        ${unlocked && !selected && !activeDrive ? "" : "disabled"}
+      >
+        ${escapeHtml(activeDrive && unlocked && !selected ? "Park First" : buttonLabel || lockedCopy)}
+      </button>
+    </div>
+  `;
+}
+
+function renderCollectionPanel(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  const activeDrive = appState.running || appState.calibrating;
+  const selectedCrew = selectedCharacter(state);
+  const soundPack = selectedSoundPack(state);
+  if (elements.selectedCharacterBadge) {
+    elements.selectedCharacterBadge.textContent = selectedCrew
+      ? selectedCrew.name
+      : "No crew yet";
+  }
+  if (elements.selectedCharacterName) {
+    elements.selectedCharacterName.textContent = selectedCrew
+      ? selectedCrew.name
+      : "No character selected";
+  }
+  if (elements.selectedCharacterFlavor) {
+    elements.selectedCharacterFlavor.textContent = selectedCrew
+      ? selectedCrew.flavor
+      : "Complete your first delivery to meet the crew.";
+  }
+  if (elements.selectedSoundPackName) {
+    elements.selectedSoundPackName.textContent = soundPack.name;
+  }
+  if (elements.selectedSoundPackFlavor) {
+    elements.selectedSoundPackFlavor.textContent =
+      `${soundPack.description} Muted mode disables cosmetic sound effects.`;
+  }
+  if (elements.characterList) {
+    elements.characterList.innerHTML = CHARACTER_CATALOG.map((character) => renderCollectionItem(
+      character,
+      {
+        unlocked: state.collection.unlockedCharacterIds.includes(character.id),
+        selected: selectedCrew && selectedCrew.id === character.id,
+        type: "character",
+        activeDrive,
+      },
+    )).join("");
+  }
+  if (elements.soundPackList) {
+    elements.soundPackList.innerHTML = SOUND_PACK_CATALOG.map((pack) => renderCollectionItem(
+      pack,
+      {
+        unlocked: state.collection.unlockedSoundPackIds.includes(pack.id),
+        selected: soundPack.id === pack.id,
+        type: "sound",
+        activeDrive,
+      },
+    )).join("");
+  }
+  if (elements.previewSoundButton) {
+    const muted = normalizeAudioLevel(appState.audioLevel) === "muted" || !appState.audioEnabled;
+    elements.previewSoundButton.disabled = activeDrive || muted;
+    elements.previewSoundButton.textContent = activeDrive
+      ? "Park First"
+      : muted
+        ? "Muted"
+        : "Preview Sound";
+  }
 }
 
 function renderGamePanels(gameState = loadGameState()) {
@@ -3578,6 +3818,7 @@ function renderGamePanels(gameState = loadGameState()) {
   renderDeliveryLog(state);
   renderMerchProgress(state);
   renderTofuShop(state);
+  renderCollectionPanel(state);
 }
 
 function merchProgressMetric(label, value) {
@@ -3616,6 +3857,16 @@ function renderDeliverySummary(summary) {
   const shopState = shop.gameState
     ? normalizeGameState(shop.gameState).shop
     : normalizeGameState(rewards.gameState || loadGameState()).shop;
+  const collectionState = normalizeGameState(rewards.gameState || loadGameState());
+  const crew = selectedCharacter(collectionState);
+  const collectionUnlocks = rewards.collectionUnlocks || {
+    newCharacterUnlocks: [],
+    newSoundUnlocks: [],
+  };
+  const newUnlockLine = [
+    ...collectionUnlocks.newCharacterUnlocks.map((unlock) => `${unlock.label} joined your Delivery Crew`),
+    ...collectionUnlocks.newSoundUnlocks.map((unlock) => `${unlock.label} unlocked`),
+  ].join(", ") || "No new crew or sound unlock";
   const skillLine = rewards.skillXP
     ? Object.entries(rewards.skillXP)
         .sort((left, right) => right[1] - left[1])
@@ -3641,6 +3892,8 @@ function renderDeliverySummary(summary) {
     summaryMetric("Main Damage Source", coach.damageSource),
     summaryMetric("Best Skill", coach.bestSkill),
     summaryMetric("Next Focus", coach.nextFocus),
+    summaryMetric("Delivery Crew", crew ? crew.name : "No crew selected yet"),
+    summaryMetric("New Unlock", newUnlockLine),
     summaryMetric("XP Gained", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
     summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
@@ -3795,6 +4048,7 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     rank: summary.rank,
     driverLicense: delivery.driverLicense,
     shopLevel: delivery.shopLevel,
+    deliveryCrew: delivery.deliveryCrew,
     qualificationStatus: qualificationShareLabel(summary),
     routeLabel: delivery.routeType,
     distanceLabel: shareConfig.includeDistanceInShare ? shareDistanceLabel(summary) : "",
@@ -3825,6 +4079,7 @@ function buildShareText(summary, config = SHARE_CONFIG) {
   ];
   if (data.driverLicense) lines.push(`Driver License: ${data.driverLicense}.`);
   if (data.shopLevel) lines.push(data.shopLevel);
+  if (data.deliveryCrew) lines.push(`Delivery Crew: ${data.deliveryCrew}.`);
   if (data.dailyStatus) lines.push(data.dailyStatus);
   if (data.distanceLabel) lines.push(`Distance: ${data.distanceLabel}.`);
   const shareConfig = normalizedShareConfig(config);
@@ -4078,6 +4333,9 @@ function handlePackTofu() {
   saveGameState(result.gameState);
   renderGamePanels(result.gameState);
   setSummaryStatusMessage(`Packed tofu: +${result.tofuStockGained} tofu stock.`);
+  playCosmeticSound("shop_pack_tofu", result.gameState, {
+    activeDrive: false,
+  });
 }
 
 function handleShopUpgradeClick(event) {
@@ -4098,6 +4356,59 @@ function handleShopUpgradeClick(event) {
   saveGameState(result.gameState);
   renderGamePanels(result.gameState);
   setSummaryStatusMessage(`${result.upgrade.name} upgraded.`);
+  playCosmeticSound("upgrade_purchased", result.gameState, {
+    activeDrive: false,
+  });
+}
+
+function handleCharacterSelect(event) {
+  const button = event.target && event.target.closest
+    ? event.target.closest("[data-character-id]")
+    : null;
+  if (!button) return;
+  const result = selectCharacter(button.dataset.characterId, loadGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderCollectionPanel(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(`${collectionUnlockLabel("character", button.dataset.characterId)} selected.`);
+}
+
+function handleSoundPackSelect(event) {
+  const button = event.target && event.target.closest
+    ? event.target.closest("[data-sound-pack-id]")
+    : null;
+  if (!button) return;
+  const result = selectSoundPack(button.dataset.soundPackId, loadGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderCollectionPanel(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(`${collectionUnlockLabel("sound", button.dataset.soundPackId)} selected.`);
+}
+
+function handlePreviewSound() {
+  const result = previewSoundPack(loadGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    userGesture: true,
+  });
+  setSummaryStatusMessage(
+    result.played
+      ? "Sound preview played."
+      : result.reason === "muted"
+        ? "Sound effects are muted."
+        : "Sound preview is unavailable here.",
+  );
 }
 
 function selectedSafetyChecksComplete() {
@@ -4212,6 +4523,18 @@ function endRun() {
   const milestoneResult = unlockMilestones(summary);
   summary.unlockedBadges = milestoneResult.unlockedThisRun;
   renderSummary(summary);
+  const collectionUnlockCount =
+    rewards.collectionUnlocks.newCharacterUnlocks.length
+    + rewards.collectionUnlocks.newSoundUnlocks.length;
+  playCosmeticSound(
+    collectionUnlockCount > 0
+      ? "unlock"
+      : summary.rank === TOP_BADGE
+        ? "perfect_pour"
+        : "delivery_complete",
+    rewards.gameState,
+    { activeDrive: appState.running || appState.calibrating },
+  );
 }
 
 function syncAudioToggles(source) {
@@ -4220,9 +4543,11 @@ function syncAudioToggles(source) {
   elements.audioToggleRunning.checked = appState.audioEnabled;
   if (appState.audioEnabled && appState.running) {
     ensureAudioCoach().then(updateAudioCoach);
+    renderCollectionPanel(loadGameState());
     return;
   }
   updateAudioCoach();
+  renderCollectionPanel(loadGameState());
 }
 
 function saveCurrentSummary() {
@@ -4307,6 +4632,9 @@ function bindEvents() {
   elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
   elements.packTofuButton.addEventListener("click", handlePackTofu);
   elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
+  elements.characterList.addEventListener("click", handleCharacterSelect);
+  elements.soundPackList.addEventListener("click", handleSoundPackSelect);
+  elements.previewSoundButton.addEventListener("click", handlePreviewSound);
   elements.newRunButton.addEventListener("click", newRun);
 }
 
@@ -4398,12 +4726,16 @@ function cacheElements() {
     packTofuButton: document.getElementById("pack-tofu-button"),
     packTofuHelper: document.getElementById("pack-tofu-helper"),
     shopUpgradeList: document.getElementById("shop-upgrade-list"),
-    shopStoryChapter: document.getElementById("shop-story-chapter"),
-    shopStoryNext: document.getElementById("shop-story-next"),
-    shopCustomersPreview: document.getElementById("shop-customers-preview"),
-    shopContractPreview: document.getElementById("shop-contract-preview"),
     deliveryWallGrid: document.getElementById("delivery-wall-grid"),
     shopOfflineEarnings: document.getElementById("shop-offline-earnings"),
+    selectedCharacterBadge: document.getElementById("selected-character-badge"),
+    selectedCharacterName: document.getElementById("selected-character-name"),
+    selectedCharacterFlavor: document.getElementById("selected-character-flavor"),
+    selectedSoundPackName: document.getElementById("selected-sound-pack-name"),
+    selectedSoundPackFlavor: document.getElementById("selected-sound-pack-flavor"),
+    characterList: document.getElementById("character-list"),
+    soundPackList: document.getElementById("sound-pack-list"),
+    previewSoundButton: document.getElementById("preview-sound-button"),
     cupCanvas: document.getElementById("cup-canvas"),
     summaryStatusLabel: document.getElementById("summary-status-label"),
     summaryTitle: document.getElementById("summary-title"),

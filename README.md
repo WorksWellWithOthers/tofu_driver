@@ -16,7 +16,9 @@ The app is intentionally lightweight:
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
 - game-first landing dashboard with Today's Delivery, Driver License, XP, passport, and shop preview
-- parked-only Tofu Shop resources, upgrades, story chapters, and Delivery Wall progress
+- parked-only Tofu Shop resources, three starter upgrades, and Delivery Wall progress
+- cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
+- design target favors progressive reveal, earned status, and ethical cosmetics over pay-to-progress
 - optional Discord community CTA, hidden unless `DISCORD_CONFIG` is enabled
 
 ## Project Layout
@@ -28,7 +30,7 @@ The app is intentionally lightweight:
 - `Dockerfile`: Nginx container used for Cloud Run source deploys
 - `nginx.conf`: static-file routing and security headers for Cloud Run
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
-- `DESIGN.md`: product, privacy, and future idle incremental direction
+- `DESIGN.md`: product, privacy, progressive reveal, ethical status, and future idle direction
 - `PLAN.md`: next implementation steps
 
 ## Local Checks

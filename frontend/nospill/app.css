@@ -411,6 +411,7 @@
 .nospill-delivery-summary-grid,
 .nospill-delivery-actions,
 .nospill-upgrade-list,
+.nospill-collection-list,
 .nospill-delivery-wall-grid,
 .nospill-shop-action-row,
 .nospill-shop-panel {
@@ -452,7 +453,43 @@
   min-height: 40px;
 }
 
+.nospill-collection-item {
+  min-width: 0;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  padding: 11px;
+  background: #0b0f10;
+  display: grid;
+  gap: 8px;
+}
+
+.nospill-collection-item.is-locked {
+  opacity: 0.72;
+}
+
+.nospill-collection-item header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nospill-collection-item strong {
+  color: #f4f7ef;
+}
+
+.nospill-collection-item span,
+.nospill-collection-item small {
+  color: #bbc7c0;
+  line-height: 1.42;
+}
+
+.nospill-collection-item button {
+  min-height: 40px;
+}
+
 .nospill-upgrade-item button:disabled,
+.nospill-collection-item button:disabled,
 .nospill-secondary:disabled,
 .nospill-danger:disabled {
   opacity: 0.58;

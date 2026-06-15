@@ -86,6 +86,7 @@ Saved session summaries contain summarized values only:
 - `xpByDate`
 - `routeMastery`
 - `shop`
+- `collection`
 
 The `shop` object stores summarized local management progress only:
 
@@ -95,12 +96,16 @@ The `shop` object stores summarized local management progress only:
 - `lifetimeTofuPacked`
 - `lifetimeReputation`
 - `upgrades`
-- `storyChapters`
-- `staff`
-- `customers`
-- `contracts`
 - `lastShopTickAt`
 - `offlineEarnings`
+
+The `collection` object stores cosmetic local unlock state only:
+
+- `selectedCharacterId`
+- `unlockedCharacterIds`
+- `selectedSoundPackId`
+- `unlockedSoundPackIds`
+- `seenUnlockIds`
 
 Route mastery uses coarse fingerprints only: route type, distance bucket, duration bucket,
 turn-density bucket, and curvature bucket. It must not include coordinates, street names, maps,
@@ -180,12 +185,12 @@ users.
 Skill XP gained, stamp result, daily delivery result, shop rewards, No-Spill Club Gear progress, and
 the next delivery goal even when a section is empty.
 
-## Tofu Shop
+## Tofu Shop V1
 
-Tofu Shop is a cozy parked-only management layer. A compact Tofu Shop preview appears in the
-top `Today's Delivery` card, and the full shop appears near the Delivery Board. Shop actions are not
-shown during an active Cup Test. The UI copy must include the parked-only rule: `Shop Mode is for
-when you are parked. Do not interact while driving.`
+Tofu Shop V1 is the implemented cozy parked-only management layer. A compact Tofu Shop preview
+appears in the top `Today's Delivery` card, and the full shop appears near the Delivery Board. Shop
+actions are not shown during an active Cup Test. The UI copy must include the parked-only rule:
+`Shop Mode is for when you are parked. Do not interact while driving.`
 
 Shop resources are local-only:
 
@@ -204,32 +209,566 @@ not affect driving score and does not grant reputation.
 Idle production is calculated locally from `lastShopTickAt` when the user returns. Offline tofu
 stock is capped at 8 hours and does not grant reputation. There is no backend timer or worker.
 
-The upgrade catalog is static and uses safe shop language only:
+The V1 upgrade catalog is static and uses safe shop language only:
 
 - Tofu Press
 - Better Boxes
 - Shop Sign
-- Delivery Shelf
-- Festival Cooler
-- Cup Display
 
-Upgrades can improve idle stock, delivery stock, reputation presentation, Delivery Wall display, or
-story/cosmetic flavor. They must not imply faster driving, better vehicle handling, stronger brakes,
-or any racing advantage.
+Upgrades can improve idle stock, delivery stock, or reputation presentation. They must not imply
+faster driving, better vehicle handling, stronger brakes, or any racing advantage.
 
 Completed deliveries call `applyDeliveryToShop()` after scoring. Tofu stock and reputation are
 based on Cargo Condition, qualification status, daily delivery completion, stamps, and existing
 daily reward reduction. Higher speed must not increase shop rewards. Practice sessions can grant
 limited tofu stock but no reputation by default; very short/unqualified sessions are capped.
 
-Story chapters are local and short: First Delivery, The Soup Bowl Incident, Festival Order, The
-Wedding Cake Contract, No-Spill Invitation, and Perfect Pour Trial. The initial contract model uses
-one summarized Smooth Week contract. Neither story nor contracts require timed driving, faster
-driving, exact distance sharing, or seeking special roads.
-
 The Delivery Wall shows No-Spill Club Gear, Perfect Pour Drop, Delivery Crew progress, and recent
 stamps. Locked merch links are hidden. Super Cute Collectibles remains the physical fulfillment
 partner and does not verify scores in the current MVP.
+
+Story chapters, customers, contracts, apprentices, route maps, and prestige remain future scope in
+the idle incremental expansion section below. They are not part of Tofu Shop V1 runtime behavior.
+
+## Collection Layer
+
+The Collection Layer is a small cosmetic unlock system for parked and result screens. It adds
+Character Unlocks, Sound Effect Unlocks, a Delivery Crew panel, and a Sound Pack selector without
+changing real-world driving scoring.
+
+Characters are local-only shop/story flavor. V1 character unlocks are:
+
+- `Angry Tofu Driver`: unlocks after First Delivery.
+- `Sleepy Dispatcher`: unlocks at Shop Level 2.
+- `Tea Master`: unlocks after a Hot Tea delivery with 90%+ Cargo Condition.
+- `Perfect Pour Courier`: unlocks after Perfect Pour.
+
+Characters can appear in Tofu Shop, Delivery Crew, Delivery Complete, and safe share flavor such as
+`Delivery Crew: Angry Tofu Driver.` They do not improve real-world driving score, shop rewards, XP,
+stamps, merch progress, rank, or route classification.
+
+Sound Packs are local-only cosmetic UI/audio polish. V1 sound packs are:
+
+- `Default`: unlocked for all users.
+- `Tofu Shop Bell`: unlocks at Shop Level 2.
+- `Retro Arcade`: unlocks after the first stamp or three deliveries.
+- `Perfect Pour Chime`: unlocks after Perfect Pour.
+
+Sound effects are synthesized locally with Web Audio; no external audio files are required. The
+Sound Pack selector and preview button are parked/menu interactions. Preview requires a user action.
+Muted mode disables cosmetic sound effects, Normal uses modest volume, and Loud remains clamped.
+Reward and unlock sounds may play only after a run has ended. They must not play during active
+drive, and the active-drive audio coach remains separate, calm, and user-controlled.
+
+Character and Sound Pack unlocks are evaluated from summarized game state: stamps, Shop Level,
+daily cargo identity, Cargo Condition, and completed delivery summaries. They must not use speed,
+raw GPS samples, raw motion samples, coordinates, route traces, maps, street names, or speed logs.
+
+## Progressive Reveal And Narrative Unfolding
+
+Tofu Driver should use progressive reveal as a guiding design rule for the current app and future
+idle-management expansion. The direction is inspired by mystery-first incremental games: make the
+game visible, but reveal systems only when they matter.
+
+### Core Principle
+
+Tofu Driver should unfold like a mystery. At the start, the player should see only the smallest
+meaningful state:
+
+- the cup
+- the first delivery
+- one clear action
+- one clear outcome
+
+Example first-run mood:
+
+```text
+The cup is full.
+
+[Start Delivery]
+```
+
+The player should not see every system immediately. Avoid showing all of these on first load:
+
+- XP
+- Passport
+- Tofu Shop
+- Delivery Wall
+- merch progress
+- Reputation
+- Characters
+- Sound Packs
+- upgrades
+- automation
+- prestige
+
+These systems should appear after they are earned or introduced through a story beat.
+
+### Why This Matters
+
+Dashboard-first design can feel overwhelming. Progressive reveal creates:
+
+- curiosity
+- mystery
+- stronger onboarding
+- clearer next goals
+- better emotional attachment
+- less UI clutter
+- better one-more-delivery motivation
+
+### Reveal Order
+
+1. The Cup
+
+   The first screen shows the full cup and Start Delivery. Do not show shop, XP, Passport, or merch
+   yet.
+
+2. First Delivery
+
+   After the first run, show Delivery Complete, Cargo Condition, and a small delivery report.
+
+3. Tips
+
+   Tips are the first visible resource. They are earned from delivery outcome.
+
+4. Pack Tofu
+
+   After a few deliveries, reveal that the shop needs tofu and unlock the parked-only Pack Tofu
+   action.
+
+5. Tofu Stock
+
+   Tofu Stock is the second resource and shows that the shop is becoming real.
+
+6. Tofu Press
+
+   Tofu Press is the first generator. Tofu Stock begins increasing slowly, creating the first true
+   incremental-game moment.
+
+7. Reputation
+
+   Reputation unlocks after a clean delivery. Story beat: word spreads.
+
+8. Passport
+
+   Passport unlocks after the first stamp-worthy delivery. Story beat: an old passport opens on the
+   counter.
+
+9. Shop Upgrades
+
+   Shop Upgrades unlock after the player has tips or tofu stock. Show one obvious bottleneck at a
+   time.
+
+10. Delivery Crew / Characters
+
+    Characters unlock when shop level or story reaches the right point. Story beat: a sleepy
+    dispatcher arrives.
+
+11. Route Map
+
+    A fictional game route map unlocks after reputation. It must remain separate from real-world
+    route incentives.
+
+12. Auto Driver
+
+    Automation unlocks after route mastery. It removes chores, not decisions.
+
+13. License Exam
+
+    Prestige unlocks after enough progress. Story beat: a letter arrives from the Delivery Office.
+
+### Narrative Beat Rule
+
+Every major mechanic should unlock with a short story beat. Examples:
+
+- "The cup is full."
+- "The tofu survived. Mostly."
+- "The shop is running low."
+- "The press rattles awake."
+- "Word spreads."
+- "The passport opens."
+- "A sleepy dispatcher asks where the clipboard is."
+- "Someone mentions Old Hill Road."
+- "An apprentice says they can handle the safe route."
+- "A letter arrives from the Delivery Office."
+
+Story beats should be short, charming, and non-intrusive.
+
+### Resource Reveal Rule
+
+Resources should be revealed one at a time. Recommended order:
+
+1. Tips
+2. Tofu Stock
+3. Reputation
+4. Passport Stamps
+5. License Stars
+
+Do not show future currencies before they matter. Do not add many currencies at once.
+
+### UI Rule
+
+First-time users should see a story-first interface.
+
+Suggested first-run hierarchy:
+
+1. Tofu Driver logo/brand
+2. "The cup is full."
+3. Start Delivery / Take The Cup Test
+4. minimal safety copy
+5. nothing else unless already unlocked
+
+Suggested returning-user hierarchy after unlocks:
+
+1. Today's Delivery
+2. current story/report
+3. primary resource row
+4. next best action
+5. unlocked systems
+6. settings
+
+### System Visibility Rule
+
+Each system should have three states:
+
+- hidden
+- newly discovered
+- active dashboard card
+
+Examples:
+
+Tofu Shop:
+
+- hidden before tofu stock matters
+- newly discovered after "The shop is running low"
+- dashboard card after Pack Tofu / Tofu Press unlock
+
+Passport:
+
+- hidden before first stamp
+- newly discovered with story beat
+- dashboard card after first stamp
+
+Characters:
+
+- hidden before first character
+- newly discovered with arrival story
+- dashboard card after Delivery Crew unlock
+
+### Safety / Legal Addendum
+
+Progressive reveal must preserve the existing safety model:
+
+- no in-drive clicking
+- no real-world speed rewards
+- no speed display as a performance metric
+- no route leaderboards
+- no public road competition
+- no "beat the clock"
+- no "drive faster"
+- no "find a harder/twistier road"
+- no high-G bragging
+- no public reporting/shaming of drivers
+- no raw GPS/motion upload by default
+
+Real-world driving mode rewards smoothness, produces summarized delivery outcomes, and remains
+audio-first and low-interaction.
+
+Management game mode happens while parked. It can show upgrades, resources, shop actions,
+characters, and collection systems.
+
+Fictional route systems may exist inside the idle game layer, but they must not tell users to seek
+real roads or risky routes.
+
+### Copy Guidance
+
+Prefer:
+
+- Smooth Delivery
+- Clean Delivery
+- Calm Cruise
+- Passenger Approved
+- Perfect Pour
+- Stable Cargo
+- Careful Route
+- Shop Delivery
+- Route Mastery
+
+Avoid or heavily qualify:
+
+- Fast
+- Aggressive
+- No Brake
+- Beat the Clock
+- Attack
+- Send It
+- High-G
+- Race
+- Drift
+- Touge
+- Find a twisty road
+
+If words like "route" or "mountain" are used, clarify when they are fictional idle-game content and
+not instructions for real-world driving.
+
+### Design Checklist
+
+- Does the first screen explain the goal without showing every system?
+- Does the first delivery unlock at least one new thing?
+- Does every new system arrive with a story beat?
+- Is only one new resource introduced at a time?
+- Does each system have hidden / discovered / active states?
+- Does the player always know the next best action?
+- Does the app avoid in-drive interaction?
+- Does the app avoid speed incentives?
+- Does the story make the shop feel alive?
+- Does the reveal create curiosity without hiding necessary safety information?
+
+### Relationship To Existing Dashboard
+
+The current visible Delivery Board, Tofu Shop, Passport, Collection Layer, and merch progress work is
+still useful, but should eventually respect unlock states.
+
+The design target is not to remove the dashboard. The target is:
+
+- first-time users get mystery and focus
+- returning users get the dashboard they have earned
+- unlocked systems stay visible and useful
+
+### Implementation Note
+
+This is a design direction, not an implementation requirement for this pass. Do not add new storage
+keys, auth, database, backend APIs, analytics, networking, service workers, or new gameplay behavior
+just to satisfy this section.
+
+## Monetization And Social Status
+
+Tofu Driver should use ethical cosmetic and status-based monetization, not predatory idle-game
+monetization. Pure cosmetics have limited value in isolated single-player idle games because no one
+sees them. Cosmetics become more meaningful when they express identity, appear in shareable proof,
+contribute to profile status, or become visible in a community context.
+
+Tofu Driver should monetize through:
+
+- earned merch
+- cosmetic shop themes
+- character cosmetics
+- sound packs
+- delivery-card frames
+- profile badges
+- convention/event drops
+- community status
+- optional supporter purchases
+
+Tofu Driver should not sell real-world driving advantage, score advantage, speed, qualification, or
+fraudulent merch unlocks.
+
+Do not design monetization around:
+
+- pay-to-progress
+- time skips
+- frustration walls
+- paid speed boosts
+- paid XP boosts
+- paid route advantages
+- premium currencies designed to obscure spending
+- FOMO pressure
+- paid progression required for normal enjoyment
+- whale-targeted mechanics
+- gambling or loot-box style random purchases
+
+### Ethical Monetization Rule
+
+The player may pay to express identity, support the project, decorate their shop/profile, or claim
+earned physical merch.
+
+The player should not pay to bypass the core meaning of smooth driving achievements.
+
+Acceptable monetization examples:
+
+- No-Spill Club shirt after earning the unlock
+- Perfect Pour decal after earning the unlock
+- alternate character skins
+- shop theme packs
+- sound effect packs
+- share-card frames
+- supporter badge
+- convention-exclusive cosmetic stamp
+- physical merch fulfilled by Super Cute Collectibles
+
+Avoid:
+
+- pay $4.99 to unlock No-Spill Club without earning it
+- pay for better Cargo Condition
+- pay for XP multipliers that affect driving achievements
+- pay for route qualification
+- pay for speed bonuses
+- pay for fake stamps
+- paid time warps that trivialize progression
+- loot boxes for characters/sounds
+- energy systems that block normal use
+
+### Social Status Layer
+
+Cosmetics need a stage. Tofu Driver should build social status through:
+
+- shareable Delivery Complete cards
+- Delivery Passport stamps
+- earned merch unlocks
+- profile cards
+- Discord community sharing
+- convention/event stamps
+- future garage/crew pages
+- future public but privacy-safe showcases
+
+Social status should be about:
+
+- consistency
+- smoothness
+- cargo condition
+- stamps
+- shop level
+- characters collected
+- sound packs unlocked
+- No-Spill Club progress
+- Perfect Pour achievement
+
+Social status must not be about:
+
+- speed
+- exact route
+- map
+- GPS trace
+- street names
+- high-G bragging
+- public road competition
+- shaming other drivers
+
+### Minimalist / A Dark Room-Inspired Status
+
+Social status should preserve the mystery and minimalism of the app:
+
+- no noisy global chat on the first screen
+- no leaderboard-first design
+- optional asynchronous community layer
+- share cards as the first social surface
+- future public profile cards as the second social surface
+- future `Delivery Chronicle` as an asynchronous status ledger
+
+Possible future feature: `Delivery Chronicle`.
+
+`Delivery Chronicle` would be a privacy-safe asynchronous feed of rare achievements:
+
+- Perfect Pour achieved
+- No-Spill Club joined
+- 7-day Delivery Crew streak completed
+- secret stamp discovered
+- convention stamp earned
+
+The Chronicle must not include:
+
+- speed
+- route
+- map
+- street
+- coordinates
+- exact distance by default
+- license plates
+- reports about other drivers
+
+### Swarm / Incremental-Inspired Status
+
+If the idle layer grows, status can come from the player's shop ecosystem:
+
+- Tofu Shop level
+- shop theme
+- staff/character roster
+- passport stamp count
+- Delivery Wall
+- license rank
+- cosmetic shop decorations
+- share-card frame
+- supporter badge
+
+This gives cosmetics value without selling power.
+
+### Cookie Clicker-Inspired Support Model
+
+A fair support model can resemble:
+
+- free browser app
+- optional supporter purchase
+- paid cosmetic/supporter edition later
+- merch
+- subtle, non-intrusive sponsorships only if ever needed
+
+Avoid intrusive ads in the active driving experience.
+
+If ads are ever considered:
+
+- never during active drive
+- never as a requirement for safety-critical feedback
+- never as popups over driving UI
+- only optional, parked, and non-disruptive
+
+### IdleOn / Social Hub-Inspired Future
+
+Large cosmetic revenue would require social visibility. Possible future features:
+
+- optional Tofu Driver profile
+- public Delivery Passport
+- garage/crew pages
+- Discord-linked community events
+- convention drop pages
+- shareable shop showcase
+- cosmetic character/team display
+
+This is future scope and should not be implemented until:
+
+- the core Cup Test is fun
+- Delivery Complete cards are being shared
+- users care about stamps/progress
+- users ask to save profiles or show off status
+
+### Privacy And Safety Guardrails
+
+Monetization and social status must preserve these rules:
+
+- no raw GPS upload by default
+- no raw motion upload by default
+- no speed-based status
+- no public road leaderboards
+- no public route competition
+- no driver shaming/reporting system in MVP
+- no license plate collection
+- no in-drive social interaction
+- no in-drive shop interaction
+- Discord/community links are for parked use only
+
+### Relationship To Character And Sound Unlocks
+
+Character unlocks and sound effect unlocks are a good fit for ethical cosmetic/status
+monetization. They may:
+
+- personalize the shop
+- personalize share cards
+- create collectible goals
+- support merch drops
+- create Discord/community identity
+
+They must not:
+
+- improve real-world driving score
+- improve route qualification
+- reward speed
+- require risky driving
+- play distracting reward sounds during active drive
+
+### Implementation Note
+
+This section is a monetization and social-status design direction. Do not implement payments,
+accounts, backend APIs, ads, Discord integrations, social feeds, public profiles, new storage keys,
+or new gameplay behavior just to satisfy this section.
 
 ## Idle Incremental / Tofu Shop Expansion
 

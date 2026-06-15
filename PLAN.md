@@ -13,8 +13,10 @@
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
 - The landing page now starts with a game-first Today's Delivery dashboard, clear goal/reward,
   and prominent `Take the Cup Test` CTA before dense setup controls.
-- Tofu Shop adds parked-only tofu stock, reputation, shop levels, Pack Tofu, idle production,
-  upgrades, story chapters, a simple Smooth Week contract, and Delivery Wall progress.
+- Tofu Shop V1 adds parked-only tofu stock, reputation, shop levels, Pack Tofu, capped idle
+  production, three starter upgrades, and Delivery Wall progress.
+- The Collection Layer adds cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
+  for parked/result screens only.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
@@ -22,6 +24,8 @@
 - Discord community CTAs are implemented but hidden until `DISCORD_CONFIG` is enabled with an invite URL.
 - `DESIGN.md` now documents the future idle incremental / Tofu Shop expansion direction; those
   systems remain future-facing unless implemented in a later pass.
+- `DESIGN.md` now documents progressive reveal and ethical monetization/status rules: first-run
+  should become story-first over time, and monetization should stay cosmetic/supporter/earned-merch.
 
 ## Recommended Next Steps
 
@@ -30,11 +34,13 @@
 3. Add a simple local static server command to `README.md`.
 4. Confirm custom-domain DNS records and certificate provisioning for `tofudriver.com`.
 5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
-6. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
-7. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
-8. Prototype the future idle expansion in the documented small-scope order: one fictional route,
+6. Prototype progressive reveal states so first-time users see the cup, first delivery, and one
+   action before larger dashboard systems appear.
+7. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
+8. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
+9. Prototype the future idle expansion in the documented small-scope order: one fictional route,
    one generator, three upgrades, one delivery report, and one stamp.
-9. Replace remaining MVP raster assets with production-ready artwork when available.
+10. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 
@@ -45,6 +51,8 @@
 - Should the app add a backend later for accounts, badges, or server-issued merch unlocks?
 - Should Tofu Shop story chapters remain fully local-only, or eventually use backend unlock tokens?
 - What moderation policy is required before accepting user-generated driving incident reports in Discord?
+- Which optional supporter/cosmetic purchases fit the ethical monetization rules without weakening
+  earned driving achievements?
 
 ## Non-Goals For The Current Slice
 
@@ -53,4 +61,5 @@
 - No raw route uploads.
 - No real-time location sharing.
 - No payment flow.
+- No pay-to-progress, paid speed/score boosts, loot boxes, or intrusive active-drive ads.
 - No safety certification claims.
