@@ -57,6 +57,16 @@ Tofu Stock -> Delivery Orders -> Fulfill Shop Order -> Tips -> Upgrade -> First 
 Routes, Crew, Garage, Shop Spirit, Rivals, License Exams, and broad Passport catalogs should remain
 hidden, teased, or marked future/partial until this core loop feels good.
 
+Early resource-funnel rule:
+
+- Tofu Stock is production/input.
+- Delivery Orders are prepared work.
+- Fulfill Shop Order converts Delivery Orders into Tips, Reputation, and XP.
+- Tips buy stations and upgrades.
+- Pack Tofu is a backup/manual stock action, not the main money action.
+- Don't Spill the Cup is optional and must not override normal shop bottleneck recommendations
+  when orders are ready or Tips are needed.
+
 ## Progression Design Principles
 
 ### 1. Strict Balance-Sheet Thinking
@@ -352,6 +362,7 @@ Station/generator controls and upgrade controls are separate:
   or `Buy Tidy Packaging`
 - early station and upgrade purchases should use Tips unless a later balance sheet explicitly
   says otherwise
+- disabled Tip-cost buttons should name the source: fulfill shop orders to earn Tips
 - visible buttons must be wired and functional, disabled with a clear reason, or hidden until
   their system is ready
 - hidden advanced systems should not leak a full future checklist into the first shop view
@@ -543,6 +554,7 @@ become meaningful.
 
 Expected bottlenecks and Next Best Action:
 
+- Delivery Orders ready and Tips low: fulfill shop orders
 - no Delivery Orders: improve Prep Counter or wait for orders
 - low Tofu Stock: buy/improve Tofu Press
 - not enough Tips: fulfill shop orders
@@ -553,6 +565,10 @@ Expected bottlenecks and Next Best Action:
 
 Only one dominant Next Best Action should appear. Secondary actions may exist, but the player should
 not have to choose among several equal-weight CTAs.
+
+Certified Cup Test should be presented as an optional boost/status path, not as the normal shop
+bottleneck. It may be visible as secondary copy, but the early shop loop should prioritize the
+resource conversion path first.
 
 ## 13. Offline Progress Contract
 

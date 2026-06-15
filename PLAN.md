@@ -11,7 +11,12 @@
 - Qualified Run Mode is opt-in and may request location only after explicit start.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
-- Fulfill Shop Order is the current core home-loop action.
+- Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
+  Reputation, and XP.
+- Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
+  players back to fulfilling shop orders.
+- Pack Tofu is a backup/manual Tofu Stock action, and Don't Spill the Cup is an optional certified
+  boost rather than the normal shop bottleneck.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
@@ -37,7 +42,7 @@ Canonical references:
 5. Hide or down-rank advanced systems during the first 10 minutes.
 6. Add balance tests for the first loop:
    first order immediately available, first order rewards, first upgrade timing, visible `/sec`
-   rate improvement, disabled button reasons, and no resource-negative states.
+   rate improvement, Tip-source disabled button reasons, and no resource-negative states.
 7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
 8. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
 9. Rename `frontend/nospill/` to a product-native path only as a separate migration.

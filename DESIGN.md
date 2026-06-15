@@ -150,7 +150,11 @@ Current design principles:
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
-- Tips buy more production.
+- Tips buy more production, stations, and upgrades.
+- The early UI must teach that Tips come from fulfilled shop orders.
+- Pack Tofu is a backup/manual Tofu Stock action, not the main money action.
+- Don't Spill the Cup is an optional certified boost and should not override normal shop
+  bottleneck recommendations when Delivery Orders are ready or Tips are needed.
 - Reputation opens new shop systems.
 - XP/levels provide visible progress.
 - Offline progress is capped and summarized.

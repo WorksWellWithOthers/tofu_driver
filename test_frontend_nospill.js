@@ -791,7 +791,7 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.firstCollectionSectionHidden, true);
   assert.strictEqual(context.firstPackDisabled, false);
   assert.strictEqual(context.firstPackText, 'Pack Tofu');
-  assert(context.firstPackHelper.includes('Pack tofu while parked'));
+  assert(context.firstPackHelper.includes('Add a little Tofu Stock while parked'));
   assert.strictEqual(context.firstFulfillDisabled, true);
   assert(context.firstFulfillHelper.includes('Prep Counter needs delivery orders first'));
   assert(context.firstGeneratorHtml.includes('Tofu Press'));
@@ -821,7 +821,7 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.notStrictEqual(context.afterDashboardStock, 'Locked');
   assert(context.afterDashboardPassport.includes('stamps collected.'));
   assert.strictEqual(context.afterPackDisabled, false);
-  assert.strictEqual(context.afterPackText, 'Pack Tofu');
+  assert.strictEqual(context.afterPackText, 'Pack Tofu (backup)');
   assert(context.afterGeneratorHtml.includes('Tofu Press'));
   assert(context.afterGeneratorHtml.includes('+0.05 tofu/sec'));
   assert(context.afterGeneratorHtml.includes('Prep Counter'));
@@ -985,6 +985,159 @@ globalThis.positiveOfflineText = elements.shopOfflineEarnings.textContent;
   assert(context.positiveOfflineText.includes('delivery orders'));
 }
 
+function testEarlyShopResourceFunnelMakesTipsObvious() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+  gameDailyTitle: makeNode(),
+  gameDailyFlavor: makeNode(),
+  gameDailyCargo: makeNode(),
+  gameDailyGoal: makeNode(),
+  gameDailyReward: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+const funnel = defaultGameState();
+funnel.shop.tofuStock = 503;
+funnel.shop.deliveryOrders = 117;
+funnel.shop.tips = 0;
+funnel.shop.lifetimeDeliveryOrders = 1;
+funnel.shop.prepSlots = 10;
+funnel.stamps.first_shop_order = { date: "2026-06-15T00:00:00.000Z", label: "First Shop Order" };
+globalThis.funnelAction = nextBestAction(funnel, { date: new Date("2026-06-15T12:00:00.000Z") });
+globalThis.funnelBottleneck = currentBottleneck(funnel);
+renderGameDashboard(funnel);
+globalThis.funnelTopTitle = elements.gameNextActionTitle.textContent;
+globalThis.funnelTopCopy = elements.gameNextActionCopy.textContent;
+globalThis.funnelTopButton = elements.gameCtaButton.textContent;
+globalThis.funnelTopAction = elements.gameCtaButton.dataset.nextAction;
+globalThis.funnelTopQuantity = elements.gameCtaButton.dataset.nextOrderQuantity;
+renderTofuShop(funnel);
+globalThis.funnelPackText = elements.packTofuButton.textContent;
+globalThis.funnelPackHelper = elements.packTofuHelper.textContent;
+globalThis.funnelFulfillHelper = elements.fulfillShopOrderHelper.textContent;
+globalThis.funnelUpgradeHtml = elements.shopUpgradeList.innerHTML;
+appState.shopTab = "overview";
+renderTofuShop(funnel);
+globalThis.funnelOverviewHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "orders";
+renderTofuShop(funnel);
+globalThis.funnelOrdersHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "production";
+renderTofuShop(funnel);
+globalThis.funnelProductionHtml = elements.shopTabPanel.innerHTML;
+const fulfilled = fulfillShopOrders(funnel, "max", { activeDrive: false });
+globalThis.funnelFulfilledOk = fulfilled.ok;
+globalThis.funnelFulfilledQuantity = fulfilled.quantity;
+globalThis.funnelTipsAfterMax = fulfilled.gameState.shop.tips;
+globalThis.funnelRepAfterMax = fulfilled.gameState.shop.reputation;
+globalThis.funnelXpAfterMax = fulfilled.gameState.totalXP;
+globalThis.funnelOrdersAfterMax = fulfilled.gameState.shop.deliveryOrders;
+`, context);
+
+  assert.strictEqual(context.funnelAction.type, 'fulfill_shop_order');
+  assert.strictEqual(context.funnelAction.title, 'Next: Fulfill Max Orders');
+  assert.strictEqual(context.funnelAction.buttonLabel, 'Fulfill Max Orders');
+  assert.strictEqual(context.funnelAction.orderQuantity, 'max');
+  assert.strictEqual(context.funnelBottleneck.label, 'Need Tips');
+  assert(!context.funnelBottleneck.label.includes('Certified boost available'));
+  assert(context.funnelBottleneck.action.includes('Fulfill shop orders'));
+  assert.strictEqual(context.funnelTopTitle, 'Next: Fulfill Max Orders');
+  assert(context.funnelTopCopy.includes('earn Tips for stations and upgrades'));
+  assert.strictEqual(context.funnelTopButton, 'Fulfill Max Orders');
+  assert.strictEqual(context.funnelTopAction, 'fulfill_shop_order');
+  assert.strictEqual(context.funnelTopQuantity, 'max');
+  assert.strictEqual(context.funnelPackText, 'Pack Tofu (backup)');
+  assert(context.funnelPackHelper.includes('Add a little Tofu Stock'));
+  assert(context.funnelFulfillHelper.includes('Turn prepared orders into Tips'));
+  assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Tips'));
+  assert(context.funnelOverviewHtml.includes('Tips come from fulfilled shop orders.'));
+  assert(context.funnelOverviewHtml.includes('Optional Certified Boost'));
+  assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
+  assert(context.funnelOrdersHtml.includes('Fulfill prepared shop orders to earn Tips'));
+  assert(context.funnelOrdersHtml.includes('Each order gives 10 Tips, 1 Reputation, and 4 XP.'));
+  assert(context.funnelOrdersHtml.includes('Fulfill 1 Order'));
+  assert(context.funnelOrdersHtml.includes('Fulfill 10 Orders'));
+  assert(context.funnelOrdersHtml.includes('Fulfill Max Orders'));
+  assert(context.funnelProductionHtml.includes('Fulfill shop orders to earn Tips.'));
+  assert(context.funnelUpgradeHtml.includes('Fulfill shop orders to earn Tips.'));
+  assert.strictEqual(context.funnelFulfilledOk, true);
+  assert.strictEqual(context.funnelFulfilledQuantity, 117);
+  assert.strictEqual(context.funnelTipsAfterMax, 1170);
+  assert.strictEqual(context.funnelRepAfterMax, 117);
+  assert.strictEqual(context.funnelXpAfterMax, 468);
+  assert.strictEqual(context.funnelOrdersAfterMax, 0);
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -1022,7 +1175,9 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
   assert.strictEqual(fulfillAction.type, 'fulfill_shop_order');
-  assert.strictEqual(fulfillAction.title, 'Next: Fulfill Shop Order');
+  assert.strictEqual(fulfillAction.title, 'Next: Fulfill Max Orders');
+  assert.strictEqual(fulfillAction.buttonLabel, 'Fulfill Max Orders');
+  assert.strictEqual(fulfillAction.orderQuantity, 'max');
 
   const funded = JSON.parse(JSON.stringify(completeDaily));
   funded.shop.tips = 100;
@@ -3227,6 +3382,7 @@ function run() {
   testTwoSurfaceRoutingSeparatesShopAndCupTest();
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();
   testTofuShopGeneratorUpgradeUiIsHonestAndProgressive();
+  testEarlyShopResourceFunnelMakesTipsObvious();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

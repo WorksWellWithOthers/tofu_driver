@@ -2660,7 +2660,7 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   if (!unlocked) return station.unlock || "Locked.";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  if (tipsNeeded > 0) return `Need ${tipsNeeded} more Tips`;
+  if (tipsNeeded > 0) return `Need ${tipsNeeded} more Tips. Fulfill shop orders to earn Tips.`;
   const prepNeeded = Math.max(0, safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots);
   if (prepNeeded > 0) return `Need ${prepNeeded} more Prep Slot${prepNeeded === 1 ? "" : "s"}`;
   return "";
@@ -2714,7 +2714,7 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
   if (level >= upgrade.maxLevel) return "Maxed";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  return tipsNeeded > 0 ? `Need ${tipsNeeded} more Tips` : "";
+  return tipsNeeded > 0 ? `Need ${tipsNeeded} more Tips. Fulfill shop orders to earn Tips.` : "";
 }
 
 function buyQuantityFromRequest(gameState, station, requested) {
@@ -5480,11 +5480,14 @@ function nextBestAction(gameState, options = {}) {
     };
   }
   if (shopUnlocked && Number(state.shop.deliveryOrders || 0) > 0) {
+    const orderCount = Math.floor(Number(state.shop.deliveryOrders || 0));
+    const multipleOrders = orderCount > 1;
     return {
       type: "fulfill_shop_order",
-      title: "Next: Fulfill Shop Order",
-      copy: "Hand off a prepared shop order to earn tips, reputation, and a little XP.",
-      buttonLabel: "Fulfill Shop Order",
+      title: multipleOrders ? "Next: Fulfill Max Orders" : "Next: Fulfill Shop Order",
+      copy: "You have prepared orders ready. Hand them off to earn Tips for stations and upgrades.",
+      buttonLabel: multipleOrders ? "Fulfill Max Orders" : "Fulfill Shop Order",
+      orderQuantity: multipleOrders ? "max" : "1",
       disabled: false,
     };
   }
@@ -5561,6 +5564,7 @@ function renderGameDashboard(gameState = loadGameState()) {
     if (elements.gameCtaButton.dataset) {
       elements.gameCtaButton.dataset.nextAction = action.type;
       elements.gameCtaButton.dataset.nextUpgrade = action.upgradeId || "";
+      elements.gameCtaButton.dataset.nextOrderQuantity = action.orderQuantity || "";
     }
   }
   if (elements.gameCertifiedCtaButton) {
@@ -5854,9 +5858,11 @@ function actionButton(label, attr, value, disabled = false, extraClass = "nospil
 
 function renderOverviewPanel(state) {
   const rates = getShopGeneratorRates(state);
+  const bottleneck = currentBottleneck(state);
   return `
     <h4>Overview</h4>
-    <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(currentBottleneck(state).label)}</p>
+    <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
+    <p class="nospill-panel-helper">Tips come from fulfilled shop orders.</p>
     <div class="nospill-idle-grid">
       ${renderIdleCard({
         title: "Tofu Press",
@@ -5871,8 +5877,8 @@ function renderOverviewPanel(state) {
       ${renderIdleCard({
         title: "Optional Certified Boost",
         status: "Don't Spill the Cup",
-        copy: "The challenge is always available and never requires shop resources.",
-        actions: [actionButton("Take Don't Spill the Cup", "data-surface-target", "cup-test", false, "nospill-primary")],
+        copy: "Available when you want a smooth-driving bonus. It is not required for shop progress.",
+        actions: [actionButton("Take Don't Spill the Cup", "data-surface-target", "cup-test", false)],
       })}
     </div>
   `;
@@ -5918,18 +5924,26 @@ function renderOrdersPanel(state) {
   const tenReason = state.shop.deliveryOrders < 10
     ? `Need ${10 - Math.floor(state.shop.deliveryOrders)} more Delivery Orders`
     : "";
+  const maxOrders = Math.floor(state.shop.deliveryOrders);
+  const showTen = state.shop.deliveryOrders >= 10;
+  const showMax = maxOrders > 1;
   return `
     <h4>Orders</h4>
-    <p class="nospill-panel-helper">Shop orders are home gameplay. They do not imply a real drive.</p>
+    <p class="nospill-panel-helper">Fulfill prepared shop orders to earn Tips. Tips buy stations and upgrades.</p>
     <div class="nospill-idle-grid">
       ${renderIdleCard({
         title: "Simple Tofu Box",
         status: `${state.shop.deliveryOrders} ready`,
-        copy: canFulfill ? "Pack and hand off a local counter order." : "No Delivery Orders ready. Prep Counter needs tofu stock.",
+        copy: canFulfill
+          ? `Each order gives ${SHOP_ORDER_TIPS_REWARD} Tips, ${SHOP_ORDER_REPUTATION_REWARD} Reputation, and ${SHOP_ORDER_XP_REWARD} XP.`
+          : "No Delivery Orders ready. Prep Counter needs tofu stock.",
         actions: [
-          actionButton("Fulfill Shop Order", "data-fulfill-orders", "1", !canFulfill, "nospill-primary", orderReason),
-          actionButton("Fulfill 10 Orders", "data-fulfill-orders", "10", state.shop.deliveryOrders < 10, "nospill-secondary", tenReason),
-          actionButton("Fulfill Max Orders", "data-fulfill-orders", "max", !canFulfill, "nospill-secondary", orderReason),
+          actionButton("Fulfill 1 Order", "data-fulfill-orders", "1", !canFulfill, "nospill-primary", orderReason),
+          showTen ? actionButton("Fulfill 10 Orders", "data-fulfill-orders", "10", false) : "",
+          showMax ? actionButton("Fulfill Max Orders", "data-fulfill-orders", "max", false, "nospill-primary") : "",
+          !showTen && state.shop.deliveryOrders > 0 && state.shop.deliveryOrders < 10
+            ? `<small class="nospill-action-reason">${escapeHtml(tenReason)}</small>`
+            : "",
         ],
       })}
     </div>
@@ -6174,14 +6188,16 @@ function renderShopSettingsPanel(state) {
 
 function currentBottleneck(gameState) {
   const state = normalizeGameState(gameState);
-  if (state.shop.deliveryOrders < 1) return { id: "orders", label: "No Delivery Orders", action: "Upgrade or wait for Prep Counter" };
+  if (state.shop.deliveryOrders > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Fulfill shop orders to earn Tips." };
+  if (state.shop.deliveryOrders > 0) return { id: "orders_ready", label: "Orders ready", action: "Fulfill shop orders for Tips." };
+  if (state.shop.deliveryOrders < 1) return { id: "orders", label: "No Delivery Orders", action: "Wait for Prep Counter or improve order production." };
   if (state.shop.tofuStock < 5) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Pack Tofu" };
   if (state.shop.prepSlots < 1) return { id: "prep_slots", label: "Prep Slots recovering", action: "Wait for prep capacity" };
   if (SHOP_STATIONS.some((station) => stationIsUnlocked(station, state) && state.shop.tips >= stationCost(station, state.shop.stations[station.id]))) {
     return { id: "upgrade", label: "Station affordable", action: "Buy a shop station" };
   }
   if (licenseExamStatus(state).ready) return { id: "license", label: "License Exam ready", action: "Review License panel" };
-  return { id: "certified", label: "Certified boost available", action: "Take Don't Spill the Cup when ready" };
+  return { id: "steady_shop", label: "Shop running", action: "Keep growing the shop or take an optional certified boost." };
 }
 
 function renderTofuShop(gameState = loadGameState()) {
@@ -6272,7 +6288,9 @@ function renderTofuShop(gameState = loadGameState()) {
     elements.packTofuButton.textContent = activeDrive
       ? "Park First"
       : reveal.shop
-        ? "Pack Tofu"
+        ? shop.deliveryOrders > 0 || shop.tofuStock >= 25
+          ? "Pack Tofu (backup)"
+          : "Pack Tofu"
         : "Start the Shop";
   }
   if (elements.fulfillShopOrderButton) {
@@ -6287,14 +6305,14 @@ function renderTofuShop(gameState = loadGameState()) {
     elements.packTofuHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
       : reveal.shop
-        ? "Pack tofu while parked. The Tofu Press also adds stock over time."
+        ? "Add a little Tofu Stock while parked. Fulfill prepared orders to earn Tips."
         : "The press is warming up. Start the shop while parked.";
   }
   if (elements.fulfillShopOrderHelper) {
     elements.fulfillShopOrderHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
       : shop.deliveryOrders > 0
-        ? "Fulfill prepared shop orders at home for tips, reputation, and a little XP."
+        ? "Turn prepared orders into Tips, Reputation, and XP."
         : "Prep Counter needs delivery orders first.";
   }
   if (elements.shopUpgradeList) {
@@ -7178,8 +7196,8 @@ function handlePackTofu() {
   });
 }
 
-function handleFulfillShopOrder() {
-  const result = fulfillShopOrder(currentGameState(), {
+function handleFulfillShopOrder(requestedQuantity = 1) {
+  const result = fulfillShopOrders(currentGameState(), requestedQuantity, {
     activeDrive: appState.running || appState.calibrating,
   });
   if (!result.ok) {
@@ -7654,7 +7672,10 @@ function handleNextBestAction() {
     return;
   }
   if (actionType === "fulfill_shop_order") {
-    handleFulfillShopOrder();
+    const orderQuantity = elements.gameCtaButton && elements.gameCtaButton.dataset
+      ? elements.gameCtaButton.dataset.nextOrderQuantity || "1"
+      : "1";
+    handleFulfillShopOrder(orderQuantity);
     return;
   }
   if (actionType === "buy_upgrade") {
