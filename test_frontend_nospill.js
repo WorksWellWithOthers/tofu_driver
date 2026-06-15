@@ -795,9 +795,16 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.firstFulfillDisabled, true);
   assert(context.firstFulfillHelper.includes('Prep Counter needs delivery orders first'));
   assert(context.firstGeneratorHtml.includes('Tofu Press'));
-  assert(context.firstGeneratorHtml.includes('+0.05 tofu / sec'));
-  assert(context.firstGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
-  assert(context.firstUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(context.firstGeneratorHtml.includes('+0.05 tofu/sec'));
+  assert(context.firstGeneratorHtml.includes('Buy Tofu Press'));
+  assert(context.firstGeneratorHtml.includes('data-shop-station="tofu_press"'));
+  assert(!context.firstGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.firstGeneratorHtml.includes('>Upgrade<'));
+  assert(context.firstUpgradeHtml.includes('Station Upgrades'));
+  assert(context.firstUpgradeHtml.includes('Complete your first shop order to reveal Steady Pressing.'));
+  assert(!context.firstUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.firstUpgradeHtml.includes('Better Boxes'));
+  assert(!context.firstUpgradeHtml.includes('Shop Sign'));
   assert(context.firstCharacterHtml.includes('No one is on shift yet. Your first delivery may attract help.'));
   assert(!context.firstCharacterHtml.includes('data-character-id'));
   assert(context.firstSoundHtml.includes('New sounds unlock as your delivery reputation grows.'));
@@ -816,9 +823,10 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.afterPackDisabled, false);
   assert.strictEqual(context.afterPackText, 'Pack Tofu');
   assert(context.afterGeneratorHtml.includes('Tofu Press'));
-  assert(context.afterGeneratorHtml.includes('+0.05 tofu / sec'));
+  assert(context.afterGeneratorHtml.includes('+0.05 tofu/sec'));
   assert(context.afterGeneratorHtml.includes('Prep Counter'));
-  assert(context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.afterGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
   assert.strictEqual(context.crewSurfaceCollectionHidden, false);
   assert(context.crewSurfaceCharacterHtml.includes('Angry Tofu Driver'));
   assert(context.crewSurfaceCharacterHtml.includes('data-character-id="angry_tofu_driver"'));
@@ -826,9 +834,155 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert(context.crewSurfaceSoundHtml.includes('data-sound-pack-id="retro_arcade"'));
   assert.strictEqual(context.crewSurfacePreviewDisabled, false);
   assert.strictEqual(context.activePackDisabled, true);
-  assert(context.activeGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(context.activeGeneratorHtml.includes('data-shop-station="tofu_press"'));
   assert(context.activeGeneratorHtml.includes('disabled'));
   assert.strictEqual(context.activePreviewDisabled, true);
+}
+
+function testTofuShopGeneratorUpgradeUiIsHonestAndProgressive() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+  gameNextActionTitle: makeNode(),
+  gameNextActionCopy: makeNode(),
+  gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+const fresh = defaultGameState();
+renderTofuShop(fresh);
+globalThis.freshGeneratorHtml = elements.shopGeneratorList.innerHTML;
+globalThis.freshUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.freshTabsHtml = elements.shopTabList.innerHTML;
+globalThis.freshOfflineText = elements.shopOfflineEarnings.textContent;
+const firstOrderSource = defaultGameState();
+firstOrderSource.shop.deliveryOrders = 1;
+const firstOrder = fulfillShopOrders(firstOrderSource, 1, { activeDrive: false }).gameState;
+renderTofuShop(firstOrder);
+globalThis.afterOrderUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.afterOrderTabsHtml = elements.shopTabList.innerHTML;
+const leveled = defaultGameState();
+leveled.shop.tips = 1000;
+leveled.shop.tofuStock = 20;
+leveled.shop.deliveryOrders = 2;
+leveled.shop.lifetimeDeliveryOrders = 5;
+leveled.stamps.first_shop_order = { date: "2026-06-15T00:00:00.000Z", label: "First Shop Order" };
+leveled.shop.stations.tofu_press = 2;
+leveled.shop.stations.prep_counter = 2;
+leveled.shop.stationUpgrades.tofu_press_faster = 1;
+leveled.shop.stationUpgrades.prep_counter_faster = 1;
+renderTofuShop(leveled);
+globalThis.leveledGeneratorHtml = elements.shopGeneratorList.innerHTML;
+globalThis.leveledUpgradeHtml = elements.shopUpgradeList.innerHTML;
+appState.shopTab = "upgrades";
+renderTofuShop(leveled);
+globalThis.leveledUpgradePanelHtml = elements.shopTabPanel.innerHTML;
+const offline = defaultGameState();
+offline.shop.offlineEarnings.tofuStock = 4.8;
+offline.shop.offlineEarnings.deliveryOrders = 1.2;
+renderTofuShop(offline);
+globalThis.positiveOfflineText = elements.shopOfflineEarnings.textContent;
+`, context);
+
+  assert(context.freshGeneratorHtml.includes('Buy Tofu Press'));
+  assert(context.freshGeneratorHtml.includes('Buy Max Tofu Press'));
+  assert(context.freshGeneratorHtml.includes('Tips'));
+  assert(!context.freshGeneratorHtml.includes('>Upgrade<'));
+  assert(!context.freshGeneratorHtml.includes('data-shop-upgrade'));
+  assert(context.freshGeneratorHtml.includes('Need '));
+  assert(context.freshUpgradeHtml.includes('Station Upgrades'));
+  assert(!context.freshUpgradeHtml.includes('Tofu Press Lv'));
+  assert(!context.freshUpgradeHtml.includes('Prep Counter Lv'));
+  assert(!context.freshUpgradeHtml.includes('Better Boxes'));
+  assert(!context.freshUpgradeHtml.includes('Shop Sign'));
+  assert.strictEqual(context.freshOfflineText, '');
+  ['Routes', 'Crew', 'Garage', 'Shop Spirit', 'Rivals', 'License'].forEach((label) => {
+    assert(!context.freshTabsHtml.includes(`>${label}<`), label);
+  });
+  assert(context.afterOrderUpgradeHtml.includes('Steady Pressing Lv 0'));
+  assert(context.afterOrderUpgradeHtml.includes('data-station-upgrade="tofu_press_faster"'));
+  assert(context.afterOrderUpgradeHtml.includes('Need '));
+  assert(!context.afterOrderUpgradeHtml.includes('Buy Upgrade'));
+  assert(!context.afterOrderUpgradeHtml.includes('Better Boxes'));
+  assert(!context.afterOrderUpgradeHtml.includes('Shop Sign'));
+  assert(context.afterOrderTabsHtml.includes('Upgrades'));
+  assert(context.leveledGeneratorHtml.includes('Tofu Press'));
+  assert(context.leveledGeneratorHtml.includes('Owned: 2'));
+  assert(context.leveledGeneratorHtml.includes('Prep Counter'));
+  assert(context.leveledUpgradeHtml.includes('Steady Pressing Lv 1'));
+  assert(context.leveledUpgradePanelHtml.includes('Tidy Packaging Lv 1'));
+  assert(!context.leveledUpgradeHtml.includes('Tofu Press Lv 1'));
+  assert(!context.leveledUpgradePanelHtml.includes('Prep Counter Lv 1'));
+  assert(context.positiveOfflineText.includes('While you were away: +'));
+  assert(context.positiveOfflineText.includes('tofu stock'));
+  assert(context.positiveOfflineText.includes('delivery orders'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -871,9 +1025,11 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
   assert.strictEqual(fulfillAction.title, 'Next: Fulfill Shop Order');
 
   const funded = JSON.parse(JSON.stringify(completeDaily));
-  funded.shop.tofuStock = 500;
+  funded.shop.tips = 100;
   funded.shop.deliveryOrders = 0;
   funded.shop.lifetimeTofuPacked = 1;
+  funded.shop.lifetimeDeliveryOrders = 1;
+  funded.stamps.first_shop_order = { date: '2026-06-14T12:00:00.000Z', label: 'First Shop Order' };
   const upgradeAction = context.nextBestAction(funded, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
@@ -1978,7 +2134,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
   assert.strictEqual(context.afterBuyRate > context.beforeBuyRate, true);
   assert(context.productionDisabledHtml.includes('disabled'));
   assert(context.productionDisabledHtml.includes('nospill-action-reason'));
-  assert(context.productionDisabledHtml.includes('Not enough resources or locked.'));
+  assert(context.productionDisabledHtml.includes('Need '));
   assert.strictEqual(intervalCalls.length, 1);
   assert.strictEqual(intervalCalls[0].ms, 1000);
 
@@ -3070,6 +3226,7 @@ function run() {
   testFirstTimeGameDashboardIsVisibleBeforeSetup();
   testTwoSurfaceRoutingSeparatesShopAndCupTest();
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();
+  testTofuShopGeneratorUpgradeUiIsHonestAndProgressive();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

@@ -29,21 +29,34 @@ Canonical references:
 
 ## Recommended Next Steps
 
-1. Do not add new systems until the first Tofu Shop loop is fun.
-2. Play-test the core loop at home:
-   Tofu Stock -> Delivery Orders -> Fulfill Shop Order -> Tips -> Upgrade -> First Stamp.
-3. Tune first-session pacing only after reviewing new balance/design material.
-4. Add pacing tests for first order under 30 seconds and first upgrade within 2 minutes once target
-   numbers are chosen.
-5. Keep advanced tabs/systems down-ranked or hidden until the core loop has clear next actions.
-6. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-7. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-8. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+1. Implement First Loop Contract:
+   align fresh starting state to the progression contract.
+2. Ensure Fulfill Shop Order is immediately available.
+3. Implement first upgrade timing around 1 to 2 minutes.
+4. Implement First Shop Order stamp behavior and reveal.
+5. Hide or down-rank advanced systems during the first 10 minutes.
+6. Add balance tests for the first loop:
+   first order immediately available, first order rewards, first upgrade timing, visible `/sec`
+   rate improvement, disabled button reasons, and no resource-negative states.
+7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+8. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+9. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+
+Later systems:
+
+- Routes
+- Crew
+- Garage
+- Shop Spirit
+- Rivals
+- License
+- monetization/social/profile features
 
 ## Open Questions
 
 - Should the first Tofu Shop session start with one Delivery Order available?
-- What are the target first 60 seconds, 10 minutes, and 1 hour balance numbers?
+- Should the first Tofu Shop session start with one Prep Counter available?
+- Do the draft first-loop target numbers in `BALANCE_AND_PROGRESSION.md` feel good in simulation?
 - Which advanced shop systems should stay hidden until the first loop is complete?
 - Should saved local sessions migrate if the storage key changes?
 - Should merch unlocks remain local-only for the MVP?

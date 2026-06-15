@@ -282,7 +282,7 @@ const SHOP_STATIONS = [
     id: "tofu_press",
     name: "Tofu Press",
     description: "Presses tofu stock for the shop.",
-    baseCostTips: 0,
+    baseCostTips: 15,
     growthRate: 1.15,
     prepSlotCost: 0,
     unlock: "Available at start",
@@ -2642,6 +2642,79 @@ function stationIsUnlocked(station, gameState) {
 
 function stationCost(station, owned) {
   return Math.ceil(station.baseCostTips * Math.pow(station.growthRate, safeNonNegativeInteger(owned, 0, 100000)));
+}
+
+function fulfilledShopOrderCount(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(state.shop.lifetimeDeliveryOrders, 0, 1000000);
+}
+
+function hasFirstShopOrder(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.stamps.first_shop_order) || fulfilledShopOrderCount(state) > 0;
+}
+
+function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
+  const state = normalizeGameState(gameState);
+  if (!station) return "Shop station unavailable.";
+  if (!unlocked) return station.unlock || "Locked.";
+  if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
+  const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
+  if (tipsNeeded > 0) return `Need ${tipsNeeded} more Tips`;
+  const prepNeeded = Math.max(0, safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots);
+  if (prepNeeded > 0) return `Need ${prepNeeded} more Prep Slot${prepNeeded === 1 ? "" : "s"}`;
+  return "";
+}
+
+function stationUpgradeCostTips(upgrade, level = 0) {
+  return Math.ceil(upgrade.costTips * Math.pow(1.32, safeNonNegativeInteger(level, 0, upgrade.maxLevel)));
+}
+
+function stationUpgradeRevealReason(upgrade, gameState) {
+  const state = normalizeGameState(gameState);
+  const orders = fulfilledShopOrderCount(state);
+  if (upgrade.id === "tofu_press_faster") return "Unlocks after first shop order";
+  if (upgrade.id === "tofu_press_double") return "Unlocks after owning 3 Tofu Presses";
+  if (upgrade.id === "prep_counter_faster") return "Unlocks after 5 fulfilled orders";
+  if (upgrade.id === "prep_counter_double") return "Unlocks after owning 2 Prep Counters";
+  if (upgrade.stationId === "delivery_shelf") return "Unlocks after the Delivery Shelf matters";
+  if (upgrade.stationId === "shop_sign") return "Unlocks when reputation matters";
+  if (upgrade.stationId === "regular_customer") return "Unlocks after Regular Customers arrive";
+  if (upgrade.stationId === "delivery_route") return "Unlocks after fictional routes arrive";
+  if (upgrade.stationId === "dispatcher_desk") return "Unlocks after crew automation arrives";
+  if (orders < 1) return "Unlocks after first shop order";
+  return "Coming after the core shop loop is balanced";
+}
+
+function stationUpgradeIsRevealed(upgrade, gameState) {
+  const state = normalizeGameState(gameState);
+  const orders = fulfilledShopOrderCount(state);
+  if (upgrade.id === "tofu_press_faster") return hasFirstShopOrder(state) || state.shop.tips >= 50;
+  if (upgrade.id === "tofu_press_double") return state.shop.stations.tofu_press >= 3 || orders >= 3;
+  if (upgrade.id === "prep_counter_faster") return orders >= 5 || state.shop.stations.prep_counter >= 2;
+  if (upgrade.id === "prep_counter_double") return state.shop.stations.prep_counter >= 2 || orders >= 10;
+  if (upgrade.stationId === "delivery_shelf") return state.shop.stations.delivery_shelf > 0;
+  if (upgrade.stationId === "shop_sign") return state.shop.stations.shop_sign > 0 || state.shop.reputation >= 10;
+  if (upgrade.stationId === "regular_customer") return state.shop.stations.regular_customer > 0;
+  if (upgrade.stationId === "delivery_route") return state.shop.stations.delivery_route > 0 || state.shop.shopReach >= 2;
+  if (upgrade.stationId === "dispatcher_desk") return state.shop.stations.dispatcher_desk > 0;
+  if (upgrade.stationId === "regional_network") return state.shop.stations.regional_network > 0;
+  return false;
+}
+
+function visibleStationUpgrades(gameState) {
+  const state = normalizeGameState(gameState);
+  return STATION_UPGRADES.filter((upgrade) => stationUpgradeIsRevealed(upgrade, state));
+}
+
+function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level) {
+  const state = normalizeGameState(gameState);
+  if (!stationUpgradeIsRevealed(upgrade, state)) return stationUpgradeRevealReason(upgrade, state);
+  if (!unlocked) return stationUpgradeRevealReason(upgrade, state);
+  if (level >= upgrade.maxLevel) return "Maxed";
+  if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
+  const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
+  return tipsNeeded > 0 ? `Need ${tipsNeeded} more Tips` : "";
 }
 
 function buyQuantityFromRequest(gameState, station, requested) {
@@ -5358,30 +5431,29 @@ function stampLockLabel(gameState, stampId) {
 
 function nextShopStep(gameState) {
   const state = normalizeGameState(gameState);
-  const nextUpgrade = getShopUpgradeCatalog().find(
-    (upgrade) => safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel)
-      < upgrade.maxLevel
-      && state.shop.shopLevel >= upgrade.requiredShopLevel,
+  const nextUpgrade = visibleStationUpgrades(state).find(
+    (upgrade) => safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel)
+      < upgrade.maxLevel,
   );
   if (!nextUpgrade) return "Complete a delivery to build the shop.";
   const currentLevel = safeNonNegativeInteger(
-    state.shop.upgrades[nextUpgrade.id],
+    state.shop.stationUpgrades[nextUpgrade.id],
     0,
     nextUpgrade.maxLevel,
   );
-  const cost = shopUpgradeCost(nextUpgrade, currentLevel);
-  return `${nextUpgrade.name}: ${cost.costTofuStock} tofu`;
+  const cost = stationUpgradeCostTips(nextUpgrade, currentLevel);
+  return `${nextUpgrade.name}: ${cost} Tips`;
 }
 
 function affordableShopUpgrade(gameState) {
   const state = normalizeGameState(gameState);
-  return getShopUpgradeCatalog().find((upgrade) => {
-    const currentLevel = safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel);
+  return visibleStationUpgrades(state).find((upgrade) => {
+    const currentLevel = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
     if (currentLevel >= upgrade.maxLevel) return false;
-    if (state.shop.shopLevel < upgrade.requiredShopLevel) return false;
-    const cost = shopUpgradeCost(upgrade, currentLevel);
-    return state.shop.tofuStock >= cost.costTofuStock
-      && state.shop.reputation >= cost.costReputation;
+    const station = shopStationById(upgrade.stationId);
+    if (!station || !stationIsUnlocked(station, state)) return false;
+    const cost = stationUpgradeCostTips(upgrade, currentLevel);
+    return state.shop.tips >= cost;
   }) || null;
 }
 
@@ -5611,68 +5683,64 @@ function renderShopGeneratorCard(generatorId, gameState) {
   const state = normalizeGameState(gameState);
   const rates = getShopGeneratorRates(state);
   const activeDrive = appState.running || appState.calibrating;
-  const generator = state.shop.generators[generatorId];
-  const upgradeId = generatorId === "tofuPress" ? "tofu_press" : "prep_counter";
-  const upgrade = SHOP_UPGRADES.find((item) => item.id === upgradeId);
-  const currentLevel = upgrade
-    ? safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel)
-    : 0;
-  const complete = upgrade ? currentLevel >= upgrade.maxLevel : true;
-  const cost = upgrade ? shopUpgradeCost(upgrade, currentLevel) : { costTofuStock: 0, costReputation: 0 };
-  const canUpgrade = Boolean(
-    upgrade
-    && generator.unlocked
-    && !complete
-    && state.shop.shopLevel >= upgrade.requiredShopLevel
-    && state.shop.tofuStock >= cost.costTofuStock
-    && state.shop.reputation >= cost.costReputation
-    && !activeDrive,
-  );
-  const costText = cost.costReputation
-    ? `${cost.costTofuStock} tofu · ${cost.costReputation} reputation`
-    : `${cost.costTofuStock} tofu`;
-  const label = generatorId === "tofuPress" ? "Tofu Press" : "Prep Counter";
+  const stationId = generatorId === "tofuPress" ? "tofu_press" : "prep_counter";
+  const station = shopStationById(stationId);
+  const generator = state.shop.generators[generatorId] || { unlocked: false, level: 0 };
+  const owned = station ? safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000) : 0;
+  const unlocked = Boolean(station && stationIsUnlocked(station, state) && generator.unlocked);
+  const cost = station ? stationCost(station, owned) : 0;
+  const disabledReason = stationPurchaseDisabledReason(station, state, cost, unlocked);
+  const canBuy = Boolean(station && unlocked && !activeDrive && !disabledReason);
+  const label = station ? station.name : generatorId === "tofuPress" ? "Tofu Press" : "Prep Counter";
   const rate = generatorId === "tofuPress"
-    ? `+${formatShopRate(rates.tofuPressPerSecond)} tofu / sec`
-    : `-${formatShopRate(rates.prepTofuPerSecond)} tofu / sec · +${formatShopRate(rates.prepOrdersPerSecond)} orders / sec`;
-  const status = !generator.unlocked
+    ? `+${formatShopRate(rates.tofuPressPerSecond)} tofu/sec`
+    : `-${formatShopRate(rates.prepTofuPerSecond)} tofu/sec · +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec`;
+  const status = !unlocked
     ? "Locked"
     : generatorId === "prepCounter"
       ? rates.prepStatus
       : "Running";
-  const helper = !generator.unlocked
+  const helper = !unlocked
     ? generatorId === "prepCounter"
-      ? "Unlocks at Shop Level 2 or after improving the Tofu Press."
+      ? "Unlocks with Tofu Stock 10 or Shop Level 2."
       : "The press is warming up. Start the shop while parked."
     : generatorId === "tofuPress"
-      ? "Produces Tofu Stock over time while the shop is open or offline."
-      : "Turns Tofu Stock into Delivery Orders without blocking The Cup Test.";
-  const upgradeStatus = !generator.unlocked
-    ? "Locked"
-    : complete
-      ? "Complete"
-      : state.shop.shopLevel < upgrade.requiredShopLevel
-        ? `Requires Shop Level ${upgrade.requiredShopLevel}`
-        : costText;
+      ? "Presses tofu for future orders."
+      : "Turns Tofu Stock into Delivery Orders.";
   return `
-    <div class="nospill-generator-item ${generator.unlocked ? "" : "is-locked"}">
+    <div class="nospill-generator-item ${unlocked ? "" : "is-locked"}">
       <header>
-        <strong>${escapeHtml(label)} ${generator.level ? `Lv ${generator.level}` : ""}</strong>
+        <strong>${escapeHtml(label)}</strong>
         <small>${escapeHtml(status)}</small>
       </header>
+      <small>Owned: ${owned}</small>
       <small>${escapeHtml(rate)}</small>
       <small>${escapeHtml(helper)}</small>
-      <small>${escapeHtml(upgradeStatus)}</small>
-      <button
-        class="nospill-secondary"
-        type="button"
-        data-shop-upgrade="${escapeHtml(upgradeId)}"
-        ${canUpgrade ? "" : "disabled"}
-      >
-        ${complete ? "Installed" : "Upgrade"}
-      </button>
+      ${station ? `<small>Next: ${cost} Tips${station.prepSlotCost ? ` · ${station.prepSlotCost} Prep Slot` : ""}</small>` : ""}
+      <div class="nospill-idle-actions">
+        ${actionButton(`Buy ${label} · ${cost} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
+        ${actionButton(`Buy Max ${label}`, "data-shop-station-max", stationId, !canBuy, "nospill-secondary", disabledReason)}
+      </div>
     </div>
   `;
+}
+
+function renderStationUpgradeCard(upgrade, gameState) {
+  const state = normalizeGameState(gameState);
+  const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+  const cost = stationUpgradeCostTips(upgrade, level);
+  const station = shopStationById(upgrade.stationId);
+  const unlocked = Boolean(station && stationIsUnlocked(station, state) && stationUpgradeIsRevealed(upgrade, state));
+  const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, cost, level);
+  const canBuy = unlocked && level < upgrade.maxLevel && !disabledReason;
+  const status = level >= upgrade.maxLevel ? "Maxed" : `${cost} Tips`;
+  return renderIdleCard({
+    title: `${upgrade.name} Lv ${level}`,
+    status,
+    copy: unlocked ? upgrade.effect : stationUpgradeRevealReason(upgrade, state),
+    locked: !unlocked,
+    actions: [actionButton(`Buy ${upgrade.name} · ${cost} Tips`, "data-station-upgrade", upgrade.id, !canBuy, "nospill-secondary", disabledReason)],
+  });
 }
 
 function renderDeliveryWall(gameState = loadGameState()) {
@@ -5685,12 +5753,12 @@ const SHOP_TABS = [
   { id: "overview", label: "Overview", unlock: () => true },
   { id: "production", label: "Production", unlock: () => true },
   { id: "orders", label: "Orders", unlock: () => true },
-  { id: "routes", label: "Routes", unlock: (state) => state.shop.shopReach > 0 || state.shop.reputation >= 5 },
-  { id: "training", label: "Training", unlock: (state) => state.shop.tips >= 10 || state.shop.cupStabilityXP > 0 },
-  { id: "garage", label: "Garage", unlock: (state) => state.shop.tips >= 50 || Object.values(state.shop.garage).some(Boolean) },
+  { id: "routes", label: "Routes", unlock: (state) => state.shop.shopReach > 0 || state.shop.reputation >= 10 },
+  { id: "training", label: "Training", unlock: (state) => fulfilledShopOrderCount(state) >= 10 || state.shop.cupStabilityXP > 0 },
+  { id: "garage", label: "Garage", unlock: (state) => state.shop.shopReach > 0 || Object.values(state.shop.garage).some(Boolean) },
   { id: "crew", label: "Crew", unlock: (state) => state.shop.shopReach >= 2 || Object.values(state.shop.crew).some(Boolean) },
-  { id: "spirit", label: "Shop Spirit", unlock: (state) => state.shop.reputation >= 5 || state.shop.shopSpirit > 0 },
-  { id: "upgrades", label: "Upgrades", unlock: () => true },
+  { id: "spirit", label: "Shop Spirit", unlock: (state) => fulfilledShopOrderCount(state) >= 25 || state.shop.shopSpirit > 0 },
+  { id: "upgrades", label: "Upgrades", unlock: (state) => hasFirstShopOrder(state) || visibleStationUpgrades(state).length > 0 },
   { id: "rivals", label: "Rivals", unlock: (state) => state.shop.reputation >= 10 || Object.values(state.shop.rivals).some(Boolean) },
   { id: "passport", label: "Passport", unlock: (state) => deliveryPassportSummary(state).total > 0 },
   { id: "license", label: "License", unlock: (state) => state.level >= 5 || state.shop.licenseStars > 0 },
@@ -5723,7 +5791,8 @@ function renderShopTabs(state) {
   if (!elements.shopTabList || !elements.shopTabPanel) return;
   const activeTab = activeShopTabForState(state);
   appState.shopTab = activeTab;
-  elements.shopTabList.innerHTML = SHOP_TABS.map((tab) => {
+  const visibleTabs = SHOP_TABS.filter((tab) => tab.unlock(state));
+  elements.shopTabList.innerHTML = visibleTabs.map((tab) => {
     const unlocked = tab.unlock(state);
     return `
       <button
@@ -5791,12 +5860,12 @@ function renderOverviewPanel(state) {
     <div class="nospill-idle-grid">
       ${renderIdleCard({
         title: "Tofu Press",
-        status: `+${formatShopRate(rates.tofuPressPerSecond)} tofu / sec`,
+        status: `+${formatShopRate(rates.tofuPressPerSecond)} tofu/sec`,
         copy: "The first station in the shop cascade.",
       })}
       ${renderIdleCard({
         title: "Prep Counter",
-        status: state.shop.generators.prepCounter.unlocked ? `+${formatShopRate(rates.prepOrdersPerSecond)} orders / sec` : "Locked",
+        status: state.shop.generators.prepCounter.unlocked ? `+${formatShopRate(rates.prepOrdersPerSecond)} orders/sec` : "Locked",
         copy: state.shop.generators.prepCounter.unlocked ? rates.prepStatus : "Unlocks with Tofu Stock 10 or Shop Level 2.",
       })}
       ${renderIdleCard({
@@ -5810,23 +5879,32 @@ function renderOverviewPanel(state) {
 }
 
 function renderProductionPanel(state) {
+  const visibleStations = SHOP_STATIONS.filter((station) => {
+    if (station.id === "tofu_press" || station.id === "prep_counter") return true;
+    if (station.id === "delivery_shelf") return fulfilledShopOrderCount(state) >= 10 || stationIsUnlocked(station, state) && state.shop.tips >= 50;
+    if (station.id === "shop_sign") return state.shop.reputation >= 8 || state.shop.shopLevel >= 2 || state.shop.stations.shop_sign > 0;
+    return stationIsUnlocked(station, state) && state.shop.stations[station.id] > 0;
+  });
   return `
     <h4>Production</h4>
-    <p class="nospill-panel-helper">Stations use Tips and Prep Slots. Milestones at 10, 25, 50, and 100 increase output.</p>
+    <p class="nospill-panel-helper">Stations use Tips and Prep Slots. New stations appear when the core loop needs them.</p>
     <div class="nospill-idle-grid">
-      ${SHOP_STATIONS.map((station) => {
+      ${visibleStations.map((station) => {
         const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
         const unlocked = stationIsUnlocked(station, state);
         const cost = stationCost(station, owned);
         const canBuy = unlocked && state.shop.tips >= cost && state.shop.prepSlots >= station.prepSlotCost;
+        const reason = stationPurchaseDisabledReason(station, state, cost, unlocked);
         return renderIdleCard({
-          title: `${station.name} x${owned}`,
+          title: station.name,
           status: unlocked ? `${cost} tips · ${station.prepSlotCost} Prep Slot` : "Locked",
-          copy: unlocked ? `${station.description} Milestone x${stationMilestoneMultiplier(owned)}.` : station.unlock,
+          copy: unlocked
+            ? `Owned: ${owned}. ${station.description} Milestone x${stationMilestoneMultiplier(owned)}.`
+            : station.unlock,
           locked: !unlocked,
           actions: [
-            actionButton("Buy", "data-shop-station", station.id, !canBuy),
-            actionButton("Buy Max", "data-shop-station-max", station.id, !unlocked),
+            actionButton(`Buy ${station.name} · ${cost} Tips`, "data-shop-station", station.id, !canBuy, "nospill-secondary", reason),
+            actionButton(`Buy Max ${station.name}`, "data-shop-station-max", station.id, !canBuy, "nospill-secondary", reason),
           ],
         });
       }).join("")}
@@ -5836,6 +5914,10 @@ function renderProductionPanel(state) {
 
 function renderOrdersPanel(state) {
   const canFulfill = state.shop.deliveryOrders > 0;
+  const orderReason = canFulfill ? "" : "No Delivery Orders ready";
+  const tenReason = state.shop.deliveryOrders < 10
+    ? `Need ${10 - Math.floor(state.shop.deliveryOrders)} more Delivery Orders`
+    : "";
   return `
     <h4>Orders</h4>
     <p class="nospill-panel-helper">Shop orders are home gameplay. They do not imply a real drive.</p>
@@ -5845,9 +5927,9 @@ function renderOrdersPanel(state) {
         status: `${state.shop.deliveryOrders} ready`,
         copy: canFulfill ? "Pack and hand off a local counter order." : "No Delivery Orders ready. Prep Counter needs tofu stock.",
         actions: [
-          actionButton("Fulfill Shop Order", "data-fulfill-orders", "1", !canFulfill, "nospill-primary"),
-          actionButton("Fulfill 10 Orders", "data-fulfill-orders", "10", state.shop.deliveryOrders < 10),
-          actionButton("Fulfill Max Orders", "data-fulfill-orders", "max", !canFulfill),
+          actionButton("Fulfill Shop Order", "data-fulfill-orders", "1", !canFulfill, "nospill-primary", orderReason),
+          actionButton("Fulfill 10 Orders", "data-fulfill-orders", "10", state.shop.deliveryOrders < 10, "nospill-secondary", tenReason),
+          actionButton("Fulfill Max Orders", "data-fulfill-orders", "max", !canFulfill, "nospill-secondary", orderReason),
         ],
       })}
     </div>
@@ -5941,7 +6023,7 @@ function renderSpiritPanel(state) {
         return renderIdleCard({
           title: `${generator.name} x${owned}`,
           status: `${cost} tips`,
-          copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit / sec when owned. Unlock: ${generator.unlock}.`,
+          copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
           actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost)],
         });
       }).join("")}
@@ -5962,23 +6044,18 @@ function renderSpiritPanel(state) {
 }
 
 function renderExpandedUpgradePanel(state) {
+  const upgrades = visibleStationUpgrades(state);
+  const firstUpgradeTeaser = renderIdleCard({
+    title: "Steady Pressing",
+    status: "Locked",
+    copy: "Unlocks after first shop order.",
+    locked: true,
+  });
   return `
     <h4>Station Upgrades</h4>
-    <p class="nospill-panel-helper">Faster Prep and Double Batch style upgrades improve shop production only.</p>
+    <p class="nospill-panel-helper">Station upgrades are separate modifiers. Stations are bought in Production; upgrades improve what owned stations do.</p>
     <div class="nospill-idle-grid">
-      ${STATION_UPGRADES.map((upgrade) => {
-        const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
-        const cost = Math.ceil(upgrade.costTips * Math.pow(1.32, level));
-        const station = shopStationById(upgrade.stationId);
-        const unlocked = station && stationIsUnlocked(station, state);
-        return renderIdleCard({
-          title: `${upgrade.name} Lv ${level}`,
-          status: level >= upgrade.maxLevel ? "Maxed" : `${cost} tips`,
-          copy: unlocked ? upgrade.effect : "Station locked.",
-          locked: !unlocked,
-          actions: [actionButton("Buy Upgrade", "data-station-upgrade", upgrade.id, !unlocked || level >= upgrade.maxLevel || state.shop.tips < cost)],
-        });
-      }).join("")}
+      ${upgrades.length ? upgrades.map((upgrade) => renderStationUpgradeCard(upgrade, state)).join("") : firstUpgradeTeaser}
     </div>
   `;
 }
@@ -6221,14 +6298,23 @@ function renderTofuShop(gameState = loadGameState()) {
         : "Prep Counter needs delivery orders first.";
   }
   if (elements.shopUpgradeList) {
+    const upgrades = visibleStationUpgrades(state);
     elements.shopUpgradeList.innerHTML = reveal.shop
-      ? getShopUpgradeCatalog()
-        .map((upgrade) => renderShopUpgrade(upgrade, state))
-        .join("")
+      ? upgrades.length
+        ? upgrades.slice(0, 2).map((upgrade) => renderStationUpgradeCard(upgrade, state)).join("")
+        : `
+          <div class="nospill-upgrade-item is-locked">
+            <header>
+              <strong>Station Upgrades</strong>
+              <small>Hidden</small>
+            </header>
+            <small>Complete your first shop order to reveal Steady Pressing.</small>
+          </div>
+        `
       : `
         <div class="nospill-upgrade-item is-locked">
           <header>
-            <strong>Tofu Press</strong>
+            <strong>Station Upgrades</strong>
             <small>Locked</small>
           </header>
           <small>The press is warming up. Start the shop while parked.</small>
@@ -6253,10 +6339,13 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   renderShopTabs(state);
   if (elements.shopOfflineEarnings) {
-    elements.shopOfflineEarnings.textContent =
-      reveal.shop
-        ? `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock, +${shop.offlineEarnings.deliveryOrders} delivery orders.`
-        : "No offline tofu yet. Start the shop first.";
+    const offlineTofu = Number(shop.offlineEarnings && shop.offlineEarnings.tofuStock || 0);
+    const offlineOrders = Number(shop.offlineEarnings && shop.offlineEarnings.deliveryOrders || 0);
+    const offlineTips = Number(shop.offlineEarnings && shop.offlineEarnings.tips || 0);
+    const hasOfflineEarnings = reveal.shop && (offlineTofu > 0.005 || offlineOrders > 0.005 || offlineTips > 0.005);
+    elements.shopOfflineEarnings.textContent = hasOfflineEarnings
+      ? `While you were away: +${Math.floor(offlineTofu)} tofu stock, +${Math.floor(offlineOrders)} delivery orders${offlineTips > 0.005 ? `, +${Math.floor(offlineTips)} tips` : ""}.`
+      : "";
   }
   renderDeliveryWall(state);
 }

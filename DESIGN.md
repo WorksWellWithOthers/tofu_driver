@@ -130,6 +130,10 @@ always have one obvious next step.
 Tofu Shop is the parked-only idle/incremental management game. It should be playable at home without
 sensors or location.
 
+Design stance:
+
+> Tofu Shop is a one-loop incremental game that earns the right to unfold.
+
 Current core loop target:
 
 ```text
@@ -140,6 +144,9 @@ The loop should become fun before deeper systems are expanded.
 
 Current design principles:
 
+- first-time users should not see every system
+- returning users should see the dashboard they earned
+- progression should be bumpy and story-driven, not a flat generator list
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
@@ -164,8 +171,10 @@ dominate the first session until the core loop is paced and understandable:
 - expanded Passport
 - Delivery Ledger
 
-The current MVP loop remains the priority. Use `BALANCE_AND_PROGRESSION.md` for pacing, formulas,
-sources/sinks, unresolved balance questions, and implementation audit.
+The current MVP loop remains the priority. Routes, Crew, Garage, Shop Spirit, Rivals, and License
+are later-phase systems until the core loop feels good. Use `BALANCE_AND_PROGRESSION.md` for
+pacing, formulas, sources/sinks, upgrade ladders, button inventories, unresolved balance questions,
+and implementation audit.
 
 ## Don't Spill The Cup Integration
 
