@@ -17,6 +17,8 @@ The app is intentionally lightweight:
 - animated tofu cargo visualization driven by local motion data, not speed
 - story-first landing flow with Today's Delivery, one Next Best Action CTA, and compact teaser cards
 - parked-only Tofu Shop resources, three starter upgrades, and Delivery Wall progress
+- consolidated Delivery/Practice Complete result screen that returns to the updated dashboard/shop
+- Practice Mode grants modest local progress; qualified delivery criteria gate Perfect Pour and merch progress
 - cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
 - hidden local Delivery Simulator for QA, enabled with `?simulator=1`
 - design target favors progressive reveal, earned status, and ethical cosmetics over pay-to-progress

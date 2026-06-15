@@ -81,6 +81,8 @@ const QUALIFICATION_RULES = {
   maxImpossibleMotionSpikePercent: 5,
   maxOrientationUnstablePercent: 25,
 };
+const PRACTICE_VALID_MIN_SECONDS = 60;
+const PRACTICE_DAILY_MIN_SECONDS = 300;
 
 // TODO: Real merch gating needs backend-issued unlock tokens, Shopify customer tags,
 // or another server-side access control layer. Unlisted Shopify links are unlisted,
@@ -1414,6 +1416,8 @@ function unlockMilestones(summary) {
   const clubState = loadClubState();
   const unlockedThisRun = [];
   const today = String(summary.date || new Date().toISOString()).slice(0, 10);
+  const qualified = isQualifiedSession(summary);
+  const validPractice = isValidPracticeSession(summary);
 
   function unlock(id) {
     if (clubState.unlockedMilestones[id]) return;
@@ -1421,27 +1425,29 @@ function unlockMilestones(summary) {
     unlockedThisRun.push(id);
   }
 
-  clubState.completedSessionCount += 1;
+  if (qualified || validPractice) {
+    clubState.completedSessionCount += 1;
+  }
   clubState.bestWaterScore = Math.max(
     Number(clubState.bestWaterScore || 0),
     Number(summary.waterLeft || 0),
   );
 
-  if (summary.mode === "basic" && summary.motionSamples > 0) unlock("first_pour");
-  if (summary.waterLeft >= 50) unlock("half_cup_hero");
-  if (summary.waterLeft >= 75) unlock("smooth_driver");
+  if (summary.mode === "basic" && validPractice && summary.motionSamples > 0) unlock("first_pour");
+  if (qualified && summary.waterLeft >= 50) unlock("half_cup_hero");
+  if (qualified && summary.waterLeft >= 75) unlock("smooth_driver");
   if (
-    summary.qualificationStatus === "qualified"
+    qualified
     && summary.deliveryRewards
     && summary.deliveryRewards.merchProgress.nospillClubGear.unlocked
   ) {
     unlock("nospill_club");
   }
-  if (summary.qualificationStatus === "qualified" && summary.waterLeft >= 99.95) {
+  if (qualified && summary.waterLeft >= 99.95) {
     unlock("perfect_pour");
   }
 
-  if (summary.qualificationStatus === "qualified") {
+  if (qualified) {
     unlock("qualified_pour");
     if (summary.waterLeft >= 80 && summary.distanceMiles >= 10) unlock("long_pour");
     if (summary.waterLeft >= 90 && summary.durationSeconds >= 900) {
@@ -1544,6 +1550,30 @@ function isQualifiedSession(session) {
     && session.qualificationStatus === "qualified"
     && (session.mode === "qualified" || session.mode === "simulated"),
   );
+}
+
+function isPracticeSession(session) {
+  return !isQualifiedSession(session);
+}
+
+function isValidPracticeSession(session) {
+  if (!isPracticeSession(session)) return false;
+  return Number(session && session.durationSeconds || 0) >= PRACTICE_VALID_MIN_SECONDS;
+}
+
+function isDailyEligiblePracticeSession(session) {
+  if (!isValidPracticeSession(session)) return false;
+  return Number(session && session.durationSeconds || 0) >= PRACTICE_DAILY_MIN_SECONDS;
+}
+
+function displayRankForSession(session) {
+  if (isQualifiedSession(session)) return rankForWater(calculateCargoCondition(session));
+  const cargo = calculateCargoCondition(session);
+  if (cargo >= 99.95) return "Perfect Practice";
+  if (cargo >= 95) return "Full Cup Practice";
+  if (cargo >= 75) return "Smooth Practice";
+  if (cargo >= 50) return "Practice Saved";
+  return "Spill Practice";
 }
 
 function classifyRouteType(summary) {
@@ -1857,6 +1887,7 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
   const rewards = rewardSummary || {};
   const cargo = calculateCargoCondition(session);
   const qualified = isQualifiedSession(session);
+  const validPractice = isValidPracticeSession(session);
   const dailyComplete = Boolean(rewards.dailyComplete || session.dailyDeliveryComplete);
   const perfectPour = qualified && cargo >= 100;
   const xpMultiplier = Number(rewards.xpMultiplier || 1);
@@ -1866,15 +1897,14 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
 
   let tofuStockGained = qualified
     ? Math.floor(cargo)
-    : Math.min(18, Math.floor(cargo / 6));
+    : validPractice
+      ? Math.min(18, Math.floor(cargo / 6))
+      : 0;
   if (qualified) tofuStockGained += 20;
   if (dailyComplete) tofuStockGained += 15;
   if (perfectPour) tofuStockGained += 50;
   tofuStockGained += Math.floor(tofuStockGained * 0.08 * betterBoxes);
   tofuStockGained = Math.max(0, Math.round(tofuStockGained * extraSessionMultiplier));
-  if (!qualified && Number(session.durationSeconds || 0) < 60) {
-    tofuStockGained = Math.min(tofuStockGained, 8);
-  }
 
   let reputationGained = 0;
   if (qualified) {
@@ -1929,7 +1959,7 @@ function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}
     + Number(scenario.harshAcceleration || 0)
     + Number(scenario.harshLateral || 0)
     + Number(scenario.abruptTransitions || 0);
-  return {
+  const summary = {
     simulated: true,
     simulatorScenarioId: scenario.id,
     simulatorScenarioName: scenario.name,
@@ -1970,6 +2000,8 @@ function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}
     unlockedBadges: [],
     stamps: [],
   };
+  summary.rank = displayRankForSession(summary);
+  return summary;
 }
 
 function getCharacterCatalog() {
@@ -2031,17 +2063,18 @@ function evaluateCollectionUnlocks(sessionSummary, rewardSummary = {}, gameState
   const cargo = calculateCargoCondition(session);
   const dailyDelivery = rewards.dailyDelivery || getDailyDelivery(session.date || new Date());
   const completedDeliveries = next.recentSessions.length;
+  const validSession = isQualifiedSession(session) || isValidPracticeSession(session);
   const stamps = next.stamps || {};
   const newCharacterUnlocks = [];
   const newSoundUnlocks = [];
 
-  if (stamps.first_delivery || completedDeliveries >= 1) {
+  if (stamps.first_delivery || (validSession && completedDeliveries >= 1)) {
     unlockCollectionId(next.collection, "character", "angry_tofu_driver", newCharacterUnlocks);
   }
   if (next.shop.shopLevel >= 2) {
     unlockCollectionId(next.collection, "character", "sleepy_dispatcher", newCharacterUnlocks);
   }
-  if (dailyDelivery.id === "hot_tea" && cargo >= 90) {
+  if (isQualifiedSession(session) && dailyDelivery.id === "hot_tea" && cargo >= 90) {
     unlockCollectionId(next.collection, "character", "tea_master", newCharacterUnlocks);
   }
   if (stamps.perfect_pour || (isQualifiedSession(session) && cargo >= 100)) {
@@ -2052,7 +2085,7 @@ function evaluateCollectionUnlocks(sessionSummary, rewardSummary = {}, gameState
   if (next.shop.shopLevel >= 2) {
     unlockCollectionId(next.collection, "sound", "tofu_shop_bell", newSoundUnlocks);
   }
-  if (Object.keys(stamps).length >= 1 || completedDeliveries >= 3) {
+  if (Object.keys(stamps).length >= 1 || (validSession && completedDeliveries >= 3)) {
     unlockCollectionId(next.collection, "sound", "retro_arcade", newSoundUnlocks);
   }
   if (stamps.perfect_pour || (isQualifiedSession(session) && cargo >= 100)) {
@@ -2200,7 +2233,7 @@ function updateMerchProgress(session, gameState, missionComplete) {
     progress.perfectPourDrop.unlocked = true;
     progress.perfectPourDrop.date = progress.perfectPourDrop.date || dateKey;
   }
-  if (missionComplete && cargo >= 85) {
+  if (isQualifiedSession(session) && missionComplete && cargo >= 85) {
     progress.deliveryCrew.dates = addUniqueDate(progress.deliveryCrew.dates, dateKey);
     progress.deliveryCrew.count = Math.min(
       progress.deliveryCrew.target,
@@ -2379,7 +2412,13 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     dailyDeliveryId: dailyDelivery.id,
     dailyCargo: dailyDelivery.cargo,
   };
-  const dailyComplete = evaluateDailyDelivery(dailyDelivery, enrichedSession);
+  enrichedSession.rank = displayRankForSession(enrichedSession);
+  const qualified = isQualifiedSession(enrichedSession);
+  const validPractice = isValidPracticeSession(enrichedSession);
+  const dailyEligible = qualified || isDailyEligiblePracticeSession(enrichedSession);
+  const majorPracticeStampEligible =
+    validPractice && Number(enrichedSession.durationSeconds || 0) >= PRACTICE_DAILY_MIN_SECONDS;
+  const dailyComplete = dailyEligible && evaluateDailyDelivery(dailyDelivery, enrichedSession);
   const driverXP = calculateDriverXP(enrichedSession, state, dailyComplete);
   const skillXP = awardSkillXP(enrichedSession);
   const stamps = [];
@@ -2387,36 +2426,40 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     if (!state.stamps[id] && !stamps.includes(id)) stamps.push(id);
   };
 
-  addStamp("first_delivery");
+  if (qualified || validPractice) addStamp("first_delivery");
   if (dailyComplete) addStamp("daily_delivery_complete");
-  if (cargoCondition >= 95) addStamp("cup_stayed_full");
-  if (isQualifiedSession(enrichedSession) && cargoCondition >= 90 && Number(session.durationSeconds || 0) >= 600) {
+  if ((qualified || majorPracticeStampEligible) && cargoCondition >= 95) addStamp("cup_stayed_full");
+  if (qualified && cargoCondition >= 90 && Number(session.durationSeconds || 0) >= 600) {
     addStamp("smooth_commute");
   }
-  if (routeType === "Calm Cruise" && cargoCondition >= 90) addStamp("calm_cruise");
+  if (qualified && routeType === "Calm Cruise" && cargoCondition >= 90) addStamp("calm_cruise");
   if (
-    routeType === "City Delivery"
+    qualified
+    && routeType === "City Delivery"
     && cargoCondition >= 85
     && Number(session.harshBraking || 0) <= 1
     && Number(session.harshAcceleration || 0) <= 1
   ) {
     addStamp("city_smooth");
   }
-  if (routeType === "Long Haul" && cargoCondition >= 85) addStamp("long_haul_pour");
-  if (["Mixed Route", "Technical Route"].includes(routeType) && cargoCondition >= 90) {
+  if (qualified && routeType === "Long Haul" && cargoCondition >= 85) addStamp("long_haul_pour");
+  if (qualified && ["Mixed Route", "Technical Route"].includes(routeType) && cargoCondition >= 90) {
     addStamp("curve_control");
   }
-  if (routeType === "Technical Route" && cargoCondition >= 90) addStamp("technical_pour");
-  if (Number(session.harshInputCount || 0) <= 1) addStamp("no_panic_inputs");
+  if (qualified && routeType === "Technical Route" && cargoCondition >= 90) addStamp("technical_pour");
+  if ((qualified || majorPracticeStampEligible) && Number(session.harshInputCount || 0) <= 1) {
+    addStamp("no_panic_inputs");
+  }
   if (
-    cargoCondition >= 90
+    (qualified || majorPracticeStampEligible)
+    && cargoCondition >= 90
     && Number(session.harshBraking || 0) <= 1
     && Number(session.harshAcceleration || 0) <= 1
     && Number(session.lateralJerk || 0) <= 2
   ) {
     addStamp("passenger_approved");
   }
-  if (isQualifiedSession(enrichedSession) && cargoCondition >= 100) addStamp("perfect_pour");
+  if (qualified && cargoCondition >= 100) addStamp("perfect_pour");
 
   let nextState = normalizeGameState(state);
   nextState.totalXP += driverXP.xpGained;
@@ -2484,7 +2527,7 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     qualificationStatus: session.qualificationStatus,
     cargoCondition,
     routeType,
-    rank: session.rank,
+    rank: enrichedSession.rank,
     xpGained: driverXP.xpGained,
     xpMultiplier: driverXP.xpMultiplier,
     simulated: Boolean(session.simulated),
@@ -2530,6 +2573,7 @@ function applySimulatedDelivery(scenarioId, gameState = defaultGameState(), opti
   const rewards = calculateDeliveryRewards(summary, gameState);
   summary.cargoCondition = rewards.cargoCondition;
   summary.routeType = rewards.routeType;
+  summary.rank = displayRankForSession(summary);
   summary.dailyDeliveryComplete = rewards.dailyComplete;
   summary.deliveryStamps = rewards.stamps;
   summary.stamps = rewards.stamps;
@@ -2544,6 +2588,7 @@ function applySimulatedDelivery(scenarioId, gameState = defaultGameState(), opti
 function buildDeliverySharePayload(session, rewardSummary = null, gameState = null) {
   const routeType = session.routeType || classifyRouteType(session);
   const cargoCondition = calculateCargoCondition(session);
+  const qualified = isQualifiedSession(session);
   const state = gameState || (rewardSummary && rewardSummary.gameState) || null;
   const normalized = state ? normalizeGameState(state) : null;
   const level = normalized ? normalized.level : null;
@@ -2553,9 +2598,11 @@ function buildDeliverySharePayload(session, rewardSummary = null, gameState = nu
     : bestUnlockedMilestone(session);
   return {
     title: APP_BRAND,
-    status: session.simulated ? "Simulated Delivery" : "Delivery Complete",
+    status: session.simulated
+      ? (qualified ? "Simulated Delivery" : "Simulated Practice Delivery")
+      : (qualified ? "Delivery Complete" : "Practice Delivery"),
     cargoCondition: formatPercent(cargoCondition),
-    rank: session.rank,
+    rank: displayRankForSession(session),
     driverLicense: level ? `Level ${level} · ${getDriverLicense(level)}` : "",
     shopLevel: normalized ? `Shop Level ${normalized.shop.shopLevel}` : "",
     deliveryCrew: crew ? crew.name : "",
@@ -3094,6 +3141,7 @@ function buildSummary() {
   const durationSeconds = appState.startPerformanceMs
     ? (performance.now() - appState.startPerformanceMs) / 1000
     : 0;
+  const roundedDurationSeconds = Math.round(durationSeconds);
   const route = appState.mode === "qualified"
     ? analyzeRoute(appState.routeSamples)
     : null;
@@ -3106,8 +3154,10 @@ function buildSummary() {
       })
     : {
         status: "practice",
-        label: "Practice Only",
-        message: "Practice score complete. Basic Mode used motion sensors only.",
+        label: roundedDurationSeconds < PRACTICE_VALID_MIN_SECONDS ? "Short Practice" : "Practice Only",
+        message: roundedDurationSeconds < PRACTICE_VALID_MIN_SECONDS
+          ? "Practice saved. Complete a longer delivery to earn stamps and shop progress."
+          : "Practice score complete. Basic Mode used motion sensors only.",
         reasons: [],
       };
   const waterLeft = roundTo(appState.waterLeft, 1);
@@ -3122,7 +3172,7 @@ function buildSummary() {
     waterLeft,
     waterSpilled,
     rank: rankForWater(waterLeft),
-    durationSeconds: Math.round(durationSeconds),
+    durationSeconds: roundedDurationSeconds,
     qualificationStatus: qualification.status,
     qualificationLabel: qualification.label,
     qualificationMessage: qualification.message,
@@ -3156,6 +3206,7 @@ function buildSummary() {
   };
   summary.routeType = classifyRouteType(summary);
   summary.cargoCondition = calculateCargoCondition(summary);
+  summary.rank = displayRankForSession(summary);
   return summary;
 }
 
@@ -4382,6 +4433,7 @@ function renderDeliverySummary(summary) {
   const merch = rewards.merchProgress || normalizeGameState(loadGameState()).merchProgress;
   const dailyDelivery = rewards.dailyDelivery || getDailyDelivery(summary.date || new Date());
   const dailyComplete = Boolean(rewards.dailyComplete);
+  const qualified = isQualifiedSession(summary);
   const shop = rewards.shop || { tofuStockGained: 0, reputationGained: 0 };
   const shopState = shop.gameState
     ? normalizeGameState(shop.gameState).shop
@@ -4405,32 +4457,41 @@ function renderDeliverySummary(summary) {
     : "No skill XP";
   const stampLine = rewards.stampLabels && rewards.stampLabels.length
     ? rewards.stampLabels.join(", ")
-    : "No new stamp";
+    : qualified ? "No new stamp" : "No qualified stamp";
   const nextGoal = dailyComplete
     ? "Daily delivery complete. Come back tomorrow for new cargo."
-    : `${dailyDelivery.cargo}: ${dailyDelivery.goal}`;
+    : qualified
+      ? `${dailyDelivery.cargo}: ${dailyDelivery.goal}`
+      : "Take a normal qualified delivery when parked and ready.";
+  const shopRewardLine = (shop.tofuStockGained || shop.reputationGained)
+    ? `+${shop.tofuStockGained || 0} tofu · +${shop.reputationGained || 0} reputation`
+    : "No shop rewards from this practice";
   elements.deliverySummaryGrid.innerHTML = [
-    summary.simulated ? summaryMetric("Test Mode", "Simulated Delivery") : "",
+    summary.simulated
+      ? summaryMetric("Test Mode", qualified ? "Simulated Delivery" : "Simulated Practice Delivery")
+      : "",
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
     summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
-    summaryMetric("Rank", summary.rank),
+    summaryMetric("Rank", displayRankForSession(summary)),
+    summaryMetric("Qualification", summary.qualificationLabel || (qualified ? "Qualified" : "Practice Only")),
     summaryMetric("Driver License", `Level ${level} · ${getDriverLicense(level)}`),
     summaryMetric(
       "Daily Delivery Result",
-      dailyComplete ? `${dailyDelivery.cargo} delivered` : `${dailyDelivery.cargo} in progress`,
+      dailyComplete
+        ? `${dailyDelivery.cargo} delivered`
+        : qualified
+          ? `${dailyDelivery.cargo} in progress`
+          : "Practice only - not completed",
     ),
     summaryMetric("Main Damage Source", coach.damageSource),
     summaryMetric("Best Skill", coach.bestSkill),
     summaryMetric("Next Focus", coach.nextFocus),
-    summaryMetric("Delivery Crew", crew ? crew.name : "No crew selected yet"),
+    summaryMetric("Selected Crew", crew ? crew.name : "No crew selected yet"),
     summaryMetric("New Unlock", newUnlockLine),
     summaryMetric("XP Gained", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
     summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
-    summaryMetric(
-      "Shop Rewards",
-      `+${shop.tofuStockGained || 0} tofu · +${shop.reputationGained || 0} reputation`,
-    ),
+    summaryMetric("Shop Rewards", shopRewardLine),
     summaryMetric("Shop Level", `Level ${shopState.shopLevel}`),
     summaryMetric("Delivery Passport", `${passport.total}/${passport.totalAvailable} stamps`),
     summaryMetric(
@@ -4438,7 +4499,7 @@ function renderDeliverySummary(summary) {
       `${merch.nospillClubGear.count}/${merch.nospillClubGear.target}`,
     ),
     summaryMetric("Perfect Pour Drop", merch.perfectPourDrop.unlocked ? "Unlocked" : "Locked"),
-    summaryMetric("Delivery Crew", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
+    summaryMetric("Delivery Crew Merch", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
     summaryMetric("Next Delivery Goal", nextGoal),
   ].filter(Boolean).join("");
   if (elements.commuteMasteryCopy) {
@@ -4457,18 +4518,31 @@ function escapeHtml(value) {
 
 function renderSummary(summary) {
   appState.lastSummary = summary;
+  const qualified = isQualifiedSession(summary);
+  const summaryGameState = summary.deliveryRewards
+    ? summary.deliveryRewards.gameState
+    : loadGameState();
+  const reveal = progressiveRevealState(summaryGameState);
   if (elements.summaryStatusLabel) {
     elements.summaryStatusLabel.textContent = summary.simulated
-      ? "Simulated Delivery"
+      ? (qualified ? "Simulated Delivery" : "Simulated Practice")
       : summary.qualificationLabel;
   }
   if (elements.summaryTitle) {
     elements.summaryTitle.textContent = summary.simulated
-      ? "Simulated Delivery Complete"
-      : "Delivery Complete";
+      ? (qualified ? "Simulated Delivery Complete" : "Simulated Practice Complete")
+      : (qualified ? "Delivery Complete" : "Practice Complete");
   }
   if (elements.summaryWater) {
     elements.summaryWater.textContent = formatPercent(summary.cargoCondition ?? summary.waterLeft);
+  }
+  if (elements.returnDashboardButton) {
+    elements.returnDashboardButton.textContent = reveal.shop
+      ? "Return to Tofu Shop"
+      : "Return to Dashboard";
+  }
+  if (elements.backSimulatorButton) {
+    elements.backSimulatorButton.classList.toggle("is-hidden", !isSimulatorEnabled());
   }
   if (elements.summaryGrid) {
     elements.summaryGrid.innerHTML = [
@@ -4476,7 +4550,7 @@ function renderSummary(summary) {
       summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
       summaryMetric("Water Spilled", formatPercent(summary.waterSpilled)),
       summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
-      summaryMetric("Rank", summary.rank),
+      summaryMetric("Rank", displayRankForSession(summary)),
       summaryMetric("Harsh Inputs", String(summary.harshInputCount)),
       summaryMetric("Qualification", summary.qualificationLabel),
     ].filter(Boolean).join("");
@@ -4577,10 +4651,10 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
   );
   return {
     title: APP_BRAND,
-    challengeName: summary.simulated ? "Simulated Delivery" : "Delivery Complete",
+    challengeName: delivery.status,
     waterDelivered: delivery.cargoCondition,
     waterSpilled: formatPercent(summary.waterSpilled),
-    rank: summary.rank,
+    rank: delivery.rank,
     driverLicense: delivery.driverLicense,
     shopLevel: delivery.shopLevel,
     deliveryCrew: delivery.deliveryCrew,
@@ -5119,15 +5193,45 @@ function saveCurrentSummary() {
   }
 }
 
-function newRun() {
-  appState.lastSummary = null;
-  resetSessionState();
+function refreshLandingDashboard(message) {
   renderMountControls();
   renderAudioLevelControls();
-  renderMerchPanel(loadClubState());
   renderGamePanels(loadGameStateWithOfflineShopEarnings());
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   showView("landing");
+  if (message) setLandingStatus(message);
+}
+
+function scrollToDashboardTarget(target) {
+  const node = target === "simulator" && isSimulatorEnabled()
+    ? elements.simulatorPanel
+    : target === "shop" && elements.tofuShopSection
+      ? elements.tofuShopSection
+      : elements.landingView;
+  if (node && node.classList && node.classList.contains && node.classList.contains("is-hidden")) {
+    return;
+  }
+  if (node && typeof node.scrollIntoView === "function") {
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}
+
+function returnToDashboard(target = "shop") {
+  refreshLandingDashboard("Review your rewards. The shop has been updated.");
+  const state = loadGameState();
+  const reveal = progressiveRevealState(state);
+  scrollToDashboardTarget(target === "shop" && !reveal.shop ? "dashboard" : target);
+}
+
+function takeAnotherCupTest() {
+  appState.lastSummary = null;
+  resetSessionState();
+  refreshLandingDashboard("Review setup, then start while parked.");
+  revealSetupFlow();
+}
+
+function newRun() {
+  takeAnotherCupTest();
 }
 
 function revealSetupFlow() {
@@ -5217,6 +5321,8 @@ function bindEvents() {
   elements.downloadButton.addEventListener("click", downloadShareCard);
   elements.copyButton.addEventListener("click", copyShareText);
   elements.saveButton.addEventListener("click", saveCurrentSummary);
+  elements.returnDashboardButton.addEventListener("click", () => returnToDashboard("shop"));
+  elements.backSimulatorButton.addEventListener("click", () => returnToDashboard("simulator"));
   elements.exportProgressButton.addEventListener("click", exportProgress);
   elements.importProgressButton.addEventListener("click", importProgress);
   elements.resetProgressButton.addEventListener("click", resetProgress);
@@ -5359,6 +5465,8 @@ function cacheElements() {
     downloadButton: document.getElementById("download-button"),
     copyButton: document.getElementById("copy-button"),
     saveButton: document.getElementById("save-button"),
+    returnDashboardButton: document.getElementById("return-dashboard-button"),
+    backSimulatorButton: document.getElementById("back-simulator-button"),
     newRunButton: document.getElementById("new-run-button"),
     summaryStatus: document.getElementById("summary-status"),
   };

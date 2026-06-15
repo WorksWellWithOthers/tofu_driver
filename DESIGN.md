@@ -177,14 +177,29 @@ practice credit but do not unlock major merch progress. Long qualified commutes 
 Smooth Commute, consistency, and route mastery rewards without encouraging faster driving or
 seeking twisty roads.
 
+Practice Mode results use a separate reward hierarchy. Basic Mode and `Practice Route` sessions can
+earn small XP, small skill XP, modest tofu stock after a valid duration, the first-delivery
+onboarding stamp, and cosmetic onboarding unlocks. They must not grant `Perfect Pour`, `No-Spill
+Club` ranks, qualified route stamps, Daily Delivery completion from zero/near-zero runs, or merch
+progress for No-Spill Club Gear, Perfect Pour Drop, or Delivery Crew. A 100% practice result may say
+`Perfect Practice`; `Perfect Pour` is reserved for qualified deliveries.
+
 Driver License labels are derived from level: Rookie Carrier, Cup Courier, Smooth Driver,
 No-Spill Candidate, Certified Tofu Driver, Perfect Pour Courier, and Delivery Legend. Delivery
 Passport summarizes local stamps without duplicating them and must show an empty state for first-time
 users.
 
-`Delivery Complete` is the primary post-run game summary. It must show Cargo Condition, XP gained,
-Skill XP gained, stamp result, daily delivery result, shop rewards, No-Spill Club Gear progress, and
-the next delivery goal even when a section is empty.
+`Delivery Complete` or `Practice Complete` is the single primary post-run game summary. It must show
+Cargo Condition, route type, rank, qualification, daily delivery result, coach recap, XP gained,
+Skill XP gained, stamp result, shop rewards, unlocks, merch progress, share actions, and the next
+delivery goal even when a section is empty. Do not render a separate legacy milestone or gear result
+block alongside the consolidated result layout.
+
+Post-run navigation must close the loop back to the game dashboard. `Return to Tofu Shop` or
+`Return to Dashboard` is the primary result-screen action and must rerender updated resources,
+unlocks, Delivery Passport, Tofu Shop, Delivery Crew, merch progress, and Next Best Action. `Take
+Another Cup Test` is secondary, not the only path out of a result. Users should be able to review the
+updated shop state after every delivery before choosing another run.
 
 ## Tofu Shop V1
 

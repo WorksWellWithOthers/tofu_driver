@@ -22,7 +22,13 @@
     <section class="nospill-panel nospill-landing" id="landing-view" aria-labelledby="landing-title">
       <section class="nospill-brand-hero" aria-labelledby="landing-title">
         <div class="nospill-hero-art">
-          <img src="/static/nospill/assets/tofu-driver-logo.png" alt="Tofu Driver mascot logo" />
+          <img
+            src="/static/nospill/assets/tofu-driver-logo.png"
+            alt=""
+            aria-hidden="true"
+            onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+          />
+          <span class="nospill-hero-fallback" hidden>Tofu Driver</span>
         </div>
         <div class="nospill-hero-copy">
           <p class="nospill-kicker">The Cup Test</p>
@@ -622,7 +628,13 @@
     <section class="nospill-panel nospill-summary is-hidden" id="summary-view" aria-labelledby="summary-title">
       <div class="nospill-summary-head">
         <div class="nospill-summary-brand">
-          <img src="/static/nospill/assets/tofu-driver-logo.png" alt="Tofu Driver mascot logo" />
+          <img
+            src="/static/nospill/assets/tofu-driver-logo.png"
+            alt=""
+            aria-hidden="true"
+            onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+          />
+          <span class="nospill-hero-fallback" hidden>Tofu Driver</span>
           <div>
             <p class="nospill-kicker" id="summary-status-label">Practice Only</p>
             <h2 id="summary-title">Run Summary</h2>
@@ -630,30 +642,13 @@
         </div>
         <output class="nospill-water-percent" id="summary-water">100.0%</output>
       </div>
-
-      <div class="nospill-summary-grid" id="summary-grid"></div>
-
       <section class="nospill-section is-hidden" id="route-context" aria-labelledby="route-context-title">
         <h3 id="route-context-title">Route Context</h3>
         <div class="nospill-route-grid" id="route-grid"></div>
       </section>
 
-      <section class="nospill-section" aria-labelledby="milestone-title">
-        <h3 id="milestone-title">Milestone</h3>
-        <p class="nospill-milestone" id="milestone-output">No milestone unlocked this run.</p>
-      </section>
-
-      <section class="nospill-section" aria-labelledby="merch-title">
-        <h3 id="merch-title">Unlocked Gear</h3>
-        <p class="nospill-panel-helper">
-          Physical merch is fulfilled by Super Cute Collectibles.
-        </p>
-        <div class="nospill-merch-progress-grid" id="merch-progress-grid"></div>
-        <div class="nospill-merch-grid" id="merch-grid"></div>
-      </section>
-
       <section class="nospill-section" aria-labelledby="delivery-summary-title">
-        <h3 id="delivery-summary-title">Delivery Complete</h3>
+        <h3 id="delivery-summary-title">Result Details</h3>
         <div class="nospill-delivery-summary-grid" id="delivery-summary-grid"></div>
         <p class="nospill-panel-helper" id="commute-mastery-copy"></p>
       </section>
@@ -663,16 +658,16 @@
       <section class="nospill-section" aria-labelledby="share-title">
         <h3 id="share-title">Share Card</h3>
         <canvas id="share-canvas" class="nospill-share-canvas" width="1080" height="1350" aria-label="Shareable Tofu Driver result card"></canvas>
-        <div class="nospill-controls nospill-share-actions">
-          <button class="nospill-primary" id="share-button" type="button">Share Result</button>
-          <button class="nospill-secondary" id="copy-button" type="button">Copy Summary</button>
-          <button class="nospill-secondary" id="download-button" type="button">Download Card</button>
-        </div>
       </section>
 
-      <div class="nospill-controls">
+      <div class="nospill-controls nospill-result-actions">
+        <button class="nospill-primary" id="return-dashboard-button" type="button">Return to Tofu Shop</button>
+        <button class="nospill-secondary" id="new-run-button" type="button">Take Another Cup Test</button>
+        <button class="nospill-secondary is-hidden" id="back-simulator-button" type="button">Back to Simulator</button>
+        <button class="nospill-secondary" id="share-button" type="button">Share Result</button>
+        <button class="nospill-secondary" id="copy-button" type="button">Copy Summary</button>
+        <button class="nospill-secondary" id="download-button" type="button">Download Card</button>
         <button class="nospill-secondary" id="save-button" type="button">Save Summary Locally</button>
-        <button class="nospill-primary" id="new-run-button" type="button">New Run</button>
       </div>
       <div class="nospill-status" id="summary-status" role="status" aria-live="polite"></div>
     </section>

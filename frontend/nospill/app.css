@@ -125,6 +125,19 @@
   display: block;
 }
 
+.nospill-hero-fallback {
+  display: grid;
+  place-items: center;
+  width: min(56%, 220px);
+  aspect-ratio: 1;
+  border: 2px solid #111;
+  border-radius: 8px;
+  color: #111;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-align: center;
+}
+
 .nospill-hero-copy {
   order: 1;
 }
@@ -980,6 +993,14 @@
   border: 1px solid rgba(244, 247, 239, 0.16);
   border-radius: 8px;
   object-fit: cover;
+  background: #f4f7ef;
+}
+
+.nospill-summary-brand .nospill-hero-fallback {
+  width: 58px;
+  height: 58px;
+  flex: 0 0 auto;
+  font-size: 0.65rem;
   background: #f4f7ef;
 }
 

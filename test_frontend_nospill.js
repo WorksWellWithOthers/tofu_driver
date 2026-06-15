@@ -51,6 +51,8 @@ globalThis.getDailyDelivery = getDailyDelivery;
 globalThis.getDriverLicense = getDriverLicense;
 globalThis.classifyRouteType = classifyRouteType;
 globalThis.calculateCargoCondition = calculateCargoCondition;
+globalThis.isValidPracticeSession = isValidPracticeSession;
+globalThis.displayRankForSession = displayRankForSession;
 globalThis.evaluateCargoMission = evaluateCargoMission;
 globalThis.evaluateDailyDelivery = evaluateDailyDelivery;
 globalThis.calculateDeliveryRewards = calculateDeliveryRewards;
@@ -102,6 +104,8 @@ globalThis.renderTofuShop = renderTofuShop;
 globalThis.renderCollectionPanel = renderCollectionPanel;
 globalThis.progressiveRevealState = progressiveRevealState;
 globalThis.nextBestAction = nextBestAction;
+globalThis.returnToDashboard = returnToDashboard;
+globalThis.takeAnotherCupTest = takeAnotherCupTest;
 globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
 globalThis.renderDiscordCtas = renderDiscordCtas;
 globalThis.APP_BRAND = APP_BRAND;
@@ -191,6 +195,7 @@ function sampleShareSummary(overrides = {}) {
   return {
     waterLeft: 97.4,
     waterSpilled: 2.6,
+    mode: 'qualified',
     rank: 'No-Spill Club',
     qualificationStatus: 'qualified',
     qualificationLabel: 'Qualified',
@@ -671,7 +676,8 @@ function testTofuDriverArtworkIsIsolatedAndAccessible() {
   assert(fs.existsSync(appImagePath), 'Tofu Driver cargo mascot app image should exist');
   assert(html.includes('/static/nospill/assets/tofu-driver-logo.png'));
   assert(html.includes('/static/nospill/assets/tofu-driver-shirt-1.png'));
-  assert(html.includes('alt="Tofu Driver mascot logo"'));
+  assert(!html.includes('Tofu Driver mascot logo'));
+  assert(html.includes('class="nospill-hero-fallback" hidden>Tofu Driver</span>'));
   assert(html.includes('alt="No-Spill Club 95% Delivered Tofu Driver shirt"'));
 }
 
@@ -1035,6 +1041,106 @@ function testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext() {
   }), state);
   assert.strictEqual(technical.routeType, 'Technical Route');
   assert(technical.stamps.includes('technical_pour'));
+}
+
+function testPracticeModeRewardGatingAndRankCopy() {
+  const context = loadNoSpillContext();
+  const state = context.defaultGameState();
+  const shortPractice = sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    qualificationLabel: 'Short Practice',
+    waterLeft: 100,
+    durationSeconds: 0,
+    distanceMiles: 0,
+    motionSamples: 0,
+    harshInputCount: 0,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0,
+    abruptTransitions: 0,
+    turnDensityScore: 0,
+    curvatureScore: 0,
+    routeDifficultyScore: 0,
+  });
+  const shortRewards = context.calculateDeliveryRewards(shortPractice, state);
+  assert.strictEqual(context.classifyRouteType(shortPractice), 'Practice Route');
+  assert.strictEqual(context.displayRankForSession(shortPractice), 'Perfect Practice');
+  assert.strictEqual(shortRewards.dailyComplete, false);
+  assert.strictEqual(shortRewards.stamps.length, 0);
+  assert.strictEqual(shortRewards.shop.tofuStockGained, 0);
+  assert.strictEqual(shortRewards.shop.reputationGained, 0);
+  assert.strictEqual(shortRewards.merchProgress.nospillClubGear.count, 0);
+  assert.strictEqual(shortRewards.merchProgress.perfectPourDrop.unlocked, false);
+  assert.strictEqual(shortRewards.merchProgress.deliveryCrew.count, 0);
+  assert.strictEqual(shortRewards.collectionUnlocks.newCharacterUnlocks.length, 0);
+  assert.strictEqual(shortRewards.collectionUnlocks.newSoundUnlocks.length, 0);
+
+  const validPractice = sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    qualificationLabel: 'Practice Only',
+    waterLeft: 100,
+    durationSeconds: 120,
+    distanceMiles: 0,
+    motionSamples: 300,
+    harshInputCount: 0,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0,
+    abruptTransitions: 0,
+    turnDensityScore: 0,
+    curvatureScore: 0,
+    routeDifficultyScore: 0,
+  });
+  const validRewards = context.calculateDeliveryRewards(validPractice, state);
+  assert.strictEqual(validRewards.stamps.length, 1);
+  assert.strictEqual(validRewards.stamps[0], 'first_delivery');
+  assert.strictEqual(validRewards.dailyComplete, false);
+  assert(validRewards.shop.tofuStockGained > 0);
+  assert.strictEqual(validRewards.shop.reputationGained, 0);
+  assert(!validRewards.stamps.includes('cup_stayed_full'));
+  assert(!validRewards.stamps.includes('no_panic_inputs'));
+  assert(!validRewards.stamps.includes('passenger_approved'));
+  assert(!validRewards.stamps.includes('perfect_pour'));
+  assert.strictEqual(validRewards.collectionUnlocks.newCharacterUnlocks.length, 1);
+  assert.strictEqual(validRewards.collectionUnlocks.newCharacterUnlocks[0].id, 'angry_tofu_driver');
+
+  const qualifiedPerfect = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+  }), state);
+  assert.strictEqual(context.displayRankForSession(sampleDeliverySession({ waterLeft: 100 })), 'Perfect Pour');
+  assert(qualifiedPerfect.stamps.includes('perfect_pour'));
+  assert.strictEqual(qualifiedPerfect.merchProgress.perfectPourDrop.unlocked, true);
+}
+
+function testPracticeShareOutputIsLabeledAndNotPerfectPour() {
+  const context = loadNoSpillContext();
+  const practiceSummary = sampleShareSummary({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    qualificationLabel: 'Practice Only',
+    routeType: 'Practice Route',
+    rank: 'Perfect Pour',
+    cargoCondition: 100,
+    waterLeft: 100,
+    waterSpilled: 0,
+    deliveryStamps: [],
+    unlockedBadges: [],
+    dailyDeliveryComplete: false,
+  });
+  const text = context.buildShareText(practiceSummary);
+  const card = context.buildShareCardData(practiceSummary);
+  assert(text.includes('Practice Delivery'));
+  assert(text.includes('Rank: Perfect Practice'));
+  assert(!text.includes('Perfect Pour'));
+  assert.strictEqual(card.challengeName, 'Practice Delivery');
+  assert.strictEqual(card.rank, 'Perfect Practice');
+  assert.strictEqual(card.qualificationStatus, 'Practice');
 }
 
 function testLongHaulDailyXpCapAndMerchProgress() {
@@ -1670,7 +1776,25 @@ function testResultScreenShowsGameSummarySections() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(html.includes('id="delivery-summary-grid"'));
-  assert(html.includes('Delivery Complete'));
+  assert(html.includes('id="summary-title"'));
+  assert(html.includes('Result Details'));
+  assert(html.includes('id="return-dashboard-button"'));
+  assert(html.includes('Return to Tofu Shop'));
+  assert(html.includes('id="new-run-button"'));
+  assert(html.includes('Take Another Cup Test'));
+  assert(html.includes('id="back-simulator-button"'));
+  assert(html.indexOf('id="return-dashboard-button"') < html.indexOf('id="new-run-button"'));
+  assert(html.indexOf('id="new-run-button"') < html.indexOf('id="share-button"'));
+  assert(source.includes('returnDashboardButton.addEventListener("click"'));
+  assert(source.includes('backSimulatorButton.addEventListener("click"'));
+  assert(source.includes('function returnToDashboard'));
+  const summaryStart = html.indexOf('id="summary-view"');
+  const summaryEnd = html.indexOf('id="landing-view"', summaryStart + 1);
+  const summaryHtml = html.slice(summaryStart, summaryEnd > summaryStart ? summaryEnd : undefined);
+  assert(!summaryHtml.includes('id="summary-grid"'));
+  assert(!summaryHtml.includes('id="milestone-output"'));
+  assert(!summaryHtml.includes('id="merch-grid"'));
+  assert.strictEqual((summaryHtml.match(/Delivery Complete/g) || []).length, 0);
   [
     '"Cargo Condition"',
     '"XP Gained"',
@@ -1678,12 +1802,98 @@ function testResultScreenShowsGameSummarySections() {
     '"Stamp Earned"',
     '"Daily Delivery Result"',
     '"Delivery Crew"',
+    '"Selected Crew"',
     '"New Unlock"',
     '"Shop Rewards"',
     '"No-Spill Club Gear"',
     '"Next Delivery Goal"',
     '"No new stamp"',
   ].forEach((needle) => assert(source.includes(needle), `${needle} missing`));
+}
+
+function testPostRunNavigationReturnsToUpdatedDashboard() {
+  const context = loadNoSpillContext({
+    window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function makeNode(id) {
+  const node = {
+    id,
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    hidden: false,
+    dataset: {},
+    scrolled: false,
+    revealed: false,
+  };
+  node.classList = {
+    contains() { return false; },
+    remove() { node.revealed = true; },
+    toggle(_className, hidden) { node.hidden = Boolean(hidden); },
+  };
+  node.scrollIntoView = function scrollIntoView() {
+    node.scrolled = true;
+  };
+  return node;
+}
+const savedState = defaultGameState();
+savedState.totalXP = 240;
+savedState.shop.tofuStock = 42;
+savedState.shop.reputation = 18;
+savedState.recentSessions = [{ dateKey: "2026-06-14", cargoCondition: 92 }];
+savedState.stamps.first_delivery = { label: "First Delivery", date: "2026-06-14T12:00:00.000Z" };
+elements = {
+  landingView: makeNode("landing"),
+  runView: makeNode("run"),
+  unsupportedView: makeNode("unsupported"),
+  summaryView: makeNode("summary"),
+  setupFlow: makeNode("setup"),
+  tofuShopSection: makeNode("shop"),
+  simulatorPanel: makeNode("simulator"),
+  cupCanvas: null,
+};
+loadGameState = function loadGameStateForTest() { return savedState; };
+loadGameStateWithOfflineShopEarnings = function loadGameStateWithOfflineShopEarningsForTest() {
+  return savedState;
+};
+renderMountControls = function renderMountControlsForTest() {};
+renderAudioLevelControls = function renderAudioLevelControlsForTest() {};
+renderGamePanels = function renderGamePanelsForTest(state) {
+  globalThis.returnRenderedXP = state.totalXP;
+  globalThis.returnRenderedStock = state.shop.tofuStock;
+  globalThis.returnRenderedReputation = state.shop.reputation;
+};
+drawCupCanvas = function drawCupCanvasForTest() {};
+showView = function showViewForTest(viewName) {
+  globalThis.returnShownView = viewName;
+};
+setLandingStatus = function setLandingStatusForTest(message) {
+  globalThis.returnLandingStatus = message;
+};
+appState.lastSummary = { cargoCondition: 92 };
+returnToDashboard("shop");
+globalThis.returnPreservedSummary = Boolean(appState.lastSummary);
+globalThis.returnScrolledShop = elements.tofuShopSection.scrolled;
+globalThis.returnFirstLandingStatus = globalThis.returnLandingStatus;
+returnToDashboard("simulator");
+globalThis.returnScrolledSimulator = elements.simulatorPanel.scrolled;
+takeAnotherCupTest();
+globalThis.takeAnotherClearedSummary = appState.lastSummary === null;
+globalThis.takeAnotherRevealedSetup = elements.setupFlow.revealed && elements.setupFlow.scrolled;
+`, context);
+
+  assert.strictEqual(context.returnShownView, 'landing');
+  assert.strictEqual(context.returnRenderedXP, 240);
+  assert.strictEqual(context.returnRenderedStock, 42);
+  assert.strictEqual(context.returnRenderedReputation, 18);
+  assert.strictEqual(context.returnPreservedSummary, true);
+  assert.strictEqual(context.returnScrolledShop, true);
+  assert.strictEqual(context.returnScrolledSimulator, true);
+  assert.strictEqual(context.returnFirstLandingStatus, 'Review your rewards. The shop has been updated.');
+  assert.strictEqual(context.returnLandingStatus, 'Review setup, then start while parked.');
+  assert.strictEqual(context.takeAnotherClearedSummary, true);
+  assert.strictEqual(context.takeAnotherRevealedSetup, true);
 }
 
 function testLocationPermissionFlowRemainsOptIn() {
@@ -1980,6 +2190,8 @@ function run() {
   testDailyDeliverySelectionAndEvaluation();
   testRouteTypeClassification();
   testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext();
+  testPracticeModeRewardGatingAndRankCopy();
+  testPracticeShareOutputIsLabeledAndNotPerfectPour();
   testLongHaulDailyXpCapAndMerchProgress();
   testNoSpillClubGearRequiresRepeatedQualifiedDeliveries();
   testPerfectPourAndDeliveryCrewProgressRules();
@@ -1995,6 +2207,7 @@ function run() {
   testDeliveryWallKeepsLockedMerchLinksHidden();
   testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
   testResultScreenShowsGameSummarySections();
+  testPostRunNavigationReturnsToUpdatedDashboard();
   testLocationPermissionFlowRemainsOptIn();
   testPrivateQualifiedSummaryMayShowDistance();
   testMountAxisMapping();

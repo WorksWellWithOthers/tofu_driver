@@ -19,6 +19,11 @@
   for parked/result screens only.
 - Delivery Simulator is hidden by default and can be enabled locally with `?simulator=1` or
   `tofuDriverSimulatorEnabled=true` to test completed delivery rewards without sensors or location.
+- Result screens now use one consolidated Delivery/Practice Complete layout, and Practice Mode
+  is gated to modest local rewards while qualified-only ranks, stamps, daily completion, and merch
+  progress stay behind Qualified Run criteria.
+- Post-run navigation returns users to the updated dashboard/Tofu Shop, with another Cup Test as a
+  secondary action instead of the only exit from results.
 - First-run progressive reveal now keeps Today's Delivery and the Cup Test CTA prominent while the
   expanded Delivery Board, Tofu Shop, Passport, Delivery Crew, and Sound Packs wait until they matter.
 - The top dashboard includes a Next Best Action card so first-run users see one primary action;
