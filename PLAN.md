@@ -19,8 +19,8 @@
   for parked/result screens only.
 - Delivery Simulator is hidden by default and can be enabled locally with `?simulator=1` or
   `tofuDriverSimulatorEnabled=true` to test completed delivery rewards without sensors or location.
-- First-run progressive reveal now keeps Today's Delivery and the Cup Test CTA prominent while
-  Tofu Shop, Passport, Delivery Crew, and Sound Packs start as teaser/locked cards.
+- First-run progressive reveal now keeps Today's Delivery and the Cup Test CTA prominent while the
+  expanded Delivery Board, Tofu Shop, Passport, Delivery Crew, and Sound Packs wait until they matter.
 - The top dashboard includes a Next Best Action card so first-run users see one primary action;
   Pack Tofu becomes a parked shop action after the first delivery wakes the shop.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.

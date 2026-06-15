@@ -554,11 +554,16 @@ still useful, but should eventually respect unlock states.
 Current implementation uses this as a first pass:
 
 - Today's Delivery and the primary Cup Test CTA are visible immediately.
-- Tofu Shop appears as a teaser first; Pack Tofu and upgrades unlock after the first delivery.
-- Delivery Passport appears as a teaser first; stamp details unlock after the first stamp-worthy
-  delivery.
-- Delivery Crew and Sound Packs appear as teaser cards first; selection controls unlock only after
-  character or sound-pack unlocks exist.
+- The first-run page defaults to a story-like surface: brand, cup premise, Today's Delivery, one
+  goal, one reward, one primary CTA, compact status, and minimal safety copy.
+- Tofu Shop, Delivery Passport, Delivery Crew, and Sound Packs appear as compact teaser cards first.
+- The expanded Delivery Board, Tofu Shop, Delivery Wall, Delivery Crew, Sound Pack lists, and
+  progress tools do not compete with the first delivery flow.
+- Pack Tofu and upgrades unlock after the first delivery wakes the shop.
+- Stamp details unlock after the first stamp-worthy delivery.
+- Crew and sound selection controls unlock only after character or sound-pack unlocks exist.
+- Export, import, and reset controls live in `Settings / Progress Tools`, not the first-run main
+  dashboard.
 - Active-drive screens still hide shop, crew, sound, and reward interactions.
 
 The design target is not to remove the dashboard. The target is:

@@ -295,8 +295,8 @@ function testTofuDriverBrandHierarchy() {
   assert(!runViewHtml.includes('Preview Sound'));
   assert(html.includes("Don't spill the cup."));
   assert(html.includes('Not faster. Smoother.'));
-  assert(html.includes('A smooth-driving challenge where your goal is simple'));
-  assert(html.includes('No speed leaderboards. No maps. No racing. Just control.'));
+  assert(html.includes('A smooth-driving delivery game.'));
+  assert(html.includes('Start and stop while parked.'));
   assert(html.includes('How it works'));
   assert(html.includes('Secret Merch'));
   assert(html.includes('No speed rankings.'));
@@ -325,7 +325,7 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(dashboardIndex < setupIndex, 'Today delivery dashboard should appear before setup controls');
   assert(dashboardIndex < runIndex, 'Today delivery dashboard should appear before active run view');
   assert(html.includes('Today&rsquo;s Delivery'));
-  assert(html.includes('Every drive is a delivery. Preserve the cargo'));
+  assert(html.includes('Soft tofu that rewards calm, balanced inputs.'));
   assert(html.includes('id="game-daily-cargo"'));
   assert(html.includes('id="game-daily-goal"'));
   assert(html.includes('id="game-daily-reward"'));
@@ -342,24 +342,37 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('The passport opens after your first stamp-worthy delivery.'));
   assert(html.includes('No one is on shift yet. Your first delivery may attract help.'));
   assert(html.includes('New sounds unlock as your delivery reputation grows.'));
-  assert(html.includes('First Delivery locked'));
-  assert(html.includes('Daily Delivery Complete locked'));
-  assert(html.includes('No-Spill Club locked'));
-  assert(html.includes('Perfect Pour locked'));
-  assert(html.includes('id="game-shop-stock"'));
-  assert(html.includes('id="game-shop-reputation"'));
-  assert(html.includes('id="game-shop-level"'));
+  assert(html.includes('id="game-teaser-grid"'));
+  assert(html.includes('nospill-section nospill-delivery-log is-hidden'));
+  assert(html.includes('nospill-section nospill-tofu-shop is-hidden'));
+  assert(html.includes('nospill-section nospill-collection is-hidden'));
+  assert(html.includes('Settings / Progress Tools'));
+  const firstRunMain = html.slice(dashboardIndex, html.indexOf('id="how-it-works"'));
+  assert(!firstRunMain.includes('Export Progress'));
+  assert(!firstRunMain.includes('Import Progress'));
+  assert(!firstRunMain.includes('Reset Progress'));
   assert(html.includes('nospill-game-primary-cta'));
   assert(html.indexOf('id="game-daily-goal"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-daily-reward"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-driver-license"'));
-  assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-passport-empty"'));
-  assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-shop-stock"'));
+  assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-teaser-grid"'));
 
   const context = loadNoSpillContext();
   vm.runInContext(`
 function makeNode() {
-  return { textContent: "", innerHTML: "", disabled: null, dataset: {} };
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  return node;
 }
 elements = {
   gameDailyTitle: makeNode(),
@@ -373,8 +386,8 @@ elements = {
   gameDailyProgress: makeNode(),
   gameDriverLicense: makeNode(),
   gameTotalXP: makeNode(),
-  gameStreak: makeNode(),
   gameGearProgress: makeNode(),
+  gameTeaserGrid: makeNode(),
   gameShopStock: makeNode(),
   gameShopReputation: makeNode(),
   gameShopLevel: makeNode(),
@@ -392,18 +405,10 @@ globalThis.dashboardActionType = elements.gameCtaButton.dataset.nextAction;
 globalThis.dashboardDriverLicense = elements.gameDriverLicense.textContent;
 globalThis.dashboardTotalXp = elements.gameTotalXP.textContent;
 globalThis.dashboardGear = elements.gameGearProgress.textContent;
-globalThis.dashboardPassport = elements.gamePassportEmpty.textContent;
-globalThis.dashboardPassportPreview = elements.gamePassportPreview.innerHTML;
-globalThis.dashboardStock = elements.gameShopStock.textContent;
-globalThis.dashboardReputation = elements.gameShopReputation.textContent;
-globalThis.dashboardShopLevel = elements.gameShopLevel.textContent;
-globalThis.dashboardShopTeaser = elements.gameShopTeaser.textContent;
-globalThis.dashboardShopHelper = elements.gameShopHelper.textContent;
-globalThis.dashboardPackDisabled = elements.gamePackTofuButton.disabled;
-globalThis.dashboardPackText = elements.gamePackTofuButton.textContent;
+globalThis.dashboardTeasersHidden = elements.gameTeaserGrid.classListValue;
 appState.running = true;
 renderGameDashboard(defaultGameState());
-globalThis.activeDashboardPackDisabled = elements.gamePackTofuButton.disabled;
+globalThis.activeDashboardActionDisabled = elements.gameCtaButton.disabled;
 `, context);
 
   assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
@@ -413,16 +418,8 @@ globalThis.activeDashboardPackDisabled = elements.gamePackTofuButton.disabled;
   assert.strictEqual(context.dashboardActionType, 'cup_test');
   assert.strictEqual(context.dashboardTotalXp, '0 XP');
   assert.strictEqual(context.dashboardGear, '0/3');
-  assert.strictEqual(context.dashboardPassport, 'The passport opens after your first stamp-worthy delivery.');
-  assert(context.dashboardPassportPreview.includes('First Delivery locked'));
-  assert.strictEqual(context.dashboardStock, 'Locked');
-  assert.strictEqual(context.dashboardReputation, 'Locked');
-  assert.strictEqual(context.dashboardShopLevel, 'Quiet');
-  assert.strictEqual(context.dashboardShopTeaser, 'The shop is quiet. Complete your first delivery to wake it up.');
-  assert.strictEqual(context.dashboardShopHelper, 'The shop is quiet. Complete your first delivery to wake it up.');
-  assert.strictEqual(context.dashboardPackDisabled, true);
-  assert.strictEqual(context.dashboardPackText, 'Complete First Delivery');
-  assert.strictEqual(context.activeDashboardPackDisabled, true);
+  assert.strictEqual(context.dashboardTeasersHidden, false);
+  assert.strictEqual(context.activeDashboardActionDisabled, true);
 }
 
 function testProgressiveRevealTeasersUnlockAfterFirstDelivery() {
@@ -431,7 +428,19 @@ function testProgressiveRevealTeasersUnlockAfterFirstDelivery() {
   });
   vm.runInContext(`
 function makeNode() {
-  return { textContent: "", innerHTML: "", disabled: null, dataset: {} };
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  return node;
 }
 elements = {
   gameDailyTitle: makeNode(),
@@ -447,6 +456,7 @@ elements = {
   gameTotalXP: makeNode(),
   gameStreak: makeNode(),
   gameGearProgress: makeNode(),
+  gameTeaserGrid: makeNode(),
   gameShopStock: makeNode(),
   gameShopReputation: makeNode(),
   gameShopLevel: makeNode(),
@@ -473,14 +483,18 @@ elements = {
   characterList: makeNode(),
   soundPackList: makeNode(),
   previewSoundButton: makeNode(),
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
 };
 appState.running = false;
 appState.calibrating = false;
 const firstRunState = defaultGameState();
-renderGameDashboard(firstRunState);
-renderTofuShop(firstRunState);
-renderCollectionPanel(firstRunState);
+renderGamePanels(firstRunState);
 globalThis.firstReveal = progressiveRevealState(firstRunState);
+globalThis.firstDeliveryBoardHidden = elements.deliveryBoardSection.classListValue;
+globalThis.firstShopSectionHidden = elements.tofuShopSection.classListValue;
+globalThis.firstCollectionSectionHidden = elements.collectionSection.classListValue;
 globalThis.firstPackDisabled = elements.packTofuButton.disabled;
 globalThis.firstPackText = elements.packTofuButton.textContent;
 globalThis.firstPackHelper = elements.packTofuHelper.textContent;
@@ -493,10 +507,11 @@ const simulated = applySimulatedDelivery(
   firstRunState,
   { now: new Date("2026-06-14T12:00:00.000Z") },
 );
-renderGameDashboard(simulated.gameState);
-renderTofuShop(simulated.gameState);
-renderCollectionPanel(simulated.gameState);
+renderGamePanels(simulated.gameState);
 globalThis.afterReveal = progressiveRevealState(simulated.gameState);
+globalThis.afterDeliveryBoardHidden = elements.deliveryBoardSection.classListValue;
+globalThis.afterShopSectionHidden = elements.tofuShopSection.classListValue;
+globalThis.afterCollectionSectionHidden = elements.collectionSection.classListValue;
 globalThis.afterDashboardStock = elements.gameShopStock.textContent;
 globalThis.afterDashboardPassport = elements.gamePassportEmpty.textContent;
 globalThis.afterPackDisabled = elements.packTofuButton.disabled;
@@ -516,6 +531,9 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.firstReveal.passport, false);
   assert.strictEqual(context.firstReveal.crew, false);
   assert.strictEqual(context.firstReveal.sounds, false);
+  assert.strictEqual(context.firstDeliveryBoardHidden, true);
+  assert.strictEqual(context.firstShopSectionHidden, true);
+  assert.strictEqual(context.firstCollectionSectionHidden, true);
   assert.strictEqual(context.firstPackDisabled, true);
   assert.strictEqual(context.firstPackText, 'Complete First Delivery');
   assert(context.firstPackHelper.includes('The shop is quiet'));
@@ -530,6 +548,9 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.afterReveal.passport, true);
   assert.strictEqual(context.afterReveal.crew, true);
   assert.strictEqual(context.afterReveal.sounds, true);
+  assert.strictEqual(context.afterDeliveryBoardHidden, false);
+  assert.strictEqual(context.afterShopSectionHidden, false);
+  assert.strictEqual(context.afterCollectionSectionHidden, false);
   assert.notStrictEqual(context.afterDashboardStock, 'Locked');
   assert(context.afterDashboardPassport.includes('/13 stamps collected.'));
   assert.strictEqual(context.afterPackDisabled, false);
@@ -630,9 +651,10 @@ globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
   assert.strictEqual(context.topActionType, 'cup_test');
 
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const actionStart = html.indexOf('class="nospill-next-action-card"');
   const actionArea = html.slice(
-    html.indexOf('class="nospill-next-action-card"'),
-    html.indexOf('<div class="nospill-game-grid"', html.indexOf('class="nospill-next-action-card"')),
+    actionStart,
+    html.indexOf('<div class="nospill-game-grid nospill-game-status-grid"', actionStart),
   );
   assert.strictEqual((actionArea.match(/nospill-primary/g) || []).length, 1);
   assert(!actionArea.includes('game-pack-tofu-button'));

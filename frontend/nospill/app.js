@@ -3942,8 +3942,7 @@ function renderGameDashboard(gameState = loadGameState()) {
   const gear = state.merchProgress.nospillClubGear;
   if (elements.gameDailyTitle) elements.gameDailyTitle.textContent = mission.cargo;
   if (elements.gameDailyFlavor) {
-    elements.gameDailyFlavor.textContent =
-      `${mission.description} Every drive is a delivery. Preserve the cargo, level up your smoothness, and unlock secret gear.`;
+    elements.gameDailyFlavor.textContent = mission.description;
   }
   if (elements.gameDailyCargo) elements.gameDailyCargo.textContent = mission.cargo;
   if (elements.gameDailyGoal) elements.gameDailyGoal.textContent = mission.goal;
@@ -3973,6 +3972,9 @@ function renderGameDashboard(gameState = loadGameState()) {
   }
   if (elements.gameGearProgress) {
     elements.gameGearProgress.textContent = `${gear.count}/${gear.target}`;
+  }
+  if (elements.gameTeaserGrid) {
+    elements.gameTeaserGrid.classList.toggle("is-hidden", reveal.firstDelivery);
   }
   if (elements.gameShopStock) {
     elements.gameShopStock.textContent = reveal.shop ? String(state.shop.tofuStock) : "Locked";
@@ -4330,12 +4332,22 @@ function renderSimulatorPanel() {
 
 function renderGamePanels(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
+  const reveal = progressiveRevealState(state);
   renderGameDashboard(state);
   renderDeliveryLog(state);
   renderMerchProgress(state);
   renderTofuShop(state);
   renderCollectionPanel(state);
   renderSimulatorPanel();
+  if (elements.deliveryBoardSection) {
+    elements.deliveryBoardSection.classList.toggle("is-hidden", !reveal.firstDelivery);
+  }
+  if (elements.tofuShopSection) {
+    elements.tofuShopSection.classList.toggle("is-hidden", !reveal.shop);
+  }
+  if (elements.collectionSection) {
+    elements.collectionSection.classList.toggle("is-hidden", !reveal.firstDelivery);
+  }
 }
 
 function merchProgressMetric(label, value) {
@@ -5208,7 +5220,9 @@ function bindEvents() {
   elements.exportProgressButton.addEventListener("click", exportProgress);
   elements.importProgressButton.addEventListener("click", importProgress);
   elements.resetProgressButton.addEventListener("click", resetProgress);
-  elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
+  if (elements.gamePackTofuButton) {
+    elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
+  }
   elements.packTofuButton.addEventListener("click", handlePackTofu);
   elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
   elements.characterList.addEventListener("click", handleCharacterSelect);
@@ -5226,6 +5240,8 @@ function cacheElements() {
     summaryView: document.getElementById("summary-view"),
     setupFlow: document.getElementById("setup-flow"),
     tofuShopSection: document.getElementById("tofu-shop"),
+    deliveryBoardSection: document.getElementById("delivery-board-section"),
+    collectionSection: document.getElementById("delivery-crew"),
     introCtaButton: document.getElementById("intro-cta-button"),
     gameCtaButton: document.getElementById("game-cta-button"),
     gameNextActionTitle: document.getElementById("game-next-action-title"),
@@ -5240,6 +5256,7 @@ function cacheElements() {
     gameTotalXP: document.getElementById("game-total-xp"),
     gameStreak: document.getElementById("game-streak"),
     gameGearProgress: document.getElementById("game-gear-progress"),
+    gameTeaserGrid: document.getElementById("game-teaser-grid"),
     gameShopStock: document.getElementById("game-shop-stock"),
     gameShopReputation: document.getElementById("game-shop-reputation"),
     gameShopLevel: document.getElementById("game-shop-level"),

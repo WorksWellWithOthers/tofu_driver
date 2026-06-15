@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>Tofu Driver</title>
-  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615m" />
+  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615n" />
 </head>
 <body class="nospill-page">
   <main class="nospill-app" id="nospill-app">
     <header class="nospill-header" aria-label="Tofu Driver">
       <div>
-        <p class="nospill-kicker">Don't spill the cup.</p>
+        <p class="nospill-kicker">Not faster. Smoother.</p>
         <h1>Tofu Driver</h1>
       </div>
       <div class="nospill-water-mark" aria-hidden="true">
@@ -28,11 +28,11 @@
           <p class="nospill-kicker">The Cup Test</p>
           <h2 id="landing-title">Don't spill the cup.</h2>
           <p>
-            A smooth-driving challenge where your goal is simple: deliver the cup without spilling it.
+            A smooth-driving delivery game.
           </p>
           <p class="nospill-hero-tagline">Not faster. Smoother.</p>
           <p class="nospill-hero-safety">
-            No speed leaderboards. No maps. No racing. Just control.
+            Start and stop while parked. Use audio so you do not look at the screen while driving.
           </p>
         </div>
       </section>
@@ -43,7 +43,7 @@
             <p class="nospill-kicker">Today&rsquo;s Delivery</p>
             <h3 id="today-delivery-title">Silken Tofu</h3>
             <p id="game-daily-flavor">
-              Every drive is a delivery. Preserve the cargo, level up your smoothness, and unlock secret gear.
+              Soft tofu that rewards calm, balanced inputs.
             </p>
           </div>
         </div>
@@ -69,11 +69,7 @@
           </button>
         </div>
 
-        <div class="nospill-game-grid" aria-label="Driver status">
-          <div>
-            <span>Daily Progress</span>
-            <strong id="game-daily-progress">Not delivered yet</strong>
-          </div>
+        <div class="nospill-game-grid nospill-game-status-grid" aria-label="Driver status">
           <div>
             <span>Driver License</span>
             <strong id="game-driver-license">Level 1 &middot; Rookie Carrier</strong>
@@ -83,54 +79,28 @@
             <strong id="game-total-xp">0 XP</strong>
           </div>
           <div>
-            <span>Current Streak</span>
-            <strong id="game-streak">0 days</strong>
-          </div>
-          <div>
             <span>No-Spill Club Gear</span>
             <strong id="game-gear-progress">0/3</strong>
           </div>
         </div>
 
-        <div class="nospill-game-grid" aria-label="Tofu Shop preview">
-          <div>
-            <span>Tofu Stock</span>
-            <strong id="game-shop-stock">Locked</strong>
+        <div class="nospill-teaser-grid" id="game-teaser-grid" aria-label="Locked future systems">
+          <div class="nospill-teaser-card">
+            <strong>Tofu Shop</strong>
+            <span>The shop is quiet. Complete your first delivery to wake it up.</span>
           </div>
-          <div>
-            <span>Reputation</span>
-            <strong id="game-shop-reputation">Locked</strong>
+          <div class="nospill-teaser-card">
+            <strong>Delivery Passport</strong>
+            <span>The passport opens after your first stamp-worthy delivery.</span>
           </div>
-          <div>
-            <span>Shop Level</span>
-            <strong id="game-shop-level">Quiet</strong>
+          <div class="nospill-teaser-card">
+            <strong>Delivery Crew</strong>
+            <span>No one is on shift yet. Your first delivery may attract help.</span>
           </div>
-          <div>
-            <span>Next Shop Step</span>
-            <strong id="game-shop-teaser">The shop is quiet. Complete your first delivery to wake it up.</strong>
+          <div class="nospill-teaser-card">
+            <strong>Sound Packs</strong>
+            <span>New sounds unlock as your delivery reputation grows.</span>
           </div>
-        </div>
-
-        <div class="nospill-game-passport" aria-label="Delivery Passport preview">
-          <div>
-            <h4>Delivery Passport</h4>
-            <p id="game-passport-empty">The passport opens after your first stamp-worthy delivery.</p>
-          </div>
-          <div class="nospill-passport-preview" id="game-passport-preview">
-            <span>First Delivery locked</span>
-            <span>Daily Delivery Complete locked</span>
-            <span>No-Spill Club locked</span>
-            <span>Perfect Pour locked</span>
-          </div>
-        </div>
-
-        <div class="nospill-game-shop-action">
-          <p class="nospill-panel-helper" id="game-shop-helper">
-            The shop is quiet. Complete your first delivery to wake it up.
-          </p>
-          <button class="nospill-secondary" id="game-pack-tofu-button" type="button" disabled>
-            Complete First Delivery
-          </button>
         </div>
       </section>
 
@@ -221,7 +191,7 @@
         </p>
       </section>
 
-      <section class="nospill-section nospill-delivery-log" aria-labelledby="delivery-log-title">
+      <section class="nospill-section nospill-delivery-log is-hidden" id="delivery-board-section" aria-labelledby="delivery-log-title">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Delivery Board</p>
@@ -274,20 +244,9 @@
         <p class="nospill-panel-helper">
           Progress is saved on this device.
         </p>
-        <div class="nospill-delivery-actions" aria-label="Delivery Log progress tools">
-          <button class="nospill-secondary" id="export-progress-button" type="button">
-            Export Progress
-          </button>
-          <button class="nospill-secondary" id="import-progress-button" type="button">
-            Import Progress
-          </button>
-          <button class="nospill-danger" id="reset-progress-button" type="button">
-            Reset Progress
-          </button>
-        </div>
       </section>
 
-      <section class="nospill-section nospill-tofu-shop" id="tofu-shop" aria-labelledby="tofu-shop-title">
+      <section class="nospill-section nospill-tofu-shop is-hidden" id="tofu-shop" aria-labelledby="tofu-shop-title">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Tofu Shop</p>
@@ -348,7 +307,7 @@
         </p>
       </section>
 
-      <section class="nospill-section nospill-collection" id="delivery-crew" aria-labelledby="delivery-crew-title">
+      <section class="nospill-section nospill-collection is-hidden" id="delivery-crew" aria-labelledby="delivery-crew-title">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Delivery Crew</p>
@@ -389,6 +348,26 @@
             Preview Sound
           </button>
         </div>
+      </section>
+
+      <section class="nospill-section nospill-progress-tools" aria-labelledby="progress-tools-title">
+        <details>
+          <summary id="progress-tools-title">Settings / Progress Tools</summary>
+          <p class="nospill-panel-helper">
+            Progress is saved on this device. Export, import, or reset only Tofu Driver game state.
+          </p>
+          <div class="nospill-delivery-actions" aria-label="Delivery Log progress tools">
+            <button class="nospill-secondary" id="export-progress-button" type="button">
+              Export Progress
+            </button>
+            <button class="nospill-secondary" id="import-progress-button" type="button">
+              Import Progress
+            </button>
+            <button class="nospill-danger" id="reset-progress-button" type="button">
+              Reset Progress
+            </button>
+          </div>
+        </details>
       </section>
 
       <div class="nospill-setup is-hidden" id="setup-flow">
@@ -699,6 +678,6 @@
     </section>
   </main>
 
-  <script src="/static/nospill/app.js?v=20260615m"></script>
+  <script src="/static/nospill/app.js?v=20260615n"></script>
 </body>
 </html>

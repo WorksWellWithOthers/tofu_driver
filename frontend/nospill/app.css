@@ -205,6 +205,8 @@
 .nospill-game-dashboard,
 .nospill-delivery-log,
 .nospill-tofu-shop,
+.nospill-collection,
+.nospill-progress-tools,
 .nospill-safety-strip {
   padding: 14px;
   border: 1px solid rgba(244, 247, 239, 0.11);
@@ -217,7 +219,8 @@
 .nospill-discord-panel h3,
 .nospill-game-dashboard h3,
 .nospill-delivery-log h3,
-.nospill-tofu-shop h3 {
+.nospill-tofu-shop h3,
+.nospill-collection h3 {
   font-size: 1.2rem;
 }
 
@@ -326,6 +329,35 @@
   font-size: 1.02rem;
 }
 
+.nospill-game-status-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.nospill-teaser-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.nospill-teaser-card {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(244, 247, 239, 0.1);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(244, 247, 239, 0.035);
+}
+
+.nospill-teaser-card strong {
+  color: #f4f7ef;
+  font-size: 0.9rem;
+}
+
+.nospill-teaser-card span {
+  color: #bbc7c0;
+  font-size: 0.84rem;
+  line-height: 1.35;
+}
+
 .nospill-game-passport h4 {
   margin: 0 0 5px;
   color: #f4f7ef;
@@ -360,6 +392,24 @@
 
 .nospill-discord-panel .nospill-link-button {
   width: 100%;
+}
+
+.nospill-progress-tools details {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-progress-tools summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: #f4f7ef;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.nospill-progress-tools details[open] {
+  gap: 12px;
 }
 
 .nospill-delivery-log-head {
@@ -1110,6 +1160,14 @@
   .nospill-game-grid,
   .nospill-passport-preview {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .nospill-game-status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .nospill-teaser-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .nospill-choice-row button {
