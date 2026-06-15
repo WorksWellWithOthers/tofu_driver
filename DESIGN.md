@@ -210,14 +210,23 @@ an optional certified smooth-delivery boost and status path, not the gate for or
 
 The app has two clear surfaces:
 
-- `Tofu Shop`: the default home game surface. It shows resources, generators, shop actions,
-  upgrades, Delivery Wall, Passport, Delivery Crew, Sound Packs, and progress tools.
-- `Don't Spill the Cup`: the always-available challenge surface. It shows the safety checklist,
-  Basic Mode, Qualified Run, mount/orientation controls, cup difficulty, audio coach, start flow,
-  active Cup Test, and result flow.
+- `Don't Spill the Cup`: the default visitor-facing challenge surface. It shows the safety
+  checklist, Basic Mode, Qualified Run, mount/orientation controls, cup difficulty, audio coach,
+  start flow, active Cup Test, and result flow.
+- `Tofu Shop`: the home idle game surface. It shows resources, generators, shop actions,
+  upgrades, Passport, and progress tools.
+- `Delivery Crew`: a dedicated collection surface for character selection, sound-pack selection,
+  crew unlocks, and cosmetic/audio choices once those systems are relevant.
 
-The current static frontend uses hash routing for those surfaces: `#/shop` and `#/cup-test`. Public
-navigation labels must read `Tofu Shop` and `Don't Spill the Cup`.
+The current static frontend uses hash routing for those surfaces. Root/no hash defaults to
+`#/cup-test`, `#/cup-test` shows `Don't Spill the Cup`, `#/shop` shows `Tofu Shop`, and `#/crew`
+shows `Delivery Crew` when relevant. Public navigation labels must read `Tofu Shop`,
+`Delivery Crew`, and `Don't Spill the Cup`.
+
+The first brand shelf is shared across top-level surfaces. The logo side must stay consistent and
+show the Tofu Driver logo image without a duplicate fallback box when the image loads. The copy side
+can adapt by route: `Certified Challenge` / `Don't Spill the Cup` for the challenge surface and
+`Tofu Shop` / `Run the Tofu Shop` for the shop surface.
 
 First-run action hierarchy:
 
@@ -250,10 +259,14 @@ The Cup Test must remain always available from the surface navigation, shop boos
 secondary action. It must not require Delivery Orders, tofu stock, upgrades, accounts, or shop
 progress.
 
-Unlock presentation should split into two tracks:
+Unlock logic should remain split internally into two tracks, but the UI should not show a large
+future-unlock checklist:
 
-- `Shop Unlocks` come from growing the Tofu Shop.
-- `Certified Delivery Unlocks` come from qualified smooth-driving results.
+- shop unlocks come from growing the Tofu Shop
+- certified delivery unlocks come from qualified smooth-driving results
+
+Surface those rewards through Delivery Complete summaries, Passport stamps, merch progress, and
+small story beats instead of a separate `Shop Unlocks` or `Certified Delivery Unlocks` shelf.
 
 Avoid wording such as `real vs fake` or anything implying simulator/home play is fraudulent. Use
 `home shop`, `shop order`, `certified delivery`, and `qualified smooth-driving result`.
@@ -316,12 +329,92 @@ stamps, and existing daily reward reduction. Higher speed must not increase shop
 sessions can grant limited local progress but no certified boost; very short/unqualified sessions
 are capped.
 
-The Delivery Wall separates `Shop Unlocks` from `Certified Delivery Unlocks`. Locked merch links are
-hidden. Super Cute Collectibles remains the physical fulfillment partner and does not verify scores
-in the current MVP.
+There is no separate visible Delivery Wall shelf in the current UI. Locked merch links stay hidden,
+and earned rewards should feel discovered through result screens, Passport stamps, and subtle
+status updates. Super Cute Collectibles remains the physical fulfillment partner and does not verify
+scores in the current MVP.
 
-Story chapters, customers, contracts, apprentices, route maps, and prestige remain future scope in
-the idle incremental expansion section below. They are not part of Tofu Shop V1 runtime behavior.
+## Tofu Shop Idle Layer V3
+
+The implemented shop layer now has a broad, local-first idle structure inspired by cascading
+production games, translated fully into Tofu Driver terms. It keeps home shop progression as the
+base game and keeps `Don't Spill the Cup` as an optional certified boost/status path.
+
+Implemented local resources:
+
+- `Tips`: main spend currency from shop orders, fictional route cards, Regular Customers, and
+  certified boosts.
+- `Tofu Stock`: produced by Tofu Press stations and consumed by Prep Counter and fictional routes.
+- `Delivery Orders`: produced by Prep Counter and consumed by shop orders, fictional routes, and
+  friendly Rival Shop Challenges.
+- `Reputation`: unlock currency from shop orders, route cards, certified boosts, and friendly
+  shop outcomes.
+- `Prep Slots`: recover over elapsed time and gate bulk station staffing.
+- `Shop Reach`: fictional expansion progress from route cards.
+- `Shop Spirit`: parked-only boost resource from Tea Kettle, Shrine Corner, Festival Lantern, Night
+  Shift Kettle, and Lucky Cat stations.
+- `Cup Stability XP`, `Route Knowledge`, `Passport Stamps`, and `License Stars`: local progression
+  layers for training, route cards, achievements, and License Exam prestige.
+
+The implemented shop panels are:
+
+1. Overview
+2. Production
+3. Orders
+4. Routes
+5. Training
+6. Garage
+7. Crew
+8. Shop Spirit
+9. Upgrades
+10. Rival Shop Challenges
+11. Passport
+12. License
+13. Ledger
+14. Settings / QA
+
+Production is data-driven. Station costs use `baseCost * growthRate ^ owned`, stations support the
+global buy multiplier (`x1`, `x10`, `x100`, `Max`), and milestones at 10, 25, 50, and 100 owned
+increase output. The visible station cascade is:
+
+- `Tofu Press` produces Tofu Stock.
+- `Prep Counter` consumes Tofu Stock and produces Delivery Orders.
+- `Delivery Shelf` boosts Prep Counter output.
+- `Shop Sign` improves passive/local reputation and unlocks customer systems.
+- `Regular Customers` produce Tips over time when the shop has orders.
+- `Delivery Routes` are fictional route cards that produce Tips, Reputation, Route Knowledge, and
+  Shop Reach.
+- `Dispatcher Desk` and `Regional Tofu Network` are higher-tier shop stations for automation and
+  broad production boosts.
+
+The current `Routes`, `Crew`, `Rival Shop Challenges`, and `License Exam` systems are minimal
+working versions: route cards complete instantly, crew roles are local automation/progression
+counts, rival challenges resolve immediately, and the first License Exam performs a local prestige
+reset with License Stars and perks. Future versions can add durations, assignment queues, richer
+reports, and deeper balancing without changing the safety contract.
+
+Training and Garage are parked-only fictional systems. Training drills grant Cup Stability XP and
+skill XP for shop/route flavor. Garage upgrades use safe names such as `Cup Holder Charm`, `Gentle
+Cargo Straps`, `Route Notebook`, and `Careful Delivery Mat`; they affect fictional shop route
+results only and do not improve real-world Cup Test scoring.
+
+Shop Spirit boosts and Festival Boost token inventory are local, parked-only systems. Boosts can
+grant instant shop resources or temporary shop production multipliers. They must not affect
+real-world Cup Test scoring and must not appear during active driving.
+
+The Delivery Ledger stores a capped list of local summary entries for purchases, shop orders,
+offline progress, fictional routes, training, boosts, License Exams, and friendly Rival Shop
+Challenges. It must not store raw GPS, raw motion samples, coordinates, maps, street names, route
+traces, or speed logs.
+
+Developer QA tools are hidden unless `?dev=1` or `tofuDriverDevToolsEnabled=true` is set. `Unlock
+All Local QA` marks state as untrusted and must never create certified merch proof or backend
+tokens.
+
+Safety translation rule: mechanics inspired by other idle games must use Tofu Driver language only.
+User-facing copy should say `Prep Slots`, `Shop Reach`, `Shop Spirit`, `Festival Boosts`, `License
+Exams`, `License Stars`, `License Perks`, `Rival Shop Challenges`, and `Delivery Districts`.
+Avoid source-game biological/combat terms and avoid real-world racing or speed language.
 
 ## Collection Layer
 
@@ -386,7 +479,6 @@ The player should not see every system immediately. Avoid showing all of these o
 - XP
 - Passport
 - Tofu Shop
-- Delivery Wall
 - merch progress
 - Reputation
 - Characters
@@ -649,10 +741,10 @@ Current implementation uses this as a first pass:
 - Today's Delivery and the primary Tofu Shop CTA are visible immediately.
 - The first-run page defaults to a story-like surface: brand, cup premise, Today's Delivery, one
   goal, one reward, one primary CTA, compact status, and minimal safety copy.
-- Tofu Shop is playable immediately; Delivery Passport, Delivery Crew, and Sound Packs appear as
-  compact teaser cards first.
-- The expanded Delivery Board, Tofu Shop, Delivery Wall, Delivery Crew, Sound Pack lists, and
-  progress tools do not compete with the first delivery flow.
+- Tofu Shop is playable immediately; Delivery Passport appears as a compact teaser first, and
+  Delivery Crew/Sound Pack controls move to their own surface once relevant.
+- The expanded Delivery Board, Tofu Shop details, dedicated Delivery Crew surface, Sound Pack lists,
+  and progress tools do not compete with the first delivery flow.
 - Pack Tofu is available for parked home play; upgrades and Fulfill Shop Order appear when the
   relevant resources exist.
 - Stamp details unlock after the first stamp-worthy delivery.
@@ -816,7 +908,7 @@ If the idle layer grows, status can come from the player's shop ecosystem:
 - shop theme
 - staff/character roster
 - passport stamp count
-- Delivery Wall
+- Passport or shop display
 - license rank
 - cosmetic shop decorations
 - share-card frame

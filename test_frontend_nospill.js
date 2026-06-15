@@ -70,6 +70,23 @@ globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
+globalThis.fulfillShopOrders = fulfillShopOrders;
+globalThis.buyShopStation = buyShopStation;
+globalThis.buyStationUpgrade = buyStationUpgrade;
+globalThis.completeFictionalRoute = completeFictionalRoute;
+globalThis.runTrainingDrill = runTrainingDrill;
+globalThis.buyGarageUpgrade = buyGarageUpgrade;
+globalThis.hireCrewRole = hireCrewRole;
+globalThis.buySpiritGenerator = buySpiritGenerator;
+globalThis.useShopSpiritBoost = useShopSpiritBoost;
+globalThis.useFestivalBoost = useFestivalBoost;
+globalThis.licenseExamStatus = licenseExamStatus;
+globalThis.takeLicenseExam = takeLicenseExam;
+globalThis.buyLicensePerk = buyLicensePerk;
+globalThis.startRivalChallenge = startRivalChallenge;
+globalThis.unlockAllLocalQa = unlockAllLocalQa;
+globalThis.isDevToolsEnabled = isDevToolsEnabled;
+globalThis.currentBottleneck = currentBottleneck;
 globalThis.buyShopUpgrade = buyShopUpgrade;
 globalThis.applyDeliveryToShop = applyDeliveryToShop;
 globalThis.sanitizeShopStateForExport = sanitizeShopStateForExport;
@@ -110,6 +127,7 @@ globalThis.progressiveRevealState = progressiveRevealState;
 globalThis.nextBestAction = nextBestAction;
 globalThis.surfaceFromHash = surfaceFromHash;
 globalThis.setAppSurface = setAppSurface;
+globalThis.initializeAppSurface = initializeAppSurface;
 globalThis.renderSurfaceNavigation = renderSurfaceNavigation;
 globalThis.returnToDashboard = returnToDashboard;
 globalThis.takeAnotherCupTest = takeAnotherCupTest;
@@ -276,11 +294,16 @@ function testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata() {
 
 function testTofuDriverBrandHierarchy() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const appSource = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(html.includes('<title>Tofu Driver</title>'));
   assert(html.includes('<h1>Tofu Driver</h1>'));
   assert(html.includes('data-surface-target="shop"'));
+  assert(html.includes('data-surface-target="crew"'));
   assert(html.includes('data-surface-target="cup-test"'));
-  assert(html.includes('Run the tofu shop.'));
+  assert(html.includes('Certified Challenge'));
+  assert(html.includes('Keep the cup steady. Drive smoothly. Boost the Tofu Shop.'));
+  assert(html.includes('id="brand-primary-cta"'));
+  assert(html.includes('id="brand-secondary-cta"'));
   assert(html.includes("Don't Spill the Cup"));
   assert(html.includes('Mount your phone, start while parked, and drive smoothly. Your result can boost the Tofu Shop.'));
   assert(html.includes('The Cup Test'));
@@ -289,12 +312,18 @@ function testTofuDriverBrandHierarchy() {
   assert(html.includes('Tofu Shop'));
   assert(html.includes('Shop Mode is for when you are parked. Do not interact while driving.'));
   assert(html.includes('Pack Tofu'));
-  assert(html.includes('Delivery Wall'));
+  assert(!html.includes('Delivery Wall'));
+  assert(!html.includes('Shop Unlocks'));
+  assert(!html.includes('Certified Delivery Unlocks'));
   assert(html.includes('Tofu Stock'));
   assert(html.includes('Delivery Orders'));
   assert(html.includes('Reputation'));
-  assert(html.includes('Tofu Stock Rate'));
-  assert(html.includes('Delivery Orders Rate'));
+  assert(html.includes('Tofu Stock/sec'));
+  assert(html.includes('Delivery Orders/sec'));
+  assert(html.includes('Tips/sec'));
+  assert(html.includes('Reputation/sec'));
+  assert(html.includes('Shop Spirit/sec'));
+  assert(!/\/ ?min\b/i.test(html));
   assert(html.includes('Prep Counter'));
   assert(html.includes('Delivery Crew'));
   assert(html.includes('Character Unlocks'));
@@ -314,7 +343,7 @@ function testTofuDriverBrandHierarchy() {
   assert(!runViewHtml.includes('data-character-id'));
   assert(!runViewHtml.includes('data-sound-pack-id'));
   assert(!runViewHtml.includes('Preview Sound'));
-  assert(html.includes('A cozy delivery-management game you can play at home.'));
+  assert(appSource.includes('A cozy delivery-management game you can play at home.'));
   assert(html.includes('Not faster. Smoother.'));
   assert(html.includes('Start and stop while parked.'));
   assert(html.includes('How it works'));
@@ -450,15 +479,22 @@ function testTwoSurfaceRoutingSeparatesShopAndCupTest() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   assert(html.includes('data-app-surface="shop"'));
   assert(html.includes('data-app-surface="cup-test"'));
+  assert(html.includes('data-app-surface="crew"'));
   assert(html.includes('data-surface-target="shop"'));
+  assert(html.includes('data-surface-target="crew"'));
   assert(html.includes('data-surface-target="cup-test"'));
+  assert(html.includes('class="nospill-brand-hero" aria-labelledby="landing-title"'));
+  assert(!html.includes('class="nospill-brand-hero" aria-labelledby="landing-title" data-app-surface='));
   assert(html.includes("Take Don't Spill the Cup for a certified boost")
     || html.includes('Take the Cup Test'));
 
   const context = loadNoSpillContext({
-    window: { location: { hash: '#/shop', search: '' }, localStorage: makeLocalStorage() },
+    window: { location: { hash: '', search: '' }, localStorage: makeLocalStorage() },
   });
   vm.runInContext(`
+function makeTextNode() {
+  return { textContent: "", dataset: {} };
+}
 function makeSection(surface) {
   const node = { hidden: false, dataset: { appSurface: surface }, classes: new Set() };
   node.classList = {
@@ -500,37 +536,111 @@ function makeNav(target) {
 }
 const shopSection = makeSection("shop");
 const cupSection = makeSection("cup-test");
+const crewSection = makeSection("crew");
 const shopNav = makeNav("shop");
 const cupNav = makeNav("cup-test");
+const crewNav = makeNav("crew");
 elements = {
-  surfaceSections: [shopSection, cupSection],
-  surfaceNavButtons: [shopNav, cupNav],
+  surfaceSections: [shopSection, cupSection, crewSection],
+  surfaceNavButtons: [shopNav, cupNav, crewNav],
   setupFlow: cupSection,
   landingView: { scrollIntoView() {} },
+  brandShelfEyebrow: makeTextNode(),
+  landingTitle: makeTextNode(),
+  brandShelfCopy: makeTextNode(),
+  brandShelfSafety: makeTextNode(),
+  brandPrimaryCta: makeTextNode(),
+  brandSecondaryCta: makeTextNode(),
 };
+globalThis.hashDefault = surfaceFromHash("");
+initializeAppSurface();
+globalThis.defaultSurface = appState.surface;
+globalThis.defaultHash = window.location.hash;
+globalThis.defaultShopHidden = shopSection.hidden;
+globalThis.defaultCupHidden = cupSection.hidden;
+globalThis.defaultCrewHidden = crewSection.hidden;
+globalThis.defaultCupNavCurrent = cupNav.attrs["aria-current"];
+globalThis.defaultBrandTitle = elements.landingTitle.textContent;
+globalThis.defaultBrandPrimary = elements.brandPrimaryCta.textContent;
+globalThis.defaultBrandSecondary = elements.brandSecondaryCta.textContent;
 setAppSurface("shop", { updateHash: false });
 globalThis.shopHiddenOnShop = shopSection.hidden;
 globalThis.cupHiddenOnShop = cupSection.hidden;
+globalThis.crewHiddenOnShop = crewSection.hidden;
 globalThis.shopNavCurrent = shopNav.attrs["aria-current"];
+globalThis.shopBrandEyebrow = elements.brandShelfEyebrow.textContent;
+globalThis.shopBrandTitle = elements.landingTitle.textContent;
+globalThis.shopBrandCopy = elements.brandShelfCopy.textContent;
+globalThis.shopBrandPrimary = elements.brandPrimaryCta.textContent;
+globalThis.shopBrandSecondary = elements.brandSecondaryCta.textContent;
 setAppSurface("cup-test", { updateHash: false });
 globalThis.shopHiddenOnCup = shopSection.hidden;
 globalThis.cupHiddenOnCup = cupSection.hidden;
+globalThis.crewHiddenOnCup = crewSection.hidden;
 globalThis.cupNavCurrent = cupNav.attrs["aria-current"];
+globalThis.cupBrandEyebrow = elements.brandShelfEyebrow.textContent;
+globalThis.cupBrandTitle = elements.landingTitle.textContent;
+globalThis.cupBrandCopy = elements.brandShelfCopy.textContent;
+globalThis.cupBrandPrimary = elements.brandPrimaryCta.textContent;
+globalThis.cupBrandSecondary = elements.brandSecondaryCta.textContent;
+setAppSurface("crew", { updateHash: false });
+globalThis.shopHiddenOnCrew = shopSection.hidden;
+globalThis.cupHiddenOnCrew = cupSection.hidden;
+globalThis.crewHiddenOnCrew = crewSection.hidden;
+globalThis.crewNavCurrent = crewNav.attrs["aria-current"];
+globalThis.crewBrandEyebrow = elements.brandShelfEyebrow.textContent;
+globalThis.crewBrandTitle = elements.landingTitle.textContent;
+globalThis.crewBrandCopy = elements.brandShelfCopy.textContent;
+globalThis.crewBrandPrimary = elements.brandPrimaryCta.textContent;
+globalThis.crewBrandSecondary = elements.brandSecondaryCta.textContent;
 appState.running = true;
 renderSurfaceNavigation();
-globalThis.navDisabledDuringDrive = shopNav.disabled && cupNav.disabled;
+globalThis.navDisabledDuringDrive = shopNav.disabled && cupNav.disabled && crewNav.disabled;
 globalThis.hashShop = surfaceFromHash("#/shop");
 globalThis.hashCup = surfaceFromHash("#/cup-test");
+globalThis.hashCrew = surfaceFromHash("#/crew");
 `, context);
 
+  assert.strictEqual(context.hashDefault, 'cup-test');
   assert.strictEqual(context.hashShop, 'shop');
   assert.strictEqual(context.hashCup, 'cup-test');
+  assert.strictEqual(context.hashCrew, 'crew');
+  assert.strictEqual(context.defaultSurface, 'cup-test');
+  assert.strictEqual(context.defaultHash, '#/cup-test');
+  assert.strictEqual(context.defaultShopHidden, true);
+  assert.strictEqual(context.defaultCupHidden, false);
+  assert.strictEqual(context.defaultCrewHidden, true);
+  assert.strictEqual(context.defaultCupNavCurrent, 'page');
+  assert.strictEqual(context.defaultBrandTitle, "Don't Spill the Cup");
+  assert.strictEqual(context.defaultBrandPrimary, 'Take the Cup Test');
+  assert.strictEqual(context.defaultBrandSecondary, 'Go to Tofu Shop');
   assert.strictEqual(context.shopHiddenOnShop, false);
   assert.strictEqual(context.cupHiddenOnShop, true);
+  assert.strictEqual(context.crewHiddenOnShop, true);
   assert.strictEqual(context.shopNavCurrent, 'page');
+  assert.strictEqual(context.shopBrandEyebrow, 'Tofu Shop');
+  assert.strictEqual(context.shopBrandTitle, 'Run the Tofu Shop');
+  assert.strictEqual(context.shopBrandCopy, 'A cozy delivery-management game you can play at home.');
+  assert.strictEqual(context.shopBrandPrimary, 'Continue the Shop');
+  assert.strictEqual(context.shopBrandSecondary, "Take Don't Spill the Cup");
   assert.strictEqual(context.shopHiddenOnCup, true);
   assert.strictEqual(context.cupHiddenOnCup, false);
+  assert.strictEqual(context.crewHiddenOnCup, true);
   assert.strictEqual(context.cupNavCurrent, 'page');
+  assert.strictEqual(context.cupBrandEyebrow, 'Certified Challenge');
+  assert.strictEqual(context.cupBrandTitle, "Don't Spill the Cup");
+  assert.strictEqual(context.cupBrandCopy, 'Keep the cup steady. Drive smoothly. Boost the Tofu Shop.');
+  assert.strictEqual(context.cupBrandPrimary, 'Take the Cup Test');
+  assert.strictEqual(context.cupBrandSecondary, 'Go to Tofu Shop');
+  assert.strictEqual(context.shopHiddenOnCrew, true);
+  assert.strictEqual(context.cupHiddenOnCrew, true);
+  assert.strictEqual(context.crewHiddenOnCrew, false);
+  assert.strictEqual(context.crewNavCurrent, 'page');
+  assert.strictEqual(context.crewBrandEyebrow, 'Delivery Crew');
+  assert.strictEqual(context.crewBrandTitle, 'Delivery Crew');
+  assert.strictEqual(context.crewBrandCopy, 'Choose your local crew, characters, and gentle sound packs while parked.');
+  assert.strictEqual(context.crewBrandPrimary, 'Go to Tofu Shop');
+  assert.strictEqual(context.crewBrandSecondary, "Take Don't Spill the Cup");
   assert.strictEqual(context.navDisabledDuringDrive, true);
 }
 
@@ -585,6 +695,9 @@ elements = {
   shopLevelProgress: makeNode(),
   shopIdleRate: makeNode(),
   shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
   shopPrepStatus: makeNode(),
   packTofuButton: makeNode(),
   packTofuHelper: makeNode(),
@@ -608,6 +721,7 @@ elements = {
 };
 appState.running = false;
 appState.calibrating = false;
+appState.surface = "shop";
 const firstRunState = defaultGameState();
 renderGamePanels(firstRunState);
 globalThis.firstReveal = progressiveRevealState(firstRunState);
@@ -643,6 +757,12 @@ globalThis.afterUpgradeHtml = elements.shopUpgradeList.innerHTML;
 globalThis.afterCharacterHtml = elements.characterList.innerHTML;
 globalThis.afterSoundHtml = elements.soundPackList.innerHTML;
 globalThis.afterPreviewDisabled = elements.previewSoundButton.disabled;
+appState.surface = "crew";
+renderGamePanels(simulated.gameState);
+globalThis.crewSurfaceCollectionHidden = elements.collectionSection.classListValue;
+globalThis.crewSurfaceCharacterHtml = elements.characterList.innerHTML;
+globalThis.crewSurfaceSoundHtml = elements.soundPackList.innerHTML;
+globalThis.crewSurfacePreviewDisabled = elements.previewSoundButton.disabled;
 appState.running = true;
 renderTofuShop(simulated.gameState);
 renderCollectionPanel(simulated.gameState);
@@ -679,20 +799,21 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.afterReveal.sounds, true);
   assert.strictEqual(context.afterDeliveryBoardHidden, false);
   assert.strictEqual(context.afterShopSectionHidden, false);
-  assert.strictEqual(context.afterCollectionSectionHidden, false);
+  assert.strictEqual(context.afterCollectionSectionHidden, true);
   assert.notStrictEqual(context.afterDashboardStock, 'Locked');
-  assert(context.afterDashboardPassport.includes('/13 stamps collected.'));
+  assert(context.afterDashboardPassport.includes('stamps collected.'));
   assert.strictEqual(context.afterPackDisabled, false);
   assert.strictEqual(context.afterPackText, 'Pack Tofu');
   assert(context.afterGeneratorHtml.includes('Tofu Press'));
   assert(context.afterGeneratorHtml.includes('+0.05 tofu / sec'));
   assert(context.afterGeneratorHtml.includes('Prep Counter'));
   assert(context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
-  assert(context.afterCharacterHtml.includes('Angry Tofu Driver'));
-  assert(context.afterCharacterHtml.includes('data-character-id="angry_tofu_driver"'));
-  assert(context.afterSoundHtml.includes('Retro Arcade'));
-  assert(context.afterSoundHtml.includes('data-sound-pack-id="retro_arcade"'));
-  assert.strictEqual(context.afterPreviewDisabled, false);
+  assert.strictEqual(context.crewSurfaceCollectionHidden, false);
+  assert(context.crewSurfaceCharacterHtml.includes('Angry Tofu Driver'));
+  assert(context.crewSurfaceCharacterHtml.includes('data-character-id="angry_tofu_driver"'));
+  assert(context.crewSurfaceSoundHtml.includes('Retro Arcade'));
+  assert(context.crewSurfaceSoundHtml.includes('data-sound-pack-id="retro_arcade"'));
+  assert.strictEqual(context.crewSurfacePreviewDisabled, false);
   assert.strictEqual(context.activePackDisabled, true);
   assert(context.activeGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
   assert(context.activeGeneratorHtml.includes('disabled'));
@@ -818,6 +939,9 @@ function testTofuDriverArtworkIsIsolatedAndAccessible() {
   assert(html.includes('/static/nospill/assets/tofu-driver-shirt-1.png'));
   assert(!html.includes('Tofu Driver mascot logo'));
   assert(html.includes('class="nospill-hero-fallback" hidden>Tofu Driver</span>'));
+  const css = fs.readFileSync(path.join(NOSPILL_DIR, 'app.css'), 'utf8');
+  assert(css.includes('.nospill-hero-fallback[hidden]'));
+  assert(css.includes('display: none;'));
   assert(html.includes('alt="No-Spill Club 95% Delivered Tofu Driver shirt"'));
 }
 
@@ -1549,6 +1673,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   const tickState = JSON.parse(JSON.stringify(delivery.gameState));
   tickState.shop.tofuStock = 0;
   tickState.shop.generators.prepCounter = { unlocked: false, level: 0 };
+  tickState.shop.stations.prep_counter = 0;
   tickState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
   const ticked = context.applyShopGeneratorTick(
     tickState,
@@ -1733,6 +1858,115 @@ function testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly() {
   const exportedShop = context.sanitizeShopStateForExport(slow.gameState);
   assert(exportedShop.tofuStock > 0);
   assertNoSensitiveStorageData(exportedShop);
+}
+
+function testExpandedIdleShopLayerMechanics() {
+  const context = loadNoSpillContext({
+    window: { location: { search: '?dev=1' }, localStorage: makeLocalStorage() },
+  });
+  const state = context.defaultGameState();
+  assert.strictEqual(state.shop.prepSlots >= 10, true);
+  assert.strictEqual(state.shop.shopReach, 0);
+  assert.strictEqual(state.shop.shopSpirit, 0);
+  assert.strictEqual(state.shop.licenseStars, 0);
+  assert.strictEqual(state.shop.stations.tofu_press, 1);
+
+  const funded = context.defaultGameState();
+  funded.shop.tips = 10000;
+  funded.shop.tofuStock = 500;
+  funded.shop.deliveryOrders = 50;
+  funded.shop.reputation = 800;
+  funded.shop.shopLevel = context.getShopLevel(funded.shop.reputation);
+  funded.shop.prepSlots = 100;
+  funded.shop.shopReach = 20;
+  funded.shop.shopSpirit = 100;
+  funded.shop.routeKnowledge = 40;
+
+  const buyOne = context.buyShopStation('prep_counter', funded, 1);
+  assert.strictEqual(buyOne.ok, true);
+  assert.strictEqual(buyOne.gameState.shop.stations.prep_counter > funded.shop.stations.prep_counter, true);
+  assert.strictEqual(buyOne.gameState.shop.tips < funded.shop.tips, true);
+
+  const buyTen = context.buyShopStation('tofu_press', buyOne.gameState, 10);
+  assert.strictEqual(buyTen.ok, true);
+  assert.strictEqual(buyTen.quantity, 10);
+  assert.strictEqual(buyTen.gameState.shop.stations.tofu_press >= 11, true);
+  assert.strictEqual(context.getShopGeneratorRates(buyTen.gameState).tofuPressPerSecond > context.getShopGeneratorRates(funded).tofuPressPerSecond, true);
+
+  const stationUpgrade = context.buyStationUpgrade('tofu_press_faster', buyTen.gameState);
+  assert.strictEqual(stationUpgrade.ok, true);
+  assert.strictEqual(stationUpgrade.gameState.shop.stationUpgrades.tofu_press_faster, 1);
+
+  const bulkOrders = context.fulfillShopOrders(stationUpgrade.gameState, 10, { activeDrive: false });
+  assert.strictEqual(bulkOrders.ok, true);
+  assert.strictEqual(bulkOrders.quantity, 10);
+  assert.strictEqual(bulkOrders.gameState.shop.tips > stationUpgrade.gameState.shop.tips, true);
+  assert.strictEqual(Boolean(bulkOrders.gameState.stamps.first_shop_order), true);
+
+  const route = context.completeFictionalRoute('shop_street', bulkOrders.gameState);
+  assert.strictEqual(route.ok, true);
+  assert.strictEqual(route.gameState.shop.shopReach > bulkOrders.gameState.shop.shopReach, true);
+  assert.strictEqual(Boolean(route.gameState.stamps.shop_street_complete), true);
+
+  const training = context.runTrainingDrill('cone_drill', route.gameState);
+  assert.strictEqual(training.ok, true);
+  assert.strictEqual(training.gameState.shop.cupStabilityXP > route.gameState.shop.cupStabilityXP, true);
+
+  const garage = context.buyGarageUpgrade('cup_holder_charm', training.gameState);
+  assert.strictEqual(garage.ok, true);
+  assert.strictEqual(garage.gameState.shop.garage.cup_holder_charm, 1);
+
+  const crew = context.hireCrewRole('apprentice_driver', garage.gameState);
+  assert.strictEqual(crew.ok, true);
+  assert.strictEqual(crew.gameState.shop.crew.apprentice_driver, 1);
+  assert.strictEqual(Boolean(crew.gameState.stamps.first_apprentice), true);
+
+  const spiritGenerator = context.buySpiritGenerator('tea_kettle', crew.gameState);
+  assert.strictEqual(spiritGenerator.ok, true);
+  spiritGenerator.gameState.shop.shopSpirit = 25;
+  const boost = context.useShopSpiritBoost('rush_prep', spiritGenerator.gameState);
+  assert.strictEqual(boost.ok, true);
+  assert.strictEqual(boost.gameState.shop.tofuStock > spiritGenerator.gameState.shop.tofuStock, true);
+  boost.gameState.shop.festivalBoosts.lunch_rush = 1;
+  const festival = context.useFestivalBoost('lunch_rush', boost.gameState);
+  assert.strictEqual(festival.ok, true);
+  assert.strictEqual(Boolean(festival.gameState.stamps.first_festival_boost), true);
+
+  const rivalState = JSON.parse(JSON.stringify(festival.gameState));
+  rivalState.shop.deliveryOrders = 10;
+  rivalState.shop.shopSpirit = 20;
+  rivalState.shop.reputation = 100;
+  const rival = context.startRivalChallenge('quiet_counter', rivalState);
+  assert.strictEqual(rival.ok, true);
+  assert.strictEqual(Boolean(rival.gameState.stamps.quiet_counter_showcase), true);
+
+  const examState = JSON.parse(JSON.stringify(rival.gameState));
+  examState.totalXP = 2500;
+  examState.level = 10;
+  examState.shop.lifetimeDeliveryOrders = 25;
+  examState.shop.shopLevel = 5;
+  examState.shop.reputation = 1000;
+  examState.shop.routes.shop_street.mastery = 50;
+  ['first_shop_order', 'first_tofu_press', 'first_prep_counter', 'shop_street_complete', 'first_100_tips'].forEach((stampId) => {
+    examState.stamps[stampId] = { date: '2026-06-14T00:00:00.000Z', label: stampId };
+  });
+  const examStatus = context.licenseExamStatus(examState);
+  assert.strictEqual(examStatus.ready, true);
+  const exam = context.takeLicenseExam(examState, { confirmed: true });
+  assert.strictEqual(exam.ok, true);
+  assert.strictEqual(exam.gameState.shop.licenseStars > 0, true);
+  const perk = context.buyLicensePerk('starter_press', exam.gameState);
+  assert.strictEqual(perk.ok, true);
+
+  const qa = context.unlockAllLocalQa(context.defaultGameState());
+  assert.strictEqual(qa.ok, true);
+  assert.strictEqual(qa.gameState.shop.untrustedLocalQa, true);
+  assert.strictEqual(context.isDevToolsEnabled(), true);
+  assert(qa.gameState.shop.ledger.length <= 80);
+  assertNoSensitiveStorageData(qa.gameState);
+
+  const source = fs.readFileSync(NOSPILL_HTML, 'utf8') + fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!/\b(?:larva|hive|queen|swarm lord|mutagen|invasion|meat)\b/i.test(source));
 }
 
 function findDailyDeliveryDate(context, missionId) {
@@ -1982,9 +2216,13 @@ function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
   assert(!shareText.includes('discord.gg'));
 }
 
-function testDeliveryWallKeepsLockedMerchLinksHidden() {
+function testUnlockShelvesStayOutOfMainShopUi() {
   const context = loadNoSpillContext();
-  context.MERCH_LINKS.nospill_club = 'https://supercutecollectibles.com/products/nospill-club';
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(!html.includes('delivery-wall-title'));
+  assert(!html.includes('Delivery Wall'));
+  assert(!html.includes('Shop Unlocks'));
+  assert(!html.includes('Certified Delivery Unlocks'));
   vm.runInContext(`
 elements = { deliveryWallGrid: { innerHTML: "" } };
 const lockedState = defaultGameState();
@@ -1997,15 +2235,8 @@ renderDeliveryWall(unlockedState);
 globalThis.unlockedWallHtml = elements.deliveryWallGrid.innerHTML;
 `, context);
 
-  assert(context.lockedWallHtml.includes('No-Spill Club Gear'));
-  assert(context.lockedWallHtml.includes('Shop Unlocks'));
-  assert(context.lockedWallHtml.includes('Certified Delivery Unlocks'));
-  assert(context.lockedWallHtml.includes('Shop Unlocks come from growing the Tofu Shop.'));
-  assert(context.lockedWallHtml.includes('Certified Delivery Unlocks come from qualified smooth-driving results.'));
-  assert(!context.lockedWallHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
-  assert(!context.lockedWallHtml.includes('Buy unlocked shirt'));
-  assert(context.unlockedWallHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
-  assert(context.unlockedWallHtml.includes('target="_blank" rel="noopener noreferrer"'));
+  assert.strictEqual(context.lockedWallHtml, '');
+  assert.strictEqual(context.unlockedWallHtml, '');
 }
 
 function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
@@ -2473,11 +2704,12 @@ function run() {
   testGameProgressPersistsAcrossReloadSimulation();
   testResetExportAndImportProgressAreScopedAndValidated();
   testTofuShopStatePackIdleAndUpgradeRules();
+  testExpandedIdleShopLayerMechanics();
   testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();
   testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted();
   testDeliverySimulatorIsHiddenLocalAndSummarized();
   testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels();
-  testDeliveryWallKeepsLockedMerchLinksHidden();
+  testUnlockShelvesStayOutOfMainShopUi();
   testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
   testResultScreenShowsGameSummarySections();
   testPostRunNavigationReturnsToUpdatedDashboard();

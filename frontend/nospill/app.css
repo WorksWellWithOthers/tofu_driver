@@ -168,6 +168,10 @@
   text-align: center;
 }
 
+.nospill-hero-fallback[hidden] {
+  display: none;
+}
+
 .nospill-hero-copy {
   order: 1;
 }
@@ -484,6 +488,7 @@
 .nospill-delivery-summary-grid div,
 .nospill-upgrade-item,
 .nospill-generator-item,
+.nospill-idle-card,
 .nospill-delivery-wall-item {
   min-width: 0;
   border: 1px solid rgba(244, 247, 239, 0.11);
@@ -526,7 +531,8 @@
 .nospill-delivery-mission small,
 .nospill-shop-grid small,
 .nospill-upgrade-item small,
-.nospill-generator-item small {
+.nospill-generator-item small,
+.nospill-idle-card small {
   margin: 0;
   color: #bbc7c0;
   line-height: 1.42;
@@ -539,6 +545,7 @@
 .nospill-delivery-actions,
 .nospill-upgrade-list,
 .nospill-generator-list,
+.nospill-idle-grid,
 .nospill-collection-list,
 .nospill-delivery-wall-grid,
 .nospill-shop-action-row,
@@ -608,18 +615,21 @@
 }
 
 .nospill-upgrade-item,
-.nospill-generator-item {
+.nospill-generator-item,
+.nospill-idle-card {
   display: grid;
   gap: 8px;
 }
 
 .nospill-upgrade-item.is-locked,
-.nospill-generator-item.is-locked {
+.nospill-generator-item.is-locked,
+.nospill-idle-card.is-locked {
   opacity: 0.72;
 }
 
 .nospill-upgrade-item header,
-.nospill-generator-item header {
+.nospill-generator-item header,
+.nospill-idle-card header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -627,13 +637,62 @@
 }
 
 .nospill-upgrade-item strong,
-.nospill-generator-item strong {
+.nospill-generator-item strong,
+.nospill-idle-card strong {
   color: #f4f7ef;
 }
 
 .nospill-upgrade-item button,
-.nospill-generator-item button {
+.nospill-generator-item button,
+.nospill-idle-card button {
   min-height: 40px;
+}
+
+.nospill-shop-tabs {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-shop-tab-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nospill-shop-tab-list button {
+  min-height: 36px;
+  border: 1px solid rgba(244, 247, 239, 0.13);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #bbc7c0;
+  background: rgba(244, 247, 239, 0.04);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.nospill-shop-tab-list button.is-active {
+  border-color: rgba(85, 217, 138, 0.54);
+  color: #06100b;
+  background: #55d98a;
+}
+
+.nospill-idle-panel h4,
+.nospill-idle-panel h5 {
+  margin: 0;
+}
+
+.nospill-idle-grid {
+  grid-template-columns: 1fr;
+}
+
+.nospill-idle-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nospill-idle-actions button {
+  flex: 1 1 120px;
 }
 
 .nospill-collection-item {

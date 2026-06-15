@@ -17,8 +17,11 @@ The app is intentionally lightweight:
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
 - story-first landing flow with Today's Delivery, one home-shop Next Best Action CTA, and optional Cup Test certification
-- parked-only Tofu Shop resources, generator ticking, Fulfill Shop Order, starter upgrades, and Delivery Wall progress
+- parked-only Tofu Shop resources, per-second generator ticking, Fulfill Shop Order, and starter upgrades
 - home progression through Tofu Stock, Delivery Orders, Tips, Reputation, and Shop Level without sensors
+- expanded local idle layer with Prep Slots, Shop Reach, Shop Spirit, fictional route cards,
+  training drills, garage upgrades, Delivery Crew hires, friendly Rival Shop Challenges, License
+  Exams, License Stars, Passport stamps, and a capped Delivery Ledger
 - consolidated Delivery/Practice Complete result screen that returns to the updated dashboard/shop
 - Practice Mode grants modest local progress; qualified delivery criteria gate Perfect Pour and merch progress
 - cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
@@ -28,12 +31,18 @@ The app is intentionally lightweight:
 
 ## App Surfaces
 
-- `Tofu Shop` is the default home game. It uses local resources, generators, parked-only shop
-  actions, upgrades, Delivery Wall progress, and collection systems without sensors or location.
+- `Don't Spill the Cup` is the default visitor-facing surface and iconic challenge.
+- `Tofu Shop` is the home idle game. It uses local resources, generators, parked-only shop
+  actions, upgrades, fictional route cards, crew, Shop Spirit boosts, License progress, Delivery
+  Passport progress, and collection systems without sensors or location.
+- `Delivery Crew` is a separate collection surface for character and sound-pack choices once those
+  systems are relevant.
 - `Don't Spill the Cup` is the always-available challenge. It uses Basic Mode or opt-in Qualified
   Run to produce practice results or certified smooth-delivery boosts for the shop.
 
-The static app uses hash routing for local navigation: `#/shop` and `#/cup-test`.
+The static app uses hash routing for local navigation: root/no hash defaults to `#/cup-test`,
+`#/cup-test` shows the challenge, `#/shop` shows the Tofu Shop, and `#/crew` shows Delivery Crew
+collection controls when relevant.
 
 ## Project Layout
 

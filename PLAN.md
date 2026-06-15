@@ -11,26 +11,38 @@
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
-- The UI is split into two surfaces with hash routing: `#/shop` for Tofu Shop and `#/cup-test`
-  for Don't Spill the Cup.
+- The UI is split into two surfaces with hash routing: root/no hash defaults to `#/cup-test`,
+  `#/cup-test` shows Don't Spill the Cup, and `#/shop` shows Tofu Shop.
+- The first brand shelf is shared across top-level surfaces. It keeps one Tofu Driver logo image and
+  changes the right-side copy/CTAs for Don't Spill the Cup vs Tofu Shop.
 - The landing page now starts with a game-first Today's Delivery dashboard, clear goal/reward,
   and a home-shop Next Best Action before dense setup controls.
 - Home progression is now the base game: users can start the Tofu Shop, Pack Tofu, wait for
   generators, and Fulfill Shop Orders without sensors or location access.
 - Tofu Shop V1 adds parked-only tofu stock, delivery orders, tips, reputation, shop levels,
-  Pack Tofu, Fulfill Shop Order, capped idle production, starter upgrades, and Delivery Wall progress.
+  Pack Tofu, Fulfill Shop Order, capped idle production, and starter upgrades.
 - Fulfill Shop Order uses a lightweight `Shop Order Complete` result screen with driving share-card
   actions disabled.
 - Tofu Shop Generator V2 adds visible local ticking: Tofu Press produces Tofu Stock, and Prep
   Counter converts Tofu Stock into Delivery Orders while parked or through capped offline progress.
   Generator rates are shown per second in the shop UI.
+- Tofu Shop Idle Layer V3 adds a tabbed home game surface with Overview, Production, Orders,
+  Routes, Training, Garage, Crew, Shop Spirit, Upgrades, Rival Shop Challenges, Passport, License,
+  Ledger, and Settings / QA panels.
+- New local shop resources include Prep Slots, Shop Reach, Shop Spirit, Cup Stability XP, Route
+  Knowledge, and License Stars. They persist in `tofuDriverGameStateV1` as summarized local state.
+- Production now supports data-driven shop stations, global buy multipliers (`x1`, `x10`, `x100`,
+  `Max`), milestone output boosts, station-specific upgrades, fictional route cards, parked
+  training drills, fictional garage upgrades, Delivery Crew hires, Shop Spirit boosts, License
+  Exams, License Perks, friendly Rival Shop Challenges, expanded Passport stamps, and a capped
+  Delivery Ledger.
 - Qualified Cup Test runs are framed as optional certified delivery boosts/status: they can grant
   bonus shop rewards and temporary Tofu Press boosts without making real driving required for
   ordinary shop progression.
 - Don't Spill the Cup remains always available from navigation, the shop boost CTA, and post-run
   secondary actions without requiring shop resources.
 - The Collection Layer adds cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
-  for parked/result screens only.
+  on a dedicated `#/crew` surface for parked/result screens only.
 - Delivery Simulator is hidden by default and can be enabled locally with `?simulator=1` or
   `tofuDriverSimulatorEnabled=true` to test completed delivery rewards without sensors or location.
 - Result screens now use one consolidated Delivery/Practice Complete layout, and Practice Mode
@@ -39,7 +51,8 @@
 - Post-run navigation returns users to the updated dashboard/Tofu Shop, with another Cup Test as a
   secondary action instead of the only exit from results.
 - First-run progressive reveal now keeps Today's Delivery and the Tofu Shop CTA prominent while the
-  expanded Delivery Board, Passport, Delivery Crew, and Sound Packs wait until they matter.
+  expanded Delivery Board, Passport, and dedicated Delivery Crew/Sound Pack surface wait until they
+  matter.
 - The top dashboard includes a Next Best Action card so first-run users see one primary home-shop
   action; Take the Cup Test remains available as a secondary certified action.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.
@@ -60,14 +73,14 @@
 4. Confirm custom-domain DNS records and certificate provisioning for `tofudriver.com`.
 5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
 6. Play-test the progressive reveal gates on mobile and tune when shop, passport, crew, and sound
-   details should expand.
+   details should expand or appear in navigation.
 7. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
-8. Play-test Tofu Shop pacing at home and tune tofu stock, delivery order, tips, generator,
-   reputation, and certified-boost rewards.
+8. Play-test Tofu Shop pacing at home and tune tofu stock, delivery order, tips, Prep Slot,
+   Shop Spirit, fictional route, crew, License Exam, and certified-boost rewards.
 9. Use Delivery Simulator scenarios for local QA of Delivery Complete, unlocks, shop rewards, and
    share sanitization before mobile road tests.
-10. Prototype the future idle expansion in the documented small-scope order: one fictional route,
-   one generator, three upgrades, one delivery report, and one stamp.
+10. Deepen the minimal V3 systems: route durations, crew assignment queues, richer ledger reports,
+   Festival Boost inventory rewards, and better License Exam balancing.
 11. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
@@ -81,6 +94,8 @@
 - What moderation policy is required before accepting user-generated driving incident reports in Discord?
 - Which optional supporter/cosmetic purchases fit the ethical monetization rules without weakening
   earned driving achievements?
+- Which V3 idle systems should stay instant-result versus become timed/queued interactions?
+- What is the right balance curve for License Exam resets and permanent License Perks?
 
 ## Non-Goals For The Current Slice
 

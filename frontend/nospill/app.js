@@ -226,6 +226,12 @@ const SHOP_ORDER_REPUTATION_REWARD = 1;
 const SHOP_ORDER_XP_REWARD = 4;
 const CERTIFIED_BOOST_HOURS = 2;
 const CERTIFIED_BOOST_PRESS_MULTIPLIER = 1.2;
+const PREP_SLOT_BASE_MAX = 10;
+const PREP_SLOT_REGEN_PER_SECOND = 1 / 120;
+const SHOP_SPIRIT_BASE_MAX = 50;
+const LEDGER_MAX_ENTRIES = 80;
+const SHOP_MULTIPLIERS = [1, 10, 100, "max"];
+const DEV_TOOLS_LOCAL_STORAGE_KEY = "tofuDriverDevToolsEnabled";
 
 const SHOP_UPGRADES = [
   {
@@ -268,6 +274,177 @@ const SHOP_UPGRADES = [
     effect: "Adds a modest reputation bonus for qualified smooth deliveries.",
     maxLevel: 4,
   },
+];
+
+const SHOP_STATIONS = [
+  {
+    id: "tofu_press",
+    name: "Tofu Press",
+    description: "Presses tofu stock for the shop.",
+    baseCostTips: 0,
+    growthRate: 1.15,
+    prepSlotCost: 0,
+    unlock: "Available at start",
+    production: "Tofu Stock",
+  },
+  {
+    id: "prep_counter",
+    name: "Prep Counter",
+    description: "Turns tofu stock into prepared delivery orders.",
+    baseCostTips: 25,
+    growthRate: 1.16,
+    prepSlotCost: 1,
+    unlock: "Tofu Stock 10 or Shop Level 2",
+    production: "Delivery Orders",
+  },
+  {
+    id: "delivery_shelf",
+    name: "Delivery Shelf",
+    description: "Keeps order handoffs tidy and boosts the Prep Counter.",
+    baseCostTips: 90,
+    growthRate: 1.17,
+    prepSlotCost: 1,
+    unlock: "Shop Level 2",
+    production: "Prep Counter boost",
+  },
+  {
+    id: "shop_sign",
+    name: "Shop Sign",
+    description: "Makes the counter more welcoming and improves reputation.",
+    baseCostTips: 140,
+    growthRate: 1.18,
+    prepSlotCost: 1,
+    unlock: "Reputation 10",
+    production: "Reputation and customers",
+  },
+  {
+    id: "regular_customer",
+    name: "Regular Customer",
+    description: "Steady counter friends who bring tips when orders are ready.",
+    baseCostTips: 240,
+    growthRate: 1.2,
+    prepSlotCost: 1,
+    unlock: "Shop Sign 1",
+    production: "Tips over time",
+  },
+  {
+    id: "delivery_route",
+    name: "Delivery Route",
+    description: "Fictional route cards that grow shop reach and route knowledge.",
+    baseCostTips: 420,
+    growthRate: 1.22,
+    prepSlotCost: 2,
+    unlock: "Shop Reach 2",
+    production: "Route rewards",
+  },
+  {
+    id: "dispatcher_desk",
+    name: "Dispatcher Desk",
+    description: "Organizes fictional safe route repeats for the crew.",
+    baseCostTips: 900,
+    growthRate: 1.26,
+    prepSlotCost: 2,
+    unlock: "Reputation 40",
+    production: "Automation",
+  },
+  {
+    id: "regional_network",
+    name: "Regional Tofu Network",
+    description: "A late shop coordination board that boosts lower stations.",
+    baseCostTips: 2400,
+    growthRate: 1.32,
+    prepSlotCost: 3,
+    unlock: "Shop Level 5",
+    production: "Global shop boost",
+  },
+];
+
+const STATION_UPGRADES = [
+  { id: "tofu_press_faster", stationId: "tofu_press", name: "Faster Pressing", costTips: 60, effect: "Tofu Press rate +25%", maxLevel: 10 },
+  { id: "tofu_press_double", stationId: "tofu_press", name: "Double Mold", costTips: 100, effect: "Tofu Press output +50%", maxLevel: 8 },
+  { id: "prep_counter_faster", stationId: "prep_counter", name: "Faster Packaging", costTips: 120, effect: "Prep Counter rate +25%", maxLevel: 10 },
+  { id: "prep_counter_double", stationId: "prep_counter", name: "Double Labels", costTips: 180, effect: "Prep Counter output +50%", maxLevel: 8 },
+  { id: "delivery_shelf_faster", stationId: "delivery_shelf", name: "Faster Handoff", costTips: 220, effect: "Delivery Shelf boost +20%", maxLevel: 8 },
+  { id: "delivery_shelf_double", stationId: "delivery_shelf", name: "Double Stack", costTips: 320, effect: "Delivery Shelf capacity +30%", maxLevel: 8 },
+  { id: "shop_sign_faster", stationId: "shop_sign", name: "Brighter Sign", costTips: 360, effect: "Reputation from orders +20%", maxLevel: 8 },
+  { id: "shop_sign_double", stationId: "shop_sign", name: "Word of Mouth", costTips: 520, effect: "Customer tip gain +20%", maxLevel: 8 },
+  { id: "regular_customer_faster", stationId: "regular_customer", name: "Loyalty Card", costTips: 650, effect: "Regular Customer tips +25%", maxLevel: 8 },
+  { id: "regular_customer_double", stationId: "regular_customer", name: "Bring a Friend", costTips: 880, effect: "Regular Customer output +50%", maxLevel: 8 },
+  { id: "route_familiarity", stationId: "delivery_route", name: "Route Familiarity", costTips: 1000, effect: "Fictional route rewards +20%", maxLevel: 8 },
+  { id: "careful_notes", stationId: "delivery_route", name: "Careful Notes", costTips: 1300, effect: "Route knowledge +25%", maxLevel: 8 },
+  { id: "better_clipboard", stationId: "dispatcher_desk", name: "Better Clipboard", costTips: 1600, effect: "Crew automation +20%", maxLevel: 6 },
+  { id: "team_routine", stationId: "dispatcher_desk", name: "Team Routine", costTips: 2200, effect: "Automated route tips +20%", maxLevel: 6 },
+  { id: "network_calendar", stationId: "regional_network", name: "Network Calendar", costTips: 3200, effect: "All shop production +10%", maxLevel: 5 },
+];
+
+const SHOP_ROUTE_CATALOG = [
+  { id: "shop_street", name: "Shop Street", unlock: "Available at start", tofuCost: 4, orderCost: 1, tipReward: 24, reputationReward: 2, routeKnowledgeReward: 2, shopReachReward: 1, difficulty: "Beginner fictional route", stampId: "shop_street_complete" },
+  { id: "old_hill_road", name: "Old Hill Road", unlock: "Shop Reach 2", tofuCost: 8, orderCost: 2, tipReward: 54, reputationReward: 4, routeKnowledgeReward: 5, shopReachReward: 2, difficulty: "Story route card", stampId: "old_hill_story" },
+  { id: "lantern_bridge", name: "Lantern Bridge", unlock: "Reputation 25", tofuCost: 12, orderCost: 3, tipReward: 84, reputationReward: 6, routeKnowledgeReward: 8, shopReachReward: 2, difficulty: "Night-themed fictional route", stampId: "lantern_bridge_delivery" },
+  { id: "rainy_switchback", name: "Rainy Switchback", unlock: "Route Knowledge 25", tofuCost: 18, orderCost: 4, tipReward: 130, reputationReward: 8, routeKnowledgeReward: 12, shopReachReward: 3, difficulty: "Weather story route", stampId: "rainy_switchback_notes" },
+  { id: "fox_shrine_road", name: "Fox Shrine Road", unlock: "Shop Reach 10", tofuCost: 10, orderCost: 3, tipReward: 70, reputationReward: 7, routeKnowledgeReward: 15, shopReachReward: 4, difficulty: "Mystery route card", stampId: "fox_shrine_visitor" },
+];
+
+const TRAINING_DRILLS = [
+  { id: "cone_drill", name: "Run Cone Drill", skill: "smoothHands", costTips: 12, cupStabilityXP: 3, report: "The cones stayed exactly where they belonged." },
+  { id: "brake_timing", name: "Run Brake Timing Drill", skill: "brakeFeather", costTips: 18, cupStabilityXP: 4, report: "Brake timing notes added to the counter ledger." },
+  { id: "smooth_hands", name: "Run Smooth Hands Drill", skill: "cornerCalm", costTips: 22, cupStabilityXP: 5, report: "Smooth hands practice made the fictional route cards calmer." },
+];
+
+const GARAGE_UPGRADES = [
+  { id: "cup_holder_charm", name: "Cup Holder Charm", costTips: 80, effect: "Fictional route stability +5%", maxLevel: 5 },
+  { id: "cargo_straps", name: "Gentle Cargo Straps", costTips: 120, effect: "Route reports gain +5% tips", maxLevel: 5 },
+  { id: "route_notebook", name: "Route Notebook", costTips: 160, effect: "Route Knowledge rewards +10%", maxLevel: 5 },
+  { id: "delivery_mat", name: "Careful Delivery Mat", costTips: 220, effect: "Shop order reputation +1 at higher levels", maxLevel: 5 },
+];
+
+const CREW_ROLES = [
+  { id: "apprentice_driver", name: "Apprentice Driver", costTips: 300, unlock: "Shop Reach 3", effect: "Repeats safe fictional routes slowly." },
+  { id: "prep_cook", name: "Prep Cook", costTips: 360, unlock: "Prep Counter 2", effect: "Boosts Prep Counter output." },
+  { id: "dispatcher", name: "Dispatcher", costTips: 520, unlock: "Dispatcher Desk 1", effect: "Improves crew route assignment." },
+  { id: "mechanic", name: "Mechanic", costTips: 700, unlock: "Garage upgrade owned", effect: "Boosts fictional garage effects." },
+  { id: "route_scout", name: "Route Scout", costTips: 850, unlock: "Shop Reach 8", effect: "Improves Shop Reach from route cards." },
+  { id: "stamp_guide", name: "Stamp Guide", costTips: 1000, unlock: "Passport 5 stamps", effect: "Improves fictional stamp discovery." },
+  { id: "night_driver", name: "Night Driver", costTips: 1300, unlock: "Lantern Bridge complete", effect: "Supports night and festival route cards." },
+];
+
+const SPIRIT_GENERATORS = [
+  { id: "tea_kettle", name: "Tea Kettle", costTips: 75, spiritPerSecond: 0.03, unlock: "Available at start" },
+  { id: "shrine_corner", name: "Shrine Corner", costTips: 220, spiritPerSecond: 0.07, unlock: "Reputation 15" },
+  { id: "festival_lantern", name: "Festival Lantern", costTips: 520, spiritPerSecond: 0.12, unlock: "Shop Reach 6" },
+  { id: "night_shift_kettle", name: "Night Shift Kettle", costTips: 900, spiritPerSecond: 0.18, unlock: "Shop Level 4" },
+  { id: "lucky_cat", name: "Lucky Cat", costTips: 1400, spiritPerSecond: 0.25, unlock: "Shop Level 5" },
+];
+
+const SHOP_SPIRIT_BOOSTS = [
+  { id: "rush_prep", name: "Rush Prep", costSpirit: 10, type: "instant_tofu", amount: 20, description: "Instant tofu stock for parked shop play." },
+  { id: "warm_counter", name: "Warm Counter", costSpirit: 15, type: "instant_orders", amount: 4, description: "Instant Delivery Orders if tofu stock is ready." },
+  { id: "busy_lunch", name: "Busy Lunch Hour", costSpirit: 20, type: "tips_multiplier", multiplier: 1.5, durationSeconds: 900, description: "Temporary shop tips boost." },
+  { id: "double_batch", name: "Double Batch", costSpirit: 24, type: "press_multiplier", multiplier: 1.6, durationSeconds: 900, description: "Temporary Tofu Press boost." },
+  { id: "calm_focus", name: "Calm Shop Focus", costSpirit: 18, type: "route_multiplier", multiplier: 1.4, durationSeconds: 900, description: "Temporary fictional route reward boost." },
+];
+
+const FESTIVAL_BOOSTS = [
+  { id: "lunch_rush", name: "Lunch Rush Token", type: "tips_multiplier" },
+  { id: "steam_hour", name: "Steam Hour Token", type: "press_multiplier" },
+  { id: "packing_party", name: "Packing Party Token", type: "prep_multiplier" },
+  { id: "story_lantern", name: "Story Lantern Token", type: "reputation_multiplier" },
+  { id: "calm_focus_token", name: "Calm Focus Token", type: "route_multiplier" },
+];
+
+const LICENSE_PERKS = [
+  { id: "starter_press", name: "Start with extra Tofu Press level", costStars: 1, effect: "Future exams restart with +1 Tofu Press." },
+  { id: "starter_counter", name: "Start with one Prep Counter", costStars: 1, effect: "Future exams keep Prep Counter unlocked." },
+  { id: "offline_cap", name: "Higher offline cap", costStars: 1, effect: "Offline cap +1 hour." },
+  { id: "prep_slot_regen", name: "Extra Prep Slot recovery", costStars: 2, effect: "Prep Slots recover faster." },
+  { id: "shop_multiplier", name: "Small shop production multiplier", costStars: 2, effect: "All shop production +10%." },
+];
+
+const RIVAL_CHALLENGES = [
+  { id: "quiet_counter", name: "The Quiet Counter", unlock: "Reputation 10", orderCost: 2, spiritCost: 5, tipsReward: 80, reputationReward: 5, stampId: "quiet_counter_showcase" },
+  { id: "lantern_bento", name: "Lantern Bridge Bento", unlock: "Lantern Bridge complete", orderCost: 3, spiritCost: 8, tipsReward: 130, reputationReward: 8, stampId: "lantern_bento_showcase" },
+  { id: "fox_shrine_snacks", name: "Fox Shrine Snacks", unlock: "Fox Shrine Road complete", orderCost: 4, spiritCost: 10, tipsReward: 180, reputationReward: 12, stampId: "fox_paid_leaves" },
+  { id: "midnight_noodle", name: "Midnight Noodle Stand", unlock: "Shop Level 5", orderCost: 5, spiritCost: 14, tipsReward: 240, reputationReward: 16, stampId: "midnight_showcase" },
 ];
 
 const CHARACTER_CATALOG = [
@@ -492,6 +669,16 @@ const SKILL_LABELS = {
 
 const STAMP_LABELS = {
   first_delivery: "First Delivery",
+  first_shop_order: "First Shop Order",
+  first_tofu_press: "First Tofu Press",
+  first_prep_counter: "First Prep Counter",
+  first_10_orders: "First 10 Orders",
+  first_100_tips: "First 100 Tips",
+  shop_street_complete: "Shop Street Complete",
+  old_hill_story: "Old Hill Road Story",
+  lantern_bridge_delivery: "Lantern Bridge Delivery",
+  rainy_switchback_notes: "Rainy Switchback Notes",
+  fox_shrine_visitor: "Fox Shrine Visitor",
   daily_delivery_complete: "Daily Delivery Complete",
   cup_stayed_full: "Cup Stayed Full",
   smooth_commute: "Smooth Commute",
@@ -504,6 +691,14 @@ const STAMP_LABELS = {
   passenger_approved: "Passenger Approved",
   nospill_club: CLUB_NAME,
   perfect_pour: TOP_BADGE,
+  first_license_exam: "First License Exam",
+  first_apprentice: "First Apprentice",
+  first_festival_boost: "First Festival Boost",
+  full_cup_secret: "Secret: The Cup Was Already Full",
+  fox_paid_leaves: "Secret: Fox Paid in Leaves",
+  quiet_counter_showcase: "The Quiet Counter Showcase",
+  lantern_bento_showcase: "Lantern Bridge Bento",
+  midnight_showcase: "Midnight Noodle Stand",
 };
 
 const TOFU_VISUAL = {
@@ -546,7 +741,9 @@ const appState = {
   axisPreviewBaseline: null,
   axisPreviewFiltered: null,
   shopGeneratorTimer: null,
-  surface: "shop",
+  surface: "cup-test",
+  shopTab: "overview",
+  purchaseMultiplier: 1,
 };
 
 let elements = {};
@@ -1088,26 +1285,110 @@ function safeNonNegativeInteger(value, fallback = 0, maxValue = SHOP_MAX_RESOURC
   return Math.round(safeNonNegativeNumber(value, fallback, maxValue));
 }
 
+function normalizeCatalogCounts(value, catalog, maxValue = 100000) {
+  const source = value && typeof value === "object" ? value : {};
+  return Object.fromEntries(
+    catalog.map((item) => [
+      item.id,
+      safeNonNegativeInteger(source[item.id], 0, maxValue),
+    ]),
+  );
+}
+
+function normalizeFestivalBoosts(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return Object.fromEntries(
+    FESTIVAL_BOOSTS.map((boost) => [
+      boost.id,
+      safeNonNegativeInteger(source[boost.id], 0, 999),
+    ]),
+  );
+}
+
+function normalizeRouteState(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return Object.fromEntries(
+    SHOP_ROUTE_CATALOG.map((route) => {
+      const item = source[route.id] && typeof source[route.id] === "object"
+        ? source[route.id]
+        : {};
+      return [
+        route.id,
+        {
+          completions: safeNonNegativeInteger(item.completions, 0, 100000),
+          mastery: safeNonNegativeInteger(item.mastery, 0, 100),
+          auto: Boolean(item.auto),
+          lastCompletedAt: typeof item.lastCompletedAt === "string" ? item.lastCompletedAt : "",
+        },
+      ];
+    }),
+  );
+}
+
+function normalizeLedger(value) {
+  return (Array.isArray(value) ? value : [])
+    .filter((entry) => entry && typeof entry === "object")
+    .map((entry) => ({
+      date: typeof entry.date === "string" ? entry.date : new Date().toISOString(),
+      type: typeof entry.type === "string" ? entry.type.slice(0, 40) : "shop",
+      text: typeof entry.text === "string" ? entry.text.slice(0, 220) : "Shop note.",
+    }))
+    .slice(0, LEDGER_MAX_ENTRIES);
+}
+
+function addLedgerEntry(gameState, type, text, date = new Date()) {
+  const next = normalizeGameState(gameState);
+  const iso = date instanceof Date ? date.toISOString() : new Date(date).toISOString();
+  next.shop.ledger = [
+    { date: iso, type: String(type || "shop").slice(0, 40), text: String(text || "Shop note.").slice(0, 220) },
+    ...next.shop.ledger,
+  ].slice(0, LEDGER_MAX_ENTRIES);
+  return next;
+}
+
 function defaultShopState() {
   return {
     tofuStock: 0,
     deliveryOrders: 0,
     tips: 0,
     reputation: 0,
+    prepSlots: PREP_SLOT_BASE_MAX,
+    shopReach: 0,
+    shopSpirit: 0,
+    licenseStars: 0,
+    cupStabilityXP: 0,
+    routeKnowledge: 0,
     shopLevel: 1,
     lifetimeDeliveryOrders: 0,
     lifetimeTips: 0,
     lifetimeTofuPacked: 0,
     lifetimeReputation: 0,
+    lifetimeRoutesCompleted: 0,
+    lifetimeLicenseExams: 0,
     upgrades: {},
+    stationUpgrades: normalizeCatalogCounts({}, STATION_UPGRADES, 100),
+    stations: normalizeCatalogCounts({ tofu_press: 1 }, SHOP_STATIONS, 100000),
+    routes: normalizeRouteState({}),
+    garage: normalizeCatalogCounts({}, GARAGE_UPGRADES, 100),
+    crew: normalizeCatalogCounts({}, CREW_ROLES, 1000),
+    spiritGenerators: normalizeCatalogCounts({}, SPIRIT_GENERATORS, 1000),
+    festivalBoosts: normalizeFestivalBoosts({}),
+    licensePerks: normalizeCatalogCounts({}, LICENSE_PERKS, 20),
+    rivals: normalizeCatalogCounts({}, RIVAL_CHALLENGES, 1000),
     generators: defaultShopGenerators(),
     activeBoosts: [],
+    activeFestivalBoosts: [],
+    purchaseMultiplier: 1,
+    currentShopTab: "overview",
+    untrustedLocalQa: false,
+    ledger: [],
     lastShopTickAt: "",
     lastGeneratorTickAt: "",
     offlineEarnings: {
       tofuStock: 0,
       deliveryOrders: 0,
       tips: 0,
+      shopSpirit: 0,
       cappedHours: 0,
     },
   };
@@ -1183,12 +1464,31 @@ function normalizeShopState(shop) {
   const source = shop && typeof shop === "object" ? shop : {};
   const reputation = safeNonNegativeInteger(source.reputation, defaults.reputation);
   const tips = safeNonNegativeInteger(source.tips, defaults.tips);
+  const stations = normalizeCatalogCounts(
+    source.stations || {
+      tofu_press: source.generators && source.generators.tofuPress
+        ? source.generators.tofuPress.level
+        : 1,
+      prep_counter: source.generators && source.generators.prepCounter
+        ? source.generators.prepCounter.level
+        : 0,
+    },
+    SHOP_STATIONS,
+    100000,
+  );
+  if (stations.tofu_press < 1) stations.tofu_press = 1;
   return {
     ...defaults,
     tofuStock: safeNonNegativeInteger(source.tofuStock, defaults.tofuStock),
     deliveryOrders: safeNonNegativeInteger(source.deliveryOrders, defaults.deliveryOrders),
     tips,
     reputation,
+    prepSlots: safeNonNegativeNumber(source.prepSlots, defaults.prepSlots, getPrepSlotMax({ ...defaults, ...source })),
+    shopReach: safeNonNegativeInteger(source.shopReach, defaults.shopReach),
+    shopSpirit: safeNonNegativeNumber(source.shopSpirit, defaults.shopSpirit, getShopSpiritMax({ ...defaults, ...source })),
+    licenseStars: safeNonNegativeInteger(source.licenseStars, defaults.licenseStars, 100000),
+    cupStabilityXP: safeNonNegativeInteger(source.cupStabilityXP, defaults.cupStabilityXP),
+    routeKnowledge: safeNonNegativeInteger(source.routeKnowledge, defaults.routeKnowledge),
     shopLevel: getShopLevel(reputation),
     lifetimeDeliveryOrders: safeNonNegativeInteger(
       source.lifetimeDeliveryOrders,
@@ -1206,9 +1506,29 @@ function normalizeShopState(shop) {
       reputation,
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
     ),
+    lifetimeRoutesCompleted: safeNonNegativeInteger(source.lifetimeRoutesCompleted, defaults.lifetimeRoutesCompleted),
+    lifetimeLicenseExams: safeNonNegativeInteger(source.lifetimeLicenseExams, defaults.lifetimeLicenseExams),
     upgrades: normalizeUpgradeLevels(source.upgrades),
+    stationUpgrades: normalizeCatalogCounts(source.stationUpgrades, STATION_UPGRADES, 100),
+    stations,
+    routes: normalizeRouteState(source.routes),
+    garage: normalizeCatalogCounts(source.garage, GARAGE_UPGRADES, 100),
+    crew: normalizeCatalogCounts(source.crew, CREW_ROLES, 1000),
+    spiritGenerators: normalizeCatalogCounts(source.spiritGenerators, SPIRIT_GENERATORS, 1000),
+    festivalBoosts: normalizeFestivalBoosts(source.festivalBoosts),
+    licensePerks: normalizeCatalogCounts(source.licensePerks, LICENSE_PERKS, 20),
+    rivals: normalizeCatalogCounts(source.rivals, RIVAL_CHALLENGES, 1000),
     generators: normalizeShopGenerators(source.generators),
     activeBoosts: normalizeShopBoosts(source.activeBoosts),
+    activeFestivalBoosts: normalizeShopBoosts(source.activeFestivalBoosts),
+    purchaseMultiplier: SHOP_MULTIPLIERS.includes(source.purchaseMultiplier)
+      ? source.purchaseMultiplier
+      : defaults.purchaseMultiplier,
+    currentShopTab: typeof source.currentShopTab === "string"
+      ? source.currentShopTab.slice(0, 40)
+      : defaults.currentShopTab,
+    untrustedLocalQa: Boolean(source.untrustedLocalQa),
+    ledger: normalizeLedger(source.ledger),
     lastShopTickAt: typeof source.lastShopTickAt === "string" ? source.lastShopTickAt : "",
     lastGeneratorTickAt:
       typeof source.lastGeneratorTickAt === "string" ? source.lastGeneratorTickAt : "",
@@ -1223,6 +1543,10 @@ function normalizeShopState(shop) {
       ),
       tips: safeNonNegativeInteger(
         source.offlineEarnings && source.offlineEarnings.tips,
+        0,
+      ),
+      shopSpirit: safeNonNegativeNumber(
+        source.offlineEarnings && source.offlineEarnings.shopSpirit,
         0,
       ),
       cappedHours: safeNonNegativeNumber(
@@ -1390,31 +1714,68 @@ function isValidImportedShopNumber(value, maxValue = SHOP_MAX_RESOURCE) {
 function validateImportedShopState(shop) {
   if (shop === undefined) return true;
   if (!shop || typeof shop !== "object" || Array.isArray(shop)) return false;
-  if (!isValidImportedShopNumber(shop.tofuStock)) return false;
-  if (!isValidImportedShopNumber(shop.deliveryOrders)) return false;
-  if (!isValidImportedShopNumber(shop.tips)) return false;
-  if (!isValidImportedShopNumber(shop.reputation)) return false;
+  const numericFields = [
+    "tofuStock",
+    "deliveryOrders",
+    "tips",
+    "reputation",
+    "prepSlots",
+    "shopReach",
+    "shopSpirit",
+    "licenseStars",
+    "cupStabilityXP",
+    "routeKnowledge",
+    "lifetimeDeliveryOrders",
+    "lifetimeTips",
+    "lifetimeTofuPacked",
+    "lifetimeReputation",
+    "lifetimeRoutesCompleted",
+    "lifetimeLicenseExams",
+  ];
   if (!isValidImportedShopNumber(shop.shopLevel, 1000)) return false;
-  if (!isValidImportedShopNumber(shop.lifetimeDeliveryOrders)) return false;
-  if (!isValidImportedShopNumber(shop.lifetimeTips)) return false;
-  if (!isValidImportedShopNumber(shop.lifetimeTofuPacked)) return false;
-  if (!isValidImportedShopNumber(shop.lifetimeReputation)) return false;
+  if (!numericFields.every((field) => isValidImportedShopNumber(shop[field]))) return false;
   if (shop.offlineEarnings !== undefined) {
     if (!shop.offlineEarnings || typeof shop.offlineEarnings !== "object") return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.tofuStock)) return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.deliveryOrders)) return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.tips)) return false;
+    if (!isValidImportedShopNumber(shop.offlineEarnings.shopSpirit)) return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.cappedHours, SHOP_OFFLINE_CAP_HOURS)) {
       return false;
     }
   }
-  if (shop.upgrades !== undefined) {
-    if (!shop.upgrades || typeof shop.upgrades !== "object" || Array.isArray(shop.upgrades)) {
+  const numberMaps = [
+    "upgrades",
+    "stationUpgrades",
+    "stations",
+    "garage",
+    "crew",
+    "spiritGenerators",
+    "festivalBoosts",
+    "licensePerks",
+    "rivals",
+  ];
+  for (const mapKey of numberMaps) {
+    if (shop[mapKey] !== undefined) {
+      if (!shop[mapKey] || typeof shop[mapKey] !== "object" || Array.isArray(shop[mapKey])) {
+        return false;
+      }
+      for (const value of Object.values(shop[mapKey])) {
+        const level = value && typeof value === "object" ? value.level : value;
+        if (!isValidImportedShopNumber(level, 100000)) return false;
+      }
+    }
+  }
+  if (shop.routes !== undefined) {
+    if (!shop.routes || typeof shop.routes !== "object" || Array.isArray(shop.routes)) {
       return false;
     }
-    for (const value of Object.values(shop.upgrades)) {
-      const level = value && typeof value === "object" ? value.level : value;
-      if (!isValidImportedShopNumber(level, 100)) return false;
+    for (const route of Object.values(shop.routes)) {
+      if (!route || typeof route !== "object" || Array.isArray(route)) return false;
+      if (!isValidImportedShopNumber(route.completions, 100000)) return false;
+      if (!isValidImportedShopNumber(route.mastery, 100)) return false;
+      if (route.auto !== undefined && typeof route.auto !== "boolean") return false;
+      if (route.lastCompletedAt !== undefined && typeof route.lastCompletedAt !== "string") return false;
     }
   }
   if (shop.generators !== undefined) {
@@ -1432,9 +1793,10 @@ function validateImportedShopState(shop) {
       if (!isValidImportedShopNumber(generator.level, 100)) return false;
     }
   }
-  if (shop.activeBoosts !== undefined) {
-    if (!Array.isArray(shop.activeBoosts)) return false;
-    for (const boost of shop.activeBoosts) {
+  for (const boostKey of ["activeBoosts", "activeFestivalBoosts"]) {
+    if (shop[boostKey] === undefined) continue;
+    if (!Array.isArray(shop[boostKey])) return false;
+    for (const boost of shop[boostKey]) {
       if (!boost || typeof boost !== "object" || Array.isArray(boost)) return false;
       if (boost.id !== undefined && typeof boost.id !== "string") return false;
       if (boost.label !== undefined && typeof boost.label !== "string") return false;
@@ -1443,6 +1805,15 @@ function validateImportedShopState(shop) {
       if (boost.multiplier !== undefined && !isValidImportedShopNumber(boost.multiplier, 5)) {
         return false;
       }
+    }
+  }
+  if (shop.ledger !== undefined) {
+    if (!Array.isArray(shop.ledger)) return false;
+    for (const entry of shop.ledger) {
+      if (!entry || typeof entry !== "object" || Array.isArray(entry)) return false;
+      if (entry.date !== undefined && typeof entry.date !== "string") return false;
+      if (entry.type !== undefined && typeof entry.type !== "string") return false;
+      if (entry.text !== undefined && typeof entry.text !== "string") return false;
     }
   }
   return true;
@@ -1865,17 +2236,104 @@ function activeShopBoostMultiplier(shop, now = new Date()) {
   }, 1);
 }
 
+function getPrepSlotMax(shop) {
+  const source = shop && shop.shop ? shop.shop : shop || {};
+  const perkBonus = safeNonNegativeInteger(source.licensePerks && source.licensePerks.prep_slot_regen, 0, 20);
+  return PREP_SLOT_BASE_MAX + safeNonNegativeInteger(source.shopLevel, 1, 1000) * 2 + perkBonus * 2;
+}
+
+function getShopSpiritMax(shop) {
+  const source = shop && shop.shop ? shop.shop : shop || {};
+  return SHOP_SPIRIT_BASE_MAX + safeNonNegativeInteger(source.shopLevel, 1, 1000) * 5;
+}
+
+function stationMilestoneMultiplier(owned) {
+  const count = safeNonNegativeInteger(owned, 0, 100000);
+  let multiplier = 1;
+  if (count >= 10) multiplier *= 2;
+  if (count >= 25) multiplier *= 2;
+  if (count >= 50) multiplier *= 3;
+  if (count >= 100) multiplier *= 4;
+  return multiplier;
+}
+
+function stationUpgradeLevel(shop, upgradeId) {
+  return safeNonNegativeInteger(shop && shop.stationUpgrades && shop.stationUpgrades[upgradeId], 0, 100);
+}
+
+function stationOutputMultiplier(shop, stationId) {
+  const faster = stationUpgradeLevel(shop, `${stationId}_faster`);
+  const specific = stationId === "delivery_route"
+    ? stationUpgradeLevel(shop, "route_familiarity")
+    : stationId === "dispatcher_desk"
+      ? stationUpgradeLevel(shop, "better_clipboard")
+      : 0;
+  const doubleUpgradeId = stationId === "tofu_press"
+    ? "tofu_press_double"
+    : stationId === "prep_counter"
+      ? "prep_counter_double"
+      : stationId === "delivery_shelf"
+        ? "delivery_shelf_double"
+        : stationId === "regular_customer"
+          ? "regular_customer_double"
+          : "";
+  const doubleLevel = stationUpgradeLevel(shop, doubleUpgradeId);
+  const network = safeNonNegativeInteger(shop && shop.stations && shop.stations.regional_network, 0, 100000);
+  const perk = safeNonNegativeInteger(shop && shop.licensePerks && shop.licensePerks.shop_multiplier, 0, 20);
+  return (1 + faster * 0.25 + specific * 0.2)
+    * (1 + doubleLevel * 0.5)
+    * (1 + network * 0.08)
+    * (1 + perk * 0.1);
+}
+
 function getShopGeneratorRates(gameState, now = new Date()) {
   const state = normalizeGameState(gameState);
+  syncShopGenerators(state);
   const generators = state.shop.generators;
   const boostMultiplier = activeShopBoostMultiplier(state.shop, now);
+  const festivalMultiplier = normalizeShopBoosts(state.shop.activeFestivalBoosts).reduce(
+    (multiplier, boost) => {
+      const expiresMs = Date.parse(boost.expiresAt);
+      const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
+      if (!Number.isFinite(expiresMs) || !Number.isFinite(nowMs) || expiresMs <= nowMs) return multiplier;
+      return Math.max(multiplier, Number(boost.multiplier || 1));
+    },
+    1,
+  );
+  const tofuPressOwned = safeNonNegativeInteger(state.shop.stations.tofu_press, 1, 100000);
+  const prepOwned = safeNonNegativeInteger(state.shop.stations.prep_counter, 0, 100000);
+  const shelfOwned = safeNonNegativeInteger(state.shop.stations.delivery_shelf, 0, 100000);
+  const customerOwned = safeNonNegativeInteger(state.shop.stations.regular_customer, 0, 100000);
+  const signOwned = safeNonNegativeInteger(state.shop.stations.shop_sign, 0, 100000);
+  const shelfBoost = 1 + shelfOwned * 0.08 + stationUpgradeLevel(state.shop, "delivery_shelf_faster") * 0.2;
   const tofuPressPerSecond = generators.tofuPress.unlocked
-    ? generators.tofuPress.level * TOFU_PRESS_BASE_PER_SECOND * boostMultiplier
+    ? tofuPressOwned
+      * TOFU_PRESS_BASE_PER_SECOND
+      * boostMultiplier
+      * festivalMultiplier
+      * stationOutputMultiplier(state.shop, "tofu_press")
+      * stationMilestoneMultiplier(tofuPressOwned)
     : 0;
-  const prepOrdersPerSecond = generators.prepCounter.unlocked
-    ? generators.prepCounter.level * PREP_COUNTER_BASE_ORDERS_PER_SECOND
+  const prepOrdersPerSecond = generators.prepCounter.unlocked && prepOwned > 0
+    ? prepOwned
+      * PREP_COUNTER_BASE_ORDERS_PER_SECOND
+      * shelfBoost
+      * stationOutputMultiplier(state.shop, "prep_counter")
+      * stationMilestoneMultiplier(prepOwned)
     : 0;
   const prepTofuPerSecond = prepOrdersPerSecond * PREP_COUNTER_CONSUME_PER_ORDER;
+  const customerTipsPerSecond = customerOwned
+    * 0.02
+    * stationOutputMultiplier(state.shop, "regular_customer")
+    * stationMilestoneMultiplier(customerOwned);
+  const shopSpiritPerSecond = SPIRIT_GENERATORS.reduce((total, generator) => (
+    total
+    + safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 100000)
+      * generator.spiritPerSecond
+  ), 0);
+  const prepSlotPerSecond = PREP_SLOT_REGEN_PER_SECOND
+    * (1 + safeNonNegativeInteger(state.shop.licensePerks.prep_slot_regen, 0, 20) * 0.3);
+  const passiveReputationPerSecond = signOwned * 0.002 * (1 + stationUpgradeLevel(state.shop, "shop_sign_faster") * 0.2);
   const prepStatus = !generators.prepCounter.unlocked
     ? "Locked"
     : state.shop.tofuStock >= PREP_COUNTER_CONSUME_PER_ORDER
@@ -1885,6 +2343,10 @@ function getShopGeneratorRates(gameState, now = new Date()) {
     tofuPressPerSecond,
     prepOrdersPerSecond,
     prepTofuPerSecond,
+    customerTipsPerSecond,
+    shopSpiritPerSecond,
+    prepSlotPerSecond,
+    passiveReputationPerSecond,
     prepStatus,
     boostMultiplier,
   };
@@ -1913,6 +2375,9 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
       tofuStock: 0,
       deliveryOrders: 0,
       tips: 0,
+      reputation: 0,
+      prepSlots: 0,
+      shopSpirit: 0,
       tofuProduced: 0,
       tofuConsumed: 0,
       cappedHours: 0,
@@ -1934,6 +2399,10 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
   );
   const tofuConsumed = deliveryOrders * PREP_COUNTER_CONSUME_PER_ORDER;
   const tofuStock = tofuProduced - tofuConsumed;
+  const tips = Math.floor(rates.customerTipsPerSecond * elapsedSeconds);
+  const reputation = Math.floor(rates.passiveReputationPerSecond * elapsedSeconds);
+  const prepSlots = rates.prepSlotPerSecond * elapsedSeconds;
+  const shopSpirit = rates.shopSpiritPerSecond * elapsedSeconds;
   const prepStatus = !shop.generators.prepCounter.unlocked
     ? "Locked"
     : deliveryOrders > 0
@@ -1944,7 +2413,10 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
   return {
     tofuStock,
     deliveryOrders,
-    tips: 0,
+    tips,
+    reputation,
+    prepSlots,
+    shopSpirit,
     tofuProduced,
     tofuConsumed,
     cappedHours: roundTo(elapsedSeconds / 3600, 2),
@@ -1975,11 +2447,31 @@ function applyShopGeneratorTick(gameState, now = new Date(), options = {}) {
     };
   }
   const earnings = calculateShopGeneratorEarnings(next, now, options);
-  const changed = earnings.tofuStock !== 0 || earnings.deliveryOrders > 0;
+  const changed = earnings.tofuStock !== 0
+    || earnings.deliveryOrders > 0
+    || earnings.tips > 0
+    || earnings.reputation > 0
+    || earnings.prepSlots > 0
+    || earnings.shopSpirit > 0;
   if (changed) {
     next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + earnings.tofuStock);
     next.shop.deliveryOrders = safeNonNegativeInteger(
       next.shop.deliveryOrders + earnings.deliveryOrders,
+    );
+    next.shop.tips = safeNonNegativeInteger(next.shop.tips + earnings.tips);
+    next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + earnings.tips);
+    next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + earnings.reputation);
+    next.shop.lifetimeReputation = safeNonNegativeInteger(
+      next.shop.lifetimeReputation + earnings.reputation,
+    );
+    next.shop.shopLevel = getShopLevel(next.shop.reputation);
+    next.shop.prepSlots = Math.min(
+      getPrepSlotMax(next.shop),
+      safeNonNegativeNumber(next.shop.prepSlots + earnings.prepSlots),
+    );
+    next.shop.shopSpirit = Math.min(
+      getShopSpiritMax(next.shop),
+      safeNonNegativeNumber(next.shop.shopSpirit + earnings.shopSpirit),
     );
     next.shop.lifetimeDeliveryOrders = safeNonNegativeInteger(
       next.shop.lifetimeDeliveryOrders + earnings.deliveryOrders,
@@ -2030,32 +2522,168 @@ function syncShopGenerators(state) {
   const shop = state.shop;
   const upgrades = shop.upgrades || {};
   const current = normalizeShopGenerators(shop.generators);
+  shop.stations = normalizeCatalogCounts(shop.stations, SHOP_STATIONS, 100000);
+  if (shop.stations.tofu_press < 1) shop.stations.tofu_press = 1;
   const tofuPressUpgradeLevel = safeNonNegativeInteger(upgrades.tofu_press, 0, 100);
   const prepCounterUpgradeLevel = safeNonNegativeInteger(upgrades.prep_counter, 0, 100);
+  shop.stations.tofu_press = Math.max(shop.stations.tofu_press, tofuPressUpgradeLevel + 1);
   const tofuPressUnlocked = true;
   const prepCounterUnlocked = Boolean(
     current.prepCounter.unlocked
     || shop.shopLevel >= 2
     || Number(shop.tofuStock || 0) >= 10
     || Number(shop.lifetimeDeliveryOrders || 0) > 0
+    || Number(shop.stations.prep_counter || 0) > 0
     || tofuPressUpgradeLevel > 0
     || prepCounterUpgradeLevel > 0,
   );
+  if (prepCounterUnlocked && shop.stations.prep_counter < 1) {
+    shop.stations.prep_counter = 1;
+  }
+  if (prepCounterUnlocked) {
+    shop.stations.prep_counter = Math.max(shop.stations.prep_counter, prepCounterUpgradeLevel + 1);
+  }
   shop.generators = {
     tofuPress: {
       unlocked: tofuPressUnlocked,
       level: tofuPressUnlocked
-        ? Math.max(1, current.tofuPress.level, tofuPressUpgradeLevel + 1)
+        ? Math.max(1, current.tofuPress.level, shop.stations.tofu_press, tofuPressUpgradeLevel + 1)
         : 0,
     },
     prepCounter: {
       unlocked: prepCounterUnlocked,
       level: prepCounterUnlocked
-        ? Math.max(1, current.prepCounter.level, prepCounterUpgradeLevel + 1)
+        ? Math.max(1, current.prepCounter.level, shop.stations.prep_counter, prepCounterUpgradeLevel + 1)
         : 0,
     },
   };
   return state;
+}
+
+function shopStationById(stationId) {
+  return SHOP_STATIONS.find((station) => station.id === stationId) || null;
+}
+
+function stationIsUnlocked(station, gameState) {
+  const state = normalizeGameState(gameState);
+  const shop = state.shop;
+  if (!station) return false;
+  if (station.id === "tofu_press") return true;
+  if (station.id === "prep_counter") return shop.shopLevel >= 2 || shop.tofuStock >= 10 || shop.stations.prep_counter > 0;
+  if (station.id === "delivery_shelf") return shop.shopLevel >= 2;
+  if (station.id === "shop_sign") return shop.reputation >= 10 || shop.shopLevel >= 2;
+  if (station.id === "regular_customer") return shop.stations.shop_sign > 0;
+  if (station.id === "delivery_route") return shop.shopReach >= 2 || shop.routeKnowledge >= 6;
+  if (station.id === "dispatcher_desk") return shop.reputation >= 40 || shop.stations.delivery_route > 0;
+  if (station.id === "regional_network") return shop.shopLevel >= 5;
+  return false;
+}
+
+function stationCost(station, owned) {
+  return Math.ceil(station.baseCostTips * Math.pow(station.growthRate, safeNonNegativeInteger(owned, 0, 100000)));
+}
+
+function buyQuantityFromRequest(gameState, station, requested) {
+  const state = normalizeGameState(gameState);
+  const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
+  const prepCost = Math.max(0, safeNonNegativeInteger(station.prepSlotCost, 0, 100));
+  const canBuyOne = (count) => {
+    const totalTips = Array.from({ length: count }).reduce(
+      (sum, _, index) => sum + stationCost(station, owned + index),
+      0,
+    );
+    return totalTips <= state.shop.tips && prepCost * count <= state.shop.prepSlots;
+  };
+  if (requested === "max") {
+    let count = 0;
+    while (count < 1000 && canBuyOne(count + 1)) count += 1;
+    return count;
+  }
+  return Math.max(1, safeNonNegativeInteger(requested, 1, 100));
+}
+
+function buyShopStation(stationId, gameState, requestedQuantity = 1) {
+  let next = normalizeGameState(gameState);
+  const station = shopStationById(stationId);
+  if (!station) return { ok: false, reason: "Shop station unavailable.", gameState: next };
+  if (!stationIsUnlocked(station, next)) {
+    return { ok: false, reason: station.unlock, gameState: next };
+  }
+  const quantity = buyQuantityFromRequest(next, station, requestedQuantity);
+  if (quantity < 1) return { ok: false, reason: "Not enough tips or Prep Slots.", gameState: next };
+  const owned = safeNonNegativeInteger(next.shop.stations[station.id], 0, 100000);
+  const costTips = Array.from({ length: quantity }).reduce(
+    (sum, _, index) => sum + stationCost(station, owned + index),
+    0,
+  );
+  const prepCost = safeNonNegativeInteger(station.prepSlotCost, 0, 100) * quantity;
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  if (next.shop.prepSlots < prepCost) return { ok: false, reason: "Prep Slots are recovering.", gameState: next };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
+  next.shop.prepSlots = safeNonNegativeNumber(next.shop.prepSlots - prepCost);
+  next.shop.stations[station.id] = owned + quantity;
+  syncShopGenerators(next);
+  next = addLedgerEntry(next, "purchase", `Bought ${quantity} ${station.name}${quantity > 1 ? "s" : ""}.`);
+  return { ok: true, reason: "", gameState: next, station, quantity, costTips };
+}
+
+function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive) {
+    return { ok: false, reason: "Shop actions unlock after you finish and park.", gameState: next };
+  }
+  const quantity = requestedQuantity === "max"
+    ? safeNonNegativeInteger(next.shop.deliveryOrders, 0, 100000)
+    : Math.max(1, safeNonNegativeInteger(requestedQuantity, 1, 100));
+  if (quantity < 1 || next.shop.deliveryOrders < quantity) {
+    return { ok: false, reason: "No Delivery Orders ready. Prep Counter needs delivery orders first.", gameState: next };
+  }
+  const signBonus = 1 + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
+  const garageBonus = safeNonNegativeInteger(next.shop.garage.delivery_mat, 0, 100) >= 3 ? 1 : 0;
+  const tipsGained = Math.round(SHOP_ORDER_TIPS_REWARD * quantity);
+  const reputationGained = Math.round((SHOP_ORDER_REPUTATION_REWARD * quantity + garageBonus) * signBonus);
+  const xpGained = SHOP_ORDER_XP_REWARD * quantity;
+  const previousShopLevel = next.shop.shopLevel;
+  next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders - quantity);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + tipsGained);
+  next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + tipsGained);
+  next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + reputationGained);
+  next.shop.lifetimeReputation = safeNonNegativeInteger(next.shop.lifetimeReputation + reputationGained);
+  next.shop.lifetimeDeliveryOrders = safeNonNegativeInteger(next.shop.lifetimeDeliveryOrders + quantity);
+  next.totalXP = Math.max(0, Math.round(Number(next.totalXP || 0) + xpGained));
+  next.level = levelForXP(next.totalXP);
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  if (!next.stamps.first_shop_order) next.stamps.first_shop_order = { date: new Date().toISOString(), label: STAMP_LABELS.first_shop_order };
+  if (next.shop.lifetimeDeliveryOrders >= 10 && !next.stamps.first_10_orders) {
+    next.stamps.first_10_orders = { date: new Date().toISOString(), label: STAMP_LABELS.first_10_orders };
+  }
+  if (next.shop.lifetimeTips >= 100 && !next.stamps.first_100_tips) {
+    next.stamps.first_100_tips = { date: new Date().toISOString(), label: STAMP_LABELS.first_100_tips };
+  }
+  syncShopGenerators(next);
+  next.shop.lastShopTickAt = new Date().toISOString();
+  next = addLedgerEntry(next, "order", `Fulfilled ${quantity} shop order${quantity > 1 ? "s" : ""}.`);
+  next.recentRewards = [{
+    date: next.shop.lastShopTickAt,
+    type: "shop_order",
+    label: quantity > 1 ? "Shop Orders Complete" : "Shop Order Complete",
+    tipsGained,
+    reputationGained,
+    xpGained,
+  }, ...next.recentRewards].slice(0, 12);
+  return {
+    ok: true,
+    reason: "",
+    gameState: next,
+    quantity,
+    tipsGained,
+    reputationGained,
+    xpGained,
+    shopLevelBefore: previousShopLevel,
+    shopLevelAfter: next.shop.shopLevel,
+    shopLevelChanged: next.shop.shopLevel > previousShopLevel,
+    report: `Shop order${quantity > 1 ? "s" : ""} complete. Packed and handed off from the counter.`,
+  };
 }
 
 function hasCompletedDelivery(gameState) {
@@ -2181,74 +2809,7 @@ function packTofu(gameState, options = {}) {
 }
 
 function fulfillShopOrder(gameState, options = {}) {
-  const next = normalizeGameState(gameState);
-  if (options.activeDrive) {
-    return {
-      ok: false,
-      reason: "Shop actions unlock after you finish and park.",
-      gameState: next,
-      tipsGained: 0,
-      reputationGained: 0,
-      xpGained: 0,
-    };
-  }
-  if (!isShopDiscovered(next)) {
-    return {
-      ok: false,
-      reason: "Start the Tofu Shop before fulfilling orders.",
-      gameState: next,
-      tipsGained: 0,
-      reputationGained: 0,
-      xpGained: 0,
-    };
-  }
-  if (next.shop.deliveryOrders < 1) {
-    return {
-      ok: false,
-      reason: "Prep Counter needs delivery orders first.",
-      gameState: next,
-      tipsGained: 0,
-      reputationGained: 0,
-      xpGained: 0,
-    };
-  }
-  const previousShopLevel = next.shop.shopLevel;
-  next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders - 1);
-  next.shop.tips = safeNonNegativeInteger(next.shop.tips + SHOP_ORDER_TIPS_REWARD);
-  next.shop.lifetimeTips = safeNonNegativeInteger(
-    next.shop.lifetimeTips + SHOP_ORDER_TIPS_REWARD,
-  );
-  next.shop.reputation = safeNonNegativeInteger(
-    next.shop.reputation + SHOP_ORDER_REPUTATION_REWARD,
-  );
-  next.shop.lifetimeReputation = safeNonNegativeInteger(
-    next.shop.lifetimeReputation + SHOP_ORDER_REPUTATION_REWARD,
-  );
-  next.totalXP = Math.max(0, Math.round(Number(next.totalXP || 0) + SHOP_ORDER_XP_REWARD));
-  next.level = levelForXP(next.totalXP);
-  next.shop.shopLevel = getShopLevel(next.shop.reputation);
-  syncShopGenerators(next);
-  next.shop.lastShopTickAt = new Date().toISOString();
-  next.recentRewards = [{
-    date: next.shop.lastShopTickAt,
-    type: "shop_order",
-    label: "Shop Order Complete",
-    tipsGained: SHOP_ORDER_TIPS_REWARD,
-    reputationGained: SHOP_ORDER_REPUTATION_REWARD,
-    xpGained: SHOP_ORDER_XP_REWARD,
-  }, ...next.recentRewards].slice(0, 12);
-  return {
-    ok: true,
-    reason: "",
-    gameState: next,
-    tipsGained: SHOP_ORDER_TIPS_REWARD,
-    reputationGained: SHOP_ORDER_REPUTATION_REWARD,
-    xpGained: SHOP_ORDER_XP_REWARD,
-    shopLevelBefore: previousShopLevel,
-    shopLevelAfter: next.shop.shopLevel,
-    shopLevelChanged: next.shop.shopLevel > previousShopLevel,
-    report: "Shop order complete. Packed and handed off from the counter.",
-  };
+  return fulfillShopOrders(gameState, 1, options);
 }
 
 function buyShopUpgrade(upgradeId, gameState) {
@@ -2284,6 +2845,275 @@ function buyShopUpgrade(upgradeId, gameState) {
     gameState: next,
     upgrade: { ...upgrade, level: currentLevel + 1 },
   };
+}
+
+function buyStationUpgrade(upgradeId, gameState) {
+  let next = normalizeGameState(gameState);
+  const upgrade = STATION_UPGRADES.find((item) => item.id === upgradeId);
+  if (!upgrade) return { ok: false, reason: "Station upgrade unavailable.", gameState: next };
+  const station = shopStationById(upgrade.stationId);
+  if (!station || !stationIsUnlocked(station, next)) {
+    return { ok: false, reason: "Station is locked.", gameState: next };
+  }
+  const current = safeNonNegativeInteger(next.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+  if (current >= upgrade.maxLevel) return { ok: false, reason: "Upgrade is already maxed.", gameState: next };
+  const costTips = Math.ceil(upgrade.costTips * Math.pow(1.32, current));
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
+  next.shop.stationUpgrades[upgrade.id] = current + 1;
+  next = addLedgerEntry(next, "upgrade", `${upgrade.name} upgraded.`);
+  return { ok: true, gameState: next, upgrade, level: current + 1, costTips };
+}
+
+function routeIsUnlocked(route, gameState) {
+  const state = normalizeGameState(gameState);
+  if (route.id === "shop_street") return true;
+  if (route.id === "old_hill_road") return state.shop.shopReach >= 2;
+  if (route.id === "lantern_bridge") return state.shop.reputation >= 25;
+  if (route.id === "rainy_switchback") return state.shop.routeKnowledge >= 25;
+  if (route.id === "fox_shrine_road") return state.shop.shopReach >= 10;
+  return false;
+}
+
+function completeFictionalRoute(routeId, gameState) {
+  let next = normalizeGameState(gameState);
+  const route = SHOP_ROUTE_CATALOG.find((item) => item.id === routeId);
+  if (!route) return { ok: false, reason: "Route card unavailable.", gameState: next };
+  if (!routeIsUnlocked(route, next)) return { ok: false, reason: route.unlock, gameState: next };
+  if (next.shop.tofuStock < route.tofuCost) return { ok: false, reason: "Not enough tofu stock.", gameState: next };
+  if (next.shop.deliveryOrders < route.orderCost) return { ok: false, reason: "Not enough Delivery Orders.", gameState: next };
+  const routeBoost = 1 + stationUpgradeLevel(next.shop, "route_familiarity") * 0.2;
+  const notesBoost = 1 + stationUpgradeLevel(next.shop, "careful_notes") * 0.25;
+  const scoutBoost = 1 + safeNonNegativeInteger(next.shop.crew.route_scout, 0, 1000) * 0.05;
+  next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock - route.tofuCost);
+  next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders - route.orderCost);
+  const tipsGained = Math.round(route.tipReward * routeBoost);
+  const reputationGained = Math.round(route.reputationReward * routeBoost);
+  const knowledgeGained = Math.round(route.routeKnowledgeReward * notesBoost);
+  const reachGained = Math.round(route.shopReachReward * scoutBoost);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + tipsGained);
+  next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + tipsGained);
+  next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + reputationGained);
+  next.shop.lifetimeReputation = safeNonNegativeInteger(next.shop.lifetimeReputation + reputationGained);
+  next.shop.routeKnowledge = safeNonNegativeInteger(next.shop.routeKnowledge + knowledgeGained);
+  next.shop.shopReach = safeNonNegativeInteger(next.shop.shopReach + reachGained);
+  next.shop.lifetimeRoutesCompleted = safeNonNegativeInteger(next.shop.lifetimeRoutesCompleted + 1);
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  const routeState = next.shop.routes[route.id];
+  routeState.completions = safeNonNegativeInteger(routeState.completions + 1);
+  routeState.mastery = Math.min(100, routeState.mastery + 10);
+  routeState.lastCompletedAt = new Date().toISOString();
+  next.stamps[route.stampId] = next.stamps[route.stampId] || {
+    date: new Date().toISOString(),
+    label: STAMP_LABELS[route.stampId] || route.name,
+  };
+  next = addLedgerEntry(next, "route", `${route.name} complete as a fictional shop route.`);
+  return { ok: true, gameState: next, route, tipsGained, reputationGained, knowledgeGained, reachGained };
+}
+
+function runTrainingDrill(drillId, gameState) {
+  let next = normalizeGameState(gameState);
+  const drill = TRAINING_DRILLS.find((item) => item.id === drillId);
+  if (!drill) return { ok: false, reason: "Training drill unavailable.", gameState: next };
+  if (next.shop.tips < drill.costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - drill.costTips);
+  next.shop.cupStabilityXP = safeNonNegativeInteger(next.shop.cupStabilityXP + drill.cupStabilityXP);
+  next.skillXP[drill.skill] = safeNonNegativeInteger((next.skillXP[drill.skill] || 0) + drill.cupStabilityXP);
+  next = addLedgerEntry(next, "training", drill.report);
+  return { ok: true, gameState: next, drill };
+}
+
+function buyGarageUpgrade(upgradeId, gameState) {
+  let next = normalizeGameState(gameState);
+  const upgrade = GARAGE_UPGRADES.find((item) => item.id === upgradeId);
+  if (!upgrade) return { ok: false, reason: "Garage upgrade unavailable.", gameState: next };
+  const current = safeNonNegativeInteger(next.shop.garage[upgrade.id], 0, upgrade.maxLevel);
+  if (current >= upgrade.maxLevel) return { ok: false, reason: "Garage upgrade is maxed.", gameState: next };
+  const costTips = Math.ceil(upgrade.costTips * Math.pow(1.25, current));
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
+  next.shop.garage[upgrade.id] = current + 1;
+  next = addLedgerEntry(next, "garage", `${upgrade.name} upgraded for fictional shop routes.`);
+  return { ok: true, gameState: next, upgrade, level: current + 1 };
+}
+
+function hireCrewRole(roleId, gameState) {
+  let next = normalizeGameState(gameState);
+  const role = CREW_ROLES.find((item) => item.id === roleId);
+  if (!role) return { ok: false, reason: "Crew role unavailable.", gameState: next };
+  const current = safeNonNegativeInteger(next.shop.crew[role.id], 0, 1000);
+  const costTips = Math.ceil(role.costTips * Math.pow(1.35, current));
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
+  next.shop.crew[role.id] = current + 1;
+  if (role.id === "apprentice_driver" && !next.stamps.first_apprentice) {
+    next.stamps.first_apprentice = { date: new Date().toISOString(), label: STAMP_LABELS.first_apprentice };
+  }
+  next = addLedgerEntry(next, "crew", `${role.name} joined the Delivery Crew.`);
+  return { ok: true, gameState: next, role, level: current + 1 };
+}
+
+function buySpiritGenerator(generatorId, gameState) {
+  let next = normalizeGameState(gameState);
+  const generator = SPIRIT_GENERATORS.find((item) => item.id === generatorId);
+  if (!generator) return { ok: false, reason: "Shop Spirit station unavailable.", gameState: next };
+  const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, 1000);
+  const costTips = Math.ceil(generator.costTips * Math.pow(1.22, current));
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
+  next.shop.spiritGenerators[generator.id] = current + 1;
+  next = addLedgerEntry(next, "spirit", `${generator.name} added to the shop.`);
+  return { ok: true, gameState: next, generator, level: current + 1 };
+}
+
+function useShopSpiritBoost(boostId, gameState) {
+  let next = normalizeGameState(gameState);
+  const boost = SHOP_SPIRIT_BOOSTS.find((item) => item.id === boostId);
+  if (!boost) return { ok: false, reason: "Shop Spirit boost unavailable.", gameState: next };
+  if (next.shop.shopSpirit < boost.costSpirit) return { ok: false, reason: "Not enough Shop Spirit.", gameState: next };
+  next.shop.shopSpirit = safeNonNegativeNumber(next.shop.shopSpirit - boost.costSpirit);
+  if (boost.type === "instant_tofu") next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + boost.amount);
+  if (boost.type === "instant_orders") next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders + boost.amount);
+  if (boost.multiplier) {
+    const expiresAt = new Date(Date.now() + boost.durationSeconds * 1000).toISOString();
+    next.shop.activeFestivalBoosts = normalizeShopBoosts([
+      { id: boost.id, label: boost.name, multiplier: boost.multiplier, expiresAt, source: "shop_spirit" },
+      ...next.shop.activeFestivalBoosts,
+    ]);
+  }
+  next = addLedgerEntry(next, "boost", `${boost.name} used while parked.`);
+  return { ok: true, gameState: next, boost };
+}
+
+function useFestivalBoost(boostId, gameState) {
+  let next = normalizeGameState(gameState);
+  const boost = FESTIVAL_BOOSTS.find((item) => item.id === boostId);
+  if (!boost) return { ok: false, reason: "Festival Boost unavailable.", gameState: next };
+  if (next.shop.festivalBoosts[boost.id] < 1) return { ok: false, reason: "No Festival Boost token ready.", gameState: next };
+  next.shop.festivalBoosts[boost.id] = safeNonNegativeInteger(next.shop.festivalBoosts[boost.id] - 1);
+  const multiplier = boost.type === "press_multiplier" || boost.type === "prep_multiplier" ? 1.75 : 1.5;
+  const expiresAt = new Date(Date.now() + 20 * 60 * 1000).toISOString();
+  next.shop.activeFestivalBoosts = normalizeShopBoosts([
+    { id: boost.id, label: boost.name, multiplier, expiresAt, source: "festival_boost" },
+    ...next.shop.activeFestivalBoosts,
+  ]);
+  if (!next.stamps.first_festival_boost) {
+    next.stamps.first_festival_boost = { date: new Date().toISOString(), label: STAMP_LABELS.first_festival_boost };
+  }
+  next = addLedgerEntry(next, "festival", `${boost.name} used while parked.`);
+  return { ok: true, gameState: next, boost };
+}
+
+function licenseExamStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const passport = deliveryPassportSummary(state);
+  const routeMastered = Object.values(state.shop.routes).some((route) => route.mastery >= 50);
+  const requirements = [
+    { label: "Level 10", met: state.level >= 10 },
+    { label: "25 shop orders or route completions", met: state.shop.lifetimeDeliveryOrders + state.shop.lifetimeRoutesCompleted >= 25 },
+    { label: "5 passport stamps", met: passport.total >= 5 },
+    { label: "Shop Level 5", met: state.shop.shopLevel >= 5 },
+    { label: "One fictional route partly mastered", met: routeMastered },
+  ];
+  return { ready: requirements.every((item) => item.met), requirements };
+}
+
+function takeLicenseExam(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  const status = licenseExamStatus(next);
+  if (!options.confirmed) return { ok: false, reason: "Confirm License Exam before resetting shop progress.", gameState: next, status };
+  if (!status.ready) return { ok: false, reason: "License Exam requirements are not complete.", gameState: next, status };
+  const starsEarned = clamp(1 + Math.floor(next.shop.shopLevel / 10), 1, 3);
+  const preserved = {
+    licenseStars: next.shop.licenseStars + starsEarned,
+    licensePerks: next.shop.licensePerks,
+    lifetimeLicenseExams: next.shop.lifetimeLicenseExams + 1,
+    lifetimeTips: next.shop.lifetimeTips,
+    lifetimeDeliveryOrders: next.shop.lifetimeDeliveryOrders,
+    lifetimeRoutesCompleted: next.shop.lifetimeRoutesCompleted,
+    lifetimeReputation: next.shop.lifetimeReputation,
+  };
+  const fresh = defaultShopState();
+  fresh.licenseStars = preserved.licenseStars;
+  fresh.licensePerks = preserved.licensePerks;
+  fresh.lifetimeLicenseExams = preserved.lifetimeLicenseExams;
+  fresh.lifetimeTips = preserved.lifetimeTips;
+  fresh.lifetimeDeliveryOrders = preserved.lifetimeDeliveryOrders;
+  fresh.lifetimeRoutesCompleted = preserved.lifetimeRoutesCompleted;
+  fresh.lifetimeReputation = preserved.lifetimeReputation;
+  fresh.stations.tofu_press += safeNonNegativeInteger(fresh.licensePerks.starter_press, 0, 20);
+  if (fresh.licensePerks.starter_counter > 0) fresh.stations.prep_counter = 1;
+  next.shop = normalizeShopState(fresh);
+  next.stamps.first_license_exam = next.stamps.first_license_exam || {
+    date: new Date().toISOString(),
+    label: STAMP_LABELS.first_license_exam,
+  };
+  next = addLedgerEntry(next, "license", `Local Delivery License passed. Earned ${starsEarned} License Star${starsEarned > 1 ? "s" : ""}.`);
+  return { ok: true, gameState: next, starsEarned };
+}
+
+function buyLicensePerk(perkId, gameState) {
+  let next = normalizeGameState(gameState);
+  const perk = LICENSE_PERKS.find((item) => item.id === perkId);
+  if (!perk) return { ok: false, reason: "License Perk unavailable.", gameState: next };
+  if (next.shop.licenseStars < perk.costStars) return { ok: false, reason: "Not enough License Stars.", gameState: next };
+  next.shop.licenseStars = safeNonNegativeInteger(next.shop.licenseStars - perk.costStars);
+  next.shop.licensePerks[perk.id] = safeNonNegativeInteger(next.shop.licensePerks[perk.id] + 1, 0, 20);
+  next = addLedgerEntry(next, "license", `${perk.name} purchased.`);
+  return { ok: true, gameState: next, perk };
+}
+
+function startRivalChallenge(rivalId, gameState) {
+  let next = normalizeGameState(gameState);
+  const rival = RIVAL_CHALLENGES.find((item) => item.id === rivalId);
+  if (!rival) return { ok: false, reason: "Rival Shop Challenge unavailable.", gameState: next };
+  if (next.shop.deliveryOrders < rival.orderCost) return { ok: false, reason: "Not enough Delivery Orders.", gameState: next };
+  if (next.shop.shopSpirit < rival.spiritCost) return { ok: false, reason: "Not enough Shop Spirit.", gameState: next };
+  next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders - rival.orderCost);
+  next.shop.shopSpirit = safeNonNegativeNumber(next.shop.shopSpirit - rival.spiritCost);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + rival.tipsReward);
+  next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + rival.reputationReward);
+  next.shop.rivals[rival.id] = safeNonNegativeInteger(next.shop.rivals[rival.id] + 1);
+  next.stamps[rival.stampId] = next.stamps[rival.stampId] || {
+    date: new Date().toISOString(),
+    label: STAMP_LABELS[rival.stampId] || rival.name,
+  };
+  next = addLedgerEntry(next, "rival", `${rival.name} friendly challenge complete.`);
+  return { ok: true, gameState: next, rival };
+}
+
+function unlockAllLocalQa(gameState) {
+  let next = normalizeGameState(gameState);
+  next.shop.tips = 50000;
+  next.shop.tofuStock = 5000;
+  next.shop.deliveryOrders = 500;
+  next.shop.reputation = 2000;
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  next.shop.prepSlots = getPrepSlotMax(next.shop);
+  next.shop.shopSpirit = getShopSpiritMax(next.shop);
+  next.shop.shopReach = 100;
+  next.shop.routeKnowledge = 100;
+  next.shop.licenseStars = 10;
+  next.shop.untrustedLocalQa = true;
+  SHOP_STATIONS.forEach((station) => { next.shop.stations[station.id] = Math.max(next.shop.stations[station.id] || 0, 5); });
+  SHOP_ROUTE_CATALOG.forEach((route) => { next.shop.routes[route.id].mastery = 50; });
+  CHARACTER_CATALOG.forEach((character) => {
+    if (!next.collection.unlockedCharacterIds.includes(character.id)) next.collection.unlockedCharacterIds.push(character.id);
+  });
+  SOUND_PACK_CATALOG.forEach((sound) => {
+    if (!next.collection.unlockedSoundPackIds.includes(sound.id)) next.collection.unlockedSoundPackIds.push(sound.id);
+  });
+  Object.keys(STAMP_LABELS).forEach((stampId) => {
+    next.stamps[stampId] = next.stamps[stampId] || { date: new Date().toISOString(), label: STAMP_LABELS[stampId] };
+  });
+  next = addLedgerEntry(next, "dev", "Developer QA unlock applied. Local state is not trusted for certified merch.");
+  return { ok: true, gameState: next };
+}
+
+function isDevToolsEnabled() {
+  if (typeof window !== "undefined" && window.location && /\bdev=1\b/.test(window.location.search || "")) return true;
+  const storage = safeLocalStorage();
+  return Boolean(storage && storage.getItem(DEV_TOOLS_LOCAL_STORAGE_KEY) === "true");
 }
 
 function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
@@ -3684,18 +4514,27 @@ function showView(viewName) {
 
 function surfaceFromHash(hashValue = "") {
   const value = String(hashValue || "").replace(/^#\/?/, "").toLowerCase();
-  return value === "cup-test" ? "cup-test" : "shop";
+  if (value === "shop") return "shop";
+  if (value === "crew") return "crew";
+  return "cup-test";
 }
 
 function surfaceHash(surface) {
+  if (surface === "crew") return "#/crew";
   return surface === "cup-test" ? "#/cup-test" : "#/shop";
 }
 
-function renderSurfaceNavigation() {
+function renderSurfaceNavigation(gameState = null) {
   const activeDrive = appState.running || appState.calibrating;
+  const state = gameState ? normalizeGameState(gameState) : loadGameState();
+  const reveal = progressiveRevealState(state);
   if (elements.surfaceNavButtons) {
     elements.surfaceNavButtons.forEach((button) => {
       const active = button.dataset.surfaceTarget === appState.surface;
+      const crewNav = button.dataset.surfaceTarget === "crew";
+      if (crewNav && button.classList) {
+        button.classList.toggle("is-hidden", !reveal.crew && !reveal.sounds && appState.surface !== "crew");
+      }
       button.classList.toggle("is-active", active);
       if (active) {
         button.setAttribute("aria-current", "page");
@@ -3707,8 +4546,57 @@ function renderSurfaceNavigation() {
   }
 }
 
-function setAppSurface(surface = "shop", options = {}) {
-  const nextSurface = surface === "cup-test" ? "cup-test" : "shop";
+function renderBrandShelf() {
+  const shopSurface = appState.surface === "shop";
+  const crewSurface = appState.surface === "crew";
+  if (elements.brandShelfEyebrow) {
+    elements.brandShelfEyebrow.textContent = crewSurface
+      ? "Delivery Crew"
+      : shopSurface
+        ? "Tofu Shop"
+        : "Certified Challenge";
+  }
+  if (elements.landingTitle) {
+    elements.landingTitle.textContent = crewSurface
+      ? "Delivery Crew"
+      : shopSurface
+        ? "Run the Tofu Shop"
+        : "Don't Spill the Cup";
+  }
+  if (elements.brandShelfCopy) {
+    elements.brandShelfCopy.textContent = shopSurface
+      ? "A cozy delivery-management game you can play at home."
+      : crewSurface
+        ? "Choose your local crew, characters, and gentle sound packs while parked."
+        : "Keep the cup steady. Drive smoothly. Boost the Tofu Shop.";
+  }
+  if (elements.brandShelfSafety) {
+    elements.brandShelfSafety.textContent = shopSurface
+      ? "Play the shop anytime. Take Don't Spill the Cup when you're ready for a certified smooth-delivery boost."
+      : crewSurface
+        ? "Crew and sound choices never change real-world driving score."
+        : "Start while parked. Basic Mode uses motion only; Qualified Run is opt-in.";
+  }
+  if (elements.brandPrimaryCta) {
+    elements.brandPrimaryCta.textContent = crewSurface
+      ? "Go to Tofu Shop"
+      : shopSurface
+        ? "Continue the Shop"
+        : "Take the Cup Test";
+    elements.brandPrimaryCta.dataset.brandAction = crewSurface ? "shop" : shopSurface ? "shop" : "cup-test";
+  }
+  if (elements.brandSecondaryCta) {
+    elements.brandSecondaryCta.textContent = crewSurface
+      ? "Take Don't Spill the Cup"
+      : shopSurface
+        ? "Take Don't Spill the Cup"
+        : "Go to Tofu Shop";
+    elements.brandSecondaryCta.dataset.brandAction = crewSurface || shopSurface ? "cup-test" : "shop";
+  }
+}
+
+function setAppSurface(surface = "cup-test", options = {}) {
+  const nextSurface = surface === "cup-test" || surface === "crew" ? surface : "shop";
   appState.surface = nextSurface;
   if (elements.surfaceSections) {
     elements.surfaceSections.forEach((section) => {
@@ -3720,6 +4608,7 @@ function setAppSurface(surface = "shop", options = {}) {
     elements.setupFlow.classList.toggle("is-hidden", nextSurface !== "cup-test");
   }
   renderSurfaceNavigation();
+  renderBrandShelf();
   if (
     options.updateHash !== false
     && typeof window !== "undefined"
@@ -3734,11 +4623,13 @@ function setAppSurface(surface = "shop", options = {}) {
 }
 
 function initializeAppSurface() {
-  const initialSurface =
-    typeof window !== "undefined" && window.location
-      ? surfaceFromHash(window.location.hash)
-      : "shop";
-  setAppSurface(initialSurface, { updateHash: false });
+  const hasHash = typeof window !== "undefined"
+    && window.location
+    && Boolean(window.location.hash);
+  const initialSurface = hasHash
+    ? surfaceFromHash(window.location.hash)
+    : "cup-test";
+  setAppSurface(initialSurface, { updateHash: hasHash ? false : true });
 }
 
 function setLandingStatus(message) {
@@ -4714,86 +5605,410 @@ function renderShopGeneratorCard(generatorId, gameState) {
 
 function renderDeliveryWall(gameState = loadGameState()) {
   if (!elements.deliveryWallGrid) return;
-  const state = normalizeGameState(gameState);
-  const progress = state.merchProgress;
-  const passport = deliveryPassportSummary(state);
-  const shopItems = [
-    {
-      id: "shop_level_badge",
-      label: "Shop Level Badge",
-      status: `Level ${state.shop.shopLevel}`,
-      unlocked: state.shop.shopLevel >= 2,
-    },
-    {
-      id: "delivery_counter_tee",
-      label: "Delivery Counter Tee",
-      status: `${state.shop.lifetimeDeliveryOrders} shop orders`,
-      unlocked: state.shop.lifetimeDeliveryOrders >= 25,
-    },
-    {
-      id: "angry_tofu_sticker",
-      label: "Angry Tofu Driver Sticker",
-      status: state.collection.unlockedCharacterIds.includes("angry_tofu_driver")
-        ? "Unlocked"
-        : "Locked",
-      unlocked: state.collection.unlockedCharacterIds.includes("angry_tofu_driver"),
-    },
-  ];
-  const certifiedItems = [
-    {
-      id: "nospill_club",
-      label: "No-Spill Club Gear",
-      status: `${progress.nospillClubGear.count}/${progress.nospillClubGear.target}`,
-      unlocked: progress.nospillClubGear.unlocked,
-    },
-    {
-      id: "perfect_pour",
-      label: "Perfect Pour Drop",
-      status: progress.perfectPourDrop.unlocked ? "Unlocked" : "Locked",
-      unlocked: progress.perfectPourDrop.unlocked,
-    },
-    {
-      id: "smooth_driver",
-      label: "Delivery Crew",
-      status: `${progress.deliveryCrew.count}/${progress.deliveryCrew.target}`,
-      unlocked: progress.deliveryCrew.unlocked,
-    },
-    {
-      id: "passport",
-      label: "Recent Stamps",
-      status: passport.recent.length
-        ? passport.recent.map((stamp) => stamp.label).slice(0, 3).join(", ")
-        : "No stamps yet",
-      unlocked: passport.recent.length > 0,
-    },
-  ];
-  const renderWallItem = (item) => {
-    const link = item.unlocked ? MERCH_LINKS[item.id] : null;
-    const action = link
-      ? `<a class="nospill-merch-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Buy unlocked shirt</a>`
-      : item.unlocked && item.id !== "passport"
-        ? "<strong>Unlocked, merch coming soon.</strong>"
-        : "";
-    return `
-      <div class="nospill-delivery-wall-item ${item.unlocked ? "" : "is-locked"}">
-        <span>${escapeHtml(item.label)}</span>
-        <strong>${escapeHtml(item.status)}</strong>
-        ${action}
-      </div>
-    `;
+  normalizeGameState(gameState);
+  elements.deliveryWallGrid.innerHTML = "";
+}
+
+const SHOP_TABS = [
+  { id: "overview", label: "Overview", unlock: () => true },
+  { id: "production", label: "Production", unlock: () => true },
+  { id: "orders", label: "Orders", unlock: () => true },
+  { id: "routes", label: "Routes", unlock: (state) => state.shop.shopReach > 0 || state.shop.reputation >= 5 },
+  { id: "training", label: "Training", unlock: (state) => state.shop.tips >= 10 || state.shop.cupStabilityXP > 0 },
+  { id: "garage", label: "Garage", unlock: (state) => state.shop.tips >= 50 || Object.values(state.shop.garage).some(Boolean) },
+  { id: "crew", label: "Crew", unlock: (state) => state.shop.shopReach >= 2 || Object.values(state.shop.crew).some(Boolean) },
+  { id: "spirit", label: "Shop Spirit", unlock: (state) => state.shop.reputation >= 5 || state.shop.shopSpirit > 0 },
+  { id: "upgrades", label: "Upgrades", unlock: () => true },
+  { id: "rivals", label: "Rivals", unlock: (state) => state.shop.reputation >= 10 || Object.values(state.shop.rivals).some(Boolean) },
+  { id: "passport", label: "Passport", unlock: (state) => deliveryPassportSummary(state).total > 0 },
+  { id: "license", label: "License", unlock: (state) => state.level >= 5 || state.shop.licenseStars > 0 },
+  { id: "ledger", label: "Ledger", unlock: (state) => state.shop.ledger.length > 0 },
+  { id: "settings", label: "Settings", unlock: () => true },
+];
+
+function activeShopTabForState(state) {
+  const requested = appState.shopTab || state.shop.currentShopTab || "overview";
+  const tab = SHOP_TABS.find((item) => item.id === requested);
+  return tab && tab.unlock(state) ? requested : "overview";
+}
+
+function shopTabLockedCopy(tab) {
+  const copy = {
+    routes: "Fictional route cards unlock after the shop gains reach or reputation.",
+    training: "Training Lot unlocks after the first few tips.",
+    garage: "Garage upgrades unlock after the shop has enough tips.",
+    crew: "Delivery Crew automation unlocks after the shop reaches new districts.",
+    spirit: "Shop Spirit unlocks when reputation starts to spread.",
+    rivals: "Rival Shop Challenges unlock after the shop has a little reputation.",
+    passport: "The passport opens after your first stamp-worthy shop moment.",
+    license: "License Exams appear after early shop progress.",
+    ledger: "The Delivery Ledger fills as the shop does things.",
   };
-  elements.deliveryWallGrid.innerHTML = `
-    <div class="nospill-delivery-wall-group">
-      <h5>Shop Unlocks</h5>
-      <p>Shop Unlocks come from growing the Tofu Shop.</p>
-      ${shopItems.map(renderWallItem).join("")}
-    </div>
-    <div class="nospill-delivery-wall-group">
-      <h5>Certified Delivery Unlocks</h5>
-      <p>Certified Delivery Unlocks come from qualified smooth-driving results.</p>
-      ${certifiedItems.map(renderWallItem).join("")}
+  return copy[tab.id] || "Keep growing the Tofu Shop to unlock this panel.";
+}
+
+function renderShopTabs(state) {
+  if (!elements.shopTabList || !elements.shopTabPanel) return;
+  const activeTab = activeShopTabForState(state);
+  appState.shopTab = activeTab;
+  elements.shopTabList.innerHTML = SHOP_TABS.map((tab) => {
+    const unlocked = tab.unlock(state);
+    return `
+      <button
+        type="button"
+        data-shop-tab="${escapeHtml(tab.id)}"
+        class="${tab.id === activeTab ? "is-active" : ""}"
+        ${unlocked ? "" : "disabled"}
+      >
+        ${escapeHtml(tab.label)}
+      </button>
+    `;
+  }).join("");
+  elements.shopTabPanel.innerHTML = renderShopTabPanel(activeTab, state);
+}
+
+function renderShopTabPanel(tabId, state) {
+  if (tabId === "production") return renderProductionPanel(state);
+  if (tabId === "orders") return renderOrdersPanel(state);
+  if (tabId === "routes") return renderRoutesPanel(state);
+  if (tabId === "training") return renderTrainingPanel(state);
+  if (tabId === "garage") return renderGaragePanel(state);
+  if (tabId === "crew") return renderCrewPanel(state);
+  if (tabId === "spirit") return renderSpiritPanel(state);
+  if (tabId === "upgrades") return renderExpandedUpgradePanel(state);
+  if (tabId === "rivals") return renderRivalsPanel(state);
+  if (tabId === "passport") return renderPassportPanel(state);
+  if (tabId === "license") return renderLicensePanel(state);
+  if (tabId === "ledger") return renderLedgerPanel(state);
+  if (tabId === "settings") return renderShopSettingsPanel(state);
+  return renderOverviewPanel(state);
+}
+
+function renderIdleCard({ title, status, copy, actions = [], locked = false }) {
+  return `
+    <div class="nospill-idle-card ${locked ? "is-locked" : ""}">
+      <header>
+        <strong>${escapeHtml(title)}</strong>
+        <small>${escapeHtml(status || "")}</small>
+      </header>
+      <small>${escapeHtml(copy || "")}</small>
+      ${actions.length ? `<div class="nospill-idle-actions">${actions.join("")}</div>` : ""}
     </div>
   `;
+}
+
+function actionButton(label, attr, value, disabled = false, extraClass = "nospill-secondary") {
+  return `<button class="${extraClass}" type="button" ${attr}="${escapeHtml(value)}" ${disabled ? "disabled" : ""}>${escapeHtml(label)}</button>`;
+}
+
+function renderOverviewPanel(state) {
+  const rates = getShopGeneratorRates(state);
+  return `
+    <h4>Overview</h4>
+    <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(currentBottleneck(state).label)}</p>
+    <div class="nospill-idle-grid">
+      ${renderIdleCard({
+        title: "Tofu Press",
+        status: `+${formatShopRate(rates.tofuPressPerSecond)} tofu / sec`,
+        copy: "The first station in the shop cascade.",
+      })}
+      ${renderIdleCard({
+        title: "Prep Counter",
+        status: state.shop.generators.prepCounter.unlocked ? `+${formatShopRate(rates.prepOrdersPerSecond)} orders / sec` : "Locked",
+        copy: state.shop.generators.prepCounter.unlocked ? rates.prepStatus : "Unlocks with Tofu Stock 10 or Shop Level 2.",
+      })}
+      ${renderIdleCard({
+        title: "Optional Certified Boost",
+        status: "Don't Spill the Cup",
+        copy: "The challenge is always available and never requires shop resources.",
+        actions: [actionButton("Take Don't Spill the Cup", "data-surface-target", "cup-test", false, "nospill-primary")],
+      })}
+    </div>
+  `;
+}
+
+function renderProductionPanel(state) {
+  return `
+    <h4>Production</h4>
+    <p class="nospill-panel-helper">Stations use Tips and Prep Slots. Milestones at 10, 25, 50, and 100 increase output.</p>
+    <div class="nospill-idle-grid">
+      ${SHOP_STATIONS.map((station) => {
+        const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
+        const unlocked = stationIsUnlocked(station, state);
+        const cost = stationCost(station, owned);
+        const canBuy = unlocked && state.shop.tips >= cost && state.shop.prepSlots >= station.prepSlotCost;
+        return renderIdleCard({
+          title: `${station.name} x${owned}`,
+          status: unlocked ? `${cost} tips · ${station.prepSlotCost} Prep Slot` : "Locked",
+          copy: unlocked ? `${station.description} Milestone x${stationMilestoneMultiplier(owned)}.` : station.unlock,
+          locked: !unlocked,
+          actions: [
+            actionButton("Buy", "data-shop-station", station.id, !canBuy),
+            actionButton("Buy Max", "data-shop-station-max", station.id, !unlocked),
+          ],
+        });
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderOrdersPanel(state) {
+  const canFulfill = state.shop.deliveryOrders > 0;
+  return `
+    <h4>Orders</h4>
+    <p class="nospill-panel-helper">Shop orders are home gameplay. They do not imply a real drive.</p>
+    <div class="nospill-idle-grid">
+      ${renderIdleCard({
+        title: "Simple Tofu Box",
+        status: `${state.shop.deliveryOrders} ready`,
+        copy: canFulfill ? "Pack and hand off a local counter order." : "No Delivery Orders ready. Prep Counter needs tofu stock.",
+        actions: [
+          actionButton("Fulfill Shop Order", "data-fulfill-orders", "1", !canFulfill, "nospill-primary"),
+          actionButton("Fulfill 10 Orders", "data-fulfill-orders", "10", state.shop.deliveryOrders < 10),
+          actionButton("Fulfill Max Orders", "data-fulfill-orders", "max", !canFulfill),
+        ],
+      })}
+    </div>
+  `;
+}
+
+function renderRoutesPanel(state) {
+  return `
+    <h4>Routes</h4>
+    <p class="nospill-panel-helper">These are fictional route cards for parked shop play, not instructions for real roads.</p>
+    <div class="nospill-idle-grid">
+      ${SHOP_ROUTE_CATALOG.map((route) => {
+        const routeState = state.shop.routes[route.id];
+        const unlocked = routeIsUnlocked(route, state);
+        const affordable = state.shop.tofuStock >= route.tofuCost && state.shop.deliveryOrders >= route.orderCost;
+        return renderIdleCard({
+          title: route.name,
+          status: unlocked ? `Mastery ${routeState.mastery}%` : "Locked",
+          copy: unlocked
+            ? `${route.difficulty}. Costs ${route.tofuCost} tofu and ${route.orderCost} orders.`
+            : route.unlock,
+          locked: !unlocked,
+          actions: [actionButton("Start Route Card", "data-shop-route", route.id, !unlocked || !affordable)],
+        });
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderTrainingPanel(state) {
+  return `
+    <h4>Training</h4>
+    <p class="nospill-panel-helper">Training is parked/home gameplay and affects fictional route confidence only.</p>
+    <div class="nospill-idle-grid">
+      ${TRAINING_DRILLS.map((drill) => renderIdleCard({
+        title: drill.name,
+        status: `${drill.costTips} tips`,
+        copy: `Grants ${drill.cupStabilityXP} Cup Stability XP to ${SKILL_LABELS[drill.skill]}.`,
+        actions: [actionButton("Run Drill", "data-training-drill", drill.id, state.shop.tips < drill.costTips)],
+      })).join("")}
+    </div>
+  `;
+}
+
+function renderGaragePanel(state) {
+  return `
+    <h4>Garage</h4>
+    <p class="nospill-panel-helper">Garage upgrades are fictional/cosmetic shop effects. They do not improve real Cup Test scoring.</p>
+    <div class="nospill-idle-grid">
+      ${GARAGE_UPGRADES.map((upgrade) => {
+        const level = safeNonNegativeInteger(state.shop.garage[upgrade.id], 0, upgrade.maxLevel);
+        const cost = Math.ceil(upgrade.costTips * Math.pow(1.25, level));
+        return renderIdleCard({
+          title: `${upgrade.name} Lv ${level}`,
+          status: level >= upgrade.maxLevel ? "Maxed" : `${cost} tips`,
+          copy: `${upgrade.effect}.`,
+          actions: [actionButton("Upgrade Garage", "data-garage-upgrade", upgrade.id, level >= upgrade.maxLevel || state.shop.tips < cost)],
+        });
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderCrewPanel(state) {
+  return `
+    <h4>Crew</h4>
+    <p class="nospill-panel-helper">Crew automates fictional shop work only. It never asks for extra real driving.</p>
+    <div class="nospill-idle-grid">
+      ${CREW_ROLES.map((role) => {
+        const owned = safeNonNegativeInteger(state.shop.crew[role.id], 0, 1000);
+        const cost = Math.ceil(role.costTips * Math.pow(1.35, owned));
+        return renderIdleCard({
+          title: `${role.name} x${owned}`,
+          status: `${cost} tips`,
+          copy: `${role.effect} Unlock: ${role.unlock}.`,
+          actions: [actionButton("Hire", "data-crew-role", role.id, state.shop.tips < cost)],
+        });
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderSpiritPanel(state) {
+  return `
+    <h4>Shop Spirit</h4>
+    <p class="nospill-panel-helper">Shop Spirit is a parked-only boost resource. It never affects real driving score.</p>
+    <div class="nospill-idle-grid">
+      ${SPIRIT_GENERATORS.map((generator) => {
+        const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
+        const cost = Math.ceil(generator.costTips * Math.pow(1.22, owned));
+        return renderIdleCard({
+          title: `${generator.name} x${owned}`,
+          status: `${cost} tips`,
+          copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit / sec when owned. Unlock: ${generator.unlock}.`,
+          actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost)],
+        });
+      }).join("")}
+      ${SHOP_SPIRIT_BOOSTS.map((boost) => renderIdleCard({
+        title: boost.name,
+        status: `${boost.costSpirit} Shop Spirit`,
+        copy: boost.description,
+        actions: [actionButton("Use Boost", "data-spirit-boost", boost.id, state.shop.shopSpirit < boost.costSpirit)],
+      })).join("")}
+      ${FESTIVAL_BOOSTS.map((boost) => renderIdleCard({
+        title: boost.name,
+        status: `${state.shop.festivalBoosts[boost.id] || 0} ready`,
+        copy: "Consumable parked-only Festival Boost token.",
+        actions: [actionButton("Use Festival Boost", "data-festival-boost", boost.id, !state.shop.festivalBoosts[boost.id])],
+      })).join("")}
+    </div>
+  `;
+}
+
+function renderExpandedUpgradePanel(state) {
+  return `
+    <h4>Station Upgrades</h4>
+    <p class="nospill-panel-helper">Faster Prep and Double Batch style upgrades improve shop production only.</p>
+    <div class="nospill-idle-grid">
+      ${STATION_UPGRADES.map((upgrade) => {
+        const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+        const cost = Math.ceil(upgrade.costTips * Math.pow(1.32, level));
+        const station = shopStationById(upgrade.stationId);
+        const unlocked = station && stationIsUnlocked(station, state);
+        return renderIdleCard({
+          title: `${upgrade.name} Lv ${level}`,
+          status: level >= upgrade.maxLevel ? "Maxed" : `${cost} tips`,
+          copy: unlocked ? upgrade.effect : "Station locked.",
+          locked: !unlocked,
+          actions: [actionButton("Buy Upgrade", "data-station-upgrade", upgrade.id, !unlocked || level >= upgrade.maxLevel || state.shop.tips < cost)],
+        });
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderRivalsPanel(state) {
+  return `
+    <h4>Rival Shop Challenges</h4>
+    <p class="nospill-panel-helper">Friendly parked-only shop showcases. No public road competition, speed, or combat framing.</p>
+    <div class="nospill-idle-grid">
+      ${RIVAL_CHALLENGES.map((rival) => {
+        const unlocked = state.shop.reputation >= 10
+          || state.shop.rivals[rival.id] > 0
+          || (rival.id === "quiet_counter" && state.shop.reputation >= 10);
+        const affordable = state.shop.deliveryOrders >= rival.orderCost && state.shop.shopSpirit >= rival.spiritCost;
+        return renderIdleCard({
+          title: rival.name,
+          status: unlocked ? `${rival.orderCost} orders · ${rival.spiritCost} spirit` : "Locked",
+          copy: unlocked
+            ? `Friendly showcase reward: ${rival.tipsReward} tips and ${rival.reputationReward} reputation.`
+            : rival.unlock,
+          locked: !unlocked,
+          actions: [actionButton("Start Rival Shop Challenge", "data-rival-challenge", rival.id, !unlocked || !affordable)],
+        });
+      }).join("")}
+    </div>
+  `;
+}
+
+function renderPassportPanel(state) {
+  const stamps = Object.entries(STAMP_LABELS);
+  return `
+    <h4>Delivery Passport</h4>
+    <p class="nospill-panel-helper">Stamps are local collectibles for shop, route, certified, style, secret, and license progress.</p>
+    <div class="nospill-idle-grid">
+      ${stamps.map(([id, label]) => renderIdleCard({
+        title: label,
+        status: state.stamps[id] ? "Unlocked" : "Locked",
+        copy: state.stamps[id] ? "Stamped in your local passport." : "Keep growing the shop or earning certified smooth results.",
+        locked: !state.stamps[id],
+      })).join("")}
+    </div>
+  `;
+}
+
+function renderLicensePanel(state) {
+  const exam = licenseExamStatus(state);
+  return `
+    <h4>License</h4>
+    <p class="nospill-panel-helper">License Exams prestige fictional shop progress. Real driving is helpful but not required.</p>
+    <div class="nospill-idle-grid">
+      ${renderIdleCard({
+        title: "Local Delivery License",
+        status: exam.ready ? "Ready" : "Requirements",
+        copy: exam.requirements.map((item) => `${item.met ? "Met" : "Need"}: ${item.label}`).join(" | "),
+        actions: [actionButton("Take License Exam", "data-license-exam", "local_delivery", !exam.ready, "nospill-danger")],
+      })}
+      ${LICENSE_PERKS.map((perk) => renderIdleCard({
+        title: perk.name,
+        status: `${perk.costStars} License Star${perk.costStars > 1 ? "s" : ""}`,
+        copy: `${perk.effect} Owned ${state.shop.licensePerks[perk.id] || 0}.`,
+        actions: [actionButton("Buy License Perk", "data-license-perk", perk.id, state.shop.licenseStars < perk.costStars)],
+      })).join("")}
+    </div>
+  `;
+}
+
+function renderLedgerPanel(state) {
+  return `
+    <h4>Delivery Ledger</h4>
+    <p class="nospill-panel-helper">Recent local shop events. Entries are capped to avoid unbounded storage.</p>
+    <div class="nospill-idle-grid">
+      ${state.shop.ledger.length ? state.shop.ledger.map((entry) => renderIdleCard({
+        title: entry.type,
+        status: entry.date.slice(0, 10),
+        copy: entry.text,
+      })).join("") : renderIdleCard({ title: "No ledger entries yet", status: "Quiet counter", copy: "Fulfill an order or buy a station to start the ledger." })}
+    </div>
+  `;
+}
+
+function renderShopSettingsPanel(state) {
+  return `
+    <h4>Settings / QA</h4>
+    <p class="nospill-panel-helper">Progress tools live below this shop card. Developer tools are local-only and hidden by default.</p>
+    <div class="nospill-idle-grid">
+      ${isDevToolsEnabled() ? renderIdleCard({
+        title: "Developer QA",
+        status: state.shop.untrustedLocalQa ? "Untrusted local state" : "Local only",
+        copy: "Developer QA only. Local test state is not trusted for certified merch.",
+        actions: [
+          actionButton("Unlock All Local QA", "data-dev-unlock", "all", false, "nospill-danger"),
+          actionButton("Reset QA State", "data-dev-reset", "reset", false),
+        ],
+      }) : renderIdleCard({
+        title: "Developer QA hidden",
+        status: "Off",
+        copy: "Enable with ?dev=1 or localStorage for local testing.",
+      })}
+    </div>
+  `;
+}
+
+function currentBottleneck(gameState) {
+  const state = normalizeGameState(gameState);
+  if (state.shop.deliveryOrders < 1) return { id: "orders", label: "No Delivery Orders", action: "Upgrade or wait for Prep Counter" };
+  if (state.shop.tofuStock < 5) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Pack Tofu" };
+  if (state.shop.prepSlots < 1) return { id: "prep_slots", label: "Prep Slots recovering", action: "Wait for prep capacity" };
+  if (SHOP_STATIONS.some((station) => stationIsUnlocked(station, state) && state.shop.tips >= stationCost(station, state.shop.stations[station.id]))) {
+    return { id: "upgrade", label: "Station affordable", action: "Buy a shop station" };
+  }
+  if (licenseExamStatus(state).ready) return { id: "license", label: "License Exam ready", action: "Review License panel" };
+  return { id: "certified", label: "Certified boost available", action: "Take Don't Spill the Cup when ready" };
 }
 
 function renderTofuShop(gameState = loadGameState()) {
@@ -4833,8 +6048,42 @@ function renderTofuShop(gameState = loadGameState()) {
       ? `+${formatShopRate(generatorRates.prepOrdersPerSecond)}/sec`
       : "Locked";
   }
+  if (elements.shopTipsRate) {
+    elements.shopTipsRate.textContent = reveal.shop
+      ? `+${formatShopRate(generatorRates.customerTipsPerSecond)}/sec`
+      : "Locked";
+  }
+  if (elements.shopReputationRate) {
+    elements.shopReputationRate.textContent = reveal.shop
+      ? `+${formatShopRate(generatorRates.passiveReputationPerSecond)}/sec`
+      : "Locked";
+  }
+  if (elements.shopSpiritRate) {
+    elements.shopSpiritRate.textContent = reveal.shop
+      ? `+${formatShopRate(generatorRates.shopSpiritPerSecond)}/sec`
+      : "Locked";
+  }
   if (elements.shopPrepStatus) {
     elements.shopPrepStatus.textContent = reveal.shop ? generatorRates.prepStatus : "Locked";
+  }
+  if (elements.shopPrepSlots) {
+    elements.shopPrepSlots.textContent = reveal.shop
+      ? `${Math.floor(shop.prepSlots)}/${getPrepSlotMax(shop)}`
+      : "Locked";
+  }
+  if (elements.shopReach) {
+    elements.shopReach.textContent = reveal.shop ? String(shop.shopReach) : "Locked";
+  }
+  if (elements.shopSpirit) {
+    elements.shopSpirit.textContent = reveal.shop
+      ? `${Math.floor(shop.shopSpirit)}/${getShopSpiritMax(shop)}`
+      : "Locked";
+  }
+  if (elements.shopLicenseStars) {
+    elements.shopLicenseStars.textContent = reveal.shop ? String(shop.licenseStars) : "Locked";
+  }
+  if (elements.shopBuyMultiplier) {
+    elements.shopBuyMultiplier.value = String(shop.purchaseMultiplier || appState.purchaseMultiplier || 1);
   }
   if (elements.packTofuButton) {
     const activeDrive = appState.running || appState.calibrating;
@@ -4898,6 +6147,7 @@ function renderTofuShop(gameState = loadGameState()) {
         </div>
       `;
   }
+  renderShopTabs(state);
   if (elements.shopOfflineEarnings) {
     elements.shopOfflineEarnings.textContent =
       reveal.shop
@@ -5071,6 +6321,8 @@ function renderGamePanels(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const reveal = progressiveRevealState(state);
   const shopSurface = appState.surface === "shop";
+  const crewSurface = appState.surface === "crew";
+  renderSurfaceNavigation(state);
   renderGameDashboard(state);
   renderDeliveryLog(state);
   renderMerchProgress(state);
@@ -5084,7 +6336,7 @@ function renderGamePanels(gameState = loadGameState()) {
     elements.tofuShopSection.classList.toggle("is-hidden", !shopSurface || !reveal.shop);
   }
   if (elements.collectionSection) {
-    elements.collectionSection.classList.toggle("is-hidden", !shopSurface || !reveal.firstDelivery);
+    elements.collectionSection.classList.toggle("is-hidden", !crewSurface);
   }
   if (elements.surfaceSections) {
     elements.surfaceSections.forEach((section) => {
@@ -5737,6 +6989,117 @@ function handleShopUpgradeClick(event) {
   });
 }
 
+function saveShopActionResult(result, successMessage) {
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return false;
+  }
+  saveGameState(result.gameState);
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(successMessage);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+  return true;
+}
+
+function handleTofuShopPanelClick(event) {
+  if (appState.running || appState.calibrating) {
+    setSummaryStatusMessage("Shop actions unlock after you finish and park.");
+    return;
+  }
+  const target = event.target && event.target.closest ? event.target.closest("button") : null;
+  if (!target) return;
+  if (target.dataset.shopTab) {
+    appState.shopTab = target.dataset.shopTab;
+    const state = loadGameState();
+    state.shop.currentShopTab = appState.shopTab;
+    saveGameState(state);
+    renderTofuShop(state);
+    return;
+  }
+  if (target.dataset.surfaceTarget) {
+    setAppSurface(target.dataset.surfaceTarget, { updateHash: true, scroll: true });
+    renderGamePanels(loadGameState());
+    return;
+  }
+  if (target.dataset.shopStation) {
+    const state = loadGameState();
+    const quantity = state.shop.purchaseMultiplier || appState.purchaseMultiplier || 1;
+    const result = buyShopStation(target.dataset.shopStation, state, quantity);
+    saveShopActionResult(result, result.ok ? `Bought ${result.quantity} ${result.station.name}.` : "");
+    return;
+  }
+  if (target.dataset.shopStationMax) {
+    const result = buyShopStation(target.dataset.shopStationMax, loadGameState(), "max");
+    saveShopActionResult(result, result.ok ? `Bought ${result.quantity} ${result.station.name}.` : "");
+    return;
+  }
+  if (target.dataset.fulfillOrders) {
+    const result = fulfillShopOrders(loadGameState(), target.dataset.fulfillOrders, {
+      activeDrive: false,
+    });
+    if (!result.ok) {
+      setSummaryStatusMessage(result.reason);
+      renderTofuShop(result.gameState);
+      return;
+    }
+    saveGameState(result.gameState);
+    renderShopOrderResult(result);
+    playCosmeticSound("shop_pack_tofu", result.gameState, { activeDrive: false });
+    return;
+  }
+  const actionMap = [
+    ["stationUpgrade", "data-station-upgrade", buyStationUpgrade, (result) => `${result.upgrade.name} upgraded.`],
+    ["shopRoute", "data-shop-route", completeFictionalRoute, (result) => `${result.route.name} complete.`],
+    ["trainingDrill", "data-training-drill", runTrainingDrill, (result) => `${result.drill.name} complete.`],
+    ["garageUpgrade", "data-garage-upgrade", buyGarageUpgrade, (result) => `${result.upgrade.name} upgraded.`],
+    ["crewRole", "data-crew-role", hireCrewRole, (result) => `${result.role.name} joined.`],
+    ["spiritGenerator", "data-spirit-generator", buySpiritGenerator, (result) => `${result.generator.name} added.`],
+    ["spiritBoost", "data-spirit-boost", useShopSpiritBoost, (result) => `${result.boost.name} used.`],
+    ["festivalBoost", "data-festival-boost", useFestivalBoost, (result) => `${result.boost.name} used.`],
+    ["licensePerk", "data-license-perk", buyLicensePerk, (result) => `${result.perk.name} purchased.`],
+    ["rivalChallenge", "data-rival-challenge", startRivalChallenge, (result) => `${result.rival.name} complete.`],
+  ];
+  for (const [, attr, fn, message] of actionMap) {
+    const value = target.getAttribute(attr);
+    if (value) {
+      const result = fn(value, loadGameState());
+      saveShopActionResult(result, result.ok ? message(result) : "");
+      return;
+    }
+  }
+  if (target.dataset.licenseExam) {
+    const confirmed = typeof window === "undefined"
+      || typeof window.confirm !== "function"
+      || window.confirm("Take the Local Delivery License Exam and reset selected shop progress?");
+    const result = takeLicenseExam(loadGameState(), { confirmed });
+    saveShopActionResult(result, result.ok ? `License Exam passed. +${result.starsEarned} License Stars.` : "");
+    return;
+  }
+  if (target.dataset.devUnlock) {
+    const result = unlockAllLocalQa(loadGameState());
+    saveShopActionResult(result, "Developer QA unlock applied.");
+    return;
+  }
+  if (target.dataset.devReset) {
+    const state = defaultGameState();
+    saveGameState(state);
+    renderGamePanels(state);
+    setSummaryStatusMessage("Developer QA state reset.");
+  }
+}
+
+function handleShopMultiplierChange() {
+  const value = elements.shopBuyMultiplier && elements.shopBuyMultiplier.value === "max"
+    ? "max"
+    : safeNonNegativeInteger(elements.shopBuyMultiplier && elements.shopBuyMultiplier.value, 1, 100);
+  appState.purchaseMultiplier = value;
+  const state = loadGameState();
+  state.shop.purchaseMultiplier = value;
+  saveGameState(state);
+  renderTofuShop(state);
+}
+
 function handleCharacterSelect(event) {
   const button = event.target && event.target.closest
     ? event.target.closest("[data-character-id]")
@@ -6057,6 +7420,27 @@ function bindEvents() {
   if (elements.gameCertifiedCtaButton) {
     elements.gameCertifiedCtaButton.addEventListener("click", revealSetupFlow);
   }
+  if (elements.brandPrimaryCta) {
+    elements.brandPrimaryCta.addEventListener("click", () => {
+      if (appState.running || appState.calibrating) return;
+      if (elements.brandPrimaryCta.dataset.brandAction === "cup-test") {
+        revealSetupFlow();
+        return;
+      }
+      setAppSurface("shop", { updateHash: true, scroll: true });
+      renderGamePanels(loadGameState());
+    });
+  }
+  if (elements.brandSecondaryCta) {
+    elements.brandSecondaryCta.addEventListener("click", () => {
+      if (appState.running || appState.calibrating) return;
+      const target = elements.brandSecondaryCta.dataset.brandAction === "cup-test"
+        ? "cup-test"
+        : "shop";
+      setAppSurface(target, { updateHash: true, scroll: true });
+      renderGamePanels(loadGameState());
+    });
+  }
   if (elements.surfaceNavButtons) {
     elements.surfaceNavButtons.forEach((button) => {
       button.addEventListener("click", () => {
@@ -6130,6 +7514,11 @@ function bindEvents() {
   }
   elements.packTofuButton.addEventListener("click", handlePackTofu);
   elements.fulfillShopOrderButton.addEventListener("click", handleFulfillShopOrder);
+  if (elements.shopTabPanel) elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick);
+  if (elements.shopTabList) elements.shopTabList.addEventListener("click", handleTofuShopPanelClick);
+  if (elements.shopBuyMultiplier) {
+    elements.shopBuyMultiplier.addEventListener("change", handleShopMultiplierChange);
+  }
   elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
   elements.characterList.addEventListener("click", handleCharacterSelect);
   elements.soundPackList.addEventListener("click", handleSoundPackSelect);
@@ -6145,6 +7534,12 @@ function cacheElements() {
     unsupportedView: document.getElementById("unsupported-view"),
     summaryView: document.getElementById("summary-view"),
     setupFlow: document.getElementById("setup-flow"),
+    brandShelfEyebrow: document.getElementById("brand-shelf-eyebrow"),
+    landingTitle: document.getElementById("landing-title"),
+    brandShelfCopy: document.getElementById("brand-shelf-copy"),
+    brandShelfSafety: document.getElementById("brand-shelf-safety"),
+    brandPrimaryCta: document.getElementById("brand-primary-cta"),
+    brandSecondaryCta: document.getElementById("brand-secondary-cta"),
     surfaceSections: Array.from(document.querySelectorAll("[data-app-surface]")),
     surfaceNavButtons: Array.from(document.querySelectorAll("[data-surface-target]")),
     tofuShopSection: document.getElementById("tofu-shop"),
@@ -6236,7 +7631,17 @@ function cacheElements() {
     shopLevelProgress: document.getElementById("shop-level-progress"),
     shopIdleRate: document.getElementById("shop-idle-rate"),
     shopOrderRate: document.getElementById("shop-order-rate"),
+    shopTipsRate: document.getElementById("shop-tips-rate"),
+    shopReputationRate: document.getElementById("shop-reputation-rate"),
+    shopSpiritRate: document.getElementById("shop-spirit-rate"),
     shopPrepStatus: document.getElementById("shop-prep-status"),
+    shopPrepSlots: document.getElementById("shop-prep-slots"),
+    shopReach: document.getElementById("shop-reach"),
+    shopSpirit: document.getElementById("shop-spirit"),
+    shopLicenseStars: document.getElementById("shop-license-stars"),
+    shopBuyMultiplier: document.getElementById("shop-buy-multiplier"),
+    shopTabList: document.getElementById("shop-tab-list"),
+    shopTabPanel: document.getElementById("shop-tab-panel"),
     packTofuButton: document.getElementById("pack-tofu-button"),
     packTofuHelper: document.getElementById("pack-tofu-helper"),
     fulfillShopOrderButton: document.getElementById("fulfill-shop-order-button"),

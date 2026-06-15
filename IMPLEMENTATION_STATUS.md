@@ -13,8 +13,9 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Runtime | Static browser-only app | Implemented | `frontend/nospill/index.html`, `frontend/nospill/app.js`, `frontend/nospill/app.css`, `README.md` | `make check` | Rename legacy source path later | P2 | No backend required for MVP |
 | Runtime | Cloud Run deployment | Implemented | `Dockerfile`, `nginx.conf`, `Makefile`, `DEPLOYMENT.md` | `make check` before deploy | External DNS/certificate verification is outside repo | P1 | Static container only |
-| Runtime | Two app surfaces: Tofu Shop and Don't Spill the Cup | Implemented | `data-app-surface`, `data-surface-target`, `setAppSurface`, `surfaceFromHash` in `frontend/nospill/index.html` and `frontend/nospill/app.js` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile navigation polish | P1 | Shop is home play; Cup Test remains separate optional challenge |
-| Runtime | Hash routing for `#/shop` and `#/cup-test` | Implemented | `surfaceHash`, `initializeAppSurface`, `hashchange` listener in `frontend/nospill/app.js`; `README.md` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Consider clean URL routing later if hosting supports it | P2 | User-facing copy uses product names, not legacy source paths |
+| Runtime | Two app surfaces: Tofu Shop and Don't Spill the Cup | Implemented | `data-app-surface`, `data-surface-target`, `setAppSurface`, `surfaceFromHash` in `frontend/nospill/index.html` and `frontend/nospill/app.js` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile navigation polish | P1 | Cup Test is default visitor surface; Shop remains home idle game |
+| Runtime | Hash routing for `#/shop` and `#/cup-test` | Implemented | `surfaceHash`, `initializeAppSurface`, `hashchange` listener in `frontend/nospill/app.js`; `README.md` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Consider clean URL routing later if hosting supports it | P2 | Root/no hash defaults to `#/cup-test`; user-facing copy uses product names |
+| Runtime | Shared brand shelf | Implemented | `nospill-brand-hero`, `renderBrandShelf`, fallback CSS | `testTofuDriverArtworkIsIsolatedAndAccessible`, `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile copy polish | P1 | Logo fallback appears only if image fails |
 | Driving | Basic Mode `DeviceMotionEvent` | Implemented | `getDeviceMotionConstructor`, `setMode`, `startRun` in `frontend/nospill/app.js` | `testLocationPermissionFlowRemainsOptIn` | Real-device browser testing | P1 | Basic Mode does not request location |
 | Driving | Qualified Run Mode opt-in location | Implemented | `startLocationWatch`, `qualificationForRoute`, `if (appState.mode === "qualified") startLocationWatch()` | `testLocationPermissionFlowRemainsOptIn`, `testQualifiedRouteAnalysisAndQualification` | Real-device HTTPS testing | P1 | Location starts only after explicit start |
 | Driving | Mount orientation mapping | Implemented | `MOUNT_PRESETS`, `computeMappedMotion`, mount controls | `testMountAxisMapping`, `testMappedMotionUsesSelectedMountConfig` | Mobile UX tuning | P2 | Local sensor mapping only |
@@ -74,25 +75,44 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Shop | Tofu Stock | Implemented | `shop.tofuStock`, shop UI | `testTofuShopStatePackIdleAndUpgradeRules` | Balance tuning | P2 | Local summarized resource |
-| Shop | Tofu Shop home surface | Implemented | hero/dashboard/shop sections tagged `data-app-surface="shop"`; default `appState.surface` | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile hierarchy polish | P1 | Playable at home without sensors/location |
+| Shop | Tofu Shop home surface | Implemented | dashboard/shop sections tagged `data-app-surface="shop"`; `#/shop` route | `testTwoSurfaceRoutingSeparatesShopAndCupTest` | Mobile hierarchy polish | P1 | Playable at home without sensors/location |
 | Shop | Delivery Orders | Implemented | `shop.deliveryOrders`, shop UI, `applyShopGeneratorTick` | `testTofuShopStatePackIdleAndUpgradeRules` | Balance tuning | P2 | Shop resource only; does not block The Cup Test |
 | Shop | Tips | Implemented | `shop.tips`, Fulfill Shop Order rewards | shop/order tests | Balance tuning | P2 | Home shop currency, local-only |
 | Shop | Reputation | Implemented | `shop.reputation`, `applyDeliveryToShop` | shop reward tests | Balance tuning | P2 | Comes from shop orders and smooth qualified outcomes |
+| Shop | Prep Slots | Implemented | `shop.prepSlots`, `getPrepSlotMax`, station purchase gates | `testExpandedIdleShopLayerMechanics` | Balance regen/costs | P2 | Parked-only capacity, no driving effect |
+| Shop | Shop Reach | Implemented | `shop.shopReach`, fictional route rewards | `testExpandedIdleShopLayerMechanics` | Route unlock tuning | P2 | Fictional districts only, no GPS/routes |
+| Shop | Shop Spirit | Implemented | `shop.shopSpirit`, spirit generators and boosts | `testExpandedIdleShopLayerMechanics` | Boost balance | P2 | Parked-only boosts; no Cup Test scoring effect |
+| Shop | Cup Stability XP | Implemented | `shop.cupStabilityXP`, Training drills | `testExpandedIdleShopLayerMechanics` | UI polish | P3 | Fictional/home training, no sensors |
+| Shop | Route Knowledge | Implemented | `shop.routeKnowledge`, route card rewards | `testExpandedIdleShopLayerMechanics` | Balance tuning | P3 | Fictional route knowledge only |
+| Prestige | License Stars | Implemented | `shop.licenseStars`, License Exam and perks | `testExpandedIdleShopLayerMechanics` | Prestige balance | P2 | Permanent local prestige, no real driving score effect |
 | Shop | Shop Level | Implemented | `getShopLevel`, shop UI | shop level tests | Balance tuning | P2 | Does not affect real driving score |
 | Shop | Pack Tofu | Implemented | `packTofu`, `handlePackTofu` | `testTofuShopStatePackIdleAndUpgradeRules` | UX tuning | P2 | Parked-only, disabled during drive |
 | Shop | Fulfill Shop Order | Implemented | `fulfillShopOrder`, `handleFulfillShopOrder`, shop UI | `testTofuShopStatePackIdleAndUpgradeRules` | Result polish | P1 | Parked-only home action, no sensors/geolocation |
 | Results | Shop Order Complete screen | Implemented | `renderShopOrderResult` | shop/order tests | Visual polish | P2 | Share actions disabled; not a driving result |
 | Shop | Live generator ticking | Implemented | `tickOpenShopGenerators`, `applyShopGeneratorTick`, per-second shop rate labels | `testTofuShopStatePackIdleAndUpgradeRules` | Mobile pacing QA | P1 | Runs only while parked/open; no backend timer |
+| Shop | Tabbed idle panels | Implemented | `SHOP_TABS`, `renderShopTabs`, `shop-tab-panel` | `testExpandedIdleShopLayerMechanics` | Mobile information density tuning | P1 | Hidden from active drive with landing view |
+| Shop | Buy multiplier controls | Implemented | `shop-buy-multiplier`, `buyShopStation`, `Buy Max` station buttons | `testExpandedIdleShopLayerMechanics` | Add per-card ETA later | P2 | Reduces repetitive clicking |
+| Shop | Cascading station catalog | Partial | `SHOP_STATIONS`, `buyShopStation`, `getShopGeneratorRates` | `testExpandedIdleShopLayerMechanics` | More balancing and station-specific visuals | P1 | Tofu shop language only |
 | Shop | Capped idle production | Implemented | `calculateOfflineShopEarnings`, cap constants | idle production tests | Balance tuning | P2 | Includes tofu stock and delivery orders; no reputation |
 | Generator | Tofu Press | Implemented | `SHOP_UPGRADES`, `getShopGeneratorRates`, generator UI | generator/shop tests | Balance tuning | P2 | Produces Tofu Stock only |
 | Generator | Prep Counter | Implemented | `SHOP_UPGRADES`, `getShopGeneratorRates`, generator UI | generator/shop tests | Balance tuning | P2 | Converts Tofu Stock to Delivery Orders |
 | Upgrade | Better Boxes | Implemented | `SHOP_UPGRADES`, delivery-to-shop reward modifier | upgrade/shop reward tests | Balance tuning | P3 | Packaging language, no vehicle advantage |
 | Upgrade | Shop Sign | Implemented | `SHOP_UPGRADES`, reputation modifier | upgrade/shop reward tests | Balance tuning | P3 | Presentation/reputation only |
-| Shop | Delivery Wall | Implemented | `renderDeliveryWall` | `testDeliveryWallKeepsLockedMerchLinksHidden` | Visual polish | P2 | Locked merch links hidden |
+| Shop | Delivery Wall shelf | Rejected / Non-goal | Visible shelf removed from `index.html`; `renderDeliveryWall` is compatibility no-op | `testUnlockShelvesStayOutOfMainShopUi` | Surface rewards through Passport/results instead | P3 | Avoids exposing a full unlock checklist |
 | Shop | Shop rewards after delivery | Implemented | `applyDeliveryToShop`, result grid | shop reward tests | Balance tuning | P1 | Speed does not affect rewards |
 | Certified | Certified Cup Test boosts | Implemented | `applyDeliveryToShop`, `certifiedBoost`, active shop boost | speed/shop reward tests | Balance tuning | P1 | Qualified non-simulated sessions only; speed does not scale boost |
-| Unlocks | Shop Unlocks vs Certified Delivery Unlocks | Implemented | `renderDeliveryWall` grouped UI | Delivery Wall tests | More real product URLs | P2 | Avoids real/fake wording |
+| Unlocks | Shop vs Certified unlock tracks | Partial | Internal merch/progress state and result summaries | share/result/merch tests | Keep visible roadmap shelves hidden; reveal rewards through stamps/results | P2 | Avoids real/fake wording and keeps certified progress separate |
 | Shop | Parked-only shop actions | Implemented | active-drive gates in shop handlers/rendering | active-drive tests | Real mobile testing | P0 | No in-drive shop actions |
+| Routes | Fictional Delivery Routes | Partial | `SHOP_ROUTE_CATALOG`, `completeFictionalRoute`, Routes panel | `testExpandedIdleShopLayerMechanics` | Add timed route queues and richer reports | P2 | Fictional cards, not real-road instructions |
+| Training | Training Lot drills | Implemented | `TRAINING_DRILLS`, `runTrainingDrill`, Training panel | `testExpandedIdleShopLayerMechanics` | Add more drills | P3 | Parked/home only |
+| Garage | Fictional garage upgrades | Implemented | `GARAGE_UPGRADES`, `buyGarageUpgrade`, Garage panel | `testExpandedIdleShopLayerMechanics` | Balance/cosmetic art | P3 | Does not affect real Cup Test scoring |
+| Crew | Delivery Crew automation counts | Partial | `CREW_ROLES`, `hireCrewRole`, Crew panel | `testExpandedIdleShopLayerMechanics` | Add actual route assignment queues | P2 | Fictional/home automation only |
+| Spirit | Shop Spirit and Festival Boosts | Partial | `SPIRIT_GENERATORS`, `SHOP_SPIRIT_BOOSTS`, `FESTIVAL_BOOSTS`, `useShopSpiritBoost`, `useFestivalBoost` | `testExpandedIdleShopLayerMechanics` | More token earning rules | P2 | Parked-only; no real driving score effect |
+| Prestige | License Exam and perks | Partial | `licenseExamStatus`, `takeLicenseExam`, `LICENSE_PERKS` | `testExpandedIdleShopLayerMechanics` | Confirm UX and balance reset depth | P2 | First prestige does not require real driving |
+| Rivals | Rival Shop Challenges | Partial | `RIVAL_CHALLENGES`, `startRivalChallenge`, Rivals panel | `testExpandedIdleShopLayerMechanics` | Add queued/claim flow | P3 | Friendly shop challenge copy only |
+| Passport | Expanded shop/passport stamps | Partial | `STAMP_LABELS`, Passport panel | `testExpandedIdleShopLayerMechanics` | Category filters and details | P3 | Local-only achievements |
+| Ledger | Delivery Ledger | Implemented | `shop.ledger`, `addLedgerEntry`, Ledger panel | `testExpandedIdleShopLayerMechanics` | Clear/filter UI later | P2 | Capped summaries only |
+| Dev QA | Unlock All Local QA | Implemented | `isDevToolsEnabled`, `unlockAllLocalQa`, Settings / QA panel | `testExpandedIdleShopLayerMechanics` | Add explicit UI reset confirmation | P3 | Marks local state untrusted; no certified proof |
 
 ## Collection Layer
 
@@ -160,18 +180,15 @@ Status values: `Implemented`, `Partial`, `Documented only`, `Planned`, `Blocked`
 
 | Area | Requirement / Feature | Status | Evidence / Files | Tests | Remaining Work | Priority | Safety / Privacy Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Economy | Tips as separate currency | Documented only | `DESIGN.md` idle expansion | None | Design/balance/prototype | Future | Must not reward speed |
-| Routes | 5 fictional routes | Documented only | `DESIGN.md` route system | None | Prototype fictional route layer | Future | Fictional content, not real-road instructions |
-| Routes | Fictional route map | Documented only | `DESIGN.md` route system | None | Design UI/data model | Future | Must remain separate from real-world routing |
-| Narrative | Delivery reports / ledger | Planned | `DESIGN.md`, next build candidates | None | Add small post-run report flavor | P2 | No raw route/street details |
-| Economy | 15 upgrades | Documented only | `DESIGN.md` MVP scope | None | Expand from 3 upgrades | Future | Avoid vehicle/speed advantage wording |
-| Automation | Apprentice auto-driver | Documented only | `DESIGN.md` automation ladder | None | Future idle prototype | Future | Must not encourage extra real driving |
+| Routes | Fictional route map | Planned | Route cards implemented; map remains in `DESIGN.md` | None | Design fictional map UI | Future | Must remain separate from real-world routing |
+| Narrative | Rich delivery reports | Partial | Capped ledger entries implemented | `testExpandedIdleShopLayerMechanics` | Add more authored report variety | P2 | No raw route/street details |
+| Economy | 15+ upgrades | Implemented | `SHOP_UPGRADES`, `STATION_UPGRADES`, `GARAGE_UPGRADES`, `LICENSE_PERKS` | `testExpandedIdleShopLayerMechanics` | Balance and display polish | P2 | Avoid vehicle/speed advantage wording |
+| Automation | Apprentice auto-driver queue | Partial | Crew counts implemented; assignment queue planned | `testExpandedIdleShopLayerMechanics` | Add timed auto route assignments | Future | Must not encourage extra real driving |
 | Mastery | Route mastery expanded system | Partial | coarse fingerprints implemented; expansion in `DESIGN.md` | route mastery tests | Add richer fictional/local mastery | Future | Coarse buckets only |
 | Idle | Offline progress expansion | Partial | capped shop idle implemented; expansion in `DESIGN.md` | idle tests | More generators/reporting | Future | No service worker/backend |
-| Prestige | License Exam prestige | Documented only | `DESIGN.md` prestige section | None | Design reset/perk model | Future | Must not improve real driving score |
-| Prestige | License Stars | Documented only | `DESIGN.md` prestige section | None | Design currency/perks | Future | Fictional/cosmetic/convenience only |
+| Prestige | Deeper License Exam prestige | Partial | First License Exam and License Perks implemented | `testExpandedIdleShopLayerMechanics` | Tune reset strategy and later exams | Future | Must not improve real driving score |
 | Narrative | Story chapters | Documented only | `DESIGN.md` future direction | None | Implement only after core loop polish | Future | Parked-only story |
-| Narrative | Customers | Documented only | `DESIGN.md` future direction | None | Implement lightweight customers | Future | No unsafe driving prompts |
+| Narrative | Customers | Partial | `regular_customer` station implemented | `testExpandedIdleShopLayerMechanics` | Add named customers and reports | Future | No unsafe driving prompts |
 | Narrative | Contracts | Documented only | `DESIGN.md` future direction | None | Design safe contracts | Future | No timed/speed contracts |
 | Crew | Staff/crew expansion | Partial | cosmetic Delivery Crew implemented; expansion in `DESIGN.md` | collection tests | Add staff roles later | Future | Cosmetic/local only |
 | Social | Public profiles | Planned | `DESIGN.md` monetization/status section | None | Requires privacy/account design | Future | No raw route/speed/location |

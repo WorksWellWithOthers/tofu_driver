@@ -15,10 +15,13 @@
         <h1>Tofu Driver</h1>
       </div>
       <nav class="nospill-surface-nav" aria-label="Tofu Driver sections">
-        <button class="is-active" type="button" data-surface-target="shop" aria-current="page">
+        <button type="button" data-surface-target="shop">
           Tofu Shop
         </button>
-        <button type="button" data-surface-target="cup-test">
+        <button class="is-hidden" type="button" data-surface-target="crew">
+          Delivery Crew
+        </button>
+        <button class="is-active" type="button" data-surface-target="cup-test" aria-current="page">
           Don't Spill the Cup
         </button>
       </nav>
@@ -28,7 +31,7 @@
     </header>
 
     <section class="nospill-panel nospill-landing" id="landing-view" aria-labelledby="landing-title">
-      <section class="nospill-brand-hero" aria-labelledby="landing-title" data-app-surface="shop">
+      <section class="nospill-brand-hero" aria-labelledby="landing-title">
         <div class="nospill-hero-art">
           <img
             src="/static/nospill/assets/tofu-driver-logo.png"
@@ -39,15 +42,23 @@
           <span class="nospill-hero-fallback" hidden>Tofu Driver</span>
         </div>
         <div class="nospill-hero-copy">
-          <p class="nospill-kicker">Tofu Shop</p>
-          <h2 id="landing-title">Run the tofu shop.</h2>
-          <p>
-            A cozy delivery-management game you can play at home.
+          <p class="nospill-kicker" id="brand-shelf-eyebrow">Certified Challenge</p>
+          <h2 id="landing-title">Don't Spill the Cup</h2>
+          <p id="brand-shelf-copy">
+            Keep the cup steady. Drive smoothly. Boost the Tofu Shop.
           </p>
           <p class="nospill-hero-tagline">Not faster. Smoother.</p>
           <p class="nospill-hero-safety">
-            Play the shop anytime. Take Don't Spill the Cup when you're ready for a certified smooth-delivery boost.
+            <span id="brand-shelf-safety">Start while parked. Basic Mode uses motion only; Qualified Run is opt-in.</span>
           </p>
+          <div class="nospill-hero-actions">
+            <button class="nospill-primary" id="brand-primary-cta" type="button">
+              Take the Cup Test
+            </button>
+            <button class="nospill-secondary" id="brand-secondary-cta" type="button">
+              Go to Tofu Shop
+            </button>
+          </div>
         </div>
       </section>
 
@@ -114,14 +125,6 @@
             <strong>Delivery Passport</strong>
             <span>The passport opens after your first stamp-worthy delivery.</span>
           </div>
-          <div class="nospill-teaser-card">
-            <strong>Delivery Crew</strong>
-            <span>No one is on shift yet. Your first delivery may attract help.</span>
-          </div>
-          <div class="nospill-teaser-card">
-            <strong>Sound Packs</strong>
-            <span>New sounds unlock as your delivery reputation grows.</span>
-          </div>
         </div>
       </section>
 
@@ -162,6 +165,7 @@
           <p>
             Complete Cup Test milestones to unlock limited No-Spill Club gear.
             Secret shirts and drops are fulfilled through Super Cute Collectibles.
+            Physical merch is fulfilled by Super Cute Collectibles.
           </p>
           <a
             class="nospill-secondary nospill-link-button nospill-merch-partner-link"
@@ -307,16 +311,44 @@
             <strong id="shop-level-progress">Complete first delivery</strong>
           </div>
           <div>
-            <span>Tofu Stock Rate</span>
+            <span>Tofu Stock/sec</span>
             <strong id="shop-idle-rate">Locked</strong>
           </div>
           <div>
-            <span>Delivery Orders Rate</span>
+            <span>Delivery Orders/sec</span>
             <strong id="shop-order-rate">Locked</strong>
+          </div>
+          <div>
+            <span>Tips/sec</span>
+            <strong id="shop-tips-rate">Locked</strong>
+          </div>
+          <div>
+            <span>Reputation/sec</span>
+            <strong id="shop-reputation-rate">Locked</strong>
+          </div>
+          <div>
+            <span>Shop Spirit/sec</span>
+            <strong id="shop-spirit-rate">Locked</strong>
           </div>
           <div>
             <span>Prep Counter</span>
             <strong id="shop-prep-status">Locked</strong>
+          </div>
+          <div>
+            <span>Prep Slots</span>
+            <strong id="shop-prep-slots">Locked</strong>
+          </div>
+          <div>
+            <span>Shop Reach</span>
+            <strong id="shop-reach">Locked</strong>
+          </div>
+          <div>
+            <span>Shop Spirit</span>
+            <strong id="shop-spirit">Locked</strong>
+          </div>
+          <div>
+            <span>License Stars</span>
+            <strong id="shop-license-stars">Locked</strong>
           </div>
         </div>
 
@@ -335,6 +367,21 @@
           </p>
         </div>
 
+        <div class="nospill-shop-tabs" aria-label="Tofu Shop panels">
+          <label class="nospill-field nospill-buy-multiplier" for="shop-buy-multiplier">
+            <span>Buy Multiplier</span>
+            <select id="shop-buy-multiplier">
+              <option value="1">x1</option>
+              <option value="10">x10</option>
+              <option value="100">x100</option>
+              <option value="max">Max</option>
+            </select>
+          </label>
+          <div class="nospill-shop-tab-list" id="shop-tab-list" role="tablist"></div>
+        </div>
+
+        <div class="nospill-shop-panel nospill-idle-panel" id="shop-tab-panel" aria-live="polite"></div>
+
         <div class="nospill-shop-panel" aria-labelledby="shop-generators-title">
           <h4 id="shop-generators-title">Generators</h4>
           <div class="nospill-generator-list" id="shop-generator-list"></div>
@@ -345,20 +392,12 @@
           <div class="nospill-upgrade-list" id="shop-upgrade-list"></div>
         </div>
 
-        <div class="nospill-shop-panel" aria-labelledby="delivery-wall-title">
-          <h4 id="delivery-wall-title">Delivery Wall</h4>
-          <p class="nospill-panel-helper">
-            Secret gear progress stays local. Physical merch is fulfilled by Super Cute Collectibles.
-          </p>
-          <div class="nospill-delivery-wall-grid" id="delivery-wall-grid"></div>
-        </div>
-
         <p class="nospill-panel-helper" id="shop-offline-earnings">
           While you were away: +0 tofu stock.
         </p>
       </section>
 
-      <section class="nospill-section nospill-collection is-hidden" id="delivery-crew" aria-labelledby="delivery-crew-title" data-app-surface="shop">
+      <section class="nospill-section nospill-collection is-hidden" id="delivery-crew" aria-labelledby="delivery-crew-title" data-app-surface="crew">
         <div class="nospill-delivery-log-head">
           <div>
             <p class="nospill-kicker">Delivery Crew</p>
