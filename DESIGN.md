@@ -263,6 +263,26 @@ street names, exact distance by default, fastest time, high-G bragging, `cavrino
 Super Cute Collectibles links by default. Share output should not include shop click counts or idle
 production stats by default.
 
+## Discord Community
+
+Discord is an optional community channel configured in `DISCORD_CONFIG` inside
+`frontend/nospill/app.js`:
+
+```js
+{
+  enabled: false,
+  inviteUrl: null
+}
+```
+
+The Discord CTA is hidden unless `enabled` is true and `inviteUrl` is set. It must not appear during
+an active drive. When enabled, Discord is for delivery-card sharing, feature ideas, bug reports,
+feedback, secret merch drops, and community updates.
+
+Discord is not for reporting, identifying, shaming, or accusing drivers. A future moderation policy
+is required before accepting user-generated driving incident reports. Discord invite links must not
+be added to default share text or generated share images.
+
 ## Scoring Principles
 
 - Smoothness is rewarded.

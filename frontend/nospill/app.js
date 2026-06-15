@@ -65,6 +65,11 @@ const SHARE_CONFIG = {
   includeDistanceInShare: false,
 };
 
+const DISCORD_CONFIG = {
+  enabled: false,
+  inviteUrl: null,
+};
+
 const QUALIFICATION_RULES = {
   minDurationSeconds: 180,
   minDistanceMiles: 1,
@@ -2077,6 +2082,7 @@ function sanitizeShareOutput(text) {
     .replace(/\b(?:speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g)\b/gi, "")
     .replace(/cavrino\.com\/nospill/gi, "")
     .replace(/supercutecollectibles\.com/gi, "")
+    .replace(/discord\.gg\/[a-z0-9-]+/gi, "")
     .replace(/Super Cute Collectibles/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -2673,6 +2679,7 @@ function showView(viewName) {
     if (!node) return;
     node.classList.toggle("is-hidden", name !== viewName);
   });
+  renderDiscordCtas(viewName);
 }
 
 function setLandingStatus(message) {
@@ -3222,6 +3229,60 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
 
 function summaryMetric(label, value, className = "") {
   return `<div><span>${escapeHtml(label)}</span><strong class="${className}">${escapeHtml(value)}</strong></div>`;
+}
+
+function normalizedDiscordConfig(config = DISCORD_CONFIG) {
+  const source = config && typeof config === "object" ? config : {};
+  const inviteUrl = typeof source.inviteUrl === "string" ? source.inviteUrl.trim() : "";
+  return {
+    enabled: Boolean(source.enabled && inviteUrl),
+    inviteUrl: inviteUrl || null,
+  };
+}
+
+function discordCtaHtml(variant, config = DISCORD_CONFIG) {
+  const discord = normalizedDiscordConfig(config);
+  if (!discord.enabled) return "";
+  const summary = variant === "summary";
+  return `
+    <section class="nospill-section nospill-discord-panel" aria-label="Discord community">
+      <p class="nospill-kicker">Community</p>
+      <h3>Join the Delivery Crew</h3>
+      <p>
+        ${summary
+          ? "Want to share your run or suggest the next cargo?"
+          : "Share delivery cards, suggest features, and follow secret merch drops."}
+      </p>
+      <a
+        class="nospill-secondary nospill-link-button"
+        href="${escapeHtml(discord.inviteUrl)}"
+        target="_blank"
+        rel="noopener noreferrer"
+      >
+        ${summary ? "Join the Delivery Crew" : "Join Discord"}
+      </a>
+    </section>
+  `;
+}
+
+function renderDiscordCtas(viewName = "landing") {
+  const activeDrive = appState.running || appState.calibrating || viewName === "run";
+  const config = normalizedDiscordConfig(DISCORD_CONFIG);
+  const shouldRender = config.enabled && !activeDrive;
+  const landingHtml = shouldRender && viewName === "landing"
+    ? discordCtaHtml("landing", DISCORD_CONFIG)
+    : "";
+  const summaryHtml = shouldRender && viewName === "summary"
+    ? discordCtaHtml("summary", DISCORD_CONFIG)
+    : "";
+  if (elements.landingDiscordCta) {
+    elements.landingDiscordCta.innerHTML = landingHtml;
+    elements.landingDiscordCta.classList.toggle("is-hidden", !landingHtml);
+  }
+  if (elements.summaryDiscordCta) {
+    elements.summaryDiscordCta.innerHTML = summaryHtml;
+    elements.summaryDiscordCta.classList.toggle("is-hidden", !summaryHtml);
+  }
 }
 
 function renderDeliveryLog(gameState = loadGameState()) {
@@ -4220,6 +4281,8 @@ function cacheElements() {
     exportProgressButton: document.getElementById("export-progress-button"),
     importProgressButton: document.getElementById("import-progress-button"),
     resetProgressButton: document.getElementById("reset-progress-button"),
+    landingDiscordCta: document.getElementById("landing-discord-cta"),
+    summaryDiscordCta: document.getElementById("summary-discord-cta"),
     shopLevelBadge: document.getElementById("shop-level-badge"),
     shopTofuStock: document.getElementById("shop-tofu-stock"),
     shopReputation: document.getElementById("shop-reputation"),
@@ -4268,6 +4331,7 @@ function initNoSpillApp() {
   updateModeCopy();
   renderMerchPanel(clubState);
   renderGamePanels(loadGameStateWithOfflineShopEarnings());
+  renderDiscordCtas("landing");
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   if (!hasDeviceMotionSupport()) {
     setLandingStatus(

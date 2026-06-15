@@ -192,6 +192,7 @@
 
 .nospill-how,
 .nospill-merch-preview,
+.nospill-discord-panel,
 .nospill-delivery-log,
 .nospill-tofu-shop,
 .nospill-safety-strip {
@@ -203,9 +204,23 @@
 
 .nospill-how h3,
 .nospill-merch-preview h3,
+.nospill-discord-panel h3,
 .nospill-delivery-log h3,
 .nospill-tofu-shop h3 {
   font-size: 1.2rem;
+}
+
+.nospill-discord-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.nospill-discord-panel p {
+  margin: 0;
+}
+
+.nospill-discord-panel .nospill-link-button {
+  width: 100%;
 }
 
 .nospill-delivery-log-head {

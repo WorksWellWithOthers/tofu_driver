@@ -17,6 +17,7 @@
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
 - Unlock-gated merch product links still live in `MERCH_LINKS`.
+- Discord community CTAs are implemented but hidden until `DISCORD_CONFIG` is enabled with an invite URL.
 
 ## Recommended Next Steps
 
@@ -36,6 +37,7 @@
 - Should Qualified Run verification remain share-private by default?
 - Should the app add a backend later for accounts, badges, or server-issued merch unlocks?
 - Should Tofu Shop story chapters remain fully local-only, or eventually use backend unlock tokens?
+- What moderation policy is required before accepting user-generated driving incident reports in Discord?
 
 ## Non-Goals For The Current Slice
 

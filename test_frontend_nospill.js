@@ -85,10 +85,13 @@ globalThis.loadClubState = loadClubState;
 globalThis.saveClubState = saveClubState;
 globalThis.renderMerchPanel = renderMerchPanel;
 globalThis.renderDeliveryWall = renderDeliveryWall;
+globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
+globalThis.renderDiscordCtas = renderDiscordCtas;
 globalThis.APP_BRAND = APP_BRAND;
 globalThis.CHALLENGE_NAME = CHALLENGE_NAME;
 globalThis.CLUB_NAME = CLUB_NAME;
 globalThis.TOP_BADGE = TOP_BADGE;
+globalThis.DISCORD_CONFIG = DISCORD_CONFIG;
 globalThis.MERCH_LABELS = MERCH_LABELS;
 globalThis.MERCH_LINKS = MERCH_LINKS;
 globalThis.CARGO_PROFILES = CARGO_PROFILES;
@@ -259,6 +262,80 @@ function testSuperCuteCollectiblesLandingAndMerchCopy() {
   assert(!html.includes('Certified by Super Cute Collectibles'));
 }
 
+function testDiscordCtaConfigAndRendering() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('id="landing-discord-cta"'));
+  assert(html.includes('id="summary-discord-cta"'));
+  assert(!html.includes('Join Discord'));
+  assert(!html.includes('https://discord.gg/zckcWD9bmq'));
+
+  const runViewHtml = html.slice(
+    html.indexOf('id="run-view"'),
+    html.indexOf('id="unsupported-view"'),
+  );
+  assert(!runViewHtml.includes('Discord'));
+
+  const context = loadNoSpillContext();
+  assert.strictEqual(context.DISCORD_CONFIG.enabled, false);
+  assert.strictEqual(context.DISCORD_CONFIG.inviteUrl, null);
+  const defaultConfig = context.normalizedDiscordConfig(context.DISCORD_CONFIG);
+  assert.strictEqual(defaultConfig.enabled, false);
+  assert.strictEqual(defaultConfig.inviteUrl, null);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    innerHTML: "",
+    hidden: null,
+    classList: {
+      toggle(_className, hidden) {
+        node.hidden = Boolean(hidden);
+      },
+    },
+  };
+  return node;
+}
+elements = {
+  landingDiscordCta: makeNode(),
+  summaryDiscordCta: makeNode(),
+};
+renderDiscordCtas("landing");
+globalThis.defaultLandingDiscordHtml = elements.landingDiscordCta.innerHTML;
+globalThis.defaultLandingDiscordHidden = elements.landingDiscordCta.hidden;
+DISCORD_CONFIG.enabled = true;
+DISCORD_CONFIG.inviteUrl = "https://discord.gg/zckcWD9bmq";
+appState.running = false;
+appState.calibrating = false;
+renderDiscordCtas("landing");
+globalThis.enabledLandingDiscordHtml = elements.landingDiscordCta.innerHTML;
+globalThis.enabledLandingDiscordHidden = elements.landingDiscordCta.hidden;
+appState.running = true;
+renderDiscordCtas("run");
+globalThis.activeLandingDiscordHtml = elements.landingDiscordCta.innerHTML;
+globalThis.activeSummaryDiscordHtml = elements.summaryDiscordCta.innerHTML;
+globalThis.activeLandingDiscordHidden = elements.landingDiscordCta.hidden;
+appState.running = false;
+renderDiscordCtas("summary");
+globalThis.enabledSummaryDiscordHtml = elements.summaryDiscordCta.innerHTML;
+`, context);
+
+  assert.strictEqual(context.defaultLandingDiscordHtml, '');
+  assert.strictEqual(context.defaultLandingDiscordHidden, true);
+  assert(context.enabledLandingDiscordHtml.includes('Join the Delivery Crew'));
+  assert(context.enabledLandingDiscordHtml.includes('Share delivery cards, suggest features, and follow secret merch drops.'));
+  assert(context.enabledLandingDiscordHtml.includes('Join Discord'));
+  assert(context.enabledLandingDiscordHtml.includes('href="https://discord.gg/zckcWD9bmq"'));
+  assert(context.enabledLandingDiscordHtml.includes('target="_blank"'));
+  assert(context.enabledLandingDiscordHtml.includes('rel="noopener noreferrer"'));
+  assert.strictEqual(context.enabledLandingDiscordHidden, false);
+  assert.strictEqual(context.activeLandingDiscordHtml, '');
+  assert.strictEqual(context.activeSummaryDiscordHtml, '');
+  assert.strictEqual(context.activeLandingDiscordHidden, true);
+  assert(context.enabledSummaryDiscordHtml.includes('Want to share your run or suggest the next cargo?'));
+  assert(context.enabledSummaryDiscordHtml.includes('Join the Delivery Crew'));
+  assert(!/Report bad drivers|Call out drivers|Submit license plates|Upload incidents|Shame reckless drivers|Street racing community|Canyon leaderboard/i.test(context.enabledLandingDiscordHtml));
+}
+
 function testNoSpillClientDoesNotUploadRawRunData() {
   for (const filePath of [NOSPILL_HTML, NOSPILL_JS]) {
     const source = fs.readFileSync(filePath, 'utf8');
@@ -293,6 +370,7 @@ function testNoSpillLiveSummaryAndShareAvoidSensitiveDetails() {
   assert(!shareText.includes('cavrino.com/nospill'));
   assert(!shareText.includes('Super Cute Collectibles'));
   assert(!shareText.includes('supercutecollectibles.com'));
+  assert(!shareText.includes('discord.gg'));
 }
 
 function testShareConfigAndCardData() {
@@ -317,6 +395,7 @@ function testShareConfigAndCardData() {
   assert(!defaultText.includes('cavrino.com/nospill'));
   assert(!defaultText.includes('Super Cute Collectibles'));
   assert(!defaultText.includes('supercutecollectibles.com'));
+  assert(!defaultText.includes('discord.gg'));
 
   const clubText = context.buildShareText(sampleShareSummary({
     unlockedBadges: ['nospill_club'],
@@ -345,6 +424,7 @@ function testShareConfigAndCardData() {
   assert(!missingLinkText.includes('null'));
 
   const cardData = context.buildShareCardData(summary);
+  assert(!JSON.stringify(cardData).includes('discord.gg'));
   assert.strictEqual(cardData.title, 'Tofu Driver');
   assert.strictEqual(cardData.challengeName, 'Delivery Complete');
   assert.strictEqual(cardData.waterDelivered, '97.4%');
@@ -869,6 +949,7 @@ function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
   assert(!text.includes('cavrino.com/nospill'));
   assert(!text.includes('Super Cute Collectibles'));
   assert(!text.includes('supercutecollectibles.com'));
+  assert(!text.includes('discord.gg'));
 }
 
 function testLocationPermissionFlowRemainsOptIn() {
@@ -1154,6 +1235,7 @@ function run() {
   testTofuDriverBrandHierarchy();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
+  testDiscordCtaConfigAndRendering();
   testNoSpillClientDoesNotUploadRawRunData();
   testNoSpillLiveSummaryAndShareAvoidSensitiveDetails();
   testShareConfigAndCardData();
