@@ -15,9 +15,10 @@ The app is intentionally lightweight:
 - local results stored only in browser `localStorage`
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
-- game-first landing dashboard with Today's Delivery, Driver License, XP, passport, and shop preview
+- game-first landing dashboard with Today's Delivery, a clear Cup Test CTA, and progressive teaser cards
 - parked-only Tofu Shop resources, three starter upgrades, and Delivery Wall progress
 - cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
+- hidden local Delivery Simulator for QA, enabled with `?simulator=1`
 - design target favors progressive reveal, earned status, and ethical cosmetics over pay-to-progress
 - optional Discord community CTA, hidden unless `DISCORD_CONFIG` is enabled
 
@@ -41,6 +42,10 @@ make check
 
 Open `frontend/nospill/index.html` in a browser for static inspection. Device motion behavior needs
 a real mobile browser over HTTPS for full testing.
+
+For local game-loop QA without a real drive, append `?simulator=1` to the app URL. Simulated
+deliveries are labeled as test mode, use no sensors or location, and should not be treated as real
+merch verification.
 
 ## Deploy
 

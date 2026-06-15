@@ -61,6 +61,7 @@ Saved session summaries contain summarized values only:
 
 - `date`
 - `mode`
+- `simulated`
 - `waterLeft`
 - `waterSpilled`
 - `rank`
@@ -529,6 +530,16 @@ not instructions for real-world driving.
 The current visible Delivery Board, Tofu Shop, Passport, Collection Layer, and merch progress work is
 still useful, but should eventually respect unlock states.
 
+Current implementation uses this as a first pass:
+
+- Today's Delivery and the primary Cup Test CTA are visible immediately.
+- Tofu Shop appears as a teaser first; Pack Tofu and upgrades unlock after the first delivery.
+- Delivery Passport appears as a teaser first; stamp details unlock after the first stamp-worthy
+  delivery.
+- Delivery Crew and Sound Packs appear as teaser cards first; selection controls unlock only after
+  character or sound-pack unlocks exist.
+- Active-drive screens still hide shop, crew, sound, and reward interactions.
+
 The design target is not to remove the dashboard. The target is:
 
 - first-time users get mystery and focus
@@ -792,6 +803,119 @@ The fantasy:
 - earn higher License ranks
 
 The game is about condition, smoothness, mastery, and shop growth. It is not about real-world speed.
+
+### Long-Arc Narrative Inspiration
+
+Future Tofu Driver can borrow the multi-phase structure of minimalist incremental games: a quiet
+beginning, one resource at a time, story beats that reveal systems, automation that removes chores,
+and a strange endgame that still honors the cup. This is future design direction, not current
+runtime behavior.
+
+The long arc can unfold in six safe phases:
+
+1. The Dark Garage
+
+   Start with one quiet scene. The engine is cold. The cup is full. The first action is Start
+   Delivery / Take The Cup Test. Reveal only one mechanic at a time. The first reward is a small
+   delivery report and Tips.
+
+   Avoid making engine revving, speed fantasy, drifting, or racing language part of real-world
+   driving mode.
+
+2. The Tofu Shop
+
+   The shop becomes the first management layer: Tofu Stock, Reputation, Shop Level, Pack Tofu,
+   Tofu Press, Better Boxes, and Shop Sign. Shop mode is parked-only. Smooth deliveries build
+   reputation. Idle production is capped and summarized. Shop growth should feel cozy and alive.
+
+3. Fictional Route Network
+
+   A fictional route map may exist in the idle layer later. Routes are game content, not
+   instructions for real-world roads. Atmospheric route names can include:
+
+   - Shop Street
+   - Old Hill Road
+   - Lantern Bridge
+   - Rainy Switchback
+   - Fox Shrine Road
+
+   Route mastery should be fictional or idle progression. Real-world app mode must not tell users
+   to seek twisty roads, risky roads, faster roads, or specific road types.
+
+4. Delivery Network Expansion
+
+   The player can eventually train apprentices, dispatchers, prep staff, and route scouts.
+   Automation removes chores, not decisions. Automation should repeat fictional safe routes or shop
+   tasks. It must not encourage extra real-world driving.
+
+5. License Prestige
+
+   Prestige should be themed as License Exams. A License Exam partially resets fictional
+   shop/network progress and grants permanent License Stars. License Stars can improve future
+   idle-game pacing, shop convenience, story unlocks, or cosmetic progress. They must not improve
+   real-world driving score or qualification.
+
+   Possible license ranks:
+
+   - Local Delivery License
+   - Mountain Shop License
+   - Night Delivery License
+   - Festival License
+   - Legend License
+   - Ghost Road License
+
+   Words like mountain, night, and route are fictional game content unless explicitly tied to safe,
+   legal, summarized real-world driving outcomes.
+
+6. Legendary Final Delivery
+
+   Endgame can become surreal and dramatic while preserving the core metaphor: the water in the cup
+   does not spill. The final fantasy is not fastest driver. The final fantasy is perfect control.
+   The ending should reinforce: Not faster. Smoother.
+
+   Possible ending copy:
+
+   ```text
+   The mountain behind is quiet.
+   The shop lights are still on.
+   The road ahead is calm.
+   The cup is full.
+   ```
+
+If future fictional mechanics include rivals, races, speed, drifting, or battles, they must be
+renamed or framed as non-real-world fictional challenges.
+
+Prefer:
+
+- Delivery Trial
+- License Exam
+- Route Mastery
+- Smoothness Trial
+- Rival Shop Challenge
+- Festival Order
+- Perfect Pour Trial
+
+Avoid:
+
+- street race
+- drift battle
+- beat the clock
+- fastest route
+- high-speed run
+- attack the pass
+- no-brake challenge
+
+Fictional speed fantasy may exist only as stylized story flavor inside the idle layer. It must never
+become a real-world instruction, metric, reward, unlock requirement, merch condition, shareable
+status, or reason to drive faster.
+
+The long arc should preserve the progressive reveal style:
+
+- start with one sentence
+- reveal one resource at a time
+- unlock systems through story beats
+- keep mystery
+- make each new mechanic feel discovered, not dumped onto the first screen
 
 ### Design Pillars
 
@@ -1169,6 +1293,63 @@ Hard rules:
 Interaction rule: driving produces summarized delivery outcomes. Management gameplay happens while
 parked.
 
+## Delivery Simulator / Test Drive Mode
+
+Delivery Simulator is an implemented local QA mode for testing the Delivery Complete loop at home.
+It is hidden by default and appears only when one of these local gates is present:
+
+- the page URL includes `?simulator=1`
+- `localStorage` contains `tofuDriverSimulatorEnabled=true`
+
+The simulator panel is labeled `Delivery Simulator` and includes the warning:
+`Test mode. Simulated deliveries are for local testing and may not represent real driving.`
+
+Simulator scenarios generate completed delivery summaries without using sensors, geolocation,
+network calls, backend storage, service workers, uploads, or accounts. They must never request
+`DeviceMotionEvent` permission, start geolocation, or store raw GPS samples, raw motion streams,
+coordinates, route traces, maps, street names, or speed logs.
+
+V1 scenarios include:
+
+- Smooth Commute
+- City Delivery
+- Technical Pour
+- Perfect Pour
+- Hot Tea 90
+- Shaky Practice
+- Spilled Soup
+- Long Haul Smooth
+
+Generated summaries use the same result/reward path as real completed sessions where practical, but
+they must include:
+
+- `simulated: true`
+- `mode: "simulated"`
+- scenario id/name
+- cargo condition / water-left score
+- qualification status
+- route type
+- duration bucket-style summary values
+- stamp and reward summaries
+
+The simulator may apply local XP, shop rewards, stamps, character unlocks, sound-pack unlocks, and
+other summarized progress so development can test the game loop. Simulated sessions are local-only
+and not secure. The default simulator control excludes local merch progress; if a developer opts in
+to count simulated sessions for local QA, that state remains untrusted and must not be used as proof
+for future backend-verified merch claims.
+
+Future server-side merch verification must reject or ignore simulated sessions. Backend unlock
+tokens, if added later, should rely on trusted summarized verification state and must not accept
+client-generated `simulated` sessions as real deliveries.
+
+Share output for simulated sessions must clearly say `Simulated Delivery` or `Practice Delivery`.
+All normal sharing restrictions still apply: no speed, GPS, location, maps, route traces, street
+names, exact distance by default, high-G bragging, Super Cute Collectibles links, Discord links, or
+legacy app URLs by default.
+
+The simulator is not an active-drive feature. It must be hidden during an active Cup Test, must not
+start audio/geolocation/motion sensors, and must remain usable on desktop for local testing.
+
 ## XP And Stamps
 
 Driver XP is local-only and uses cargo condition, qualified-run bonus, daily delivery completion,
@@ -1213,7 +1394,8 @@ Shop Level, generic route type, stamp earned, daily delivery status, and `Not fa
 It must not include speed, average speed, top speed, GPS, location, coordinates, maps, route traces,
 street names, exact distance by default, fastest time, high-G bragging, `cavrino.com/nospill`, or
 Super Cute Collectibles links by default. Share output should not include shop click counts or idle
-production stats by default.
+production stats by default. Simulated sessions must be labeled as `Simulated Delivery` or
+`Practice Delivery` in default share output so they cannot be mistaken for real drives.
 
 ## Discord Community
 

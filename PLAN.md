@@ -17,6 +17,10 @@
   production, three starter upgrades, and Delivery Wall progress.
 - The Collection Layer adds cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
   for parked/result screens only.
+- Delivery Simulator is hidden by default and can be enabled locally with `?simulator=1` or
+  `tofuDriverSimulatorEnabled=true` to test completed delivery rewards without sensors or location.
+- First-run progressive reveal now keeps Today's Delivery and the Cup Test CTA prominent while
+  Tofu Shop, Passport, Delivery Crew, and Sound Packs start as teaser/locked cards.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
@@ -34,13 +38,15 @@
 3. Add a simple local static server command to `README.md`.
 4. Confirm custom-domain DNS records and certificate provisioning for `tofudriver.com`.
 5. Re-test on real iPhone Safari and Android Chrome over HTTPS.
-6. Prototype progressive reveal states so first-time users see the cup, first delivery, and one
-   action before larger dashboard systems appear.
+6. Play-test the progressive reveal gates on mobile and tune when shop, passport, crew, and sound
+   details should expand.
 7. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
 8. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
-9. Prototype the future idle expansion in the documented small-scope order: one fictional route,
+9. Use Delivery Simulator scenarios for local QA of Delivery Complete, unlocks, shop rewards, and
+   share sanitization before mobile road tests.
+10. Prototype the future idle expansion in the documented small-scope order: one fictional route,
    one generator, three upgrades, one delivery report, and one stamp.
-10. Replace remaining MVP raster assets with production-ready artwork when available.
+11. Replace remaining MVP raster assets with production-ready artwork when available.
 
 ## Open Questions
 

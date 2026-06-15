@@ -76,6 +76,11 @@ globalThis.selectedCharacter = selectedCharacter;
 globalThis.selectedSoundPack = selectedSoundPack;
 globalThis.playCosmeticSound = playCosmeticSound;
 globalThis.previewSoundPack = previewSoundPack;
+globalThis.getSimulatorScenarios = getSimulatorScenarios;
+globalThis.buildSimulatedSessionSummary = buildSimulatedSessionSummary;
+globalThis.applySimulatedDelivery = applySimulatedDelivery;
+globalThis.isSimulatorEnabled = isSimulatorEnabled;
+globalThis.renderSimulatorPanel = renderSimulatorPanel;
 globalThis.buildDeliverySharePayload = buildDeliverySharePayload;
 globalThis.sanitizeShareOutput = sanitizeShareOutput;
 globalThis.loadGameState = loadGameState;
@@ -93,6 +98,9 @@ globalThis.saveClubState = saveClubState;
 globalThis.renderMerchPanel = renderMerchPanel;
 globalThis.renderDeliveryWall = renderDeliveryWall;
 globalThis.renderGameDashboard = renderGameDashboard;
+globalThis.renderTofuShop = renderTofuShop;
+globalThis.renderCollectionPanel = renderCollectionPanel;
+globalThis.progressiveRevealState = progressiveRevealState;
 globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
 globalThis.renderDiscordCtas = renderDiscordCtas;
 globalThis.APP_BRAND = APP_BRAND;
@@ -125,6 +133,57 @@ function makeLocalStorage(initial = {}) {
       store.delete(key);
     },
   };
+}
+
+function assertNoSensitiveStorageData(value) {
+  const serialized = typeof value === 'string' ? value : JSON.stringify(value);
+  assert(
+    !/(routeSamples|gpsSamples|motionSamples|rawGps|rawMotion|coordinates|latitude|longitude|routeTrace|speedLog|streetName|streetNames|mapData)/i.test(serialized),
+    'stored data should not include raw GPS, motion, map, route trace, street, or speed-log fields',
+  );
+  let parsed = value;
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value);
+    } catch (_) {
+      return;
+    }
+  }
+  const blockedKeys = new Set([
+    'routesamples',
+    'gpssamples',
+    'motionsamples',
+    'rawgps',
+    'rawgpssamples',
+    'rawmotion',
+    'rawmotionsamples',
+    'coords',
+    'coordinates',
+    'latitude',
+    'longitude',
+    'lat',
+    'lon',
+    'trace',
+    'routetrace',
+    'routetraces',
+    'street',
+    'streetname',
+    'streetnames',
+    'map',
+    'maps',
+    'mapdata',
+    'speedlog',
+    'speedlogs',
+    'speedhistory',
+  ]);
+  const visit = (node) => {
+    if (!node || typeof node !== 'object') return;
+    Object.entries(node).forEach(([key, child]) => {
+      assert(!blockedKeys.has(key.toLowerCase()), `sensitive storage key found: ${key}`);
+      visit(child);
+    });
+  };
+  visit(parsed);
 }
 
 function sampleShareSummary(overrides = {}) {
@@ -275,7 +334,10 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('0 XP'));
   assert(html.includes('id="game-gear-progress"'));
   assert(html.includes('0/3'));
-  assert(html.includes('No stamps yet. Complete your first delivery.'));
+  assert(html.includes('The shop is quiet. Complete your first delivery to wake it up.'));
+  assert(html.includes('The passport opens after your first stamp-worthy delivery.'));
+  assert(html.includes('No one is on shift yet. Your first delivery may attract help.'));
+  assert(html.includes('New sounds unlock as your delivery reputation grows.'));
   assert(html.includes('First Delivery locked'));
   assert(html.includes('Daily Delivery Complete locked'));
   assert(html.includes('No-Spill Club locked'));
@@ -310,6 +372,7 @@ elements = {
   gameShopReputation: makeNode(),
   gameShopLevel: makeNode(),
   gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
   gamePassportEmpty: makeNode(),
   gamePassportPreview: makeNode(),
   gamePackTofuButton: makeNode(),
@@ -323,7 +386,10 @@ globalThis.dashboardPassportPreview = elements.gamePassportPreview.innerHTML;
 globalThis.dashboardStock = elements.gameShopStock.textContent;
 globalThis.dashboardReputation = elements.gameShopReputation.textContent;
 globalThis.dashboardShopLevel = elements.gameShopLevel.textContent;
+globalThis.dashboardShopTeaser = elements.gameShopTeaser.textContent;
+globalThis.dashboardShopHelper = elements.gameShopHelper.textContent;
 globalThis.dashboardPackDisabled = elements.gamePackTofuButton.disabled;
+globalThis.dashboardPackText = elements.gamePackTofuButton.textContent;
 appState.running = true;
 renderGameDashboard(defaultGameState());
 globalThis.activeDashboardPackDisabled = elements.gamePackTofuButton.disabled;
@@ -332,13 +398,132 @@ globalThis.activeDashboardPackDisabled = elements.gamePackTofuButton.disabled;
   assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
   assert.strictEqual(context.dashboardTotalXp, '0 XP');
   assert.strictEqual(context.dashboardGear, '0/3');
-  assert.strictEqual(context.dashboardPassport, 'No stamps yet. Complete your first delivery.');
+  assert.strictEqual(context.dashboardPassport, 'The passport opens after your first stamp-worthy delivery.');
   assert(context.dashboardPassportPreview.includes('First Delivery locked'));
-  assert.strictEqual(context.dashboardStock, '0');
-  assert.strictEqual(context.dashboardReputation, '0');
-  assert.strictEqual(context.dashboardShopLevel, 'Level 1');
-  assert.strictEqual(context.dashboardPackDisabled, false);
+  assert.strictEqual(context.dashboardStock, 'Locked');
+  assert.strictEqual(context.dashboardReputation, 'Locked');
+  assert.strictEqual(context.dashboardShopLevel, 'Quiet');
+  assert.strictEqual(context.dashboardShopTeaser, 'The shop is quiet. Complete your first delivery to wake it up.');
+  assert.strictEqual(context.dashboardShopHelper, 'The shop is quiet. Complete your first delivery to wake it up.');
+  assert.strictEqual(context.dashboardPackDisabled, true);
+  assert.strictEqual(context.dashboardPackText, 'Complete First Delivery');
   assert.strictEqual(context.activeDashboardPackDisabled, true);
+}
+
+function testProgressiveRevealTeasersUnlockAfterFirstDelivery() {
+  const context = loadNoSpillContext({
+    window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function makeNode() {
+  return { textContent: "", innerHTML: "", disabled: null };
+}
+elements = {
+  gameDailyTitle: makeNode(),
+  gameDailyFlavor: makeNode(),
+  gameDailyCargo: makeNode(),
+  gameDailyGoal: makeNode(),
+  gameDailyReward: makeNode(),
+  gameDailyProgress: makeNode(),
+  gameDriverLicense: makeNode(),
+  gameTotalXP: makeNode(),
+  gameStreak: makeNode(),
+  gameGearProgress: makeNode(),
+  gameShopStock: makeNode(),
+  gameShopReputation: makeNode(),
+  gameShopLevel: makeNode(),
+  gameShopTeaser: makeNode(),
+  gameShopHelper: makeNode(),
+  gamePassportEmpty: makeNode(),
+  gamePassportPreview: makeNode(),
+  gamePackTofuButton: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  packTofuButton: makeNode(),
+  packTofuHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  deliveryWallGrid: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  selectedCharacterBadge: makeNode(),
+  selectedCharacterName: makeNode(),
+  selectedCharacterFlavor: makeNode(),
+  selectedSoundPackName: makeNode(),
+  selectedSoundPackFlavor: makeNode(),
+  characterList: makeNode(),
+  soundPackList: makeNode(),
+  previewSoundButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+const firstRunState = defaultGameState();
+renderGameDashboard(firstRunState);
+renderTofuShop(firstRunState);
+renderCollectionPanel(firstRunState);
+globalThis.firstReveal = progressiveRevealState(firstRunState);
+globalThis.firstPackDisabled = elements.packTofuButton.disabled;
+globalThis.firstPackText = elements.packTofuButton.textContent;
+globalThis.firstPackHelper = elements.packTofuHelper.textContent;
+globalThis.firstUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.firstCharacterHtml = elements.characterList.innerHTML;
+globalThis.firstSoundHtml = elements.soundPackList.innerHTML;
+globalThis.firstPreviewDisabled = elements.previewSoundButton.disabled;
+const simulated = applySimulatedDelivery(
+  "smooth_commute",
+  firstRunState,
+  { now: new Date("2026-06-14T12:00:00.000Z") },
+);
+renderGameDashboard(simulated.gameState);
+renderTofuShop(simulated.gameState);
+renderCollectionPanel(simulated.gameState);
+globalThis.afterReveal = progressiveRevealState(simulated.gameState);
+globalThis.afterDashboardStock = elements.gameShopStock.textContent;
+globalThis.afterDashboardPassport = elements.gamePassportEmpty.textContent;
+globalThis.afterPackDisabled = elements.packTofuButton.disabled;
+globalThis.afterPackText = elements.packTofuButton.textContent;
+globalThis.afterUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.afterCharacterHtml = elements.characterList.innerHTML;
+globalThis.afterSoundHtml = elements.soundPackList.innerHTML;
+globalThis.afterPreviewDisabled = elements.previewSoundButton.disabled;
+appState.running = true;
+renderTofuShop(simulated.gameState);
+renderCollectionPanel(simulated.gameState);
+globalThis.activePackDisabled = elements.packTofuButton.disabled;
+globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
+`, context);
+
+  assert.strictEqual(context.firstReveal.shop, false);
+  assert.strictEqual(context.firstReveal.passport, false);
+  assert.strictEqual(context.firstReveal.crew, false);
+  assert.strictEqual(context.firstReveal.sounds, false);
+  assert.strictEqual(context.firstPackDisabled, true);
+  assert.strictEqual(context.firstPackText, 'Complete First Delivery');
+  assert(context.firstPackHelper.includes('The shop is quiet'));
+  assert(context.firstUpgradeHtml.includes('The press is still cold'));
+  assert(context.firstCharacterHtml.includes('No one is on shift yet. Your first delivery may attract help.'));
+  assert(!context.firstCharacterHtml.includes('data-character-id'));
+  assert(context.firstSoundHtml.includes('New sounds unlock as your delivery reputation grows.'));
+  assert(!context.firstSoundHtml.includes('data-sound-pack-id'));
+  assert.strictEqual(context.firstPreviewDisabled, true);
+
+  assert.strictEqual(context.afterReveal.shop, true);
+  assert.strictEqual(context.afterReveal.passport, true);
+  assert.strictEqual(context.afterReveal.crew, true);
+  assert.strictEqual(context.afterReveal.sounds, true);
+  assert.notStrictEqual(context.afterDashboardStock, 'Locked');
+  assert(context.afterDashboardPassport.includes('/13 stamps collected.'));
+  assert.strictEqual(context.afterPackDisabled, false);
+  assert.strictEqual(context.afterPackText, 'Pack Tofu');
+  assert(context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(context.afterCharacterHtml.includes('Angry Tofu Driver'));
+  assert(context.afterCharacterHtml.includes('data-character-id="angry_tofu_driver"'));
+  assert(context.afterSoundHtml.includes('Retro Arcade'));
+  assert(context.afterSoundHtml.includes('data-sound-pack-id="retro_arcade"'));
+  assert.strictEqual(context.afterPreviewDisabled, false);
+  assert.strictEqual(context.activePackDisabled, true);
+  assert.strictEqual(context.activePreviewDisabled, true);
 }
 
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
@@ -850,7 +1035,7 @@ function testGameStateStorageIsSummaryOnlyAndCommuteMasteryUsesFingerprints() {
   context.saveGameState(second.gameState);
   const stored = localStorage.getItem(context.GAME_STORAGE_KEY);
   assert(stored.includes('routeMastery'));
-  assert(!/routeSamples|raw|coords|latitude|longitude|lat|lon|trace|street|map/i.test(stored));
+  assertNoSensitiveStorageData(stored);
   assert(second.commuteMasteryMessage.includes('familiar delivery'));
   const fingerprints = Object.keys(second.gameState.routeMastery);
   assert(fingerprints.length >= 1);
@@ -894,7 +1079,7 @@ function testResetExportAndImportProgressAreScopedAndValidated() {
 
   const backup = context.exportGameProgress(result.gameState);
   assert(backup.includes(context.GAME_STORAGE_KEY));
-  assert(!/routeSamples|raw|coords|coordinates|latitude|longitude|lat|lon|trace|street|map|speedLog/i.test(backup));
+  assertNoSensitiveStorageData(backup);
 
   assert.strictEqual(context.resetGameState(), true);
   assert.strictEqual(localStorage.getItem(context.GAME_STORAGE_KEY), null);
@@ -948,11 +1133,26 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   assert.strictEqual(activePack.ok, false);
   assert.strictEqual(activePack.gameState.shop.tofuStock, 0);
 
-  const parkedPack = context.packTofu(state, { activeDrive: false });
+  const lockedPack = context.packTofu(state, { activeDrive: false });
+  assert.strictEqual(lockedPack.ok, false);
+  assert(lockedPack.reason.includes('The shop is quiet'));
+
+  const delivery = context.applySimulatedDelivery(
+    'smooth_commute',
+    state,
+    { now: new Date('2026-06-14T12:00:00.000Z') },
+  );
+  const parkedPack = context.packTofu(delivery.gameState, { activeDrive: false });
   assert.strictEqual(parkedPack.ok, true);
   assert.strictEqual(parkedPack.tofuStockGained, 1);
-  assert.strictEqual(parkedPack.gameState.shop.tofuStock, 1);
-  assert.strictEqual(parkedPack.gameState.shop.reputation, 0);
+  assert.strictEqual(
+    parkedPack.gameState.shop.tofuStock,
+    delivery.gameState.shop.tofuStock + 1,
+  );
+  assert.strictEqual(
+    parkedPack.gameState.shop.reputation,
+    delivery.gameState.shop.reputation,
+  );
 
   const productionState = context.defaultGameState();
   productionState.shop.upgrades.tofu_press = 2;
@@ -1025,7 +1225,7 @@ function testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly() {
 
   const exportedShop = context.sanitizeShopStateForExport(slow.gameState);
   assert(exportedShop.tofuStock > 0);
-  assert(!/routeSamples|raw|coords|coordinates|latitude|longitude|lat|lon|trace|street|map|speedLog/i.test(JSON.stringify(exportedShop)));
+  assertNoSensitiveStorageData(exportedShop);
 }
 
 function findDailyDeliveryDate(context, missionId) {
@@ -1142,7 +1342,136 @@ function testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted() {
     JSON.stringify(fast.gameState.collection.unlockedSoundPackIds),
   );
 
-  assert(!/routeSamples|motionSamples|raw|coords|coordinates|latitude|longitude|lat|lon|trace|street|map|speedLog/i.test(JSON.stringify(fast.gameState.collection)));
+  assertNoSensitiveStorageData(fast.gameState.collection);
+}
+
+function testDeliverySimulatorIsHiddenLocalAndSummarized() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('id="simulator-panel"'));
+  assert(html.includes('nospill-simulator is-hidden'));
+
+  const defaultContext = loadNoSpillContext({
+    window: { location: { search: '' }, localStorage: makeLocalStorage() },
+  });
+  assert.strictEqual(defaultContext.isSimulatorEnabled(), false);
+
+  const queryContext = loadNoSpillContext({
+    window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
+  });
+  assert.strictEqual(queryContext.isSimulatorEnabled(), true);
+
+  const flagContext = loadNoSpillContext({
+    window: {
+      location: { search: '' },
+      localStorage: makeLocalStorage({ tofuDriverSimulatorEnabled: 'true' }),
+    },
+  });
+  assert.strictEqual(flagContext.isSimulatorEnabled(), true);
+
+  vm.runInContext(`
+globalThis.simulatorHiddenStates = [];
+elements = {
+  simulatorPanel: {
+    classList: {
+      toggle(name, value) {
+        if (name === "is-hidden") globalThis.simulatorHiddenStates.push(value);
+      },
+    },
+  },
+  simulatorScenarioSelect: { options: [], innerHTML: "" },
+  applySimulatorButton: { disabled: null, textContent: "" },
+  simulatorStatus: { textContent: "" },
+};
+appState.running = false;
+appState.calibrating = false;
+renderSimulatorPanel();
+globalThis.simulatorSelectHtml = elements.simulatorScenarioSelect.innerHTML;
+appState.running = true;
+renderSimulatorPanel();
+`, queryContext);
+  assert.strictEqual(JSON.stringify(queryContext.simulatorHiddenStates), JSON.stringify([false, true]));
+  assert(queryContext.simulatorSelectHtml.includes('Smooth Commute'));
+  assert(queryContext.simulatorSelectHtml.includes('Perfect Pour'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!String(queryContext.applySimulatedDelivery).includes('startLocationWatch'));
+  assert(!String(queryContext.applySimulatedDelivery).includes('requestMotionPermission'));
+  assert(!String(queryContext.buildSimulatedSessionSummary).includes('DeviceMotionEvent'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+
+  const summary = queryContext.buildSimulatedSessionSummary(
+    'smooth_commute',
+    new Date('2026-06-14T12:00:00.000Z'),
+  );
+  assert.strictEqual(summary.simulated, true);
+  assert.strictEqual(summary.mode, 'simulated');
+  assert.strictEqual(summary.qualificationStatus, 'qualified');
+  assert.strictEqual(summary.simulatorExcludeMerch, true);
+  assertNoSensitiveStorageData(summary);
+}
+
+function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
+  const context = loadNoSpillContext({
+    window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
+  });
+
+  const smooth = context.applySimulatedDelivery(
+    'smooth_commute',
+    context.defaultGameState(),
+    { now: new Date('2026-06-14T12:00:00.000Z') },
+  );
+  assert.strictEqual(smooth.summary.simulated, true);
+  assert(smooth.rewards.xpGained > 0);
+  assert(smooth.rewards.shop.tofuStockGained > 0);
+  assert(smooth.rewards.stamps.includes('first_delivery'));
+  assert(smooth.gameState.collection.unlockedCharacterIds.includes('angry_tofu_driver'));
+  assert.strictEqual(smooth.gameState.recentSessions[0].simulated, true);
+
+  const perfect = context.applySimulatedDelivery(
+    'perfect_pour',
+    context.defaultGameState(),
+    { now: new Date('2026-06-15T12:00:00.000Z') },
+  );
+  assert(perfect.rewards.stamps.includes('perfect_pour'));
+  assert(perfect.gameState.collection.unlockedCharacterIds.includes('perfect_pour_courier'));
+  assert(perfect.gameState.collection.unlockedSoundPackIds.includes('perfect_pour_chime'));
+  assert.strictEqual(perfect.gameState.merchProgress.perfectPourDrop.unlocked, false);
+
+  const perfectWithMerch = context.applySimulatedDelivery(
+    'perfect_pour',
+    context.defaultGameState(),
+    { now: new Date('2026-06-15T12:00:00.000Z'), excludeMerch: false },
+  );
+  assert.strictEqual(perfectWithMerch.gameState.merchProgress.perfectPourDrop.unlocked, true);
+
+  const hotTea = context.applySimulatedDelivery(
+    'hot_tea_90',
+    context.defaultGameState(),
+    { now: new Date('2026-06-16T12:00:00.000Z') },
+  );
+  assert(hotTea.gameState.collection.unlockedCharacterIds.includes('tea_master'));
+
+  const shaky = context.applySimulatedDelivery(
+    'shaky_practice',
+    context.defaultGameState(),
+    { now: new Date('2026-06-17T12:00:00.000Z') },
+  );
+  assert.strictEqual(shaky.summary.qualificationStatus, 'practice');
+  assert(!shaky.rewards.stamps.includes('perfect_pour'));
+  assert.strictEqual(shaky.gameState.merchProgress.nospillClubGear.count, 0);
+  assert.strictEqual(shaky.gameState.merchProgress.perfectPourDrop.unlocked, false);
+
+  const shareText = context.buildShareText(smooth.summary);
+  assert(shareText.includes('Simulated Delivery'));
+  const payload = context.buildDeliverySharePayload(smooth.summary, smooth.rewards, smooth.gameState);
+  assert.strictEqual(payload.status, 'Simulated Delivery');
+  assert(!/\b(?:speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g)\b/i.test(shareText));
+  assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(shareText));
+  assert(!shareText.includes('cavrino.com/nospill'));
+  assert(!shareText.includes('Super Cute Collectibles'));
+  assert(!shareText.includes('discord.gg'));
 }
 
 function testDeliveryWallKeepsLockedMerchLinksHidden() {
@@ -1505,6 +1834,7 @@ function run() {
   testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
   testTofuDriverBrandHierarchy();
   testFirstTimeGameDashboardIsVisibleBeforeSetup();
+  testProgressiveRevealTeasersUnlockAfterFirstDelivery();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
   testDiscordCtaConfigAndRendering();
@@ -1525,6 +1855,8 @@ function run() {
   testTofuShopStatePackIdleAndUpgradeRules();
   testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();
   testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted();
+  testDeliverySimulatorIsHiddenLocalAndSummarized();
+  testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels();
   testDeliveryWallKeepsLockedMerchLinksHidden();
   testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
   testResultScreenShowsGameSummarySections();

@@ -14,6 +14,10 @@
   font: inherit;
 }
 
+.nospill-page code {
+  color: #f7e4b8;
+}
+
 .nospill-app {
   width: min(100%, 680px);
   min-height: 100vh;
@@ -427,6 +431,34 @@
   background: rgba(240, 185, 90, 0.08);
 }
 
+.nospill-field,
+.nospill-checkline {
+  display: grid;
+  gap: 7px;
+}
+
+.nospill-field span,
+.nospill-checkline span {
+  color: #bbc7c0;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.nospill-field select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid rgba(244, 247, 239, 0.16);
+  border-radius: 8px;
+  padding: 0 10px;
+  color: #f4f7ef;
+  background: #0b0f10;
+}
+
+.nospill-checkline {
+  grid-template-columns: auto 1fr;
+  align-items: center;
+}
+
 .nospill-shop-panel h4 {
   margin: 0;
   color: #f4f7ef;
@@ -436,6 +468,10 @@
 .nospill-upgrade-item {
   display: grid;
   gap: 8px;
+}
+
+.nospill-upgrade-item.is-locked {
+  opacity: 0.72;
 }
 
 .nospill-upgrade-item header {

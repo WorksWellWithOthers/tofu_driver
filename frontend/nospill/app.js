@@ -310,6 +310,155 @@ const SOUND_PACK_CATALOG = [
   },
 ];
 
+const SIMULATOR_LOCAL_STORAGE_KEY = "tofuDriverSimulatorEnabled";
+
+const SIMULATOR_SCENARIOS = [
+  {
+    id: "smooth_commute",
+    name: "Smooth Commute",
+    cargoProfileId: "silken_tofu",
+    cargoCondition: 92,
+    qualificationStatus: "qualified",
+    routeType: "Calm Cruise",
+    durationSeconds: 900,
+    distanceMiles: 5.2,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0.4,
+    abruptTransitions: 0,
+    turnDensityScore: 0.16,
+    curvatureScore: 0.12,
+    routeDifficultyScore: 0.16,
+  },
+  {
+    id: "city_delivery",
+    name: "City Delivery",
+    cargoProfileId: "soup_bowl",
+    cargoCondition: 88,
+    qualificationStatus: "qualified",
+    routeType: "City Delivery",
+    durationSeconds: 720,
+    distanceMiles: 3.4,
+    harshBraking: 2,
+    harshAcceleration: 1,
+    harshLateral: 0,
+    lateralJerk: 1.4,
+    abruptTransitions: 3,
+    turnDensityScore: 0.22,
+    curvatureScore: 0.2,
+    routeDifficultyScore: 0.3,
+  },
+  {
+    id: "technical_pour",
+    name: "Technical Pour",
+    cargoProfileId: "hot_tea",
+    cargoCondition: 93,
+    qualificationStatus: "qualified",
+    routeType: "Technical Route",
+    durationSeconds: 780,
+    distanceMiles: 4.1,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 1,
+    lateralJerk: 1,
+    abruptTransitions: 1,
+    turnDensityScore: 0.72,
+    curvatureScore: 0.7,
+    routeDifficultyScore: 0.74,
+  },
+  {
+    id: "perfect_pour",
+    name: "Perfect Pour",
+    cargoProfileId: "silken_tofu",
+    cargoCondition: 100,
+    qualificationStatus: "qualified",
+    routeType: "Mixed Route",
+    durationSeconds: 840,
+    distanceMiles: 4.8,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0,
+    abruptTransitions: 0,
+    turnDensityScore: 0.42,
+    curvatureScore: 0.38,
+    routeDifficultyScore: 0.46,
+  },
+  {
+    id: "hot_tea_90",
+    name: "Hot Tea 90",
+    cargoProfileId: "hot_tea",
+    cargoCondition: 91,
+    qualificationStatus: "qualified",
+    routeType: "Calm Cruise",
+    durationSeconds: 720,
+    distanceMiles: 3.8,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0.4,
+    abruptTransitions: 0,
+    turnDensityScore: 0.18,
+    curvatureScore: 0.18,
+    routeDifficultyScore: 0.2,
+  },
+  {
+    id: "shaky_practice",
+    name: "Shaky Practice",
+    cargoProfileId: "egg_carton",
+    cargoCondition: 62,
+    qualificationStatus: "practice",
+    routeType: "Practice Route",
+    durationSeconds: 120,
+    distanceMiles: 0,
+    harshBraking: 2,
+    harshAcceleration: 2,
+    harshLateral: 1,
+    lateralJerk: 3,
+    abruptTransitions: 3,
+    turnDensityScore: 0,
+    curvatureScore: 0,
+    routeDifficultyScore: 0,
+  },
+  {
+    id: "spilled_soup",
+    name: "Spilled Soup",
+    cargoProfileId: "soup_bowl",
+    cargoCondition: 28,
+    qualificationStatus: "practice",
+    routeType: "Practice Route",
+    durationSeconds: 90,
+    distanceMiles: 0,
+    harshBraking: 5,
+    harshAcceleration: 4,
+    harshLateral: 3,
+    lateralJerk: 5,
+    abruptTransitions: 5,
+    turnDensityScore: 0,
+    curvatureScore: 0,
+    routeDifficultyScore: 0,
+  },
+  {
+    id: "long_haul_smooth",
+    name: "Long Haul Smooth",
+    cargoProfileId: "glass_bottle",
+    cargoCondition: 89,
+    qualificationStatus: "qualified",
+    routeType: "Long Haul",
+    durationSeconds: 1800,
+    distanceMiles: 12.5,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0.8,
+    abruptTransitions: 1,
+    turnDensityScore: 0.18,
+    curvatureScore: 0.2,
+    routeDifficultyScore: 0.28,
+  },
+];
+
 const SKILL_LABELS = {
   brakeFeather: "Brake Feather",
   throttleControl: "Throttle Control",
@@ -1370,6 +1519,10 @@ function getDailyDelivery(date = new Date()) {
   return { ...DAILY_DELIVERIES[index], dateKey };
 }
 
+function cargoProfileById(profileId) {
+  return CARGO_PROFILES.find((profile) => profile.id === profileId) || CARGO_PROFILES[0];
+}
+
 function getDriverLicense(level) {
   const numericLevel = Math.max(1, Math.floor(Number(level || 1)));
   return DRIVER_LICENSES.reduce(
@@ -1387,13 +1540,26 @@ function calculateCargoCondition(session) {
 function isQualifiedSession(session) {
   return Boolean(
     session
-    && session.mode === "qualified"
-    && session.qualificationStatus === "qualified",
+    && session.qualificationStatus === "qualified"
+    && (session.mode === "qualified" || session.mode === "simulated"),
   );
 }
 
 function classifyRouteType(summary) {
   if (!isQualifiedSession(summary)) return "Practice Route";
+  if (
+    summary
+    && summary.simulated
+    && [
+      "Calm Cruise",
+      "City Delivery",
+      "Mixed Route",
+      "Technical Route",
+      "Long Haul",
+    ].includes(summary.routeType)
+  ) {
+    return summary.routeType;
+  }
   const duration = Number(summary.durationSeconds || 0);
   const distance = Number(summary.distanceMiles || 0);
   const turnDensity = Number(summary.turnDensityScore || 0);
@@ -1546,6 +1712,52 @@ function calculateOfflineShopEarnings(gameState, now = new Date()) {
   };
 }
 
+function hasCompletedDelivery(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(
+    state.stamps.first_delivery
+    || (Array.isArray(state.recentSessions) && state.recentSessions.length > 0)
+    || (Array.isArray(state.recentRewards) && state.recentRewards.length > 0),
+  );
+}
+
+function isShopDiscovered(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(
+    hasCompletedDelivery(state)
+    || Number(state.shop.tofuStock || 0) > 0
+    || Number(state.shop.reputation || 0) > 0
+    || Number(state.shop.lifetimeTofuPacked || 0) > 0
+    || Object.values(state.shop.upgrades || {}).some((level) => Number(level || 0) > 0),
+  );
+}
+
+function isPassportDiscovered(gameState) {
+  return deliveryPassportSummary(gameState).total > 0;
+}
+
+function isCrewDiscovered(gameState) {
+  const state = normalizeGameState(gameState);
+  return state.collection.unlockedCharacterIds.length > 0;
+}
+
+function areSoundPacksDiscovered(gameState) {
+  const state = normalizeGameState(gameState);
+  return state.collection.unlockedSoundPackIds.some((id) => id !== "default")
+    || isPassportDiscovered(state);
+}
+
+function progressiveRevealState(gameState) {
+  const state = normalizeGameState(gameState);
+  return {
+    firstDelivery: hasCompletedDelivery(state),
+    shop: isShopDiscovered(state),
+    passport: isPassportDiscovered(state),
+    crew: isCrewDiscovered(state),
+    sounds: areSoundPacksDiscovered(state),
+  };
+}
+
 function applyOfflineShopEarnings(gameState, now = new Date()) {
   const next = normalizeGameState(gameState);
   const nowIso = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
@@ -1579,6 +1791,14 @@ function packTofu(gameState, options = {}) {
     return {
       ok: false,
       reason: "Shop actions unlock after you finish and park.",
+      gameState: next,
+      tofuStockGained: 0,
+    };
+  }
+  if (!isShopDiscovered(next)) {
+    return {
+      ok: false,
+      reason: "The shop is quiet. Complete your first delivery to wake it up.",
       gameState: next,
       tofuStockGained: 0,
     };
@@ -1687,6 +1907,68 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
 
 function sanitizeShopStateForExport(gameState) {
   return normalizeShopState(gameState && gameState.shop);
+}
+
+function getSimulatorScenarios() {
+  return SIMULATOR_SCENARIOS.map((scenario) => ({ ...scenario }));
+}
+
+function simulatorScenarioById(scenarioId) {
+  return SIMULATOR_SCENARIOS.find((scenario) => scenario.id === scenarioId)
+    || SIMULATOR_SCENARIOS[0];
+}
+
+function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}) {
+  const scenario = simulatorScenarioById(scenarioId);
+  const createdAt = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
+  const cargo = cargoProfileById(scenario.cargoProfileId);
+  const waterLeft = clamp(roundTo(scenario.cargoCondition, 1), 0, 100);
+  const harshInputCount =
+    Number(scenario.harshBraking || 0)
+    + Number(scenario.harshAcceleration || 0)
+    + Number(scenario.harshLateral || 0)
+    + Number(scenario.abruptTransitions || 0);
+  return {
+    simulated: true,
+    simulatorScenarioId: scenario.id,
+    simulatorScenarioName: scenario.name,
+    simulatorExcludeMerch: options.excludeMerch !== false,
+    createdAt,
+    date: createdAt,
+    mode: "simulated",
+    difficulty: "standard",
+    difficultyLabel: DIFFICULTIES.standard.label,
+    thresholdG: DIFFICULTIES.standard.thresholdG,
+    waterLeft,
+    waterSpilled: roundTo(100 - waterLeft, 1),
+    cargoCondition: waterLeft,
+    rank: rankForWater(waterLeft),
+    qualificationStatus: scenario.qualificationStatus,
+    qualificationLabel: scenario.qualificationStatus === "qualified" ? "Qualified" : "Practice Only",
+    qualificationMessage: "Simulated delivery result for local testing.",
+    qualificationReasons: [],
+    routeType: scenario.routeType,
+    routeDifficultyLabel: scenario.routeType,
+    durationSeconds: scenario.durationSeconds,
+    distanceMiles: scenario.distanceMiles,
+    harshInputCount,
+    harshBraking: scenario.harshBraking,
+    harshAcceleration: scenario.harshAcceleration,
+    harshLateral: scenario.harshLateral,
+    lateralJerk: scenario.lateralJerk,
+    abruptTransitions: scenario.abruptTransitions,
+    turnDensityScore: scenario.turnDensityScore,
+    curvatureScore: scenario.curvatureScore,
+    routeDifficultyScore: scenario.routeDifficultyScore,
+    significantTurnCount: Math.round(Number(scenario.turnDensityScore || 0) * 12),
+    significantTurnsPerMile: roundTo(Number(scenario.turnDensityScore || 0) * 8, 1),
+    headingChangePerMile: Math.round(Number(scenario.curvatureScore || 0) * 240),
+    dailyDeliveryId: cargo.id,
+    dailyCargo: cargo.cargo,
+    simulatedCargoProfileId: cargo.id,
+    unlockedBadges: [],
+    stamps: [],
+  };
 }
 
 function getCharacterCatalog() {
@@ -2084,7 +2366,9 @@ function buildCoachRecap(sessionSummary, rewardSummary = {}) {
 function calculateDeliveryRewards(session, gameState = defaultGameState()) {
   const state = normalizeGameState(gameState);
   const dateKey = localDateKey(session.date);
-  const dailyDelivery = getDailyDelivery(dateKey);
+  const dailyDelivery = session && session.simulated && session.dailyDeliveryId
+    ? { ...cargoProfileById(session.dailyDeliveryId), dateKey }
+    : getDailyDelivery(dateKey);
   const routeType = classifyRouteType(session);
   const cargoCondition = calculateCargoCondition(session);
   const enrichedSession = {
@@ -2157,7 +2441,9 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
         : 1;
     nextState.streak.lastCompletedDate = dateKey;
   }
-  nextState.merchProgress = updateMerchProgress(enrichedSession, nextState, dailyComplete);
+  nextState.merchProgress = session.simulated && session.simulatorExcludeMerch
+    ? nextState.merchProgress
+    : updateMerchProgress(enrichedSession, nextState, dailyComplete);
   if (nextState.merchProgress.nospillClubGear.unlocked) {
     nextState.stamps.nospill_club = nextState.stamps.nospill_club || {
       label: STAMP_LABELS.nospill_club,
@@ -2186,6 +2472,8 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     stamps: stampLabels(stamps),
     tofuStockGained: shop.tofuStockGained,
     reputationGained: shop.reputationGained,
+    simulated: Boolean(session.simulated),
+    simulatorScenarioId: session.simulatorScenarioId || "",
   };
   nextState.recentRewards = [rewardEntry, ...nextState.recentRewards].slice(0, 12);
   nextState.recentSessions = [{
@@ -2198,6 +2486,9 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     rank: session.rank,
     xpGained: driverXP.xpGained,
     xpMultiplier: driverXP.xpMultiplier,
+    simulated: Boolean(session.simulated),
+    simulatorScenarioId: session.simulatorScenarioId || "",
+    simulatorExcludeMerch: Boolean(session.simulatorExcludeMerch),
   }, ...nextState.recentSessions].slice(0, 20);
   nextState.xpByDate[dateKey] = Math.round(
     Number(nextState.xpByDate[dateKey] || 0) + driverXP.xpGained,
@@ -2229,6 +2520,26 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
   };
 }
 
+function applySimulatedDelivery(scenarioId, gameState = defaultGameState(), options = {}) {
+  const summary = buildSimulatedSessionSummary(
+    scenarioId,
+    options.now || new Date(),
+    { excludeMerch: options.excludeMerch !== false },
+  );
+  const rewards = calculateDeliveryRewards(summary, gameState);
+  summary.cargoCondition = rewards.cargoCondition;
+  summary.routeType = rewards.routeType;
+  summary.dailyDeliveryComplete = rewards.dailyComplete;
+  summary.deliveryStamps = rewards.stamps;
+  summary.stamps = rewards.stamps;
+  summary.deliveryRewards = rewards;
+  return {
+    summary,
+    rewards,
+    gameState: rewards.gameState,
+  };
+}
+
 function buildDeliverySharePayload(session, rewardSummary = null, gameState = null) {
   const routeType = session.routeType || classifyRouteType(session);
   const cargoCondition = calculateCargoCondition(session);
@@ -2241,7 +2552,7 @@ function buildDeliverySharePayload(session, rewardSummary = null, gameState = nu
     : bestUnlockedMilestone(session);
   return {
     title: APP_BRAND,
-    status: "Delivery Complete",
+    status: session.simulated ? "Simulated Delivery" : "Delivery Complete",
     cargoCondition: formatPercent(cargoCondition),
     rank: session.rank,
     driverLicense: level ? `Level ${level} · ${getDriverLicense(level)}` : "",
@@ -2863,6 +3174,7 @@ function showView(viewName) {
     node.classList.toggle("is-hidden", name !== viewName);
   });
   renderDiscordCtas(viewName);
+  renderSimulatorPanel();
 }
 
 function setLandingStatus(message) {
@@ -3540,6 +3852,7 @@ function nextShopStep(gameState) {
 
 function renderGameDashboard(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
+  const reveal = progressiveRevealState(state);
   const mission = getDailyDelivery(new Date());
   const progress = levelProgress(state.totalXP);
   const passport = deliveryPassportSummary(state);
@@ -3569,16 +3882,24 @@ function renderGameDashboard(gameState = loadGameState()) {
   if (elements.gameGearProgress) {
     elements.gameGearProgress.textContent = `${gear.count}/${gear.target}`;
   }
-  if (elements.gameShopStock) elements.gameShopStock.textContent = String(state.shop.tofuStock);
-  if (elements.gameShopReputation) {
-    elements.gameShopReputation.textContent = String(state.shop.reputation);
+  if (elements.gameShopStock) {
+    elements.gameShopStock.textContent = reveal.shop ? String(state.shop.tofuStock) : "Locked";
   }
-  if (elements.gameShopLevel) elements.gameShopLevel.textContent = `Level ${state.shop.shopLevel}`;
-  if (elements.gameShopTeaser) elements.gameShopTeaser.textContent = nextShopStep(state);
+  if (elements.gameShopReputation) {
+    elements.gameShopReputation.textContent = reveal.shop ? String(state.shop.reputation) : "Locked";
+  }
+  if (elements.gameShopLevel) {
+    elements.gameShopLevel.textContent = reveal.shop ? `Level ${state.shop.shopLevel}` : "Quiet";
+  }
+  if (elements.gameShopTeaser) {
+    elements.gameShopTeaser.textContent = reveal.shop
+      ? nextShopStep(state)
+      : "The shop is quiet. Complete your first delivery to wake it up.";
+  }
   if (elements.gamePassportEmpty) {
-    elements.gamePassportEmpty.textContent = passport.total
+    elements.gamePassportEmpty.textContent = reveal.passport
       ? `${passport.total}/${passport.totalAvailable} stamps collected.`
-      : "No stamps yet. Complete your first delivery.";
+      : "The passport opens after your first stamp-worthy delivery.";
   }
   if (elements.gamePassportPreview) {
     elements.gamePassportPreview.innerHTML = [
@@ -3590,8 +3911,19 @@ function renderGameDashboard(gameState = loadGameState()) {
   }
   if (elements.gamePackTofuButton) {
     const activeDrive = appState.running || appState.calibrating;
-    elements.gamePackTofuButton.disabled = activeDrive;
-    elements.gamePackTofuButton.textContent = activeDrive ? "Park First" : "Pack Tofu";
+    elements.gamePackTofuButton.disabled = activeDrive || !reveal.shop;
+    elements.gamePackTofuButton.textContent = activeDrive
+      ? "Park First"
+      : reveal.shop
+        ? "Pack Tofu"
+        : "Complete First Delivery";
+  }
+  if (elements.gameShopHelper) {
+    elements.gameShopHelper.textContent = appState.running || appState.calibrating
+      ? "Shop actions unlock after you finish and park."
+      : reveal.shop
+        ? "Shop Mode is for when you are parked. Do not interact while driving."
+        : "The shop is quiet. Complete your first delivery to wake it up.";
   }
 }
 
@@ -3687,37 +4019,62 @@ function renderDeliveryWall(gameState = loadGameState()) {
 
 function renderTofuShop(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
+  const reveal = progressiveRevealState(state);
   const shop = state.shop;
   const progress = shopLevelProgress(shop.reputation);
   const rate = getShopProductionRate(state);
   if (elements.shopLevelBadge) {
-    elements.shopLevelBadge.textContent = `Shop Level ${shop.shopLevel}`;
+    elements.shopLevelBadge.textContent = reveal.shop ? `Shop Level ${shop.shopLevel}` : "Locked";
   }
-  if (elements.shopTofuStock) elements.shopTofuStock.textContent = String(shop.tofuStock);
-  if (elements.shopReputation) elements.shopReputation.textContent = String(shop.reputation);
+  if (elements.shopTofuStock) {
+    elements.shopTofuStock.textContent = reveal.shop ? String(shop.tofuStock) : "Locked";
+  }
+  if (elements.shopReputation) {
+    elements.shopReputation.textContent = reveal.shop ? String(shop.reputation) : "Locked";
+  }
   if (elements.shopLevelProgress) {
     elements.shopLevelProgress.textContent =
-      `Level ${progress.level} · ${progress.currentReputation}/${progress.nextReputation}`;
+      reveal.shop
+        ? `Level ${progress.level} · ${progress.currentReputation}/${progress.nextReputation}`
+        : "Complete first delivery";
   }
-  if (elements.shopIdleRate) elements.shopIdleRate.textContent = `${rate}/hr`;
+  if (elements.shopIdleRate) elements.shopIdleRate.textContent = reveal.shop ? `${rate}/hr` : "Locked";
   if (elements.packTofuButton) {
     const activeDrive = appState.running || appState.calibrating;
-    elements.packTofuButton.disabled = activeDrive;
-    elements.packTofuButton.textContent = activeDrive ? "Park First" : "Pack Tofu";
+    elements.packTofuButton.disabled = activeDrive || !reveal.shop;
+    elements.packTofuButton.textContent = activeDrive
+      ? "Park First"
+      : reveal.shop
+        ? "Pack Tofu"
+        : "Complete First Delivery";
   }
   if (elements.packTofuHelper) {
     elements.packTofuHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
-      : "Parked-only. Packing adds tofu stock, not reputation.";
+      : reveal.shop
+        ? "The shop lights are on. Pack tofu while parked; smooth deliveries build reputation."
+        : "The shop is quiet. Complete your first delivery to wake it up.";
   }
   if (elements.shopUpgradeList) {
-    elements.shopUpgradeList.innerHTML = getShopUpgradeCatalog()
-      .map((upgrade) => renderShopUpgrade(upgrade, state))
-      .join("");
+    elements.shopUpgradeList.innerHTML = reveal.shop
+      ? getShopUpgradeCatalog()
+        .map((upgrade) => renderShopUpgrade(upgrade, state))
+        .join("")
+      : `
+        <div class="nospill-upgrade-item is-locked">
+          <header>
+            <strong>Tofu Press</strong>
+            <small>Locked</small>
+          </header>
+          <small>The press is still cold. Wake the shop with your first delivery.</small>
+        </div>
+      `;
   }
   if (elements.shopOfflineEarnings) {
     elements.shopOfflineEarnings.textContent =
-      `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock.`;
+      reveal.shop
+        ? `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock.`
+        : "No offline tofu yet. Wake the shop first.";
   }
   renderDeliveryWall(state);
 }
@@ -3752,63 +4109,130 @@ function renderCollectionItem(item, { unlocked, selected, type, activeDrive }) {
   `;
 }
 
+function renderLockedCollectionTeaser(title, copy) {
+  return `
+    <div class="nospill-collection-item is-locked">
+      <header>
+        <strong>${escapeHtml(title)}</strong>
+        <small>Locked</small>
+      </header>
+      <span>${escapeHtml(copy)}</span>
+      <button class="nospill-secondary" type="button" disabled>Locked</button>
+    </div>
+  `;
+}
+
 function renderCollectionPanel(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
+  const reveal = progressiveRevealState(state);
   const activeDrive = appState.running || appState.calibrating;
   const selectedCrew = selectedCharacter(state);
   const soundPack = selectedSoundPack(state);
   if (elements.selectedCharacterBadge) {
-    elements.selectedCharacterBadge.textContent = selectedCrew
+    elements.selectedCharacterBadge.textContent = reveal.crew && selectedCrew
       ? selectedCrew.name
-      : "No crew yet";
+      : "Crew Locked";
   }
   if (elements.selectedCharacterName) {
-    elements.selectedCharacterName.textContent = selectedCrew
+    elements.selectedCharacterName.textContent = reveal.crew && selectedCrew
       ? selectedCrew.name
-      : "No character selected";
+      : "No one on shift yet";
   }
   if (elements.selectedCharacterFlavor) {
-    elements.selectedCharacterFlavor.textContent = selectedCrew
+    elements.selectedCharacterFlavor.textContent = reveal.crew && selectedCrew
       ? selectedCrew.flavor
-      : "Complete your first delivery to meet the crew.";
+      : "No one is on shift yet. Your first delivery may attract help.";
   }
   if (elements.selectedSoundPackName) {
-    elements.selectedSoundPackName.textContent = soundPack.name;
+    elements.selectedSoundPackName.textContent = reveal.sounds ? soundPack.name : "Default";
   }
   if (elements.selectedSoundPackFlavor) {
     elements.selectedSoundPackFlavor.textContent =
-      `${soundPack.description} Muted mode disables cosmetic sound effects.`;
+      reveal.sounds
+        ? `${soundPack.description} Muted mode disables cosmetic sound effects.`
+        : "New sounds unlock as your delivery reputation grows.";
   }
   if (elements.characterList) {
-    elements.characterList.innerHTML = CHARACTER_CATALOG.map((character) => renderCollectionItem(
-      character,
-      {
-        unlocked: state.collection.unlockedCharacterIds.includes(character.id),
-        selected: selectedCrew && selectedCrew.id === character.id,
-        type: "character",
-        activeDrive,
-      },
-    )).join("");
+    elements.characterList.innerHTML = reveal.crew
+      ? CHARACTER_CATALOG.map((character) => renderCollectionItem(
+        character,
+        {
+          unlocked: state.collection.unlockedCharacterIds.includes(character.id),
+          selected: selectedCrew && selectedCrew.id === character.id,
+          type: "character",
+          activeDrive,
+        },
+      )).join("")
+      : renderLockedCollectionTeaser(
+        "Delivery Crew",
+        "No one is on shift yet. Your first delivery may attract help.",
+      );
   }
   if (elements.soundPackList) {
-    elements.soundPackList.innerHTML = SOUND_PACK_CATALOG.map((pack) => renderCollectionItem(
-      pack,
-      {
-        unlocked: state.collection.unlockedSoundPackIds.includes(pack.id),
-        selected: soundPack.id === pack.id,
-        type: "sound",
-        activeDrive,
-      },
-    )).join("");
+    elements.soundPackList.innerHTML = reveal.sounds
+      ? SOUND_PACK_CATALOG.map((pack) => renderCollectionItem(
+        pack,
+        {
+          unlocked: state.collection.unlockedSoundPackIds.includes(pack.id),
+          selected: soundPack.id === pack.id,
+          type: "sound",
+          activeDrive,
+        },
+      )).join("")
+      : renderLockedCollectionTeaser(
+        "Sound Packs",
+        "New sounds unlock as your delivery reputation grows.",
+      );
   }
   if (elements.previewSoundButton) {
     const muted = normalizeAudioLevel(appState.audioLevel) === "muted" || !appState.audioEnabled;
-    elements.previewSoundButton.disabled = activeDrive || muted;
+    elements.previewSoundButton.disabled = activeDrive || muted || !reveal.sounds;
     elements.previewSoundButton.textContent = activeDrive
       ? "Park First"
-      : muted
-        ? "Muted"
-        : "Preview Sound";
+      : !reveal.sounds
+        ? "Locked"
+        : muted
+          ? "Muted"
+          : "Preview Sound";
+  }
+}
+
+function isSimulatorEnabled() {
+  if (typeof window === "undefined") return false;
+  const search = window.location && typeof window.location.search === "string"
+    ? window.location.search
+    : "";
+  if (/(?:^\?|&)simulator=1(?:&|$)/.test(search)) return true;
+  const storage = safeLocalStorage();
+  return Boolean(
+    storage
+    && ["1", "true", "yes"].includes(
+      String(storage.getItem(SIMULATOR_LOCAL_STORAGE_KEY) || "").toLowerCase(),
+    )
+  );
+}
+
+function renderSimulatorPanel() {
+  if (!elements.simulatorPanel) return;
+  const enabled = isSimulatorEnabled();
+  const activeDrive = appState.running || appState.calibrating;
+  elements.simulatorPanel.classList.toggle("is-hidden", !enabled || activeDrive);
+  if (!enabled) return;
+  if (elements.simulatorScenarioSelect && !elements.simulatorScenarioSelect.options.length) {
+    elements.simulatorScenarioSelect.innerHTML = getSimulatorScenarios()
+      .map((scenario) => `<option value="${escapeHtml(scenario.id)}">${escapeHtml(scenario.name)}</option>`)
+      .join("");
+  }
+  if (elements.applySimulatorButton) {
+    elements.applySimulatorButton.disabled = activeDrive;
+    elements.applySimulatorButton.textContent = activeDrive
+      ? "Park First"
+      : "Apply Simulated Delivery";
+  }
+  if (elements.simulatorStatus) {
+    elements.simulatorStatus.textContent = activeDrive
+      ? "Simulator controls unlock after you finish and park."
+      : "Simulator is local-only and does not use motion sensors or location.";
   }
 }
 
@@ -3819,6 +4243,7 @@ function renderGamePanels(gameState = loadGameState()) {
   renderMerchProgress(state);
   renderTofuShop(state);
   renderCollectionPanel(state);
+  renderSimulatorPanel();
 }
 
 function merchProgressMetric(label, value) {
@@ -3881,6 +4306,7 @@ function renderDeliverySummary(summary) {
     ? "Daily delivery complete. Come back tomorrow for new cargo."
     : `${dailyDelivery.cargo}: ${dailyDelivery.goal}`;
   elements.deliverySummaryGrid.innerHTML = [
+    summary.simulated ? summaryMetric("Test Mode", "Simulated Delivery") : "",
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
     summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
     summaryMetric("Rank", summary.rank),
@@ -3910,7 +4336,7 @@ function renderDeliverySummary(summary) {
     summaryMetric("Perfect Pour Drop", merch.perfectPourDrop.unlocked ? "Unlocked" : "Locked"),
     summaryMetric("Delivery Crew", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
     summaryMetric("Next Delivery Goal", nextGoal),
-  ].join("");
+  ].filter(Boolean).join("");
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || coach.message || "";
   }
@@ -3928,23 +4354,28 @@ function escapeHtml(value) {
 function renderSummary(summary) {
   appState.lastSummary = summary;
   if (elements.summaryStatusLabel) {
-    elements.summaryStatusLabel.textContent = summary.qualificationLabel;
+    elements.summaryStatusLabel.textContent = summary.simulated
+      ? "Simulated Delivery"
+      : summary.qualificationLabel;
   }
   if (elements.summaryTitle) {
-    elements.summaryTitle.textContent = "Delivery Complete";
+    elements.summaryTitle.textContent = summary.simulated
+      ? "Simulated Delivery Complete"
+      : "Delivery Complete";
   }
   if (elements.summaryWater) {
     elements.summaryWater.textContent = formatPercent(summary.cargoCondition ?? summary.waterLeft);
   }
   if (elements.summaryGrid) {
     elements.summaryGrid.innerHTML = [
+      summary.simulated ? summaryMetric("Test Mode", "Simulated Delivery") : "",
       summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
       summaryMetric("Water Spilled", formatPercent(summary.waterSpilled)),
       summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
       summaryMetric("Rank", summary.rank),
       summaryMetric("Harsh Inputs", String(summary.harshInputCount)),
       summaryMetric("Qualification", summary.qualificationLabel),
-    ].join("");
+    ].filter(Boolean).join("");
   }
 
   const showRoute = summary.mode === "qualified";
@@ -4042,7 +4473,7 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
   );
   return {
     title: APP_BRAND,
-    challengeName: "Delivery Complete",
+    challengeName: summary.simulated ? "Simulated Delivery" : "Delivery Complete",
     waterDelivered: delivery.cargoCondition,
     waterSpilled: formatPercent(summary.waterSpilled),
     rank: summary.rank,
@@ -4075,7 +4506,7 @@ function buildShareText(summary, config = SHARE_CONFIG) {
     ? ` Stamp: ${data.milestone}.`
     : "";
   const lines = [
-    `${APP_BRAND}: Delivery Complete. Cargo Condition: ${data.waterDelivered}. Rank: ${data.rank}. Route Type: ${data.routeLabel}.${milestoneText} ${data.tagline}`,
+    `${APP_BRAND}: ${data.challengeName}. Cargo Condition: ${data.waterDelivered}. Rank: ${data.rank}. Route Type: ${data.routeLabel}.${milestoneText} ${data.tagline}`,
   ];
   if (data.driverLicense) lines.push(`Driver License: ${data.driverLicense}.`);
   if (data.shopLevel) lines.push(data.shopLevel);
@@ -4411,6 +4842,32 @@ function handlePreviewSound() {
   );
 }
 
+function handleApplySimulatedDelivery() {
+  if (appState.running || appState.calibrating) {
+    if (elements.simulatorStatus) {
+      elements.simulatorStatus.textContent = "Simulator controls unlock after you finish and park.";
+    }
+    return;
+  }
+  const scenarioId = elements.simulatorScenarioSelect
+    ? elements.simulatorScenarioSelect.value
+    : SIMULATOR_SCENARIOS[0].id;
+  const excludeMerch = elements.simulatorExcludeMerch
+    ? elements.simulatorExcludeMerch.checked
+    : true;
+  const result = applySimulatedDelivery(scenarioId, loadGameState(), {
+    excludeMerch,
+  });
+  saveGameState(result.gameState);
+  renderSummary(result.summary);
+  const unlockCount =
+    result.rewards.collectionUnlocks.newCharacterUnlocks.length
+    + result.rewards.collectionUnlocks.newSoundUnlocks.length;
+  playCosmeticSound(unlockCount > 0 ? "unlock" : "delivery_complete", result.gameState, {
+    activeDrive: false,
+  });
+}
+
 function selectedSafetyChecksComplete() {
   return [...document.querySelectorAll("[data-safety-check]")].every(
     (input) => input.checked,
@@ -4635,6 +5092,7 @@ function bindEvents() {
   elements.characterList.addEventListener("click", handleCharacterSelect);
   elements.soundPackList.addEventListener("click", handleSoundPackSelect);
   elements.previewSoundButton.addEventListener("click", handlePreviewSound);
+  elements.applySimulatorButton.addEventListener("click", handleApplySimulatedDelivery);
   elements.newRunButton.addEventListener("click", newRun);
 }
 
@@ -4661,6 +5119,7 @@ function cacheElements() {
     gameShopReputation: document.getElementById("game-shop-reputation"),
     gameShopLevel: document.getElementById("game-shop-level"),
     gameShopTeaser: document.getElementById("game-shop-teaser"),
+    gameShopHelper: document.getElementById("game-shop-helper"),
     gamePassportEmpty: document.getElementById("game-passport-empty"),
     gamePassportPreview: document.getElementById("game-passport-preview"),
     gamePackTofuButton: document.getElementById("game-pack-tofu-button"),
@@ -4736,6 +5195,11 @@ function cacheElements() {
     characterList: document.getElementById("character-list"),
     soundPackList: document.getElementById("sound-pack-list"),
     previewSoundButton: document.getElementById("preview-sound-button"),
+    simulatorPanel: document.getElementById("simulator-panel"),
+    simulatorScenarioSelect: document.getElementById("simulator-scenario-select"),
+    simulatorExcludeMerch: document.getElementById("simulator-exclude-merch"),
+    applySimulatorButton: document.getElementById("apply-simulator-button"),
+    simulatorStatus: document.getElementById("simulator-status"),
     cupCanvas: document.getElementById("cup-canvas"),
     summaryStatusLabel: document.getElementById("summary-status-label"),
     summaryTitle: document.getElementById("summary-title"),
