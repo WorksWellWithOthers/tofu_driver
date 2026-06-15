@@ -144,6 +144,8 @@ must make the game layer visible before the user opens setup controls. The prima
 card is `Today's Delivery`, shown near the top of the landing page with cargo, flavor text, goal,
 reward, daily progress, Driver License, level, XP, streak, No-Spill Club Gear progress, Delivery
 Passport preview, and a parked Tofu Shop preview.
+The first-run hierarchy is brand, `Don't spill the cup.`, Today's Delivery, one clear goal, one
+clear reward, primary `Take the Cup Test` CTA, then compact status and shop previews.
 
 The secondary Delivery Board shows the same local delivery context with today's cargo profile, goal,
 reward, driver license, numeric level, total XP, streak, No-Spill Club Gear progress, Delivery

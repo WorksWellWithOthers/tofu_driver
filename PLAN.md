@@ -11,7 +11,8 @@
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
-- The landing page now starts with a game-first Today's Delivery dashboard before dense setup controls.
+- The landing page now starts with a game-first Today's Delivery dashboard, clear goal/reward,
+  and prominent `Take the Cup Test` CTA before dense setup controls.
 - Tofu Shop adds parked-only tofu stock, reputation, shop levels, Pack Tofu, idle production,
   upgrades, story chapters, a simple Smooth Week contract, and Delivery Wall progress.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.

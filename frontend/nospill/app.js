@@ -4251,7 +4251,9 @@ function revealSetupFlow() {
 }
 
 function bindEvents() {
-  elements.introCtaButton.addEventListener("click", revealSetupFlow);
+  if (elements.introCtaButton) {
+    elements.introCtaButton.addEventListener("click", revealSetupFlow);
+  }
   elements.gameCtaButton.addEventListener("click", revealSetupFlow);
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
     input.addEventListener("change", updateStartReadiness);

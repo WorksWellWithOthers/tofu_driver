@@ -93,9 +93,9 @@
 
 .nospill-brand-hero {
   display: grid;
-  gap: 18px;
+  gap: 12px;
   align-items: center;
-  padding: 12px;
+  padding: 10px;
   overflow: hidden;
   border: 1px solid rgba(244, 247, 239, 0.14);
   border-radius: 8px;
@@ -106,18 +106,23 @@
 }
 
 .nospill-hero-art {
+  order: 2;
   display: grid;
   place-items: center;
-  min-height: 220px;
+  min-height: 118px;
   overflow: hidden;
   border-radius: 8px;
   background: #f4f7ef;
 }
 
 .nospill-hero-art img {
-  width: min(88%, 360px);
+  width: min(56%, 220px);
   height: auto;
   display: block;
+}
+
+.nospill-hero-copy {
+  order: 1;
 }
 
 .nospill-hero-copy h2,
@@ -129,7 +134,7 @@
 .nospill-brand-hero .nospill-hero-copy h2 {
   max-width: 10ch;
   color: #ffffff;
-  font-size: 3.1rem;
+  font-size: 2.55rem;
   line-height: 0.94;
   text-transform: uppercase;
 }
@@ -145,7 +150,7 @@
 }
 
 .nospill-hero-copy p {
-  margin: 12px 0 0;
+  margin: 9px 0 0;
 }
 
 .nospill-hero-tagline {
@@ -221,6 +226,7 @@
 
 .nospill-game-head,
 .nospill-game-grid,
+.nospill-game-mission-card,
 .nospill-passport-preview,
 .nospill-game-passport,
 .nospill-game-shop-action {
@@ -238,6 +244,7 @@
 }
 
 .nospill-game-grid div,
+.nospill-game-mission-card,
 .nospill-game-passport {
   min-width: 0;
   border: 1px solid rgba(244, 247, 239, 0.11);
@@ -259,6 +266,37 @@
   font-size: 1rem;
   line-height: 1.25;
   overflow-wrap: anywhere;
+}
+
+.nospill-game-mission-card {
+  border-color: rgba(85, 217, 138, 0.28);
+}
+
+.nospill-game-mission-card span {
+  color: #9ee9bf;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-game-mission-card strong {
+  display: block;
+  color: #f4f7ef;
+  line-height: 1.25;
+}
+
+.nospill-game-cargo-line {
+  color: #bbc7c0;
+}
+
+.nospill-game-cargo-line strong {
+  display: inline;
+}
+
+.nospill-game-primary-cta {
+  width: 100%;
+  min-height: 56px;
+  font-size: 1.02rem;
 }
 
 .nospill-game-passport h4 {
@@ -937,6 +975,25 @@
 
   .nospill-brand-hero {
     grid-template-columns: minmax(190px, 0.85fr) minmax(0, 1fr);
+    gap: 18px;
+    padding: 12px;
+  }
+
+  .nospill-hero-art {
+    order: 0;
+    min-height: 220px;
+  }
+
+  .nospill-hero-art img {
+    width: min(88%, 360px);
+  }
+
+  .nospill-hero-copy {
+    order: 0;
+  }
+
+  .nospill-brand-hero .nospill-hero-copy h2 {
+    font-size: 3.1rem;
   }
 
   .nospill-hero-actions {
@@ -946,6 +1003,11 @@
   .nospill-game-head,
   .nospill-game-shop-action {
     grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+  }
+
+  .nospill-game-mission-card {
+    grid-template-columns: 0.82fr 1fr 1fr;
     align-items: center;
   }
 

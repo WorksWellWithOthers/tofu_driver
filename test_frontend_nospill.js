@@ -263,6 +263,12 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('id="game-shop-stock"'));
   assert(html.includes('id="game-shop-reputation"'));
   assert(html.includes('id="game-shop-level"'));
+  assert(html.includes('nospill-game-primary-cta'));
+  assert(html.indexOf('id="game-daily-goal"') < html.indexOf('id="game-cta-button"'));
+  assert(html.indexOf('id="game-daily-reward"') < html.indexOf('id="game-cta-button"'));
+  assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-driver-license"'));
+  assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-passport-empty"'));
+  assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-shop-stock"'));
 
   const context = loadNoSpillContext();
   vm.runInContext(`

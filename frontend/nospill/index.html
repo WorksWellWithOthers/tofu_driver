@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>Tofu Driver</title>
-  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615g" />
+  <link rel="stylesheet" href="/static/nospill/app.css?v=20260615h" />
 </head>
 <body class="nospill-page">
   <main class="nospill-app" id="nospill-app">
@@ -34,14 +34,6 @@
           <p class="nospill-hero-safety">
             No speed leaderboards. No maps. No racing. Just control.
           </p>
-          <div class="nospill-hero-actions">
-            <button class="nospill-primary" id="intro-cta-button" type="button">
-              Take the Cup Test
-            </button>
-            <a class="nospill-secondary nospill-link-button" href="#how-it-works">
-              How it works
-            </a>
-          </div>
         </div>
       </section>
 
@@ -54,16 +46,10 @@
               Every drive is a delivery. Preserve the cargo, level up your smoothness, and unlock secret gear.
             </p>
           </div>
-          <button class="nospill-primary" id="game-cta-button" type="button">
-            Take the Cup Test
-          </button>
         </div>
 
-        <div class="nospill-game-grid" aria-label="Today's delivery mission">
-          <div>
-            <span>Cargo</span>
-            <strong id="game-daily-cargo">Silken Tofu</strong>
-          </div>
+        <div class="nospill-game-mission-card" aria-label="Today's delivery mission">
+          <p class="nospill-game-cargo-line">Cargo: <strong id="game-daily-cargo">Silken Tofu</strong></p>
           <div>
             <span>Goal</span>
             <strong id="game-daily-goal">Finish with 85%+ cargo condition.</strong>
@@ -72,13 +58,17 @@
             <span>Reward</span>
             <strong id="game-daily-reward">Daily Delivery stamp and smoothness XP</strong>
           </div>
+        </div>
+
+        <button class="nospill-primary nospill-game-primary-cta" id="game-cta-button" type="button">
+          Take the Cup Test
+        </button>
+
+        <div class="nospill-game-grid" aria-label="Driver status">
           <div>
             <span>Daily Progress</span>
             <strong id="game-daily-progress">Not delivered yet</strong>
           </div>
-        </div>
-
-        <div class="nospill-game-grid" aria-label="Driver status">
           <div>
             <span>Driver License</span>
             <strong id="game-driver-license">Level 1 &middot; Rookie Carrier</strong>
@@ -643,6 +633,6 @@
     </section>
   </main>
 
-  <script src="/static/nospill/app.js?v=20260615g"></script>
+  <script src="/static/nospill/app.js?v=20260615h"></script>
 </body>
 </html>
