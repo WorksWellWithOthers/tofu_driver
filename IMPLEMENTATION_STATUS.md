@@ -194,6 +194,12 @@ Status values: `Implemented`, `Partial`, `Placeholder`, `Decorative only`, `Docu
 | Mastery | Route mastery expanded system | Partial | coarse fingerprints implemented; expansion in `DESIGN.md` | route mastery tests | Add richer fictional/local mastery | Future | Coarse buckets only |
 | Idle | Offline progress expansion | Partial | capped shop idle implemented; expansion in `DESIGN.md` | idle tests | More generators/reporting | Future | No service worker/backend |
 | Prestige | Deeper License Exam prestige | Partial | First License Exam and License Perks implemented | `testExpandedIdleShopLayerMechanics` | Tune reset strategy and later exams | Future | Must not improve real driving score |
+| Dream Garage | Dream Garage concept | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` | None | Implement only after First Loop Contract and first-shop pacing are stable | Future | Future project-car fantasy is parked/game-only |
+| Dream Garage | Project car stages | Documented only | `BALANCE_AND_PROGRESSION.md` Stage 0-3 design | None | Add state/UI/tests in a future slice | Future | Fictional parts must not affect real Cup Test scoring or qualification |
+| Dream Garage | Garage part categories | Documented only | `BALANCE_AND_PROGRESSION.md` upgrade category table | None | Convert to data catalog later | Future | Not real-world mechanical advice |
+| Dream Garage | Fictional closed-course events | Documented only | `BALANCE_AND_PROGRESSION.md` event table | None | Add async parked event loop later | Future | No real driving, speed, GPS, maps, streets, route traces, or high-G data |
+| Dream Garage | Project car completion/sale prestige | Documented only | `BALANCE_AND_PROGRESSION.md` Builder Stars design | None | Validate after garage loop is fun | Future | Separate from License Stars; no driving advantage |
+| Dream Garage | Dream Jar / Garage Fund | Documented only | `BALANCE_AND_PROGRESSION.md` open design decision | None | Decide Tips-direct versus saved-fund UX | Future | Tips remain local shop currency; no payments |
 | Narrative | Story chapters | Documented only | `DESIGN.md` future direction | None | Implement only after core loop polish | Future | Parked-only story |
 | Narrative | Customers | Partial | `regular_customer` station implemented | `testExpandedIdleShopLayerMechanics` | Add named customers and reports | Future | No unsafe driving prompts |
 | Narrative | Contracts | Documented only | `DESIGN.md` future direction | None | Design safe contracts | Future | No timed/speed contracts |

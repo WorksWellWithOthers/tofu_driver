@@ -30,6 +30,9 @@
   boost rather than the normal shop bottleneck during order prep or Tip shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
+- Dream Garage / Project Car progression is documented as a future long-term emotional arc:
+  Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
+  smooth-control philosophy/proof.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Discord, payments, accounts, backend sync, analytics, ads, service workers, and public profiles
@@ -68,11 +71,23 @@ Do not build advanced systems next. The next implementation milestone is `Implem
 Contract`; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
 features stay deferred until the first 10 minutes are playtested.
 
+Future Dream Garage milestone sequence:
+
+1. Review Dream Garage design.
+2. Finish First Loop Contract.
+3. Tune first 10 minutes.
+4. Implement Dream Garage teaser only.
+5. Implement Stage 0 garage restoration.
+6. Implement Stage 1 daily build.
+7. Implement the first fictional closed-course event.
+8. Design project car completion/sale prestige after the garage loop is fun.
+
 Deferred until after the First Loop Contract is playtested:
 
 - Routes
 - Crew
 - Garage
+- Dream Garage / Project Car progression
 - Shop Spirit
 - Rivals
 - License

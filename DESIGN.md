@@ -201,6 +201,61 @@ are later-phase systems until the core loop feels good. Use `BALANCE_AND_PROGRES
 pacing, formulas, sources/sinks, upgrade ladders, button inventories, unresolved balance questions,
 and implementation audit.
 
+## Dream Garage / Project Car Fantasy
+
+Dream Garage is a future long-term emotional progression layer:
+
+```text
+Tofu Shop funds the dream car.
+The shop is the grind.
+The garage is the dream.
+The Cup Test proves that smooth control matters more than speed.
+```
+
+North star:
+
+```text
+Tofu Driver is about working ordinary shifts to build something you love, then proving that smooth
+control matters more than speed.
+```
+
+The Tofu Shop upgrade loop stays intact. Dream Garage should run in parallel later:
+
+```text
+Work shop orders -> earn Tips -> reinvest in shop or save for parts -> build the project car ->
+enter fictional closed-course events -> earn prizes/status -> complete or sell the build -> start
+the next dream car stronger
+```
+
+Design rules:
+
+- Tofu Shop is how the player earns money.
+- Dream Garage is the long-term aspirational layer.
+- The player slowly builds a project car from an old covered car into a dream build.
+- The car-build layer is fictional game progression.
+- Fictional closed-course events are asynchronous parked game events, not instructions to drive in
+  real life.
+- Car parts may affect future Build Score, Reliability, Event Readiness, Style, prize bonuses, or
+  builder status.
+- Car parts must not improve real-world Cup Test scoring, qualification, route validation, speed,
+  or safety-sensitive behavior.
+- Selling or completing a car can become a future prestige loop only after the garage loop is fun.
+
+Safe language:
+
+- project car build
+- garage showcase
+- sponsor showcase
+- fictional closed-course event
+- track day as fictional game content
+- smooth control
+- reliability
+- style
+- event readiness
+
+Avoid copy that implies public-road competition, speed optimization, aggressive road behavior, or
+real-world vehicle modification advice.
+
 ## Don't Spill The Cup Integration
 
 Don't Spill the Cup is always available. It must not require:
@@ -367,13 +422,23 @@ Long-arc inspiration:
 
 1. The Dark Garage: one quiet scene, the cup is full, one action.
 2. The Tofu Shop: the first management layer.
-3. Fictional Route Network: atmospheric route cards that are explicitly game content.
-4. Delivery Network Expansion: apprentices, dispatchers, prep staff, route scouts.
-5. License Prestige: License Exams and permanent License Stars.
-6. Legendary Final Delivery: endgame fantasy as perfect control, not speed.
+3. Dream Garage: the covered project car behind the shop becomes the long-term dream.
+4. Fictional Route Network: atmospheric route cards that are explicitly game content.
+5. Closed-Course Showcase: fictional events prove build quality and smooth control without real-road
+   competition.
+6. Delivery Network Expansion: apprentices, dispatchers, prep staff, route scouts.
+7. License And Build Prestige: License Exams, permanent License Stars, and future project-car
+   completion/sale prestige.
+8. Legendary Final Delivery: endgame fantasy as perfect control, not speed.
 
 Future shop/incremental ideas:
 
+- covered project car reveal
+- Dream Garage
+- staged project car builds
+- fictional closed-course events
+- project car completion or sale as prestige
+- next project car starts stronger
 - richer fictional route map
 - timed route queues
 - apprentice auto-driver assignments

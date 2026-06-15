@@ -743,6 +743,7 @@ Early UI rule:
 | Routes | first 10 minutes | after Reputation/Shop Sign begins to matter | after first route unlock condition |
 | Crew | first hour | after first route progress or repeated chores | after the first automation slice |
 | Garage | first hour | after route cards need fictional stability/flavor | after route loop exists |
+| Dream Garage | first shop loop | after First 100 Tips or Shop Level 2 as covered-car teaser | after 10 fulfilled orders or first Family Tofu Tray |
 | Shop Spirit | first hour and first route phase | after stable production or event/festival hook | after boost economy has a real sink/source |
 | Rivals | early and mid first-loop play | after route network/festival systems exist | later, as friendly parked challenges |
 | License | first hour | when requirements become plausible | at plateau near 4 to 6 hours |
@@ -885,7 +886,311 @@ Simulator/dev results:
 - not trusted certified proof
 - must be rejected or ignored by any future backend merch verification
 
-## 14. Balance Sheet Schema
+## 14. Dream Garage / Project Car Progression
+
+Dream Garage is a future long-term progression layer. It should not replace the Tofu Shop loop.
+
+Core fantasy:
+
+```text
+Tofu Shop funds the dream car.
+The shop is the grind.
+The garage is the dream.
+The Cup Test proves that smooth control matters more than speed.
+```
+
+Future loop:
+
+```text
+Work shop orders -> earn Tips -> reinvest in shop or save for parts -> build the project car ->
+enter fictional closed-course events -> earn prizes/status -> complete or sell the build -> start
+the next dream car stronger
+```
+
+### Role In The Economy
+
+- Tofu Shop remains the base money engine.
+- Tips are earned from shop orders and later fictional events.
+- Tips can be reinvested into shop production or saved/spent toward project car parts.
+- This creates the key choice: buy more shop production now, or save for the dream car.
+- Dream Garage should not appear before the player understands the shop loop.
+
+Suggested reveal:
+
+- teaser after First 100 Tips or Shop Level 2
+- full Dream Garage after 10 fulfilled orders or first larger order type
+- first part purchase after stable Tip income exists
+
+Example decision points:
+
+- Buy Prep Counter now, or save for Basic Tires?
+- Improve larger-order throughput, or save for Paint Touch-Up?
+- Reinvest event prize money into the shop, or buy Stage 2 cooling?
+
+### Dream Jar / Garage Fund Decision
+
+Recommended first design:
+
+- Do not add a confusing new currency at first.
+- Tips remain the actual spend currency.
+- `Dream Jar` is a goal/progress meter showing Tips saved toward the next car part.
+- Later, the game may add `Builder Reputation` or `Builder Stars`, but not as early spend
+  currencies.
+
+Open question:
+
+- Should the garage spend Tips directly, or should Tips be allocated into a Dream Jar / Garage Fund?
+
+### Project Car Stages
+
+| Stage | Name | Fantasy | Unlock | Main Costs | Main Rewards | Exit Condition |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 | The Covered Car / Beater | There is an old car under a cover behind the shop. | First 100 Tips, Shop Level 2, or first larger order type | small Tips, basic restoration parts | emotional reveal, Reliability, first build report | car starts and basic reliability is restored |
+| 1 | Daily Driver Build | The car becomes reliable, personal, and fun. | Stage 0 complete | Tips, common parts, style parts | Build Score, Style, first closed-course event access | core reliability/style parts installed |
+| 2 | Track-Day / Closed-Course Build | The car is ready for fictional organized events. | Stage 1 basics and first event report | higher Tips, cooling/brake/suspension parts | Event Readiness, better prizes, rare part chance | major midgame event cleared |
+| 3 | Dream Build | The dream car becomes serious and expensive. | Stage 2 event progress and high Build Score | large Tips, rare parts, showcase parts | Project Car Value, Builder Reputation, completion/sale option | major invitational cleared or value target reached |
+
+Stage 0 possible upgrades:
+
+- Pull Off the Cover
+- Wash the Car
+- Replace Battery
+- Change Fluids
+- Basic Tires
+- Basic Brake Pads
+- Alignment
+- Fix Rust Spot
+- Clean Interior
+- New Cup Holder
+- Cargo Mat
+- Tool Set
+- Garage Lights
+
+Stage 1 possible upgrades:
+
+- Intake
+- Cat-Back Exhaust
+- ECU Tune
+- Better Tires
+- Brake Refresh
+- Suspension Refresh
+- Lightweight Wheels
+- Short Shifter
+- Better Seats
+- Basic Weight Reduction
+- Tofu Delivery Decal
+- Fresh Paint Touch-Up
+
+Stage 2 possible upgrades:
+
+- Performance Radiator
+- Oil Cooler
+- Intercooler
+- Header / Downpipe
+- Clutch
+- Limited-Slip Differential
+- Coilovers
+- Big Brake Kit
+- Chassis Bracing
+- Aero Lip
+- Spoiler
+- Better Gearing
+- Weight Reduction Stage 2
+- Harness Bar as fictional/event-only flavor
+
+Stage 3 possible upgrades:
+
+- Turbo Kit
+- Supercharger Kit
+- Built Engine
+- Fuel Injectors
+- Fuel Pump
+- Standalone ECU
+- Event Transmission
+- Widebody Kit
+- Full Aero
+- Weight Reduction Stage 3
+- Engine Swap
+- Event Interior
+- Dream Paint
+- Signature Livery
+- Sponsor Decals
+
+These are fictional game upgrade categories, not real-world mechanical advice. They must not imply
+real-world vehicle changes improve Cup Test scoring, qualification, or safety.
+
+### Upgrade Categories
+
+| Category | Examples | Game Purpose | Affects | Safety Note |
+| --- | --- | --- | --- | --- |
+| Reliability / Maintenance | battery, fluids, rust spot, tool set | make the car start and finish fictional events | Reliability, Event Readiness | fictional maintenance progression only |
+| Tires / Wheels | basic tires, better tires, lightweight wheels | early readiness and style | Reliability, Build Score, Style | no real-world tire advice |
+| Brakes | basic pads, brake refresh, big brake kit | closed-course event readiness | Reliability, Event Readiness | does not affect Cup Test score |
+| Suspension | suspension refresh, coilovers, alignment | build identity and event readiness | Build Score, Event Readiness, Style | fictional closed-course context |
+| Drivetrain | clutch, limited-slip differential, gearing | mid-stage build depth | Build Score, Event Readiness | no real-road instruction |
+| Cooling | radiator, oil cooler, intercooler | reliability for longer fictional events | Reliability, Event Readiness | game stat only |
+| Intake / Exhaust | intake, cat-back exhaust, header/downpipe | stage identity and Build Score | Build Score, Style | no emissions/legal advice |
+| Engine | built engine, engine swap | late build fantasy | Build Score, Project Car Value | fictional category |
+| Forced Induction | turbo kit, supercharger kit | expensive dream-build spike | Build Score, Project Car Value | not real tuning advice |
+| Fuel System | injectors, fuel pump | supports late build stages | Reliability, Build Score | fictional category |
+| ECU / Tuning | ECU tune, standalone ECU | unlocks advanced build synergy | Build Score, Event Readiness | does not affect Cup Test |
+| Transmission | short shifter, event transmission | build feel and readiness | Build Score, Event Readiness | fictional/event-only language |
+| Weight Reduction | stage 1, 2, 3 | build specialization | Build Score, Event Readiness | no unsafe public-road framing |
+| Chassis / Aero | chassis bracing, aero lip, spoiler, full aero | event/showcase identity | Event Readiness, Style | closed-course/showcase only |
+| Interior | seats, clean interior, cup holder, event interior | comfort, style, build story | Style, Reliability, Event Readiness | cosmetic/game stats only |
+| Style / Cosmetic | paint touch-up, dream paint, livery, decals | expression and sponsor/showcase progress | Style, Sponsor Reputation | no performance claims |
+| Garage Tools | tool set, garage lights | convenience and part installation fantasy | Reliability, install pacing | parked-only progression |
+| Sponsor / Showcase | sponsor decals, showcase prep | prize and status path | Prize Bonus, Sponsor Reputation | no public-road competition |
+
+### Suggested Garage Stats
+
+Recommended first stats:
+
+- Build Score
+- Reliability
+- Style
+- Event Readiness
+- Builder Reputation
+- Project Car Value
+
+Stage focus:
+
+- Stage 0 focuses on Reliability.
+- Stage 1 adds Style and Build Score.
+- Stage 2 adds Event Readiness.
+- Stage 3 adds Project Car Value and prestige potential.
+
+Avoid too many early garage resources. The first garage UI should be a project, not a spreadsheet.
+
+### Fictional Closed-Course Events
+
+Closed-course events are parked/asynchronous game actions:
+
+- the player sends the project car to a fictional event
+- no real driving is required
+- no speed, GPS, maps, street names, route traces, coordinates, exact distance, or high-G data is
+  used
+- results are based on Build Score, Reliability, Event Readiness, Style, and possibly shop
+  Reputation
+- events produce reports, prizes, rare parts, stamps, and Builder Reputation
+
+| Event | Unlock | Requires | Rewards | Purpose |
+| --- | --- | --- | --- | --- |
+| Parking Lot Shakedown | Stage 0 complete | car starts, basic tires | small Tips, Garage XP, first garage report | first event |
+| Tofu Cup Beginner | Stage 1 basics | tires, brakes, reliability | prize Tips, Reputation, stamp | first meaningful prize |
+| Sponsor Showcase | style/decal progress | paint, decal, Style score | sponsor bonus, style stamp | cosmetics matter |
+| Festival Track Day | Stage 2 | cooling, brakes, suspension | prize Tips, rare part chance | midgame event |
+| Night Garage Trial | Stage 2 | reliability and Event Readiness | special report, story stamp | atmosphere |
+| Dream Build Invitational | Stage 3 | high Build Score | huge prize, Builder Reputation, prestige option | endgame build event |
+
+Use event language such as Showcase, Trial, Track Day, Invitational, and Closed-Course Event. Avoid
+public-road competition or speed-optimization wording.
+
+### Project Car Completion / Sale Prestige
+
+Once the car reaches enough Project Car Value or clears a major event, the player can choose to keep
+and showcase it or complete/sell the build.
+
+Preferred prestige currency:
+
+```text
+Builder Stars
+```
+
+Reason: `Builder Stars` is short, positive, and clearly tied to car-build mastery. It stays separate
+from `License Stars`, which are shop/license prestige.
+
+Possible permanent perks:
+
+- cheaper first parts
+- extra starting Tips in Dream Jar
+- faster part delivery
+- better event prize money
+- extra garage slot
+- sponsor contact
+- improved first Stage 0 reliability
+- permanent cosmetic title
+- future builds start with Garage Lights or Tool Set
+
+Relationship to License Stars:
+
+- License Stars are shop/license prestige.
+- Builder Stars are car-build prestige, if implemented.
+- Keep them separate unless playtesting proves a unified prestige model is simpler.
+
+### Dream Garage Timing Targets
+
+These are design targets, not runtime constants.
+
+| Time | Garage Beat |
+| --- | --- |
+| 0 to 10 minutes | garage hidden; focus on shop loop |
+| 10 to 30 minutes | subtle teaser: covered car behind shop |
+| 30 to 60 minutes | Dream Garage unlock or first look |
+| 1 to 2 hours | Stage 0 restoration parts |
+| 2 to 6 hours | Stage 1 daily build and first event |
+| 6 to 12 hours | Stage 2 closed-course build |
+| 12 to 24+ hours | Stage 3 dream build |
+| after major event | sell/complete build prestige option |
+
+### Dream Garage Button Inventory
+
+| Button ID | Label | Visible When | Enabled When | Cost | Effect | Disabled Reason | Expected First Use | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| view_dream_garage | View Dream Garage | teaser or garage unlock exists | always when visible | none | opens garage surface/panel | Unlocks after the shop has stable income. | 30 to 60 minutes | Documented only |
+| pull_off_cover | Pull Off the Cover | Stage 0 starts | enough Tips or Dream Jar progress | small Tips target | reveals project car | Save a few more Tips from shop orders. | 30 to 60 minutes | Future |
+| deposit_dream_jar | Deposit Tips to Dream Jar | Dream Jar design chosen | Tips > 0 | selected Tips | earmarks progress toward next part | Earn Tips from shop orders first. | 30 to 60 minutes | Future / open question |
+| buy_part | Buy Part | part is visible | enough Tips or Dream Jar funds | part cost | adds part to inventory/build sheet | Need more Tips. Work shop orders or events. | 1 to 2 hours | Future |
+| install_part | Install Part | owned part not installed | garage is available | none or install time | updates build stats | Buy the part first. | 1 to 2 hours | Future |
+| buy_next_part | Buy Next Recommended Part | recommendations exist | enough Tips/funds | part cost | buys the bottleneck-solving part | Need more Tips for the recommended part. | 1 to 2 hours | Future |
+| view_build_sheet | View Build Sheet | garage active | always | none | shows parts, stats, stage, next recommendation | Unlock Dream Garage first. | 1 to 2 hours | Future |
+| enter_shakedown | Enter Parking Lot Shakedown | Stage 0 complete | basic readiness met | event entry cost target | creates first event report/prize | Finish basic restoration first. | 1 to 2 hours | Future |
+| enter_tofu_cup_beginner | Enter Tofu Cup Beginner | Stage 1 basics | tires, brakes, reliability target | event entry cost target | prize Tips, Reputation, stamp | Build basic reliability first. | 2 to 6 hours | Future |
+| enter_sponsor_showcase | Enter Sponsor Showcase | style path visible | style/decal score target | event entry cost target | sponsor bonus/style stamp | Add style parts first. | 2 to 6 hours | Future |
+| claim_event_report | Claim Event Report | event result ready | always | none | applies prizes/report/stamps | Event still in progress. | after first event | Future |
+| showcase_car | Showcase Car | garage active and car has style | always | none | cosmetic/status summary | Build or style the car first. | after Stage 1 | Future |
+| sell_completed_build | Sell Completed Build | completion value or major event cleared | confirmation accepted | completed project | grants Builder Stars/legacy reward | Finish the build or clear a major event first. | 12 to 24+ hours | Future |
+| start_next_project | Start Next Project Car | previous build completed/sold | always | Builder Stars or reset choice | starts next build stronger | Complete the current build first. | after first garage prestige | Future |
+
+### Balance Relationship With Tofu Shop
+
+- Shop upgrades increase earning speed.
+- Larger order types make garage funding easier.
+- Garage costs create long-term Tip sinks.
+- Event prizes can later feed money back into the shop.
+- The player chooses between reinvesting into shop production or saving for car parts.
+- The shop must remain useful throughout the car build.
+
+Dream Garage should never become a reason to skip the shop. It should make shop work feel
+emotionally connected to a larger dream.
+
+### Dream Garage Progressive Reveal
+
+| Moment | Visibility |
+| --- | --- |
+| Before first shop loop | garage hidden |
+| After first 100 Tips or Shop Level 2 | covered car teaser |
+| After 10 fulfilled orders or first Family Tofu Tray | Dream Garage active |
+| After Stage 0 complete | first closed-course event teaser |
+| After Stage 1 basics | events active |
+| After Stage 3 | sell/complete build prestige visible |
+
+### Dream Garage Balance Tests
+
+Future implementation should add tests for:
+
+- garage hidden during the first shop loop
+- covered car teaser appears at the intended milestone
+- Dream Garage unlocks after the defined condition
+- buying a part consumes Tips or Dream Jar funds
+- parts update Build Score, Reliability, Style, and Event Readiness
+- closed-course event does not require real driving
+- event rewards do not use speed, GPS, map, street, route trace, exact distance, or high-G data
+- selling/completing a car grants prestige and starts a new build
+- shop progression remains playable without garage
+- Cup Test remains optional for ordinary shop and garage progression
+
+## 15. Balance Sheet Schema
 
 Use this schema for future spreadsheet and simulation work.
 
@@ -944,7 +1249,7 @@ already exists.
 | 8. First License Exam | Add first prestige decision after a plateau | `app.js`, tests, docs | requirements, confirmation, reset/persist contract, Stars/perks | multiple exams, monetization |
 | 9. Post-License Rebuild | Make permanent perks accelerate the early loop | `app.js`, tests, docs | perk purchase, fresh run benefits, no Cup Test scoring effect | late regional network unless needed |
 
-## 15. Status Audit
+## 16. Status Audit
 
 Status values:
 
@@ -979,6 +1284,10 @@ progression contract.
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
+| Dream Garage concept | Documented only | Dream Garage / Project Car Progression section | future emotional arc is specified | implement only after first loop and order pacing are stable |
+| Project car stages | Documented only | Stage 0 through Stage 3 tables/lists | covered car, daily build, closed-course build, dream build are defined | no runtime state/UI yet |
+| Fictional closed-course events | Documented only | event table and safety rules | future event names/rewards are specified | no event queues/results yet |
+| Project car completion/sale prestige | Documented only | Builder Stars design | future prestige direction is specified | no Builder Stars state yet |
 | Shop Spirit | Placeholder | Spirit resources/boost helpers | boosts can affect shop layer | hide until stable production |
 | Rivals | Placeholder | challenge helpers | friendly challenge scaffold exists | keep hidden until later |
 | License Exam | Placeholder | exam/perk helpers | reset/perk concept exists | tune requirements and reset strategy |
@@ -987,7 +1296,7 @@ progression contract.
 | Don't Spill the Cup boosts | Implemented | Cup Test reward helpers/tests | optional certified shop rewards | tune boost magnitude; keep optional |
 | Developer QA | Implemented | hidden dev tools | local QA unlocks are gated | must remain hidden from normal users |
 
-## 16. Balance Tests
+## 17. Balance Tests
 
 Future implementation should enforce these tests before the first loop is considered real.
 
@@ -1066,7 +1375,7 @@ Prestige:
 - License Perks do not affect real-world Cup Test scoring or qualification
 - reset/persist behavior matches the License Exam contract
 
-## 17. Open Design Questions
+## 18. Open Design Questions
 
 These should remain unresolved until playtesting or simulation provides evidence.
 
