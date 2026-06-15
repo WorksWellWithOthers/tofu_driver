@@ -8,8 +8,10 @@ const CALIBRATION_TIMEOUT_MS = 3600;
 const LOW_PASS_ALPHA = 0.18;
 const MIN_MOVEMENT_MPH = 10;
 const STORAGE_KEY = "nospill.club.v1";
+const GAME_STORAGE_KEY = "tofuDriverGameStateV1";
 const DEFAULT_AUDIO_LEVEL = "normal";
 const APP_BRAND = "Tofu Driver";
+const GAME_LAYER_NAME = "Delivery Log";
 const CHALLENGE_NAME = "The Cup Test";
 const CLUB_NAME = "No-Spill Club";
 const TOP_BADGE = "Perfect Pour";
@@ -117,6 +119,90 @@ const MERCH_LABELS = {
   certified_smooth: "Certified Smooth Gear",
 };
 
+const DAILY_DELIVERIES = [
+  {
+    id: "silken_tofu",
+    cargo: "Silken Tofu",
+    focus: "Overall smoothness",
+    goal: "Finish a delivery with 85%+ cargo condition.",
+    reward: "Daily Delivery stamp and smoothness XP",
+    routeMatch: "Calm Cruise",
+  },
+  {
+    id: "hot_tea",
+    cargo: "Hot Tea",
+    focus: "Corner calm",
+    goal: "Keep lateral input smooth.",
+    reward: "Corner Calm XP",
+    routeMatch: "Mixed Route",
+  },
+  {
+    id: "soup_bowl",
+    cargo: "Soup Bowl",
+    focus: "Brake and throttle restraint",
+    goal: "Avoid harsh braking and acceleration spikes.",
+    reward: "Brake Feather and Throttle Control XP",
+    routeMatch: "City Delivery",
+  },
+  {
+    id: "egg_carton",
+    cargo: "Egg Carton",
+    focus: "No panic inputs",
+    goal: "Keep total harsh inputs low.",
+    reward: "Passenger Comfort XP",
+    routeMatch: "Calm Cruise",
+  },
+  {
+    id: "glass_bottle",
+    cargo: "Glass Bottle",
+    focus: "Consistency",
+    goal: "Avoid repeated jerk and spike events.",
+    reward: "Consistency XP",
+    routeMatch: "Technical Route",
+  },
+  {
+    id: "wedding_cake",
+    cargo: "Wedding Cake",
+    focus: "Longer smooth delivery",
+    goal: "Finish a longer qualified delivery with stable cargo.",
+    reward: "Long Haul progress",
+    routeMatch: "Long Haul",
+  },
+];
+
+const SKILL_LABELS = {
+  brakeFeather: "Brake Feather",
+  throttleControl: "Throttle Control",
+  smoothHands: "Smooth Hands",
+  cornerCalm: "Corner Calm",
+  passengerComfort: "Passenger Comfort",
+  consistency: "Consistency",
+};
+
+const STAMP_LABELS = {
+  first_delivery: "First Delivery",
+  daily_delivery_complete: "Daily Delivery Complete",
+  cup_stayed_full: "Cup Stayed Full",
+  smooth_commute: "Smooth Commute",
+  calm_cruise: "Calm Cruise",
+  city_smooth: "City Smooth",
+  long_haul_pour: "Long Haul Pour",
+  curve_control: "Curve Control",
+  technical_pour: "Technical Pour",
+  no_panic_inputs: "No Panic Inputs",
+  passenger_approved: "Passenger Approved",
+  nospill_club: CLUB_NAME,
+  perfect_pour: TOP_BADGE,
+};
+
+const TOFU_VISUAL = {
+  spring: 0.13,
+  damping: 0.74,
+  reducedMotionSpring: 0.42,
+  maxRotationRadians: Math.PI / 10,
+  particleLifeFrames: 34,
+};
+
 const appState = {
   mode: "basic",
   difficulty: "standard",
@@ -143,6 +229,7 @@ const appState = {
   geoStatus: "inactive",
   audio: null,
   lastSummary: null,
+  tofuVisual: defaultTofuVisualState(),
   renderPending: false,
   axisPreviewActive: false,
   axisPreviewBaseline: null,
@@ -158,6 +245,28 @@ function clamp(value, minValue, maxValue) {
 function roundTo(value, decimals) {
   const scale = 10 ** decimals;
   return Math.round(Number(value || 0) * scale) / scale;
+}
+
+function defaultTofuVisualState() {
+  return {
+    tofuX: 0,
+    tofuY: 0,
+    tofuVx: 0,
+    tofuVy: 0,
+    tofuRotation: 0,
+    tofuRotationVelocity: 0,
+    tofuSquish: 0,
+    recentSpillParticles: [],
+    lastSpillFrame: 0,
+  };
+}
+
+function prefersReducedMotion() {
+  return Boolean(
+    typeof window !== "undefined"
+    && window.matchMedia
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  );
 }
 
 function normalizeAudioLevel(level) {
@@ -277,6 +386,88 @@ function computeMappedMotion(
   return { lateralG, longitudinalG, totalG, jerk };
 }
 
+function updateTofuCargoVisualState(
+  visualState,
+  currentG,
+  {
+    thresholdG = DIFFICULTIES.standard.thresholdG,
+    maxOffset = 1,
+    reducedMotion = false,
+    frame = 0,
+  } = {},
+) {
+  const state = visualState || defaultTofuVisualState();
+  const safeThreshold = Math.max(Number(thresholdG || 0), 0.05);
+  const lateral = clamp(Number(currentG && currentG.lateralG) || 0, -safeThreshold * 1.35, safeThreshold * 1.35);
+  const longitudinal = clamp(Number(currentG && currentG.longitudinalG) || 0, -safeThreshold * 1.35, safeThreshold * 1.35);
+  const totalG = Math.max(0, Number(currentG && currentG.totalG) || 0);
+  const jerk = Math.max(0, Number(currentG && currentG.jerk) || 0);
+  const targetX = clamp((lateral / safeThreshold) * maxOffset, -maxOffset, maxOffset);
+  const targetY = clamp((-longitudinal / safeThreshold) * maxOffset, -maxOffset, maxOffset);
+
+  if (reducedMotion) {
+    state.tofuX += (targetX - state.tofuX) * TOFU_VISUAL.reducedMotionSpring;
+    state.tofuY += (targetY - state.tofuY) * TOFU_VISUAL.reducedMotionSpring;
+    state.tofuVx = 0;
+    state.tofuVy = 0;
+    state.tofuRotation *= 0.8;
+    state.tofuRotationVelocity = 0;
+    state.tofuSquish = 0;
+    state.recentSpillParticles = [];
+    return state;
+  }
+
+  state.tofuVx += (targetX - state.tofuX) * TOFU_VISUAL.spring;
+  state.tofuVy += (targetY - state.tofuY) * TOFU_VISUAL.spring;
+  state.tofuVx *= TOFU_VISUAL.damping;
+  state.tofuVy *= TOFU_VISUAL.damping;
+  state.tofuX = clamp(state.tofuX + state.tofuVx, -maxOffset * 1.08, maxOffset * 1.08);
+  state.tofuY = clamp(state.tofuY + state.tofuVy, -maxOffset * 1.08, maxOffset * 1.08);
+
+  const rotationTarget = clamp(
+    state.tofuVx * 0.55 - state.tofuY * 0.13 + lateral * 0.75,
+    -TOFU_VISUAL.maxRotationRadians,
+    TOFU_VISUAL.maxRotationRadians,
+  );
+  state.tofuRotationVelocity += (rotationTarget - state.tofuRotation) * 0.18;
+  state.tofuRotationVelocity *= 0.76;
+  state.tofuRotation = clamp(
+    state.tofuRotation + state.tofuRotationVelocity,
+    -TOFU_VISUAL.maxRotationRadians,
+    TOFU_VISUAL.maxRotationRadians,
+  );
+  state.tofuSquish = clamp(
+    totalG / safeThreshold - 0.65 + Math.min(0.45, jerk / 6),
+    0,
+    1,
+  );
+
+  const spilling = totalG > safeThreshold;
+  if (spilling && frame - state.lastSpillFrame > 8) {
+    const edgeX = clamp(state.tofuX / maxOffset, -1, 1);
+    const edgeY = clamp(state.tofuY / maxOffset, -1, 1);
+    state.recentSpillParticles.push({
+      x: edgeX,
+      y: edgeY,
+      vx: edgeX * 0.012,
+      vy: edgeY * 0.012 - 0.006,
+      age: 0,
+      life: TOFU_VISUAL.particleLifeFrames,
+    });
+    state.lastSpillFrame = frame;
+  }
+  state.recentSpillParticles = state.recentSpillParticles
+    .map((particle) => ({
+      ...particle,
+      x: particle.x + particle.vx,
+      y: particle.y + particle.vy,
+      age: particle.age + 1,
+    }))
+    .filter((particle) => particle.age < particle.life)
+    .slice(-8);
+  return state;
+}
+
 function subtractVector(left, right) {
   if (!left || !right) return null;
   return {
@@ -377,6 +568,7 @@ function resetSessionState() {
   appState.routeSamples = [];
   appState.geoStatus = "inactive";
   appState.lastSummary = null;
+  appState.tofuVisual = defaultTofuVisualState();
   appState.motion = {
     samples: 0,
     harshBraking: 0,
@@ -413,6 +605,29 @@ function defaultClubState() {
   };
 }
 
+function defaultGameState() {
+  return {
+    version: 1,
+    totalXP: 0,
+    level: 1,
+    skillXP: Object.fromEntries(
+      Object.keys(SKILL_LABELS).map((skill) => [skill, 0]),
+    ),
+    stamps: {},
+    dailyDeliveries: {},
+    streak: { current: 0, lastCompletedDate: null },
+    merchProgress: {
+      nospillClubGear: { count: 0, target: 3, dates: [], meaningfulCount: 0, unlocked: false },
+      perfectPourDrop: { unlocked: false, date: null },
+      deliveryCrew: { count: 0, target: 7, dates: [], unlocked: false },
+    },
+    recentRewards: [],
+    recentSessions: [],
+    xpByDate: {},
+    routeMastery: {},
+  };
+}
+
 function loadClubState() {
   const storage = safeLocalStorage();
   if (!storage) return defaultClubState();
@@ -435,6 +650,95 @@ function loadClubState() {
     };
   } catch (_) {
     return defaultClubState();
+  }
+}
+
+function normalizeSkillXP(skillXP) {
+  const source = skillXP && typeof skillXP === "object" ? skillXP : {};
+  return Object.fromEntries(
+    Object.keys(SKILL_LABELS).map((skill) => [
+      skill,
+      Math.max(0, Math.round(Number(source[skill] || 0))),
+    ]),
+  );
+}
+
+function normalizeGameState(stored) {
+  const defaults = defaultGameState();
+  const source = stored && typeof stored === "object" ? stored : {};
+  const merch = source.merchProgress && typeof source.merchProgress === "object"
+    ? source.merchProgress
+    : {};
+  const normalized = {
+    ...defaults,
+    ...source,
+    totalXP: Math.max(0, Math.round(Number(source.totalXP || 0))),
+    skillXP: normalizeSkillXP(source.skillXP),
+    stamps:
+      source.stamps && typeof source.stamps === "object"
+        ? JSON.parse(JSON.stringify(source.stamps))
+        : {},
+    dailyDeliveries:
+      source.dailyDeliveries && typeof source.dailyDeliveries === "object"
+        ? JSON.parse(JSON.stringify(source.dailyDeliveries))
+        : {},
+    streak:
+      source.streak && typeof source.streak === "object"
+        ? { ...defaults.streak, ...source.streak }
+        : defaults.streak,
+    merchProgress: {
+      nospillClubGear: {
+        ...defaults.merchProgress.nospillClubGear,
+        ...(merch.nospillClubGear || {}),
+      },
+      perfectPourDrop: {
+        ...defaults.merchProgress.perfectPourDrop,
+        ...(merch.perfectPourDrop || {}),
+      },
+      deliveryCrew: {
+        ...defaults.merchProgress.deliveryCrew,
+        ...(merch.deliveryCrew || {}),
+      },
+    },
+    recentRewards: Array.isArray(source.recentRewards) ? source.recentRewards.slice(0, 12) : [],
+    recentSessions: Array.isArray(source.recentSessions) ? source.recentSessions.slice(0, 20) : [],
+    xpByDate:
+      source.xpByDate && typeof source.xpByDate === "object"
+        ? { ...source.xpByDate }
+        : {},
+    routeMastery:
+      source.routeMastery && typeof source.routeMastery === "object"
+        ? JSON.parse(JSON.stringify(source.routeMastery))
+        : {},
+  };
+  normalized.level = levelForXP(normalized.totalXP);
+  normalized.merchProgress.nospillClubGear.dates = [
+    ...(normalized.merchProgress.nospillClubGear.dates || []),
+  ];
+  normalized.merchProgress.deliveryCrew.dates = [
+    ...(normalized.merchProgress.deliveryCrew.dates || []),
+  ];
+  return normalized;
+}
+
+function loadGameState() {
+  const storage = safeLocalStorage();
+  if (!storage) return defaultGameState();
+  try {
+    return normalizeGameState(JSON.parse(storage.getItem(GAME_STORAGE_KEY) || "{}"));
+  } catch (_) {
+    return defaultGameState();
+  }
+}
+
+function saveGameState(gameState) {
+  const storage = safeLocalStorage();
+  if (!storage) return false;
+  try {
+    storage.setItem(GAME_STORAGE_KEY, JSON.stringify(normalizeGameState(gameState)));
+    return true;
+  } catch (_) {
+    return false;
   }
 }
 
@@ -481,8 +785,16 @@ function unlockMilestones(summary) {
   if (summary.mode === "basic" && summary.motionSamples > 0) unlock("first_pour");
   if (summary.waterLeft >= 50) unlock("half_cup_hero");
   if (summary.waterLeft >= 75) unlock("smooth_driver");
-  if (summary.waterLeft >= 95) unlock("nospill_club");
-  if (summary.waterLeft >= 99.95) unlock("perfect_pour");
+  if (
+    summary.qualificationStatus === "qualified"
+    && summary.deliveryRewards
+    && summary.deliveryRewards.merchProgress.nospillClubGear.unlocked
+  ) {
+    unlock("nospill_club");
+  }
+  if (summary.qualificationStatus === "qualified" && summary.waterLeft >= 99.95) {
+    unlock("perfect_pour");
+  }
 
   if (summary.qualificationStatus === "qualified") {
     unlock("qualified_pour");
@@ -493,7 +805,7 @@ function unlockMilestones(summary) {
     if (summary.waterLeft >= 90 && summary.significantTurnsPerMile >= 7) {
       unlock("curve_control");
     }
-    if (summary.waterLeft >= 90 && summary.routeDifficultyScore >= 0.5) {
+    if (summary.waterLeft >= 90 && summary.routeType === "Technical Route") {
       unlock("technical_pour");
     }
     if (summary.waterLeft >= 90 && summary.routeDifficultyScore >= 0.75) {
@@ -539,6 +851,464 @@ function saveSummaryLocally(summary) {
   clubState.savedSessions = [savedSummary, ...clubState.savedSessions].slice(0, 20);
   saveClubState(clubState);
   return savedSummary;
+}
+
+function localDateKey(date = new Date()) {
+  if (typeof date === "string") return date.slice(0, 10);
+  const value = date instanceof Date ? date : new Date(date);
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function hashString(value) {
+  return String(value).split("").reduce(
+    (hash, char) => ((hash * 31) + char.charCodeAt(0)) >>> 0,
+    7,
+  );
+}
+
+function getDailyDelivery(date = new Date()) {
+  const dateKey = localDateKey(date);
+  const index = hashString(dateKey) % DAILY_DELIVERIES.length;
+  return { ...DAILY_DELIVERIES[index], dateKey };
+}
+
+function calculateCargoCondition(session) {
+  return clamp(roundTo(session && session.waterLeft, 1), 0, 100);
+}
+
+function isQualifiedSession(session) {
+  return Boolean(
+    session
+    && session.mode === "qualified"
+    && session.qualificationStatus === "qualified",
+  );
+}
+
+function classifyRouteType(summary) {
+  if (!isQualifiedSession(summary)) return "Practice Route";
+  const duration = Number(summary.durationSeconds || 0);
+  const distance = Number(summary.distanceMiles || 0);
+  const turnDensity = Number(summary.turnDensityScore || 0);
+  const curvature = Number(summary.curvatureScore || 0);
+  const difficulty = Number(summary.routeDifficultyScore || 0);
+  const harshLongitudinal =
+    Number(summary.harshBraking || 0) + Number(summary.harshAcceleration || 0);
+
+  if ((duration >= 1200 || distance >= 10) && difficulty < 0.62) {
+    return "Long Haul";
+  }
+  if (turnDensity >= 0.62 || curvature >= 0.62 || difficulty >= 0.68) {
+    return "Technical Route";
+  }
+  if (turnDensity >= 0.32 || curvature >= 0.32 || difficulty >= 0.42) {
+    return "Mixed Route";
+  }
+  if (harshLongitudinal >= 3 || Number(summary.abruptTransitions || 0) >= 3) {
+    return "City Delivery";
+  }
+  return "Calm Cruise";
+}
+
+function evaluateDailyDelivery(mission, session) {
+  const cargo = calculateCargoCondition(session);
+  const routeType = session.routeType || classifyRouteType(session);
+  const harshInputCount = Number(session.harshInputCount || 0);
+  if (!mission) return false;
+  if (mission.id === "silken_tofu") return cargo >= 85;
+  if (mission.id === "hot_tea") {
+    return cargo >= 80 && Number(session.harshLateral || 0) <= 1;
+  }
+  if (mission.id === "soup_bowl") {
+    return cargo >= 80
+      && Number(session.harshBraking || 0) <= 1
+      && Number(session.harshAcceleration || 0) <= 1;
+  }
+  if (mission.id === "egg_carton") return cargo >= 80 && harshInputCount <= 2;
+  if (mission.id === "glass_bottle") {
+    return cargo >= 82
+      && Number(session.lateralJerk || 0) <= 2
+      && Number(session.abruptTransitions || 0) <= 2;
+  }
+  if (mission.id === "wedding_cake") {
+    return isQualifiedSession(session)
+      && cargo >= 85
+      && (Number(session.durationSeconds || 0) >= 900 || routeType === "Long Haul");
+  }
+  return false;
+}
+
+function levelXPRequirement(level) {
+  return 100 + Math.max(1, Number(level || 1)) * 25;
+}
+
+function levelForXP(totalXP) {
+  let level = 1;
+  let remaining = Math.max(0, Math.round(Number(totalXP || 0)));
+  while (remaining >= levelXPRequirement(level)) {
+    remaining -= levelXPRequirement(level);
+    level += 1;
+  }
+  return level;
+}
+
+function levelProgress(totalXP) {
+  let level = 1;
+  let remaining = Math.max(0, Math.round(Number(totalXP || 0)));
+  while (remaining >= levelXPRequirement(level)) {
+    remaining -= levelXPRequirement(level);
+    level += 1;
+  }
+  return {
+    level,
+    currentXP: remaining,
+    nextXP: levelXPRequirement(level),
+  };
+}
+
+function dateDaysApart(leftDateKey, rightDateKey) {
+  if (!leftDateKey || !rightDateKey) return null;
+  const left = new Date(`${leftDateKey}T00:00:00`);
+  const right = new Date(`${rightDateKey}T00:00:00`);
+  return Math.round((left - right) / 86400000);
+}
+
+function countFullCreditQualifiedToday(gameState, dateKey) {
+  return (gameState.recentSessions || []).filter(
+    (session) => session.dateKey === dateKey
+      && session.qualificationStatus === "qualified"
+      && session.xpMultiplier === 1,
+  ).length;
+}
+
+function recentAverageCargo(gameState) {
+  const sessions = (gameState.recentSessions || []).slice(0, 5);
+  if (!sessions.length) return null;
+  const total = sessions.reduce((sum, session) => sum + Number(session.cargoCondition || 0), 0);
+  return total / sessions.length;
+}
+
+function calculateDriverXP(session, gameState, missionComplete) {
+  const cargo = calculateCargoCondition(session);
+  const dateKey = localDateKey(session.date);
+  const qualified = isQualifiedSession(session);
+  const fullCreditQualified = countFullCreditQualifiedToday(gameState, dateKey);
+  const multiplier = qualified && fullCreditQualified >= 2 ? 0.35 : 1;
+  const average = recentAverageCargo(gameState);
+  let xp = qualified ? 34 : 12;
+  xp += Math.floor(cargo * (qualified ? 0.45 : 0.14));
+  if (cargo >= 95) xp += 12;
+  if (Number(session.harshInputCount || 0) <= 1) xp += 8;
+  if (missionComplete) xp += 20;
+  if (average !== null && cargo > average) xp += Math.min(12, Math.round(cargo - average));
+  if (session.routeType === getDailyDelivery(session.date).routeMatch) xp += 8;
+  if (!qualified) xp = Math.min(xp, 28);
+  return {
+    baseXP: xp,
+    xpGained: Math.max(1, Math.round(xp * multiplier)),
+    xpMultiplier: multiplier,
+  };
+}
+
+function awardSkillXP(session) {
+  const cargo = calculateCargoCondition(session);
+  const harshBraking = Number(session.harshBraking || 0);
+  const harshAcceleration = Number(session.harshAcceleration || 0);
+  const harshLateral = Number(session.harshLateral || 0);
+  const lateralJerk = Number(session.lateralJerk || 0);
+  const abruptTransitions = Number(session.abruptTransitions || 0);
+  const duration = Number(session.durationSeconds || 0);
+  const routeType = session.routeType || classifyRouteType(session);
+  return {
+    brakeFeather: Math.max(1, Math.round(cargo / 12) - harshBraking * 2),
+    throttleControl: Math.max(1, Math.round(cargo / 12) - harshAcceleration * 2),
+    smoothHands: Math.max(1, Math.round(cargo / 14) - harshLateral - lateralJerk),
+    cornerCalm: ["Mixed Route", "Technical Route"].includes(routeType)
+      ? Math.max(2, Math.round(cargo / 10) - harshLateral * 2)
+      : Math.max(1, Math.round(cargo / 18)),
+    passengerComfort: Math.max(
+      1,
+      Math.round(cargo / 10)
+        - harshBraking
+        - harshAcceleration
+        - harshLateral,
+    ),
+    consistency: Math.max(
+      1,
+      Math.round(cargo / 14)
+        + (duration >= 600 ? 3 : 0)
+        - abruptTransitions
+        - lateralJerk,
+    ),
+  };
+}
+
+function isMeaningfulQualifiedDelivery(session) {
+  if (!isQualifiedSession(session)) return false;
+  if (["Mixed Route", "Technical Route", "Long Haul"].includes(session.routeType)) {
+    return true;
+  }
+  return Number(session.durationSeconds || 0) >= 600 || Number(session.distanceMiles || 0) >= 5;
+}
+
+function addUniqueDate(list, dateKey) {
+  return Array.from(new Set([...(Array.isArray(list) ? list : []), dateKey])).sort();
+}
+
+function updateMerchProgress(session, gameState, missionComplete) {
+  const next = normalizeGameState(gameState);
+  const cargo = calculateCargoCondition(session);
+  const dateKey = localDateKey(session.date);
+  const progress = next.merchProgress;
+
+  if (isQualifiedSession(session) && cargo >= 95 && isMeaningfulQualifiedDelivery(session)) {
+    progress.nospillClubGear.dates = addUniqueDate(progress.nospillClubGear.dates, dateKey);
+    progress.nospillClubGear.count = Math.min(
+      progress.nospillClubGear.target,
+      progress.nospillClubGear.dates.length,
+    );
+    progress.nospillClubGear.meaningfulCount = progress.nospillClubGear.count;
+    progress.nospillClubGear.unlocked =
+      progress.nospillClubGear.count >= progress.nospillClubGear.target;
+  }
+  if (isQualifiedSession(session) && cargo >= 100) {
+    progress.perfectPourDrop.unlocked = true;
+    progress.perfectPourDrop.date = progress.perfectPourDrop.date || dateKey;
+  }
+  if (missionComplete && cargo >= 85) {
+    progress.deliveryCrew.dates = addUniqueDate(progress.deliveryCrew.dates, dateKey);
+    progress.deliveryCrew.count = Math.min(
+      progress.deliveryCrew.target,
+      progress.deliveryCrew.dates.length,
+    );
+    progress.deliveryCrew.unlocked = progress.deliveryCrew.count >= progress.deliveryCrew.target;
+  }
+  return progress;
+}
+
+function routeBucket(value, thresholds) {
+  const numeric = Number(value || 0);
+  let bucket = 0;
+  thresholds.forEach((threshold) => {
+    if (numeric >= threshold) bucket += 1;
+  });
+  return bucket;
+}
+
+function routeFingerprintForSession(session) {
+  const routeType = session.routeType || classifyRouteType(session);
+  const distanceBucket = routeBucket(session.distanceMiles, [2, 5, 10, 20]);
+  const durationBucket = routeBucket(session.durationSeconds, [300, 600, 1200, 2400]);
+  const turnBucket = routeBucket(session.turnDensityScore, [0.25, 0.5, 0.75]);
+  const curveBucket = routeBucket(session.curvatureScore, [0.25, 0.5, 0.75]);
+  return {
+    id: [
+      routeType.toLowerCase().replaceAll(" ", "-"),
+      `d${distanceBucket}`,
+      `t${durationBucket}`,
+      `turn${turnBucket}`,
+      `curve${curveBucket}`,
+    ].join(":"),
+    routeType,
+    distanceBucket,
+    durationBucket,
+    turnBucket,
+    curveBucket,
+  };
+}
+
+function updateCommuteMastery(session, gameState) {
+  const next = normalizeGameState(gameState);
+  if (!isQualifiedSession(session)) return { routeMastery: next.routeMastery, message: "" };
+  const fingerprint = routeFingerprintForSession(session);
+  const previous = next.routeMastery[fingerprint.id] || {
+    fingerprintId: fingerprint.id,
+    routeType: fingerprint.routeType,
+    count: 0,
+    bestCargoCondition: 0,
+    recentAverageCargoCondition: 0,
+    lastCompletedDate: null,
+    masteryLevel: 0,
+  };
+  const previousAverage = previous.recentAverageCargoCondition || 0;
+  const cargo = calculateCargoCondition(session);
+  const count = previous.count + 1;
+  const recentAverageCargoCondition = roundTo(
+    ((previous.recentAverageCargoCondition || cargo) * previous.count + cargo) / count,
+    1,
+  );
+  const updated = {
+    ...previous,
+    routeType: fingerprint.routeType,
+    count,
+    bestCargoCondition: Math.max(Number(previous.bestCargoCondition || 0), cargo),
+    recentAverageCargoCondition,
+    lastCompletedDate: localDateKey(session.date),
+    masteryLevel: Math.floor(count / 3),
+  };
+  next.routeMastery[fingerprint.id] = updated;
+  const message = previous.count > 0 && cargo > previousAverage
+    ? "Looks like a familiar delivery. Today was smoother than your recent average."
+    : "";
+  return { routeMastery: next.routeMastery, message };
+}
+
+function stampLabels(ids) {
+  return (ids || []).map((id) => STAMP_LABELS[id] || id);
+}
+
+function calculateDeliveryRewards(session, gameState = defaultGameState()) {
+  const state = normalizeGameState(gameState);
+  const dateKey = localDateKey(session.date);
+  const dailyDelivery = getDailyDelivery(dateKey);
+  const routeType = classifyRouteType(session);
+  const cargoCondition = calculateCargoCondition(session);
+  const enrichedSession = { ...session, routeType, cargoCondition };
+  const dailyComplete = evaluateDailyDelivery(dailyDelivery, enrichedSession);
+  const driverXP = calculateDriverXP(enrichedSession, state, dailyComplete);
+  const skillXP = awardSkillXP(enrichedSession);
+  const stamps = [];
+  const addStamp = (id) => {
+    if (!state.stamps[id] && !stamps.includes(id)) stamps.push(id);
+  };
+
+  addStamp("first_delivery");
+  if (dailyComplete) addStamp("daily_delivery_complete");
+  if (cargoCondition >= 95) addStamp("cup_stayed_full");
+  if (isQualifiedSession(enrichedSession) && cargoCondition >= 90 && Number(session.durationSeconds || 0) >= 600) {
+    addStamp("smooth_commute");
+  }
+  if (routeType === "Calm Cruise" && cargoCondition >= 90) addStamp("calm_cruise");
+  if (
+    routeType === "City Delivery"
+    && cargoCondition >= 85
+    && Number(session.harshBraking || 0) <= 1
+    && Number(session.harshAcceleration || 0) <= 1
+  ) {
+    addStamp("city_smooth");
+  }
+  if (routeType === "Long Haul" && cargoCondition >= 85) addStamp("long_haul_pour");
+  if (["Mixed Route", "Technical Route"].includes(routeType) && cargoCondition >= 90) {
+    addStamp("curve_control");
+  }
+  if (routeType === "Technical Route" && cargoCondition >= 90) addStamp("technical_pour");
+  if (Number(session.harshInputCount || 0) <= 1) addStamp("no_panic_inputs");
+  if (
+    cargoCondition >= 90
+    && Number(session.harshBraking || 0) <= 1
+    && Number(session.harshAcceleration || 0) <= 1
+    && Number(session.lateralJerk || 0) <= 2
+  ) {
+    addStamp("passenger_approved");
+  }
+  if (isQualifiedSession(enrichedSession) && cargoCondition >= 100) addStamp("perfect_pour");
+
+  const nextState = normalizeGameState(state);
+  nextState.totalXP += driverXP.xpGained;
+  nextState.level = levelForXP(nextState.totalXP);
+  Object.entries(skillXP).forEach(([skill, value]) => {
+    nextState.skillXP[skill] = Math.max(0, Math.round(nextState.skillXP[skill] + value));
+  });
+  stamps.forEach((id) => {
+    nextState.stamps[id] = { label: STAMP_LABELS[id], date: session.date };
+  });
+  nextState.dailyDeliveries[dateKey] = {
+    missionId: dailyDelivery.id,
+    cargo: dailyDelivery.cargo,
+    completed: Boolean(dailyComplete),
+    cargoCondition,
+  };
+  if (dailyComplete) {
+    const apart = dateDaysApart(dateKey, nextState.streak.lastCompletedDate);
+    nextState.streak.current = apart === 1
+      ? Number(nextState.streak.current || 0) + 1
+      : apart === 0
+        ? Number(nextState.streak.current || 1)
+        : 1;
+    nextState.streak.lastCompletedDate = dateKey;
+  }
+  nextState.merchProgress = updateMerchProgress(enrichedSession, nextState, dailyComplete);
+  if (nextState.merchProgress.nospillClubGear.unlocked) {
+    nextState.stamps.nospill_club = nextState.stamps.nospill_club || {
+      label: STAMP_LABELS.nospill_club,
+      date: session.date,
+    };
+  }
+  const mastery = updateCommuteMastery(enrichedSession, nextState);
+  nextState.routeMastery = mastery.routeMastery;
+  const rewardEntry = {
+    date: session.date,
+    cargoCondition,
+    routeType,
+    xpGained: driverXP.xpGained,
+    stamps: stampLabels(stamps),
+  };
+  nextState.recentRewards = [rewardEntry, ...nextState.recentRewards].slice(0, 12);
+  nextState.recentSessions = [{
+    date: session.date,
+    dateKey,
+    mode: session.mode,
+    qualificationStatus: session.qualificationStatus,
+    cargoCondition,
+    routeType,
+    rank: session.rank,
+    xpGained: driverXP.xpGained,
+    xpMultiplier: driverXP.xpMultiplier,
+  }, ...nextState.recentSessions].slice(0, 20);
+  nextState.xpByDate[dateKey] = Math.round(
+    Number(nextState.xpByDate[dateKey] || 0) + driverXP.xpGained,
+  );
+
+  return {
+    dailyDelivery,
+    dailyComplete,
+    cargoCondition,
+    routeType,
+    xpGained: driverXP.xpGained,
+    xpMultiplier: driverXP.xpMultiplier,
+    skillXP,
+    stamps,
+    stampLabels: stampLabels(stamps),
+    merchProgress: nextState.merchProgress,
+    commuteMasteryMessage: mastery.message,
+    gameState: nextState,
+  };
+}
+
+function buildDeliverySharePayload(session, gameState = null) {
+  const routeType = session.routeType || classifyRouteType(session);
+  const cargoCondition = calculateCargoCondition(session);
+  const stamp = Array.isArray(session.deliveryStamps) && session.deliveryStamps.length
+    ? stampLabels([session.deliveryStamps[0]])[0]
+    : bestUnlockedMilestone(session);
+  return {
+    title: APP_BRAND,
+    status: "Delivery Complete",
+    cargoCondition: formatPercent(cargoCondition),
+    rank: session.rank,
+    routeType,
+    stamp: stamp || "",
+    dailyStatus:
+      session.dailyDeliveryComplete === true
+        ? "Daily Delivery Complete"
+        : session.dailyDeliveryComplete === false
+          ? "Daily Delivery In Progress"
+          : "",
+    tagline: TAGLINE_SMOOTHER,
+    gameState,
+  };
+}
+
+function sanitizeShareOutput(text) {
+  return String(text || "")
+    .replace(/\b(?:speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g)\b/gi, "")
+    .replace(/cavrino\.com\/nospill/gi, "")
+    .replace(/supercutecollectibles\.com/gi, "")
+    .replace(/Super Cute Collectibles/g, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 }
 
 function getDeviceMotionConstructor() {
@@ -1071,7 +1841,7 @@ function buildSummary() {
   const waterLeft = roundTo(appState.waterLeft, 1);
   const waterSpilled = roundTo(100 - waterLeft, 1);
   const routeData = route || {};
-  return {
+  const summary = {
     date: endedAt.toISOString(),
     mode: appState.mode,
     difficulty: appState.difficulty,
@@ -1112,6 +1882,9 @@ function buildSummary() {
     routeDifficultyLabel: route ? routeData.routeDifficultyLabel : null,
     unlockedBadges: [],
   };
+  summary.routeType = classifyRouteType(summary);
+  summary.cargoCondition = calculateCargoCondition(summary);
+  return summary;
 }
 
 function setRunStatus(message) {
@@ -1407,65 +2180,269 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
   const height = canvas.height;
   const centerX = width / 2;
   const centerY = height / 2;
-  const radius = Math.min(width, height) * 0.32;
+  const traySize = Math.min(width, height) * 0.68;
+  const trayX = centerX - traySize / 2;
+  const trayY = centerY - traySize / 2;
+  const trayRadius = 44;
+  const dangerInset = traySize * 0.12;
+  const maxOffset = traySize * 0.32;
   const thresholdG = DIFFICULTIES[appState.difficulty].thresholdG;
-  const dotX = centerX + clamp(currentG.lateralG / thresholdG, -1.25, 1.25) * radius;
-  const dotY =
-    centerY + clamp(currentG.longitudinalG / thresholdG, -1.25, 1.25) * radius;
+  const reducedMotion = prefersReducedMotion();
+  const visualFrame = Math.floor(
+    (typeof performance !== "undefined" ? performance.now() : Date.now()) / 16,
+  );
+  const visual = updateTofuCargoVisualState(
+    appState.tofuVisual,
+    currentG,
+    {
+      thresholdG,
+      maxOffset,
+      reducedMotion,
+      frame: visualFrame,
+    },
+  );
+  const dangerRatio = clamp(
+    Number(currentG && currentG.totalG ? currentG.totalG : 0) / thresholdG,
+    0,
+    1.6,
+  );
+  const tofuSize = traySize * 0.24;
+  const tofuX = centerX + visual.tofuX;
+  const tofuY = centerY + visual.tofuY;
+  const squish = reducedMotion ? 0 : visual.tofuSquish;
+  const tofuWidth = tofuSize * (1 + squish * 0.08);
+  const tofuHeight = tofuSize * (1 - squish * 0.06);
 
   context.clearRect(0, 0, width, height);
   context.fillStyle = "#070a0a";
   context.fillRect(0, 0, width, height);
 
   context.save();
+  context.fillStyle = "#101516";
+  context.strokeStyle = "rgba(244, 247, 239, 0.18)";
+  context.lineWidth = 7;
   context.beginPath();
-  context.arc(centerX, centerY, radius * 1.22, 0, Math.PI * 2);
-  context.strokeStyle = "rgba(244, 247, 239, 0.14)";
-  context.lineWidth = 16;
+  context.roundRect(trayX, trayY, traySize, traySize, trayRadius);
+  context.fill();
   context.stroke();
 
+  context.fillStyle = "rgba(110, 198, 255, 0.07)";
   context.beginPath();
-  context.arc(centerX, centerY, radius, 0, Math.PI * 2);
-  context.fillStyle = "rgba(110, 198, 255, 0.08)";
+  context.roundRect(
+    trayX + dangerInset,
+    trayY + dangerInset,
+    traySize - dangerInset * 2,
+    traySize - dangerInset * 2,
+    28,
+  );
   context.fill();
-  context.strokeStyle = "rgba(110, 198, 255, 0.9)";
-  context.lineWidth = 6;
+
+  context.beginPath();
+  context.roundRect(
+    trayX + dangerInset,
+    trayY + dangerInset,
+    traySize - dangerInset * 2,
+    traySize - dangerInset * 2,
+    28,
+  );
+  context.strokeStyle = dangerRatio > 1
+    ? `rgba(240, 185, 90, ${clamp(0.45 + (dangerRatio - 1) * 0.5, 0.45, 0.9)})`
+    : "rgba(110, 198, 255, 0.56)";
+  context.lineWidth = dangerRatio > 1 ? 9 : 5;
   context.stroke();
 
   const waterArc = (clamp(waterLeft, 0, 100) / 100) * Math.PI * 2;
   context.beginPath();
-  context.arc(centerX, centerY, radius * 0.72, -Math.PI / 2, -Math.PI / 2 + waterArc);
+  context.arc(trayX + 58, trayY + 58, 31, -Math.PI / 2, -Math.PI / 2 + waterArc);
   context.strokeStyle = "rgba(85, 217, 138, 0.92)";
-  context.lineWidth = 12;
+  context.lineWidth = 8;
   context.lineCap = "round";
   context.stroke();
 
+  if (visual.recentSpillParticles.length) {
+    visual.recentSpillParticles.forEach((particle) => {
+      const alpha = 1 - particle.age / particle.life;
+      context.beginPath();
+      context.arc(
+        centerX + particle.x * maxOffset,
+        centerY + particle.y * maxOffset,
+        5 + alpha * 5,
+        0,
+        Math.PI * 2,
+      );
+      context.fillStyle = `rgba(240, 185, 90, ${0.16 + alpha * 0.34})`;
+      context.fill();
+    });
+  }
+
+  if (!reducedMotion && Math.abs(visual.tofuVx) + Math.abs(visual.tofuVy) > 1.6) {
+    context.strokeStyle = "rgba(244, 247, 239, 0.18)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(tofuX - visual.tofuVx * 2.4, tofuY - tofuHeight * 0.55);
+    context.lineTo(tofuX - visual.tofuVx * 4.8, tofuY - tofuHeight * 0.72);
+    context.moveTo(tofuX - visual.tofuVx * 2.2, tofuY + tofuHeight * 0.52);
+    context.lineTo(tofuX - visual.tofuVx * 4.3, tofuY + tofuHeight * 0.68);
+    context.stroke();
+  }
+
+  context.save();
+  context.translate(tofuX, tofuY);
+  context.rotate(visual.tofuRotation);
+  context.fillStyle = "#f7f3df";
+  context.strokeStyle = "#101516";
+  context.lineWidth = 7;
   context.beginPath();
-  context.moveTo(centerX - radius, centerY);
-  context.lineTo(centerX + radius, centerY);
-  context.moveTo(centerX, centerY - radius);
-  context.lineTo(centerX, centerY + radius);
-  context.strokeStyle = "rgba(244, 247, 239, 0.13)";
+  context.roundRect(
+    -tofuWidth / 2,
+    -tofuHeight / 2,
+    tofuWidth,
+    tofuHeight,
+    18,
+  );
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "rgba(225, 216, 190, 0.82)";
+  [
+    [-0.28, -0.18],
+    [0.19, -0.22],
+    [-0.1, 0.23],
+    [0.31, 0.18],
+  ].forEach(([x, y]) => {
+    context.beginPath();
+    context.arc(x * tofuWidth, y * tofuHeight, 5, 0, Math.PI * 2);
+    context.fill();
+  });
+  context.fillStyle = "#101516";
+  context.beginPath();
+  context.arc(-tofuWidth * 0.16, -tofuHeight * 0.04, 5, 0, Math.PI * 2);
+  context.arc(tofuWidth * 0.16, -tofuHeight * 0.04, 5, 0, Math.PI * 2);
+  context.fill();
+  context.strokeStyle = "#101516";
+  context.lineWidth = 4;
+  context.beginPath();
+  context.arc(0, tofuHeight * 0.08, tofuWidth * 0.11, 0.12 * Math.PI, 0.88 * Math.PI);
+  context.stroke();
+  context.restore();
+
+  context.beginPath();
+  context.roundRect(trayX + 14, trayY + traySize - 68, traySize - 28, 40, 20);
+  context.fillStyle = "rgba(5, 6, 6, 0.72)";
+  context.fill();
+  context.strokeStyle = "rgba(244, 247, 239, 0.11)";
   context.lineWidth = 2;
   context.stroke();
 
-  context.beginPath();
-  context.arc(dotX, dotY, 24, 0, Math.PI * 2);
-  context.fillStyle = currentG.totalG > thresholdG ? "#f0b95a" : "#55d98a";
-  context.fill();
-  context.strokeStyle = "#f4f7ef";
-  context.lineWidth = 4;
-  context.stroke();
-
-  context.fillStyle = "#93a099";
-  context.font = "700 22px Inter, Arial, sans-serif";
+  context.fillStyle = dangerRatio > 1 ? "#f0b95a" : "#9ee9bf";
+  context.font = "800 21px Inter, Arial, sans-serif";
   context.textAlign = "center";
-  context.fillText(`Spill ring ${thresholdG.toFixed(2)}G`, centerX, height - 48);
+  context.fillText(
+    dangerRatio > 1 ? "Cargo near spill edge" : "Tofu cargo steady",
+    centerX,
+    trayY + traySize - 41,
+  );
+  context.fillStyle = "#bbc7c0";
+  context.font = "700 24px Inter, Arial, sans-serif";
+  context.fillText(`Cargo Condition ${formatPercent(waterLeft)}`, centerX, height - 42);
   context.restore();
 }
 
 function summaryMetric(label, value, className = "") {
   return `<div><span>${escapeHtml(label)}</span><strong class="${className}">${escapeHtml(value)}</strong></div>`;
+}
+
+function renderDeliveryLog(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  const mission = getDailyDelivery(new Date());
+  const progress = levelProgress(state.totalXP);
+  if (elements.driverLevel) elements.driverLevel.textContent = `Level ${progress.level}`;
+  if (elements.dailyCargo) elements.dailyCargo.textContent = mission.cargo;
+  if (elements.dailyGoal) {
+    elements.dailyGoal.textContent = `${mission.focus}: ${mission.goal}`;
+  }
+  if (elements.dailyReward) elements.dailyReward.textContent = mission.reward;
+  if (elements.driverTotalXP) elements.driverTotalXP.textContent = String(state.totalXP);
+  if (elements.driverNextXP) {
+    elements.driverNextXP.textContent = `${progress.currentXP}/${progress.nextXP} XP`;
+  }
+  if (elements.driverStreak) {
+    const current = Number(state.streak.current || 0);
+    elements.driverStreak.textContent = `${current} ${current === 1 ? "day" : "days"}`;
+  }
+  if (elements.nospillGearProgress) {
+    const gear = state.merchProgress.nospillClubGear;
+    elements.nospillGearProgress.textContent = `${gear.count}/${gear.target}`;
+  }
+  if (elements.recentStamps) {
+    const stamps = Object.values(state.stamps || {})
+      .map((stamp) => stamp.label)
+      .filter(Boolean)
+      .slice(-6)
+      .reverse();
+    elements.recentStamps.innerHTML = stamps.length
+      ? stamps.map((label) => `<span>${escapeHtml(label)}</span>`).join("")
+      : "<span>No stamps yet</span>";
+  }
+}
+
+function merchProgressMetric(label, value) {
+  return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function renderMerchProgress(gameState = loadGameState()) {
+  if (!elements.merchProgressGrid) return;
+  const progress = normalizeGameState(gameState).merchProgress;
+  elements.merchProgressGrid.innerHTML = [
+    merchProgressMetric(
+      "No-Spill Club Gear",
+      `${progress.nospillClubGear.count}/${progress.nospillClubGear.target}`,
+    ),
+    merchProgressMetric(
+      "Perfect Pour Drop",
+      progress.perfectPourDrop.unlocked ? "Unlocked" : "Locked",
+    ),
+    merchProgressMetric(
+      "Delivery Crew",
+      `${progress.deliveryCrew.count}/${progress.deliveryCrew.target}`,
+    ),
+  ].join("");
+}
+
+function renderDeliverySummary(summary) {
+  if (!elements.deliverySummaryGrid) return;
+  const rewards = summary.deliveryRewards || {};
+  const skillLine = rewards.skillXP
+    ? Object.entries(rewards.skillXP)
+        .sort((left, right) => right[1] - left[1])
+        .slice(0, 2)
+        .map(([skill, value]) => `${SKILL_LABELS[skill]} +${value}`)
+        .join(", ")
+    : "No skill XP";
+  const stampLine = rewards.stampLabels && rewards.stampLabels.length
+    ? rewards.stampLabels.join(", ")
+    : "No new stamp";
+  elements.deliverySummaryGrid.innerHTML = [
+    summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
+    summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
+    summaryMetric("Rank", summary.rank),
+    summaryMetric("Driver XP", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
+    summaryMetric("Skill XP", skillLine),
+    summaryMetric("Stamp Earned", stampLine),
+    summaryMetric(
+      "Daily Delivery",
+      rewards.dailyComplete ? "Complete" : "In progress",
+    ),
+    summaryMetric(
+      "No-Spill Club Gear",
+      rewards.merchProgress
+        ? `${rewards.merchProgress.nospillClubGear.count}/${rewards.merchProgress.nospillClubGear.target}`
+        : "0/3",
+    ),
+  ].join("");
+  if (elements.commuteMasteryCopy) {
+    elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || "";
+  }
 }
 
 function escapeHtml(value) {
@@ -1482,16 +2459,19 @@ function renderSummary(summary) {
   if (elements.summaryStatusLabel) {
     elements.summaryStatusLabel.textContent = summary.qualificationLabel;
   }
+  if (elements.summaryTitle) {
+    elements.summaryTitle.textContent = "Delivery Complete";
+  }
   if (elements.summaryWater) {
-    elements.summaryWater.textContent = formatPercent(summary.waterLeft);
+    elements.summaryWater.textContent = formatPercent(summary.cargoCondition ?? summary.waterLeft);
   }
   if (elements.summaryGrid) {
     elements.summaryGrid.innerHTML = [
-      summaryMetric("Water Delivered", formatPercent(summary.waterLeft), "nospill-is-good"),
+      summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
       summaryMetric("Water Spilled", formatPercent(summary.waterSpilled)),
+      summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
       summaryMetric("Rank", summary.rank),
       summaryMetric("Harsh Inputs", String(summary.harshInputCount)),
-      summaryMetric("Duration", formatDuration(summary.durationSeconds)),
       summaryMetric("Qualification", summary.qualificationLabel),
     ].join("");
   }
@@ -1520,6 +2500,9 @@ function renderSummary(summary) {
     elements.summaryStatus.textContent = `${summary.qualificationMessage}${reasons}`;
   }
   renderMerchPanel(loadClubState());
+  renderMerchProgress(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
+  renderDeliverySummary(summary);
+  renderDeliveryLog(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderShareCanvas(summary);
   showView("summary");
 }
@@ -1533,7 +2516,7 @@ function renderMerchPanel(clubState) {
     const action = !unlocked
       ? "<strong>Locked</strong>"
       : link
-        ? `<a class="nospill-merch-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Buy unlocked gear</a>`
+        ? `<a class="nospill-merch-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Buy unlocked shirt</a>`
         : "<strong>Unlocked, merch coming soon.</strong>";
     return `
       <div class="nospill-merch-item ${unlocked ? "" : "is-locked"}">
@@ -1582,16 +2565,18 @@ function shareDistanceLabel(summary) {
 
 function buildShareCardData(summary, config = SHARE_CONFIG) {
   const shareConfig = normalizedShareConfig(config);
+  const delivery = buildDeliverySharePayload(summary);
   return {
     title: APP_BRAND,
-    challengeName: CHALLENGE_NAME,
-    waterDelivered: formatPercent(summary.waterLeft),
+    challengeName: "Delivery Complete",
+    waterDelivered: delivery.cargoCondition,
     waterSpilled: formatPercent(summary.waterSpilled),
     rank: summary.rank,
     qualificationStatus: qualificationShareLabel(summary),
-    routeLabel: summary.routeDifficultyLabel || "",
+    routeLabel: delivery.routeType,
     distanceLabel: shareConfig.includeDistanceInShare ? shareDistanceLabel(summary) : "",
-    milestone: bestUnlockedMilestone(summary),
+    milestone: delivery.stamp || bestUnlockedMilestone(summary),
+    dailyStatus: delivery.dailyStatus,
     tagline: TAGLINE_SMOOTHER,
     shirtLine: TAGLINE_CUP,
   };
@@ -1610,15 +2595,16 @@ function normalizedShareConfig(config) {
 function buildShareText(summary, config = SHARE_CONFIG) {
   const data = buildShareCardData(summary, config);
   const milestoneText = data.milestone
-    ? ` and unlocked ${data.milestone}`
+    ? ` Stamp: ${data.milestone}.`
     : "";
   const lines = [
-    `${APP_BRAND}: I delivered ${data.waterDelivered} of the cup${milestoneText}. Rank: ${data.rank}. ${data.tagline}`,
+    `${APP_BRAND}: Delivery Complete. Cargo Condition: ${data.waterDelivered}. Rank: ${data.rank}. Route Type: ${data.routeLabel}.${milestoneText} ${data.tagline}`,
   ];
+  if (data.dailyStatus) lines.push(data.dailyStatus);
   if (data.distanceLabel) lines.push(`Distance: ${data.distanceLabel}.`);
   const shareConfig = normalizedShareConfig(config);
   if (shareConfig.includeAppLink) lines.push(shareConfig.appUrl);
-  return lines.join("\n");
+  return sanitizeShareOutput(lines.join("\n"));
 }
 
 function renderShareCanvas(summary) {
@@ -1651,7 +2637,7 @@ function renderShareCanvas(summary) {
 
   context.fillStyle = "#bbc7c0";
   context.font = "700 32px Inter, Arial, sans-serif";
-  context.fillText("Water Delivered", 118, 336);
+  context.fillText("Cargo Condition", 118, 336);
 
   context.fillStyle = "#f4f7ef";
   context.font = "900 54px Inter, Arial, sans-serif";
@@ -1659,7 +2645,7 @@ function renderShareCanvas(summary) {
 
   context.fillStyle = "#bbc7c0";
   context.font = "700 30px Inter, Arial, sans-serif";
-  context.fillText(`Water Spilled: ${data.waterSpilled}`, 118, 560);
+  context.fillText(`Rank: ${data.rank}`, 118, 560);
   context.fillText(`Status: ${data.qualificationStatus}`, 118, 622);
   let detailY = 684;
   if (data.routeLabel) {
@@ -1671,9 +2657,9 @@ function renderShareCanvas(summary) {
     detailY += 62;
   }
 
-  const milestone = data.milestone || "No new milestone";
+  const milestone = data.milestone || "No new stamp";
   context.fillStyle = "#f0b95a";
-  context.fillText(`Milestone: ${milestone}`, 118, Math.max(790, detailY + 44));
+  context.fillText(`Stamp: ${milestone}`, 118, Math.max(790, detailY + 44));
 
   context.strokeStyle = "rgba(110, 198, 255, 0.75)";
   context.lineWidth = 10;
@@ -1893,6 +2879,14 @@ function endRun() {
   const summary = buildSummary();
   stopRunSensors();
   appState.routeSamples = [];
+  const gameState = loadGameState();
+  const rewards = calculateDeliveryRewards(summary, gameState);
+  summary.cargoCondition = rewards.cargoCondition;
+  summary.routeType = rewards.routeType;
+  summary.dailyDeliveryComplete = rewards.dailyComplete;
+  summary.deliveryStamps = rewards.stamps;
+  summary.deliveryRewards = rewards;
+  saveGameState(rewards.gameState);
   const milestoneResult = unlockMilestones(summary);
   summary.unlockedBadges = milestoneResult.unlockedThisRun;
   renderSummary(summary);
@@ -1923,6 +2917,8 @@ function newRun() {
   renderMountControls();
   renderAudioLevelControls();
   renderMerchPanel(loadClubState());
+  renderMerchProgress(loadGameState());
+  renderDeliveryLog(loadGameState());
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   showView("landing");
 }
@@ -2029,14 +3025,27 @@ function cacheElements() {
     gValue: document.getElementById("g-value"),
     runStatus: document.getElementById("run-status"),
     landingStatus: document.getElementById("landing-status"),
+    driverLevel: document.getElementById("driver-level"),
+    dailyCargo: document.getElementById("daily-cargo"),
+    dailyGoal: document.getElementById("daily-goal"),
+    dailyReward: document.getElementById("daily-reward"),
+    driverTotalXP: document.getElementById("driver-total-xp"),
+    driverNextXP: document.getElementById("driver-next-xp"),
+    driverStreak: document.getElementById("driver-streak"),
+    nospillGearProgress: document.getElementById("nospill-gear-progress"),
+    recentStamps: document.getElementById("recent-stamps"),
     cupCanvas: document.getElementById("cup-canvas"),
     summaryStatusLabel: document.getElementById("summary-status-label"),
+    summaryTitle: document.getElementById("summary-title"),
     summaryWater: document.getElementById("summary-water"),
     summaryGrid: document.getElementById("summary-grid"),
     routeContext: document.getElementById("route-context"),
     routeGrid: document.getElementById("route-grid"),
     milestoneOutput: document.getElementById("milestone-output"),
+    merchProgressGrid: document.getElementById("merch-progress-grid"),
     merchGrid: document.getElementById("merch-grid"),
+    deliverySummaryGrid: document.getElementById("delivery-summary-grid"),
+    commuteMasteryCopy: document.getElementById("commute-mastery-copy"),
     shareCanvas: document.getElementById("share-canvas"),
     shareButton: document.getElementById("share-button"),
     downloadButton: document.getElementById("download-button"),
@@ -2058,6 +3067,8 @@ function initNoSpillApp() {
   updateStartReadiness();
   updateModeCopy();
   renderMerchPanel(clubState);
+  renderMerchProgress(loadGameState());
+  renderDeliveryLog(loadGameState());
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   if (!hasDeviceMotionSupport()) {
     setLandingStatus(

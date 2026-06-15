@@ -99,6 +99,46 @@
         <span>Smoothness only.</span>
       </section>
 
+      <section class="nospill-section nospill-delivery-log" aria-labelledby="delivery-log-title">
+        <div class="nospill-delivery-log-head">
+          <div>
+            <p class="nospill-kicker">Delivery Log</p>
+            <h3 id="delivery-log-title">Every drive is a delivery.</h3>
+          </div>
+          <strong id="driver-level">Level 1</strong>
+        </div>
+        <p>
+          Preserve the cargo, level up your smoothness, and unlock secret gear.
+        </p>
+        <div class="nospill-delivery-mission" aria-label="Today's Delivery">
+          <span>Today's Delivery</span>
+          <strong id="daily-cargo">Silken Tofu</strong>
+          <p id="daily-goal">Finish a delivery with 85%+ cargo condition.</p>
+          <small id="daily-reward">Daily Delivery stamp and smoothness XP</small>
+        </div>
+        <div class="nospill-delivery-grid" aria-label="Delivery Log progress">
+          <div>
+            <span>Total XP</span>
+            <strong id="driver-total-xp">0</strong>
+          </div>
+          <div>
+            <span>Next Level</span>
+            <strong id="driver-next-xp">0/125 XP</strong>
+          </div>
+          <div>
+            <span>Current Streak</span>
+            <strong id="driver-streak">0 days</strong>
+          </div>
+          <div>
+            <span>No-Spill Club Gear</span>
+            <strong id="nospill-gear-progress">0/3</strong>
+          </div>
+        </div>
+        <div class="nospill-stamp-row" id="recent-stamps" aria-label="Recent stamps">
+          <span>No stamps yet</span>
+        </div>
+      </section>
+
       <div class="nospill-setup is-hidden" id="setup-flow">
         <section class="nospill-section" aria-labelledby="safety-title">
           <h3 id="safety-title">Safety Checklist</h3>
@@ -293,7 +333,8 @@
         <output class="nospill-water-percent" id="water-percent">100.0%</output>
       </div>
 
-      <canvas id="cup-canvas" class="nospill-canvas" width="640" height="640" aria-label="Virtual cup G-ball visualization"></canvas>
+      <canvas id="cup-canvas" class="nospill-canvas" width="640" height="640" aria-label="Animated tofu cargo smoothness visualization"></canvas>
+      <p class="nospill-note">Tofu cargo moves with your driving smoothness.</p>
 
       <div class="nospill-run-metrics" aria-label="Run status">
         <div>
@@ -376,7 +417,14 @@
         <p class="nospill-panel-helper">
           Physical merch is fulfilled by Super Cute Collectibles.
         </p>
+        <div class="nospill-merch-progress-grid" id="merch-progress-grid"></div>
         <div class="nospill-merch-grid" id="merch-grid"></div>
+      </section>
+
+      <section class="nospill-section" aria-labelledby="delivery-summary-title">
+        <h3 id="delivery-summary-title">Delivery Complete</h3>
+        <div class="nospill-delivery-summary-grid" id="delivery-summary-grid"></div>
+        <p class="nospill-panel-helper" id="commute-mastery-copy"></p>
       </section>
 
       <section class="nospill-section" aria-labelledby="share-title">

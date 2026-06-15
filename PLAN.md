@@ -10,6 +10,8 @@
 - Basic Mode uses device motion only.
 - Qualified Run Mode is opt-in and may use summarized route metrics.
 - Share and local save behavior are implemented client-side.
+- Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
+- The active Cup Test canvas uses a branded tofu cargo slosh visualization instead of a technical G-dot.
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
 - Unlock-gated merch product links still live in `MERCH_LINKS`.

@@ -6,6 +6,7 @@ a virtual cup steady while driving normally. The product rewards smoothness, not
 ## Brand Hierarchy
 
 - `Tofu Driver` is the main app and brand.
+- `Delivery Log` is the local-first game layer.
 - `The Cup Test` is the core smooth-driving challenge.
 - `No-Spill Club` is a rank, community tier, and merch tier, not the primary app name.
 - `Perfect Pour` is the top achievement.
@@ -20,6 +21,7 @@ a virtual cup steady while driving normally. The product rewards smoothness, not
 - Mount orientation maps device-frame acceleration into vehicle lateral and braking/acceleration axes before scoring.
 - The Custom / Diagnose mount preview uses local `DeviceMotionEvent` data only and does not start audio or geolocation.
 - Audio coach volume is selected locally from Muted, Normal, or Loud and uses smoothed gain changes.
+- The active Cup Test canvas uses a tofu cargo slosh visualization instead of a technical G-dot.
 
 ## Privacy Contract
 
@@ -30,14 +32,16 @@ a virtual cup steady while driving normally. The product rewards smoothness, not
 - No account is required for the current MVP.
 - No backend is required for the current MVP.
 - `localStorage` stores summarized local state only.
+- Speed is used only for movement validation in Qualified Run Mode; it must not improve score, XP, stamps, merch progress, or share output.
 
 ## Local Storage
 
-The app uses one `localStorage` key:
+The app uses two versioned `localStorage` keys:
 
 - `nospill.club.v1`
+- `tofuDriverGameStateV1`
 
-The key is centralized as `STORAGE_KEY` in `frontend/nospill/app.js`.
+The Cup Test key is centralized as `STORAGE_KEY` in `frontend/nospill/app.js`.
 
 The value is a JSON object with these top-level fields:
 
@@ -64,6 +68,83 @@ Saved session summaries contain summarized values only:
 - `qualificationStatus`
 - `unlockedBadges`
 
+`tofuDriverGameStateV1` stores summarized Delivery Log state:
+
+- `totalXP`
+- `level`
+- `skillXP`
+- `stamps`
+- `dailyDeliveries`
+- `streak`
+- `merchProgress`
+- `recentRewards`
+- `recentSessions`
+- `xpByDate`
+- `routeMastery`
+
+Route mastery uses coarse fingerprints only: route type, distance bucket, duration bucket,
+turn-density bucket, and curvature bucket. It must not include coordinates, street names, maps,
+route traces, or raw GPS points.
+
+## Live Tofu Cargo Visualization
+
+The live drive canvas shows tofu cargo moving inside a tray/delivery box. It uses the same local,
+filtered lateral and longitudinal G values used by scoring:
+
+- lateral G moves the tofu side-to-side
+- longitudinal G moves it forward/back
+- total G controls danger-boundary intensity
+- jerk controls restrained wobble
+
+The visualization is local-only and does not change scoring. It has a reduced-motion path with less
+wobble and no splash particles. Cargo Condition / Water Left remains the primary visible score, and
+audio coach remains the primary eyes-off feedback while driving.
+
+## Delivery Log
+
+Delivery Log turns each completed Cup Test into a fragile-cargo delivery summary. The landing page
+shows today's local daily delivery, cargo, goal, reward, driver level, total XP, streak, No-Spill
+Club Gear progress, and recent stamps.
+
+Daily deliveries are selected deterministically from the local calendar date and a small static
+cargo catalog. They require no server and are evaluated after the session ends. Cargo Condition is
+derived from the existing water-left score, so it remains based on smoothness, G-force, and jerk,
+not speed.
+
+Route type labels are private/generic summaries:
+
+- `Practice Route` for Basic Mode or non-qualified sessions
+- `Calm Cruise`
+- `City Delivery`
+- `Mixed Route`
+- `Technical Route`
+- `Long Haul`
+
+Technical rewards require Mixed or Technical route context. Short, easy, straight sessions can earn
+practice credit but do not unlock major merch progress. Long qualified commutes can earn Long Haul,
+Smooth Commute, consistency, and route mastery rewards without encouraging faster driving or
+seeking twisty roads.
+
+## XP And Stamps
+
+Driver XP is local-only and uses cargo condition, qualified-run bonus, daily delivery completion,
+improvement over recent local average, route-type match, and low harsh input count. The first two
+qualified deliveries per local day can grant full XP; additional qualified sessions grant reduced
+XP to avoid encouraging extra driving.
+
+Skill XP categories are:
+
+- Brake Feather
+- Throttle Control
+- Smooth Hands
+- Corner Calm
+- Passenger Comfort
+- Consistency
+
+Collectible stamps are local-only. Initial stamps include First Delivery, Daily Delivery Complete,
+Cup Stayed Full, Smooth Commute, Calm Cruise, City Smooth, Long Haul Pour, Curve Control, Technical
+Pour, No Panic Inputs, Passenger Approved, No-Spill Club, and Perfect Pour.
+
 ## Sharing Contract
 
 Share-link behavior is configured in `SHARE_CONFIG` inside `frontend/nospill/app.js`:
@@ -83,6 +164,12 @@ and other share payloads. If `includeDistanceInShare` is enabled later, distance
 only as a plain summary metric. It must not be framed competitively and must not be combined with
 speed, maps, GPS coordinates, street names, route traces, or leaderboard-style language.
 
+Share output may include Tofu Driver, Delivery Complete, Cargo Condition, rank, generic route type,
+stamp earned, daily delivery status, and `Not faster. Smoother.` It must not include speed,
+average speed, top speed, GPS, location, coordinates, maps, route traces, street names, exact
+distance by default, fastest time, high-G bragging, `cavrino.com/nospill`, or Super Cute
+Collectibles links by default.
+
 ## Scoring Principles
 
 - Smoothness is rewarded.
@@ -95,11 +182,14 @@ speed, maps, GPS coordinates, street names, route traces, or leaderboard-style l
 - The landing page may link to Super Cute Collectibles as the physical merch fulfillment partner.
 - Future merch links live in `MERCH_LINKS` inside `frontend/nospill/app.js`.
 - Visible merch labels live in `MERCH_LABELS` inside `frontend/nospill/app.js`.
+- Delivery Log merch progress tracks No-Spill Club Gear `3/3`, Perfect Pour Drop locked/unlocked,
+  and Delivery Crew `7/7`.
 - Locked merch links are not rendered in the visible UI before unlock.
 - `null` links show `Unlocked, merch coming soon.`
 - External merch links must use `target="_blank"` and `rel="noopener noreferrer"`.
 - Super Cute Collectibles does not verify scores in the current MVP.
 - Real gated merch later requires backend-issued unlock tokens, customer tags, or another server-side access-control mechanism.
+  Future backend unlock tokens should verify only summarized unlock state, not raw GPS or motion streams.
 
 ## Current Source Files
 

@@ -43,8 +43,25 @@ globalThis.computeAudioTargetGain = computeAudioTargetGain;
 globalThis.normalizeAudioLevel = normalizeAudioLevel;
 globalThis.mapAccelerationToVehicle = mapAccelerationToVehicle;
 globalThis.computeMappedMotion = computeMappedMotion;
+globalThis.updateTofuCargoVisualState = updateTofuCargoVisualState;
+globalThis.defaultTofuVisualState = defaultTofuVisualState;
 globalThis.analyzeRoute = analyzeRoute;
 globalThis.qualificationForRoute = qualificationForRoute;
+globalThis.getDailyDelivery = getDailyDelivery;
+globalThis.classifyRouteType = classifyRouteType;
+globalThis.calculateCargoCondition = calculateCargoCondition;
+globalThis.evaluateDailyDelivery = evaluateDailyDelivery;
+globalThis.calculateDeliveryRewards = calculateDeliveryRewards;
+globalThis.awardSkillXP = awardSkillXP;
+globalThis.updateMerchProgress = updateMerchProgress;
+globalThis.updateCommuteMastery = updateCommuteMastery;
+globalThis.buildDeliverySharePayload = buildDeliverySharePayload;
+globalThis.sanitizeShareOutput = sanitizeShareOutput;
+globalThis.loadGameState = loadGameState;
+globalThis.saveGameState = saveGameState;
+globalThis.defaultGameState = defaultGameState;
+globalThis.levelProgress = levelProgress;
+globalThis.routeFingerprintForSession = routeFingerprintForSession;
 globalThis.buildShareCardData = buildShareCardData;
 globalThis.buildShareText = buildShareText;
 globalThis.loadClubState = loadClubState;
@@ -57,7 +74,8 @@ globalThis.TOP_BADGE = TOP_BADGE;
 globalThis.MERCH_LABELS = MERCH_LABELS;
 globalThis.MERCH_LINKS = MERCH_LINKS;
 globalThis.SHARE_CONFIG = SHARE_CONFIG;
-globalThis.STORAGE_KEY = STORAGE_KEY;`,
+globalThis.STORAGE_KEY = STORAGE_KEY;
+globalThis.GAME_STORAGE_KEY = GAME_STORAGE_KEY;`,
     context,
     { filename: 'app.js' },
   );
@@ -87,8 +105,38 @@ function sampleShareSummary(overrides = {}) {
     qualificationStatus: 'qualified',
     qualificationLabel: 'Qualified',
     routeDifficultyLabel: 'Technical Route',
+    routeType: 'Technical Route',
+    cargoCondition: 97.4,
     distanceMiles: 4.2,
     unlockedBadges: ['technical_pour'],
+    deliveryStamps: ['technical_pour'],
+    dailyDeliveryComplete: true,
+    ...overrides,
+  };
+}
+
+function sampleDeliverySession(overrides = {}) {
+  return {
+    date: '2026-06-14T12:00:00.000Z',
+    mode: 'qualified',
+    waterLeft: 94,
+    waterSpilled: 6,
+    rank: 'Smooth Driver',
+    durationSeconds: 720,
+    qualificationStatus: 'qualified',
+    qualificationLabel: 'Qualified',
+    harshInputCount: 1,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    harshLateral: 0,
+    lateralJerk: 0,
+    abruptTransitions: 0,
+    distanceMiles: 4,
+    turnDensityScore: 0.35,
+    curvatureScore: 0.35,
+    routeDifficultyScore: 0.45,
+    significantTurnsPerMile: 4,
+    unlockedBadges: [],
     ...overrides,
   };
 }
@@ -129,6 +177,8 @@ function testTofuDriverBrandHierarchy() {
   assert(html.includes('<title>Tofu Driver</title>'));
   assert(html.includes('<h1>Tofu Driver</h1>'));
   assert(html.includes('The Cup Test'));
+  assert(html.includes('Delivery Log'));
+  assert(html.includes('Every drive is a delivery.'));
   assert(html.includes("Don't spill the cup."));
   assert(html.includes('Not faster. Smoother.'));
   assert(html.includes('A smooth-driving challenge where your goal is simple'));
@@ -222,12 +272,14 @@ function testShareConfigAndCardData() {
 
   const summary = sampleShareSummary();
   const defaultText = context.buildShareText(summary);
-  assert(defaultText.includes('Tofu Driver: I delivered 97.4% of the cup'));
-  assert(defaultText.includes('unlocked Technical Pour'));
+  assert(defaultText.includes('Tofu Driver: Delivery Complete.'));
+  assert(defaultText.includes('Cargo Condition: 97.4%'));
+  assert(defaultText.includes('Route Type: Technical Route'));
+  assert(defaultText.includes('Stamp: Technical Pour'));
   assert(defaultText.includes('Rank: No-Spill Club'));
   assert(defaultText.includes('Not faster. Smoother.'));
   assert(!defaultText.includes('No-Spill Club: I delivered'));
-  assert(!/route/i.test(defaultText));
+  assert(!/route trace/i.test(defaultText));
   assert(!defaultText.includes('4.2'));
   assert(!defaultText.includes('4.2 mi'));
   assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(defaultText));
@@ -237,9 +289,10 @@ function testShareConfigAndCardData() {
 
   const clubText = context.buildShareText(sampleShareSummary({
     unlockedBadges: ['nospill_club'],
+    deliveryStamps: ['nospill_club'],
   }));
-  assert(clubText.includes('Tofu Driver: I delivered 97.4% of the cup'));
-  assert(clubText.includes('unlocked No-Spill Club'));
+  assert(clubText.includes('Tofu Driver: Delivery Complete.'));
+  assert(clubText.includes('Stamp: No-Spill Club'));
   assert(clubText.includes('Rank: No-Spill Club'));
 
   const configuredText = context.buildShareText(summary, {
@@ -262,7 +315,7 @@ function testShareConfigAndCardData() {
 
   const cardData = context.buildShareCardData(summary);
   assert.strictEqual(cardData.title, 'Tofu Driver');
-  assert.strictEqual(cardData.challengeName, 'The Cup Test');
+  assert.strictEqual(cardData.challengeName, 'Delivery Complete');
   assert.strictEqual(cardData.waterDelivered, '97.4%');
   assert.strictEqual(cardData.waterSpilled, '2.6%');
   assert.strictEqual(cardData.rank, 'No-Spill Club');
@@ -270,6 +323,7 @@ function testShareConfigAndCardData() {
   assert.strictEqual(cardData.routeLabel, 'Technical Route');
   assert.strictEqual(cardData.distanceLabel, '');
   assert.strictEqual(cardData.milestone, 'Technical Pour');
+  assert.strictEqual(cardData.dailyStatus, 'Daily Delivery Complete');
 
   const distanceText = context.buildShareText(summary, {
     includeDistanceInShare: true,
@@ -296,10 +350,222 @@ globalThis.unlockedMerchHtml = elements.merchGrid.innerHTML;
 
   assert(context.lockedMerchHtml.includes('<strong>Locked</strong>'));
   assert(!context.lockedMerchHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
-  assert(!context.lockedMerchHtml.includes('Buy unlocked gear'));
+  assert(!context.lockedMerchHtml.includes('Buy unlocked shirt'));
   assert(context.unlockedMerchHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
   assert(context.unlockedMerchHtml.includes('target="_blank" rel="noopener noreferrer"'));
-  assert(context.unlockedMerchHtml.includes('Buy unlocked gear'));
+  assert(context.unlockedMerchHtml.includes('Buy unlocked shirt'));
+}
+
+function testDailyDeliverySelectionAndEvaluation() {
+  const context = loadNoSpillContext();
+  const first = context.getDailyDelivery('2026-06-14');
+  const second = context.getDailyDelivery('2026-06-14T23:59:00');
+  assert.deepStrictEqual(first, second);
+  assert(first.cargo);
+  assert(first.goal);
+
+  const silken = { id: 'silken_tofu' };
+  assert.strictEqual(context.evaluateDailyDelivery(silken, sampleDeliverySession({
+    waterLeft: 86,
+    routeType: 'Practice Route',
+  })), true);
+  assert.strictEqual(context.evaluateDailyDelivery(silken, sampleDeliverySession({
+    waterLeft: 84.9,
+    routeType: 'Practice Route',
+  })), false);
+}
+
+function testRouteTypeClassification() {
+  const context = loadNoSpillContext();
+  assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+  })), 'Practice Route');
+  assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
+    turnDensityScore: 0.05,
+    curvatureScore: 0.05,
+    routeDifficultyScore: 0.1,
+    harshBraking: 0,
+    harshAcceleration: 0,
+    abruptTransitions: 0,
+  })), 'Calm Cruise');
+  assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
+    turnDensityScore: 0.05,
+    curvatureScore: 0.05,
+    routeDifficultyScore: 0.1,
+    harshBraking: 2,
+    harshAcceleration: 2,
+  })), 'City Delivery');
+  assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
+    turnDensityScore: 0.4,
+    curvatureScore: 0.2,
+    routeDifficultyScore: 0.45,
+  })), 'Mixed Route');
+  assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
+    turnDensityScore: 0.7,
+    curvatureScore: 0.2,
+    routeDifficultyScore: 0.7,
+  })), 'Technical Route');
+  assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
+    durationSeconds: 1800,
+    distanceMiles: 16,
+    turnDensityScore: 0.1,
+    curvatureScore: 0.1,
+    routeDifficultyScore: 0.25,
+  })), 'Long Haul');
+}
+
+function testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext() {
+  const context = loadNoSpillContext();
+  const state = context.defaultGameState();
+  const slow = context.calculateDeliveryRewards(sampleDeliverySession({
+    averageMovingSpeedMph: 15,
+    medianMovingSpeedMph: 14,
+    waterLeft: 96,
+    turnDensityScore: 0.05,
+    curvatureScore: 0.05,
+    routeDifficultyScore: 0.1,
+  }), state);
+  const fast = context.calculateDeliveryRewards(sampleDeliverySession({
+    averageMovingSpeedMph: 75,
+    medianMovingSpeedMph: 74,
+    waterLeft: 96,
+    turnDensityScore: 0.05,
+    curvatureScore: 0.05,
+    routeDifficultyScore: 0.1,
+  }), state);
+  assert.strictEqual(slow.xpGained, fast.xpGained);
+  assert.deepStrictEqual(slow.stamps, fast.stamps);
+  assert.deepStrictEqual(slow.merchProgress, fast.merchProgress);
+
+  const practice = context.calculateDeliveryRewards(sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    waterLeft: 100,
+    durationSeconds: 120,
+    distanceMiles: 0,
+    turnDensityScore: 0,
+    curvatureScore: 0,
+    routeDifficultyScore: 0,
+  }), state);
+  assert.strictEqual(practice.routeType, 'Practice Route');
+  assert.strictEqual(practice.merchProgress.nospillClubGear.count, 0);
+  assert.strictEqual(practice.merchProgress.perfectPourDrop.unlocked, false);
+  assert(!practice.stamps.includes('technical_pour'));
+
+  const technical = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 92,
+    turnDensityScore: 0.72,
+    curvatureScore: 0.68,
+    routeDifficultyScore: 0.74,
+  }), state);
+  assert.strictEqual(technical.routeType, 'Technical Route');
+  assert(technical.stamps.includes('technical_pour'));
+}
+
+function testLongHaulDailyXpCapAndMerchProgress() {
+  const context = loadNoSpillContext();
+  let state = context.defaultGameState();
+  const commute = sampleDeliverySession({
+    date: '2026-06-14T12:00:00.000Z',
+    waterLeft: 96,
+    durationSeconds: 1800,
+    distanceMiles: 16,
+    turnDensityScore: 0.1,
+    curvatureScore: 0.1,
+    routeDifficultyScore: 0.25,
+  });
+  const first = context.calculateDeliveryRewards(commute, state);
+  state = first.gameState;
+  const second = context.calculateDeliveryRewards({
+    ...commute,
+    date: '2026-06-14T15:00:00.000Z',
+  }, state);
+  state = second.gameState;
+  const third = context.calculateDeliveryRewards({
+    ...commute,
+    date: '2026-06-14T18:00:00.000Z',
+  }, state);
+  assert.strictEqual(first.routeType, 'Long Haul');
+  assert(first.stamps.includes('long_haul_pour'));
+  assert(first.stamps.includes('smooth_commute'));
+  assert.strictEqual(first.xpMultiplier, 1);
+  assert.strictEqual(second.xpMultiplier, 1);
+  assert.strictEqual(third.xpMultiplier, 0.35);
+  assert(third.xpGained < second.xpGained);
+}
+
+function testNoSpillClubGearRequiresRepeatedQualifiedDeliveries() {
+  const context = loadNoSpillContext();
+  let state = context.defaultGameState();
+  ['2026-06-14', '2026-06-15', '2026-06-16'].forEach((dateKey, index) => {
+    const result = context.calculateDeliveryRewards(sampleDeliverySession({
+      date: `${dateKey}T12:00:00.000Z`,
+      waterLeft: 96 + index,
+      durationSeconds: 900,
+      distanceMiles: 6,
+      turnDensityScore: 0.35,
+      curvatureScore: 0.35,
+      routeDifficultyScore: 0.45,
+    }), state);
+    state = result.gameState;
+  });
+  assert.strictEqual(state.merchProgress.nospillClubGear.count, 3);
+  assert.strictEqual(state.merchProgress.nospillClubGear.unlocked, true);
+}
+
+function testGameStateStorageIsSummaryOnlyAndCommuteMasteryUsesFingerprints() {
+  const localStorage = makeLocalStorage();
+  const context = loadNoSpillContext({ window: { localStorage } });
+  const state = context.defaultGameState();
+  const first = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 91,
+    durationSeconds: 900,
+    distanceMiles: 6,
+  }), state);
+  const second = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 96,
+    durationSeconds: 900,
+    distanceMiles: 6,
+  }), first.gameState);
+  context.saveGameState(second.gameState);
+  const stored = localStorage.getItem(context.GAME_STORAGE_KEY);
+  assert(stored.includes('routeMastery'));
+  assert(!/routeSamples|raw|coords|latitude|longitude|lat|lon|trace|street|map/i.test(stored));
+  assert(second.commuteMasteryMessage.includes('familiar delivery'));
+  const fingerprints = Object.keys(second.gameState.routeMastery);
+  assert(fingerprints.length >= 1);
+  assert(!fingerprints[0].includes('37.'));
+}
+
+function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
+  const context = loadNoSpillContext();
+  const summary = sampleShareSummary({
+    routeType: 'City Delivery',
+    deliveryStamps: ['passenger_approved'],
+    averageMovingSpeedMph: 40,
+    medianMovingSpeedMph: 35,
+  });
+  const text = context.buildShareText(summary);
+  assert(text.includes('Tofu Driver'));
+  assert(text.includes('Delivery Complete'));
+  assert(text.includes('Cargo Condition: 97.4%'));
+  assert(text.includes('Rank: No-Spill Club'));
+  assert(text.includes('Route Type: City Delivery'));
+  assert(text.includes('Stamp: Passenger Approved'));
+  assert(!/speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g/i.test(text));
+  assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(text));
+  assert(!text.includes('cavrino.com/nospill'));
+  assert(!text.includes('Super Cute Collectibles'));
+  assert(!text.includes('supercutecollectibles.com'));
+}
+
+function testLocationPermissionFlowRemainsOptIn() {
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(source.includes('if (appState.mode === "qualified") startLocationWatch();'));
+  assert(!source.includes('if (appState.mode === "basic") startLocationWatch();'));
+  assert(source.includes('Basic Mode does not use location.'));
+  assert(source.includes('Qualified Run is opt-in.'));
 }
 
 function testPrivateQualifiedSummaryMayShowDistance() {
@@ -378,6 +644,60 @@ function testRunMotionPathUsesSharedAxisMapping() {
   assert(source.includes('appState.mountConfig'));
   assert(!source.includes('const lateralG = appState.filteredAcceleration.x'));
   assert(!source.includes('const longitudinalG = appState.filteredAcceleration.y'));
+}
+
+function testTofuCargoVisualizationReplacesGenericGDot() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(html.includes('Animated tofu cargo smoothness visualization'));
+  assert(html.includes('Tofu cargo moves with your driving smoothness.'));
+  assert(source.includes('function updateTofuCargoVisualState'));
+  assert(source.includes('tofuX'));
+  assert(source.includes('lateralG'));
+  assert(source.includes('longitudinalG'));
+  assert(source.includes('Cargo Condition'));
+  assert(!html.includes('Virtual cup G-ball visualization'));
+  assert(!source.includes('Spill ring'));
+  assert(!source.includes('dotX'));
+  assert(!source.includes('dotY'));
+}
+
+function testTofuCargoVisualizationUsesMotionNotSpeed() {
+  const context = loadNoSpillContext();
+  const visualA = context.updateTofuCargoVisualState(
+    context.defaultTofuVisualState(),
+    { lateralG: 0.18, longitudinalG: -0.1, totalG: 0.21, jerk: 0.4 },
+    { thresholdG: 0.3, maxOffset: 100, frame: 1 },
+  );
+  const visualB = context.updateTofuCargoVisualState(
+    context.defaultTofuVisualState(),
+    {
+      lateralG: 0.18,
+      longitudinalG: -0.1,
+      totalG: 0.21,
+      jerk: 0.4,
+      averageMovingSpeedMph: 90,
+    },
+    { thresholdG: 0.3, maxOffset: 100, frame: 1 },
+  );
+  assert.strictEqual(visualA.tofuX, visualB.tofuX);
+  assert.strictEqual(visualA.tofuY, visualB.tofuY);
+  assert.strictEqual(visualA.tofuRotation, visualB.tofuRotation);
+
+  const visualC = context.updateTofuCargoVisualState(
+    context.defaultTofuVisualState(),
+    { lateralG: -0.18, longitudinalG: 0.1, totalG: 0.21, jerk: 0.4 },
+    { thresholdG: 0.3, maxOffset: 100, frame: 1 },
+  );
+  assert.notStrictEqual(visualA.tofuX, visualC.tofuX);
+  assert.notStrictEqual(visualA.tofuY, visualC.tofuY);
+
+  const reduced = context.updateTofuCargoVisualState(
+    context.defaultTofuVisualState(),
+    { lateralG: 0.6, longitudinalG: 0.6, totalG: 0.8, jerk: 3 },
+    { thresholdG: 0.3, maxOffset: 100, reducedMotion: true, frame: 20 },
+  );
+  assert.strictEqual(reduced.recentSpillParticles.length, 0);
 }
 
 function testAudioVolumeGainModel() {
@@ -518,10 +838,20 @@ function run() {
   testNoSpillLiveSummaryAndShareAvoidSensitiveDetails();
   testShareConfigAndCardData();
   testLockedMerchLinksAreNotShownBeforeUnlock();
+  testDailyDeliverySelectionAndEvaluation();
+  testRouteTypeClassification();
+  testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext();
+  testLongHaulDailyXpCapAndMerchProgress();
+  testNoSpillClubGearRequiresRepeatedQualifiedDeliveries();
+  testGameStateStorageIsSummaryOnlyAndCommuteMasteryUsesFingerprints();
+  testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
+  testLocationPermissionFlowRemainsOptIn();
   testPrivateQualifiedSummaryMayShowDistance();
   testMountAxisMapping();
   testMappedMotionUsesSelectedMountConfig();
   testRunMotionPathUsesSharedAxisMapping();
+  testTofuCargoVisualizationReplacesGenericGDot();
+  testTofuCargoVisualizationUsesMotionNotSpeed();
   testAudioVolumeGainModel();
   testAudioVolumePersistsInLocalStorageState();
   testWaterRanksAndLossAreMotionOnly();

@@ -192,6 +192,7 @@
 
 .nospill-how,
 .nospill-merch-preview,
+.nospill-delivery-log,
 .nospill-safety-strip {
   padding: 14px;
   border: 1px solid rgba(244, 247, 239, 0.11);
@@ -200,8 +201,93 @@
 }
 
 .nospill-how h3,
-.nospill-merch-preview h3 {
+.nospill-merch-preview h3,
+.nospill-delivery-log h3 {
   font-size: 1.2rem;
+}
+
+.nospill-delivery-log-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.nospill-delivery-log-head > strong {
+  flex: 0 0 auto;
+  border: 1px solid rgba(85, 217, 138, 0.42);
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: #06100b;
+  background: #55d98a;
+  font-size: 0.86rem;
+}
+
+.nospill-delivery-mission,
+.nospill-delivery-grid div,
+.nospill-merch-progress-grid div,
+.nospill-delivery-summary-grid div {
+  min-width: 0;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  padding: 11px;
+  background: #0b0f10;
+}
+
+.nospill-delivery-mission {
+  display: grid;
+  gap: 6px;
+}
+
+.nospill-delivery-mission span,
+.nospill-delivery-grid span,
+.nospill-merch-progress-grid span,
+.nospill-delivery-summary-grid span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-delivery-mission strong,
+.nospill-delivery-grid strong,
+.nospill-merch-progress-grid strong,
+.nospill-delivery-summary-grid strong {
+  display: block;
+  color: #f4f7ef;
+  font-size: 1rem;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.nospill-delivery-mission p,
+.nospill-delivery-mission small {
+  margin: 0;
+  color: #bbc7c0;
+  line-height: 1.42;
+}
+
+.nospill-delivery-grid,
+.nospill-merch-progress-grid,
+.nospill-delivery-summary-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.nospill-stamp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.nospill-stamp-row span {
+  border: 1px solid rgba(240, 185, 90, 0.34);
+  border-radius: 999px;
+  padding: 7px 9px;
+  color: #ffe2a8;
+  background: rgba(240, 185, 90, 0.09);
+  font-size: 0.78rem;
+  font-weight: 800;
 }
 
 .nospill-step-grid div {
@@ -716,7 +802,10 @@
 
   .nospill-summary-grid,
   .nospill-route-grid,
-  .nospill-merch-grid {
+  .nospill-merch-grid,
+  .nospill-delivery-grid,
+  .nospill-merch-progress-grid,
+  .nospill-delivery-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
