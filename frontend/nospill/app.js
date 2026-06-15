@@ -17,6 +17,7 @@ const CLUB_NAME = "No-Spill Club";
 const TOP_BADGE = "Perfect Pour";
 const TAGLINE_CUP = "Don't spill the cup.";
 const TAGLINE_SMOOTHER = "Not faster. Smoother.";
+const TOFU_CARGO_MASCOT_SRC = "/static/nospill/assets/tofu-driver-app-image.png";
 
 const DIFFICULTIES = {
   comfort: { label: "Comfort Cup", thresholdG: 0.2 },
@@ -237,6 +238,7 @@ const appState = {
 };
 
 let elements = {};
+let tofuCargoMascotImage = null;
 
 function clamp(value, minValue, maxValue) {
   return Math.min(maxValue, Math.max(minValue, value));
@@ -267,6 +269,24 @@ function prefersReducedMotion() {
     && window.matchMedia
     && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
+}
+
+function getTofuCargoMascotImage() {
+  if (tofuCargoMascotImage) return tofuCargoMascotImage;
+  if (typeof Image === "undefined") return null;
+  tofuCargoMascotImage = new Image();
+  tofuCargoMascotImage.decoding = "async";
+  tofuCargoMascotImage.onload = () => {
+    if (elements.cupCanvas) {
+      drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
+    }
+  };
+  tofuCargoMascotImage.src = TOFU_CARGO_MASCOT_SRC;
+  return tofuCargoMascotImage;
+}
+
+function isImageReady(image) {
+  return Boolean(image && image.complete && image.naturalWidth > 0);
 }
 
 function normalizeAudioLevel(level) {
@@ -2173,119 +2193,7 @@ function renderRunState() {
   if (appState.running) requestAnimationFrame(renderRunState);
 }
 
-function drawCupCanvas(canvas, currentG, waterLeft) {
-  if (!canvas || !canvas.getContext) return;
-  const context = canvas.getContext("2d");
-  const width = canvas.width;
-  const height = canvas.height;
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const traySize = Math.min(width, height) * 0.68;
-  const trayX = centerX - traySize / 2;
-  const trayY = centerY - traySize / 2;
-  const trayRadius = 44;
-  const dangerInset = traySize * 0.12;
-  const maxOffset = traySize * 0.32;
-  const thresholdG = DIFFICULTIES[appState.difficulty].thresholdG;
-  const reducedMotion = prefersReducedMotion();
-  const visualFrame = Math.floor(
-    (typeof performance !== "undefined" ? performance.now() : Date.now()) / 16,
-  );
-  const visual = updateTofuCargoVisualState(
-    appState.tofuVisual,
-    currentG,
-    {
-      thresholdG,
-      maxOffset,
-      reducedMotion,
-      frame: visualFrame,
-    },
-  );
-  const dangerRatio = clamp(
-    Number(currentG && currentG.totalG ? currentG.totalG : 0) / thresholdG,
-    0,
-    1.6,
-  );
-  const tofuSize = traySize * 0.24;
-  const tofuX = centerX + visual.tofuX;
-  const tofuY = centerY + visual.tofuY;
-  const squish = reducedMotion ? 0 : visual.tofuSquish;
-  const tofuWidth = tofuSize * (1 + squish * 0.08);
-  const tofuHeight = tofuSize * (1 - squish * 0.06);
-
-  context.clearRect(0, 0, width, height);
-  context.fillStyle = "#070a0a";
-  context.fillRect(0, 0, width, height);
-
-  context.save();
-  context.fillStyle = "#101516";
-  context.strokeStyle = "rgba(244, 247, 239, 0.18)";
-  context.lineWidth = 7;
-  context.beginPath();
-  context.roundRect(trayX, trayY, traySize, traySize, trayRadius);
-  context.fill();
-  context.stroke();
-
-  context.fillStyle = "rgba(110, 198, 255, 0.07)";
-  context.beginPath();
-  context.roundRect(
-    trayX + dangerInset,
-    trayY + dangerInset,
-    traySize - dangerInset * 2,
-    traySize - dangerInset * 2,
-    28,
-  );
-  context.fill();
-
-  context.beginPath();
-  context.roundRect(
-    trayX + dangerInset,
-    trayY + dangerInset,
-    traySize - dangerInset * 2,
-    traySize - dangerInset * 2,
-    28,
-  );
-  context.strokeStyle = dangerRatio > 1
-    ? `rgba(240, 185, 90, ${clamp(0.45 + (dangerRatio - 1) * 0.5, 0.45, 0.9)})`
-    : "rgba(110, 198, 255, 0.56)";
-  context.lineWidth = dangerRatio > 1 ? 9 : 5;
-  context.stroke();
-
-  if (visual.recentSpillParticles.length) {
-    visual.recentSpillParticles.forEach((particle) => {
-      const alpha = 1 - particle.age / particle.life;
-      context.beginPath();
-      context.arc(
-        centerX + particle.x * maxOffset,
-        centerY + particle.y * maxOffset,
-        5 + alpha * 5,
-        0,
-        Math.PI * 2,
-      );
-      context.fillStyle = `rgba(240, 185, 90, ${0.16 + alpha * 0.34})`;
-      context.fill();
-    });
-  }
-
-  if (!reducedMotion && Math.abs(visual.tofuVx) + Math.abs(visual.tofuVy) > 1.6) {
-    context.strokeStyle = "rgba(244, 247, 239, 0.18)";
-    context.lineWidth = 3;
-    context.beginPath();
-    context.moveTo(tofuX - visual.tofuVx * 2.4, tofuY - tofuHeight * 0.55);
-    context.lineTo(tofuX - visual.tofuVx * 4.8, tofuY - tofuHeight * 0.72);
-    context.moveTo(tofuX - visual.tofuVx * 2.2, tofuY + tofuHeight * 0.52);
-    context.lineTo(tofuX - visual.tofuVx * 4.3, tofuY + tofuHeight * 0.68);
-    context.stroke();
-  }
-
-  context.save();
-  context.translate(tofuX, tofuY);
-  context.rotate(visual.tofuRotation);
-  context.fillStyle = "rgba(0, 0, 0, 0.32)";
-  context.beginPath();
-  context.ellipse(0, tofuHeight * 0.64, tofuWidth * 0.58, tofuHeight * 0.16, 0, 0, Math.PI * 2);
-  context.fill();
-
+function drawFallbackTofuCargoMascot(context, tofuWidth, tofuHeight) {
   context.save();
   context.translate(-tofuWidth * 0.68, tofuHeight * 0.2);
   context.rotate(-0.22);
@@ -2407,6 +2315,136 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
   context.arc(0, tofuHeight * 0.08, tofuWidth * 0.08, 0, Math.PI * 2);
   context.fill();
   context.restore();
+}
+
+function drawCupCanvas(canvas, currentG, waterLeft) {
+  if (!canvas || !canvas.getContext) return;
+  const context = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+  const centerX = width / 2;
+  const centerY = height / 2;
+  const traySize = Math.min(width, height) * 0.68;
+  const trayX = centerX - traySize / 2;
+  const trayY = centerY - traySize / 2;
+  const trayRadius = 44;
+  const dangerInset = traySize * 0.12;
+  const maxOffset = traySize * 0.32;
+  const thresholdG = DIFFICULTIES[appState.difficulty].thresholdG;
+  const reducedMotion = prefersReducedMotion();
+  const visualFrame = Math.floor(
+    (typeof performance !== "undefined" ? performance.now() : Date.now()) / 16,
+  );
+  const visual = updateTofuCargoVisualState(
+    appState.tofuVisual,
+    currentG,
+    {
+      thresholdG,
+      maxOffset,
+      reducedMotion,
+      frame: visualFrame,
+    },
+  );
+  const dangerRatio = clamp(
+    Number(currentG && currentG.totalG ? currentG.totalG : 0) / thresholdG,
+    0,
+    1.6,
+  );
+  const tofuSize = traySize * 0.24;
+  const tofuX = centerX + visual.tofuX;
+  const tofuY = centerY + visual.tofuY;
+  const squish = reducedMotion ? 0 : visual.tofuSquish;
+  const tofuWidth = tofuSize * (1 + squish * 0.08);
+  const tofuHeight = tofuSize * (1 - squish * 0.06);
+
+  context.clearRect(0, 0, width, height);
+  context.fillStyle = "#070a0a";
+  context.fillRect(0, 0, width, height);
+
+  context.save();
+  context.fillStyle = "#101516";
+  context.strokeStyle = "rgba(244, 247, 239, 0.18)";
+  context.lineWidth = 7;
+  context.beginPath();
+  context.roundRect(trayX, trayY, traySize, traySize, trayRadius);
+  context.fill();
+  context.stroke();
+
+  context.fillStyle = "rgba(110, 198, 255, 0.07)";
+  context.beginPath();
+  context.roundRect(
+    trayX + dangerInset,
+    trayY + dangerInset,
+    traySize - dangerInset * 2,
+    traySize - dangerInset * 2,
+    28,
+  );
+  context.fill();
+
+  context.beginPath();
+  context.roundRect(
+    trayX + dangerInset,
+    trayY + dangerInset,
+    traySize - dangerInset * 2,
+    traySize - dangerInset * 2,
+    28,
+  );
+  context.strokeStyle = dangerRatio > 1
+    ? `rgba(240, 185, 90, ${clamp(0.45 + (dangerRatio - 1) * 0.5, 0.45, 0.9)})`
+    : "rgba(110, 198, 255, 0.56)";
+  context.lineWidth = dangerRatio > 1 ? 9 : 5;
+  context.stroke();
+
+  if (visual.recentSpillParticles.length) {
+    visual.recentSpillParticles.forEach((particle) => {
+      const alpha = 1 - particle.age / particle.life;
+      context.beginPath();
+      context.arc(
+        centerX + particle.x * maxOffset,
+        centerY + particle.y * maxOffset,
+        5 + alpha * 5,
+        0,
+        Math.PI * 2,
+      );
+      context.fillStyle = `rgba(240, 185, 90, ${0.16 + alpha * 0.34})`;
+      context.fill();
+    });
+  }
+
+  if (!reducedMotion && Math.abs(visual.tofuVx) + Math.abs(visual.tofuVy) > 1.6) {
+    context.strokeStyle = "rgba(244, 247, 239, 0.18)";
+    context.lineWidth = 3;
+    context.beginPath();
+    context.moveTo(tofuX - visual.tofuVx * 2.4, tofuY - tofuHeight * 0.55);
+    context.lineTo(tofuX - visual.tofuVx * 4.8, tofuY - tofuHeight * 0.72);
+    context.moveTo(tofuX - visual.tofuVx * 2.2, tofuY + tofuHeight * 0.52);
+    context.lineTo(tofuX - visual.tofuVx * 4.3, tofuY + tofuHeight * 0.68);
+    context.stroke();
+  }
+
+  context.save();
+  context.translate(tofuX, tofuY);
+  context.rotate(visual.tofuRotation);
+  context.fillStyle = "rgba(0, 0, 0, 0.32)";
+  context.beginPath();
+  context.ellipse(0, tofuHeight * 0.64, tofuWidth * 0.58, tofuHeight * 0.16, 0, 0, Math.PI * 2);
+  context.fill();
+
+  const mascotImage = getTofuCargoMascotImage();
+  if (isImageReady(mascotImage)) {
+    const imageRatio = mascotImage.naturalWidth / mascotImage.naturalHeight;
+    const mascotHeight = tofuHeight * 1.95;
+    const mascotWidth = mascotHeight * imageRatio;
+    context.drawImage(
+      mascotImage,
+      -mascotWidth / 2,
+      -mascotHeight / 2,
+      mascotWidth,
+      mascotHeight,
+    );
+  } else {
+    drawFallbackTofuCargoMascot(context, tofuWidth, tofuHeight);
+  }
   context.restore();
 
   context.beginPath();

@@ -92,6 +92,11 @@ The live drive canvas shows a Tofu Driver cargo mascot moving inside a tray/deli
 replaced the technical G-dot and does not use a standalone green corner indicator. The centered
 tray boundary and rim communicate safe/near-spill state instead.
 
+The default live mascot is the local app asset at
+`frontend/nospill/assets/tofu-driver-app-image.png`. Source files from a user Downloads folder are
+copy inputs only and must not be referenced by runtime code. If the image cannot load, the canvas
+falls back to the built-in vector tofu mascot drawing.
+
 The visualization uses the same local, filtered lateral and longitudinal G values used by scoring:
 
 - lateral G moves the tofu side-to-side

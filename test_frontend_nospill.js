@@ -206,9 +206,11 @@ function testTofuDriverArtworkIsIsolatedAndAccessible() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const logoPath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-logo.png');
   const shirtPath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-shirt-1.png');
+  const appImagePath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-app-image.png');
 
   assert(fs.existsSync(logoPath), 'Tofu Driver logo asset should exist');
   assert(fs.existsSync(shirtPath), 'No-Spill Club shirt preview asset should exist');
+  assert(fs.existsSync(appImagePath), 'Tofu Driver cargo mascot app image should exist');
   assert(html.includes('/static/nospill/assets/tofu-driver-logo.png'));
   assert(html.includes('/static/nospill/assets/tofu-driver-shirt-1.png'));
   assert(html.includes('alt="Tofu Driver mascot logo"'));
@@ -652,12 +654,17 @@ function testTofuCargoVisualizationReplacesGenericGDot() {
   assert(html.includes('Animated tofu cargo smoothness visualization'));
   assert(html.includes('Tofu cargo moves with your driving smoothness.'));
   assert(source.includes('function updateTofuCargoVisualState'));
+  assert(source.includes('/static/nospill/assets/tofu-driver-app-image.png'));
+  assert(source.includes('getTofuCargoMascotImage'));
+  assert(source.includes('drawImage('));
+  assert(source.includes('drawFallbackTofuCargoMascot'));
   assert(source.includes('tofuX'));
   assert(source.includes('lateralG'));
   assert(source.includes('longitudinalG'));
   assert(source.includes('Cargo Condition'));
   assert(source.includes('context.ellipse(0, tofuHeight * 0.64'));
   assert(source.includes('tofuWidth * 0.32'));
+  assert(!source.includes('/mnt/c/Users/kenne/Downloads'));
   assert(!html.includes('Virtual cup G-ball visualization'));
   assert(!source.includes('Spill ring'));
   assert(!source.includes('dotX'));
