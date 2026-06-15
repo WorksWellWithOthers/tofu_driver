@@ -259,6 +259,11 @@
   gap: 12px;
 }
 
+.nospill-next-action-buttons {
+  display: grid;
+  gap: 8px;
+}
+
 .nospill-game-head p,
 .nospill-game-passport p {
   margin: 0;
@@ -448,6 +453,7 @@
 .nospill-merch-progress-grid div,
 .nospill-delivery-summary-grid div,
 .nospill-upgrade-item,
+.nospill-generator-item,
 .nospill-delivery-wall-item {
   min-width: 0;
   border: 1px solid rgba(244, 247, 239, 0.11);
@@ -489,7 +495,8 @@
 .nospill-delivery-mission p,
 .nospill-delivery-mission small,
 .nospill-shop-grid small,
-.nospill-upgrade-item small {
+.nospill-upgrade-item small,
+.nospill-generator-item small {
   margin: 0;
   color: #bbc7c0;
   line-height: 1.42;
@@ -501,6 +508,7 @@
 .nospill-delivery-summary-grid,
 .nospill-delivery-actions,
 .nospill-upgrade-list,
+.nospill-generator-list,
 .nospill-collection-list,
 .nospill-delivery-wall-grid,
 .nospill-shop-action-row,
@@ -515,6 +523,24 @@
   border-radius: 8px;
   color: #f7e4b8;
   background: rgba(240, 185, 90, 0.08);
+}
+
+.nospill-delivery-wall-group {
+  display: grid;
+  gap: 8px;
+}
+
+.nospill-delivery-wall-group h5 {
+  margin: 0;
+  color: #f4f7ef;
+  font-size: 0.95rem;
+}
+
+.nospill-delivery-wall-group p {
+  margin: 0;
+  color: #bbc7c0;
+  font-size: 0.82rem;
+  line-height: 1.35;
 }
 
 .nospill-field,
@@ -551,27 +577,32 @@
   font-size: 0.92rem;
 }
 
-.nospill-upgrade-item {
+.nospill-upgrade-item,
+.nospill-generator-item {
   display: grid;
   gap: 8px;
 }
 
-.nospill-upgrade-item.is-locked {
+.nospill-upgrade-item.is-locked,
+.nospill-generator-item.is-locked {
   opacity: 0.72;
 }
 
-.nospill-upgrade-item header {
+.nospill-upgrade-item header,
+.nospill-generator-item header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 10px;
 }
 
-.nospill-upgrade-item strong {
+.nospill-upgrade-item strong,
+.nospill-generator-item strong {
   color: #f4f7ef;
 }
 
-.nospill-upgrade-item button {
+.nospill-upgrade-item button,
+.nospill-generator-item button {
   min-height: 40px;
 }
 

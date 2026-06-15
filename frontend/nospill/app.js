@@ -216,7 +216,16 @@ const DRIVER_LICENSES = [
 
 const SHOP_MAX_RESOURCE = 1000000000;
 const SHOP_OFFLINE_CAP_HOURS = 8;
-const SHOP_LOW_TOFU_STOCK_THRESHOLD = 150;
+const SHOP_GENERATOR_TICK_MS = 10000;
+const SHOP_OPEN_TICK_MAX_SECONDS = 300;
+const TOFU_PRESS_BASE_PER_MINUTE = 3;
+const PREP_COUNTER_CONSUME_PER_ORDER = 2;
+const PREP_COUNTER_BASE_ORDERS_PER_MINUTE = 1;
+const SHOP_ORDER_TIPS_REWARD = 10;
+const SHOP_ORDER_REPUTATION_REWARD = 1;
+const SHOP_ORDER_XP_REWARD = 4;
+const CERTIFIED_BOOST_HOURS = 2;
+const CERTIFIED_BOOST_PRESS_MULTIPLIER = 1.2;
 
 const SHOP_UPGRADES = [
   {
@@ -228,6 +237,16 @@ const SHOP_UPGRADES = [
     requiredShopLevel: 1,
     effect: "Increases idle tofu stock per hour.",
     maxLevel: 5,
+  },
+  {
+    id: "prep_counter",
+    name: "Prep Counter",
+    description: "A tidy counter that turns tofu stock into prepared delivery orders.",
+    costTofuStock: 90,
+    costReputation: 0,
+    requiredShopLevel: 2,
+    effect: "Converts tofu stock into delivery orders while the shop is open or offline.",
+    maxLevel: 4,
   },
   {
     id: "better_boxes",
@@ -526,6 +545,7 @@ const appState = {
   axisPreviewActive: false,
   axisPreviewBaseline: null,
   axisPreviewFiltered: null,
+  shopGeneratorTimer: null,
 };
 
 let elements = {};
@@ -1070,17 +1090,50 @@ function safeNonNegativeInteger(value, fallback = 0, maxValue = SHOP_MAX_RESOURC
 function defaultShopState() {
   return {
     tofuStock: 0,
+    deliveryOrders: 0,
+    tips: 0,
     reputation: 0,
     shopLevel: 1,
+    lifetimeDeliveryOrders: 0,
+    lifetimeTips: 0,
     lifetimeTofuPacked: 0,
     lifetimeReputation: 0,
     upgrades: {},
+    generators: defaultShopGenerators(),
+    activeBoosts: [],
     lastShopTickAt: "",
+    lastGeneratorTickAt: "",
     offlineEarnings: {
       tofuStock: 0,
+      deliveryOrders: 0,
+      tips: 0,
       cappedHours: 0,
     },
   };
+}
+
+function defaultShopGenerators() {
+  return {
+    tofuPress: { unlocked: true, level: 1 },
+    prepCounter: { unlocked: false, level: 0 },
+  };
+}
+
+function normalizeShopGenerators(generators) {
+  const defaults = defaultShopGenerators();
+  const source = generators && typeof generators === "object" ? generators : {};
+  return Object.fromEntries(
+    Object.entries(defaults).map(([id, fallback]) => {
+      const item = source[id] && typeof source[id] === "object" ? source[id] : {};
+      return [
+        id,
+        {
+          unlocked: Boolean(item.unlocked),
+          level: safeNonNegativeInteger(item.level, fallback.level, 100),
+        },
+      ];
+    }),
+  );
 }
 
 function normalizeUpgradeLevels(upgrades) {
@@ -1101,15 +1154,49 @@ function normalizeUpgradeLevels(upgrades) {
   );
 }
 
+function normalizeShopBoosts(boosts) {
+  const source = Array.isArray(boosts) ? boosts : [];
+  return source
+    .filter((boost) => boost && typeof boost === "object")
+    .map((boost) => {
+      const id = typeof boost.id === "string" ? boost.id.slice(0, 80) : "shop_boost";
+      const label = typeof boost.label === "string" ? boost.label.slice(0, 120) : "Shop Boost";
+      const expiresAt = typeof boost.expiresAt === "string" ? boost.expiresAt : "";
+      const multiplier = Number(boost.multiplier);
+      return {
+        id,
+        label,
+        multiplier: Number.isFinite(multiplier)
+          ? clamp(roundTo(multiplier, 2), 1, 5)
+          : 1,
+        expiresAt,
+        source: typeof boost.source === "string" ? boost.source.slice(0, 80) : "",
+      };
+    })
+    .filter((boost) => Number.isFinite(Date.parse(boost.expiresAt)))
+    .slice(0, 8);
+}
+
 function normalizeShopState(shop) {
   const defaults = defaultShopState();
   const source = shop && typeof shop === "object" ? shop : {};
   const reputation = safeNonNegativeInteger(source.reputation, defaults.reputation);
+  const tips = safeNonNegativeInteger(source.tips, defaults.tips);
   return {
     ...defaults,
     tofuStock: safeNonNegativeInteger(source.tofuStock, defaults.tofuStock),
+    deliveryOrders: safeNonNegativeInteger(source.deliveryOrders, defaults.deliveryOrders),
+    tips,
     reputation,
     shopLevel: getShopLevel(reputation),
+    lifetimeDeliveryOrders: safeNonNegativeInteger(
+      source.lifetimeDeliveryOrders,
+      defaults.lifetimeDeliveryOrders,
+    ),
+    lifetimeTips: Math.max(
+      tips,
+      safeNonNegativeInteger(source.lifetimeTips, defaults.lifetimeTips),
+    ),
     lifetimeTofuPacked: safeNonNegativeInteger(
       source.lifetimeTofuPacked,
       defaults.lifetimeTofuPacked,
@@ -1119,10 +1206,22 @@ function normalizeShopState(shop) {
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
     ),
     upgrades: normalizeUpgradeLevels(source.upgrades),
+    generators: normalizeShopGenerators(source.generators),
+    activeBoosts: normalizeShopBoosts(source.activeBoosts),
     lastShopTickAt: typeof source.lastShopTickAt === "string" ? source.lastShopTickAt : "",
+    lastGeneratorTickAt:
+      typeof source.lastGeneratorTickAt === "string" ? source.lastGeneratorTickAt : "",
     offlineEarnings: {
       tofuStock: safeNonNegativeInteger(
         source.offlineEarnings && source.offlineEarnings.tofuStock,
+        0,
+      ),
+      deliveryOrders: safeNonNegativeInteger(
+        source.offlineEarnings && source.offlineEarnings.deliveryOrders,
+        0,
+      ),
+      tips: safeNonNegativeInteger(
+        source.offlineEarnings && source.offlineEarnings.tips,
         0,
       ),
       cappedHours: safeNonNegativeNumber(
@@ -1239,6 +1338,7 @@ function normalizeGameState(stored) {
     collection: normalizeCollectionState(source.collection),
   };
   normalized.level = levelForXP(normalized.totalXP);
+  syncShopGenerators(normalized);
   normalized.merchProgress.nospillClubGear.dates = [
     ...(normalized.merchProgress.nospillClubGear.dates || []),
   ];
@@ -1290,13 +1390,19 @@ function validateImportedShopState(shop) {
   if (shop === undefined) return true;
   if (!shop || typeof shop !== "object" || Array.isArray(shop)) return false;
   if (!isValidImportedShopNumber(shop.tofuStock)) return false;
+  if (!isValidImportedShopNumber(shop.deliveryOrders)) return false;
+  if (!isValidImportedShopNumber(shop.tips)) return false;
   if (!isValidImportedShopNumber(shop.reputation)) return false;
   if (!isValidImportedShopNumber(shop.shopLevel, 1000)) return false;
+  if (!isValidImportedShopNumber(shop.lifetimeDeliveryOrders)) return false;
+  if (!isValidImportedShopNumber(shop.lifetimeTips)) return false;
   if (!isValidImportedShopNumber(shop.lifetimeTofuPacked)) return false;
   if (!isValidImportedShopNumber(shop.lifetimeReputation)) return false;
   if (shop.offlineEarnings !== undefined) {
     if (!shop.offlineEarnings || typeof shop.offlineEarnings !== "object") return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.tofuStock)) return false;
+    if (!isValidImportedShopNumber(shop.offlineEarnings.deliveryOrders)) return false;
+    if (!isValidImportedShopNumber(shop.offlineEarnings.tips)) return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.cappedHours, SHOP_OFFLINE_CAP_HOURS)) {
       return false;
     }
@@ -1308,6 +1414,34 @@ function validateImportedShopState(shop) {
     for (const value of Object.values(shop.upgrades)) {
       const level = value && typeof value === "object" ? value.level : value;
       if (!isValidImportedShopNumber(level, 100)) return false;
+    }
+  }
+  if (shop.generators !== undefined) {
+    if (!shop.generators || typeof shop.generators !== "object" || Array.isArray(shop.generators)) {
+      return false;
+    }
+    for (const generator of Object.values(shop.generators)) {
+      if (!generator || typeof generator !== "object" || Array.isArray(generator)) return false;
+      if (
+        generator.unlocked !== undefined
+        && typeof generator.unlocked !== "boolean"
+      ) {
+        return false;
+      }
+      if (!isValidImportedShopNumber(generator.level, 100)) return false;
+    }
+  }
+  if (shop.activeBoosts !== undefined) {
+    if (!Array.isArray(shop.activeBoosts)) return false;
+    for (const boost of shop.activeBoosts) {
+      if (!boost || typeof boost !== "object" || Array.isArray(boost)) return false;
+      if (boost.id !== undefined && typeof boost.id !== "string") return false;
+      if (boost.label !== undefined && typeof boost.label !== "string") return false;
+      if (boost.source !== undefined && typeof boost.source !== "string") return false;
+      if (boost.expiresAt !== undefined && typeof boost.expiresAt !== "string") return false;
+      if (boost.multiplier !== undefined && !isValidImportedShopNumber(boost.multiplier, 5)) {
+        return false;
+      }
     }
   }
   return true;
@@ -1715,52 +1849,214 @@ function shopUpgradeCost(upgrade, currentLevel = 0) {
 }
 
 function shopUpgradeLevel(gameState, upgradeId) {
-  const shop = normalizeShopState(gameState && gameState.shop);
-  return safeNonNegativeInteger(shop.upgrades[upgradeId], 0, 100);
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(state.shop.upgrades[upgradeId], 0, 100);
 }
 
-function getShopProductionRate(gameState) {
-  const state = gameState && gameState.shop ? gameState : { shop: gameState };
-  const shop = normalizeShopState(state.shop);
-  return shop.upgrades.tofu_press * 6;
-}
-
-function calculateOfflineShopEarnings(gameState, now = new Date()) {
-  const state = gameState && gameState.shop ? gameState : { shop: gameState };
-  const shop = normalizeShopState(state.shop);
-  const rate = getShopProductionRate({ shop });
-  const lastMs = Date.parse(shop.lastShopTickAt);
+function activeShopBoostMultiplier(shop, now = new Date()) {
   const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
-  if (!Number.isFinite(lastMs) || !Number.isFinite(nowMs) || nowMs <= lastMs || rate <= 0) {
-    return { tofuStock: 0, cappedHours: 0, elapsedHours: 0 };
-  }
-  const elapsedHours = (nowMs - lastMs) / 3600000;
-  const cappedHours = Math.min(SHOP_OFFLINE_CAP_HOURS, elapsedHours);
+  if (!Number.isFinite(nowMs)) return 1;
+  const boosts = normalizeShopBoosts(shop && shop.activeBoosts);
+  return boosts.reduce((multiplier, boost) => {
+    const expiresMs = Date.parse(boost.expiresAt);
+    if (!Number.isFinite(expiresMs) || expiresMs <= nowMs) return multiplier;
+    return Math.max(multiplier, Number(boost.multiplier || 1));
+  }, 1);
+}
+
+function getShopGeneratorRates(gameState, now = new Date()) {
+  const state = normalizeGameState(gameState);
+  const generators = state.shop.generators;
+  const boostMultiplier = activeShopBoostMultiplier(state.shop, now);
+  const tofuPressPerMinute = generators.tofuPress.unlocked
+    ? roundTo(generators.tofuPress.level * TOFU_PRESS_BASE_PER_MINUTE * boostMultiplier, 1)
+    : 0;
+  const prepOrdersPerMinute = generators.prepCounter.unlocked
+    ? generators.prepCounter.level * PREP_COUNTER_BASE_ORDERS_PER_MINUTE
+    : 0;
+  const prepTofuPerMinute = prepOrdersPerMinute * PREP_COUNTER_CONSUME_PER_ORDER;
+  const prepStatus = !generators.prepCounter.unlocked
+    ? "Locked"
+    : state.shop.tofuStock >= PREP_COUNTER_CONSUME_PER_ORDER
+      ? "Running"
+      : "Waiting for tofu stock";
   return {
-    tofuStock: Math.floor(rate * cappedHours),
-    cappedHours: roundTo(cappedHours, 2),
-    elapsedHours: roundTo(elapsedHours, 2),
+    tofuPressPerMinute,
+    prepOrdersPerMinute,
+    prepTofuPerMinute,
+    prepStatus,
+    boostMultiplier,
   };
 }
 
-function hasCompletedDelivery(gameState) {
+function getShopProductionRate(gameState) {
+  return getShopGeneratorRates(gameState).tofuPressPerMinute * 60;
+}
+
+function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {}) {
   const state = normalizeGameState(gameState);
+  const shop = state.shop;
+  const rates = getShopGeneratorRates(state, now);
+  const lastTick = shop.lastGeneratorTickAt || shop.lastShopTickAt;
+  const lastMs = Date.parse(lastTick);
+  const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
+  if (!Number.isFinite(lastMs) || !Number.isFinite(nowMs) || nowMs <= lastMs) {
+    return {
+      tofuStock: 0,
+      deliveryOrders: 0,
+      tips: 0,
+      tofuProduced: 0,
+      tofuConsumed: 0,
+      cappedHours: 0,
+      elapsedHours: 0,
+      elapsedSeconds: 0,
+      prepStatus: rates.prepStatus,
+    };
+  }
+  const maxSeconds = Number.isFinite(Number(options.maxSeconds))
+    ? Math.max(0, Number(options.maxSeconds))
+    : SHOP_OPEN_TICK_MAX_SECONDS;
+  const elapsedSeconds = Math.min(maxSeconds, Math.max(0, (nowMs - lastMs) / 1000));
+  const elapsedMinutes = elapsedSeconds / 60;
+  const tofuProduced = Math.floor(rates.tofuPressPerMinute * elapsedMinutes);
+  const possibleOrders = Math.floor(rates.prepOrdersPerMinute * elapsedMinutes);
+  const availableTofu = safeNonNegativeInteger(shop.tofuStock + tofuProduced);
+  const deliveryOrders = Math.min(
+    possibleOrders,
+    Math.floor(availableTofu / PREP_COUNTER_CONSUME_PER_ORDER),
+  );
+  const tofuConsumed = deliveryOrders * PREP_COUNTER_CONSUME_PER_ORDER;
+  const tofuStock = tofuProduced - tofuConsumed;
+  const prepStatus = !shop.generators.prepCounter.unlocked
+    ? "Locked"
+    : deliveryOrders > 0
+      ? "Running"
+      : availableTofu >= PREP_COUNTER_CONSUME_PER_ORDER
+        ? "Running"
+        : "Waiting for tofu stock";
+  return {
+    tofuStock,
+    deliveryOrders,
+    tips: 0,
+    tofuProduced,
+    tofuConsumed,
+    cappedHours: roundTo(elapsedSeconds / 3600, 2),
+    elapsedHours: roundTo((nowMs - lastMs) / 3600000, 2),
+    elapsedSeconds: roundTo(elapsedSeconds, 2),
+    prepStatus,
+  };
+}
+
+function applyShopGeneratorTick(gameState, now = new Date(), options = {}) {
+  const next = normalizeGameState(gameState);
+  const nowIso = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
+  if (!isShopDiscoveredState(next)) {
+    return {
+      gameState: next,
+      earnings: calculateShopGeneratorEarnings(next, now, options),
+      changed: false,
+    };
+  }
+  syncShopGenerators(next);
+  if (!next.shop.lastGeneratorTickAt && !next.shop.lastShopTickAt) {
+    next.shop.lastGeneratorTickAt = nowIso;
+    next.shop.lastShopTickAt = next.shop.lastShopTickAt || nowIso;
+    return {
+      gameState: next,
+      earnings: calculateShopGeneratorEarnings(next, now, options),
+      changed: true,
+    };
+  }
+  const earnings = calculateShopGeneratorEarnings(next, now, options);
+  const changed = earnings.tofuStock !== 0 || earnings.deliveryOrders > 0;
+  if (changed) {
+    next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + earnings.tofuStock);
+    next.shop.deliveryOrders = safeNonNegativeInteger(
+      next.shop.deliveryOrders + earnings.deliveryOrders,
+    );
+    next.shop.lifetimeDeliveryOrders = safeNonNegativeInteger(
+      next.shop.lifetimeDeliveryOrders + earnings.deliveryOrders,
+    );
+    next.shop.lastGeneratorTickAt = nowIso;
+    next.shop.lastShopTickAt = nowIso;
+  }
+  return { gameState: next, earnings, changed };
+}
+
+function calculateOfflineShopEarnings(gameState, now = new Date()) {
+  return calculateShopGeneratorEarnings(gameState, now, {
+    maxSeconds: SHOP_OFFLINE_CAP_HOURS * 3600,
+  });
+}
+
+function hasCompletedDeliveryState(state) {
   return Boolean(
-    state.stamps.first_delivery
+    state
+    && (
+      state.stamps.first_delivery
     || (Array.isArray(state.recentSessions) && state.recentSessions.length > 0)
-    || (Array.isArray(state.recentRewards) && state.recentRewards.length > 0),
+      || (Array.isArray(state.recentRewards) && state.recentRewards.length > 0)
+    )
   );
 }
 
-function isShopDiscovered(gameState) {
-  const state = normalizeGameState(gameState);
+function isShopDiscoveredState(state) {
   return Boolean(
-    hasCompletedDelivery(state)
+    state
+    && (
+      hasCompletedDeliveryState(state)
     || Number(state.shop.tofuStock || 0) > 0
+      || Number(state.shop.deliveryOrders || 0) > 0
+      || Number(state.shop.tips || 0) > 0
     || Number(state.shop.reputation || 0) > 0
     || Number(state.shop.lifetimeTofuPacked || 0) > 0
-    || Object.values(state.shop.upgrades || {}).some((level) => Number(level || 0) > 0),
+      || Number(state.shop.lifetimeDeliveryOrders || 0) > 0
+      || Number(state.shop.lifetimeTips || 0) > 0
+      || Boolean(state.shop.generators && state.shop.generators.tofuPress && state.shop.generators.tofuPress.unlocked)
+      || Object.values(state.shop.upgrades || {}).some((level) => Number(level || 0) > 0)
+    )
   );
+}
+
+function syncShopGenerators(state) {
+  if (!state || !state.shop) return state;
+  const shop = state.shop;
+  const upgrades = shop.upgrades || {};
+  const current = normalizeShopGenerators(shop.generators);
+  const tofuPressUpgradeLevel = safeNonNegativeInteger(upgrades.tofu_press, 0, 100);
+  const prepCounterUpgradeLevel = safeNonNegativeInteger(upgrades.prep_counter, 0, 100);
+  const tofuPressUnlocked = true;
+  const prepCounterUnlocked = Boolean(
+    current.prepCounter.unlocked
+    || shop.shopLevel >= 2
+    || Number(shop.tofuStock || 0) >= 10
+    || Number(shop.lifetimeDeliveryOrders || 0) > 0
+    || tofuPressUpgradeLevel > 0
+    || prepCounterUpgradeLevel > 0,
+  );
+  shop.generators = {
+    tofuPress: {
+      unlocked: tofuPressUnlocked,
+      level: tofuPressUnlocked
+        ? Math.max(1, current.tofuPress.level, tofuPressUpgradeLevel + 1)
+        : 0,
+    },
+    prepCounter: {
+      unlocked: prepCounterUnlocked,
+      level: prepCounterUnlocked
+        ? Math.max(1, current.prepCounter.level, prepCounterUpgradeLevel + 1)
+        : 0,
+    },
+  };
+  return state;
+}
+
+function hasCompletedDelivery(gameState) {
+  return hasCompletedDeliveryState(normalizeGameState(gameState));
+}
+
+function isShopDiscovered(gameState) {
+  return isShopDiscoveredState(normalizeGameState(gameState));
 }
 
 function isPassportDiscovered(gameState) {
@@ -1790,22 +2086,26 @@ function progressiveRevealState(gameState) {
 }
 
 function applyOfflineShopEarnings(gameState, now = new Date()) {
-  const next = normalizeGameState(gameState);
+  let next = normalizeGameState(gameState);
   const nowIso = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
-  const earnings = calculateOfflineShopEarnings(next, now);
-  const hadTick = Boolean(next.shop.lastShopTickAt);
-  if (earnings.tofuStock > 0) {
-    next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + earnings.tofuStock);
-  }
+  const hadTick = Boolean(next.shop.lastGeneratorTickAt || next.shop.lastShopTickAt);
+  const result = applyShopGeneratorTick(next, now, {
+    maxSeconds: SHOP_OFFLINE_CAP_HOURS * 3600,
+  });
+  next = result.gameState;
+  const earnings = result.earnings;
   next.shop.offlineEarnings = {
-    tofuStock: earnings.tofuStock,
+    tofuStock: Math.max(0, earnings.tofuStock),
+    deliveryOrders: earnings.deliveryOrders,
+    tips: 0,
     cappedHours: earnings.cappedHours,
   };
   next.shop.lastShopTickAt = nowIso;
+  next.shop.lastGeneratorTickAt = next.shop.lastGeneratorTickAt || nowIso;
   return {
     gameState: next,
     earnings,
-    changed: !hadTick || earnings.tofuStock > 0,
+    changed: !hadTick || result.changed,
   };
 }
 
@@ -1814,6 +2114,29 @@ function loadGameStateWithOfflineShopEarnings(now = new Date()) {
   const result = applyOfflineShopEarnings(state, now);
   if (result.changed) saveGameState(result.gameState);
   return result.gameState;
+}
+
+function tickOpenShopGenerators(now = new Date()) {
+  if (appState.running || appState.calibrating) return null;
+  const state = loadGameState();
+  if (!isShopDiscovered(state)) return null;
+  const result = applyShopGeneratorTick(state, now, {
+    maxSeconds: SHOP_OPEN_TICK_MAX_SECONDS,
+  });
+  if (result.changed) {
+    saveGameState(result.gameState);
+    renderGamePanels(result.gameState);
+  }
+  return result;
+}
+
+function startShopGeneratorTimer() {
+  if (typeof window === "undefined" || typeof window.setInterval !== "function") return;
+  if (appState.shopGeneratorTimer) return;
+  appState.shopGeneratorTimer = window.setInterval(
+    () => tickOpenShopGenerators(new Date()),
+    SHOP_GENERATOR_TICK_MS,
+  );
 }
 
 function packTofu(gameState, options = {}) {
@@ -1829,22 +2152,95 @@ function packTofu(gameState, options = {}) {
   if (!isShopDiscovered(next)) {
     return {
       ok: false,
-      reason: "The shop is quiet. Complete your first delivery to wake it up.",
+      reason: "The shop is warming up. Try again while parked.",
       gameState: next,
       tofuStockGained: 0,
     };
   }
+  syncShopGenerators(next);
   const amount = 1 + Math.min(3, Math.floor(next.shop.upgrades.tofu_press / 2));
   next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + amount);
   next.shop.lifetimeTofuPacked = safeNonNegativeInteger(
     next.shop.lifetimeTofuPacked + amount,
   );
   next.shop.lastShopTickAt = new Date().toISOString();
+  next.shop.lastGeneratorTickAt = next.shop.lastGeneratorTickAt || next.shop.lastShopTickAt;
   return {
     ok: true,
     reason: "",
     gameState: next,
     tofuStockGained: amount,
+  };
+}
+
+function fulfillShopOrder(gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive) {
+    return {
+      ok: false,
+      reason: "Shop actions unlock after you finish and park.",
+      gameState: next,
+      tipsGained: 0,
+      reputationGained: 0,
+      xpGained: 0,
+    };
+  }
+  if (!isShopDiscovered(next)) {
+    return {
+      ok: false,
+      reason: "Start the Tofu Shop before fulfilling orders.",
+      gameState: next,
+      tipsGained: 0,
+      reputationGained: 0,
+      xpGained: 0,
+    };
+  }
+  if (next.shop.deliveryOrders < 1) {
+    return {
+      ok: false,
+      reason: "Prep Counter needs delivery orders first.",
+      gameState: next,
+      tipsGained: 0,
+      reputationGained: 0,
+      xpGained: 0,
+    };
+  }
+  const previousShopLevel = next.shop.shopLevel;
+  next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders - 1);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + SHOP_ORDER_TIPS_REWARD);
+  next.shop.lifetimeTips = safeNonNegativeInteger(
+    next.shop.lifetimeTips + SHOP_ORDER_TIPS_REWARD,
+  );
+  next.shop.reputation = safeNonNegativeInteger(
+    next.shop.reputation + SHOP_ORDER_REPUTATION_REWARD,
+  );
+  next.shop.lifetimeReputation = safeNonNegativeInteger(
+    next.shop.lifetimeReputation + SHOP_ORDER_REPUTATION_REWARD,
+  );
+  next.totalXP = Math.max(0, Math.round(Number(next.totalXP || 0) + SHOP_ORDER_XP_REWARD));
+  next.level = levelForXP(next.totalXP);
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  syncShopGenerators(next);
+  next.shop.lastShopTickAt = new Date().toISOString();
+  next.recentRewards = [{
+    date: next.shop.lastShopTickAt,
+    type: "shop_order",
+    label: "Shop Order Complete",
+    tipsGained: SHOP_ORDER_TIPS_REWARD,
+    reputationGained: SHOP_ORDER_REPUTATION_REWARD,
+    xpGained: SHOP_ORDER_XP_REWARD,
+  }, ...next.recentRewards].slice(0, 12);
+  return {
+    ok: true,
+    reason: "",
+    gameState: next,
+    tipsGained: SHOP_ORDER_TIPS_REWARD,
+    reputationGained: SHOP_ORDER_REPUTATION_REWARD,
+    xpGained: SHOP_ORDER_XP_REWARD,
+    shopLevelBefore: previousShopLevel,
+    shopLevelAfter: next.shop.shopLevel,
+    shopLevelChanged: next.shop.shopLevel > previousShopLevel,
+    report: "Shop order complete. Packed and handed off from the counter.",
   };
 }
 
@@ -1872,7 +2268,9 @@ function buyShopUpgrade(upgradeId, gameState) {
   next.shop.reputation -= cost.costReputation;
   next.shop.shopLevel = getShopLevel(next.shop.reputation);
   next.shop.upgrades[upgrade.id] = currentLevel + 1;
+  syncShopGenerators(next);
   next.shop.lastShopTickAt = new Date().toISOString();
+  next.shop.lastGeneratorTickAt = next.shop.lastShopTickAt;
   return {
     ok: true,
     reason: "",
@@ -1887,6 +2285,7 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
   const rewards = rewardSummary || {};
   const cargo = calculateCargoCondition(session);
   const qualified = isQualifiedSession(session);
+  const trustedQualified = qualified && !session.simulated;
   const validPractice = isValidPracticeSession(session);
   const dailyComplete = Boolean(rewards.dailyComplete || session.dailyDeliveryComplete);
   const perfectPour = qualified && cargo >= 100;
@@ -1917,19 +2316,63 @@ function applyDeliveryToShop(sessionSummary, rewardSummary, gameState) {
     reputationGained = Math.max(0, Math.round(reputationGained * extraSessionMultiplier));
   }
 
+  let tipsGained = validPractice ? 2 : 0;
+  const certifiedBoost = {
+    applied: false,
+    tofuStockGained: 0,
+    reputationGained: 0,
+    tipsGained: 0,
+    pressBoostPercent: 0,
+    expiresAt: "",
+    label: "No certified boost",
+  };
+  if (trustedQualified && cargo >= 85) {
+    const sessionMs = Date.parse(session.date || "");
+    const boostStartMs = Number.isFinite(sessionMs) ? sessionMs : Date.now();
+    certifiedBoost.applied = true;
+    certifiedBoost.tofuStockGained = Math.round(100 * extraSessionMultiplier);
+    certifiedBoost.reputationGained = Math.round(25 * extraSessionMultiplier);
+    certifiedBoost.tipsGained = Math.round(20 * extraSessionMultiplier);
+    certifiedBoost.pressBoostPercent = 20;
+    certifiedBoost.expiresAt = new Date(
+      boostStartMs + CERTIFIED_BOOST_HOURS * 3600000,
+    ).toISOString();
+    certifiedBoost.label = "Certified Smooth Delivery";
+    tofuStockGained += certifiedBoost.tofuStockGained;
+    reputationGained += certifiedBoost.reputationGained;
+    tipsGained += certifiedBoost.tipsGained;
+  }
+
   const previousShopLevel = next.shop.shopLevel;
   next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + tofuStockGained);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + tipsGained);
+  next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + tipsGained);
   next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + reputationGained);
   next.shop.lifetimeReputation = safeNonNegativeInteger(
     next.shop.lifetimeReputation + reputationGained,
   );
   next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  if (certifiedBoost.applied) {
+    next.shop.activeBoosts = normalizeShopBoosts([
+      {
+        id: "certified_smooth_delivery",
+        label: "Certified Smooth Delivery",
+        multiplier: CERTIFIED_BOOST_PRESS_MULTIPLIER,
+        expiresAt: certifiedBoost.expiresAt,
+        source: "qualified_cup_test",
+      },
+      ...(next.shop.activeBoosts || []),
+    ]);
+  }
+  syncShopGenerators(next);
   next.shop.lastShopTickAt = next.shop.lastShopTickAt || new Date().toISOString();
 
   return {
     gameState: next,
     tofuStockGained,
+    tipsGained,
     reputationGained,
+    certifiedBoost,
     shopLevelBefore: previousShopLevel,
     shopLevelAfter: next.shop.shopLevel,
     shopLevelChanged: next.shop.shopLevel > previousShopLevel,
@@ -2515,7 +2958,9 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     xpGained: driverXP.xpGained,
     stamps: stampLabels(stamps),
     tofuStockGained: shop.tofuStockGained,
+    tipsGained: shop.tipsGained,
     reputationGained: shop.reputationGained,
+    certifiedBoost: shop.certifiedBoost,
     simulated: Boolean(session.simulated),
     simulatorScenarioId: session.simulatorScenarioId || "",
   };
@@ -3920,9 +4365,12 @@ function nextBestAction(gameState, options = {}) {
   const mission = getDailyDelivery(options.date || new Date());
   const daily = state.dailyDeliveries[mission.dateKey];
   const dailyComplete = Boolean(daily && daily.completed);
-  const firstDeliveryComplete = hasCompletedDelivery(state);
   const shopUnlocked = isShopDiscovered(state);
-  const lowTofuStock = Number(state.shop.tofuStock || 0) < SHOP_LOW_TOFU_STOCK_THRESHOLD;
+  const shopActionStarted = Number(state.shop.lifetimeTofuPacked || 0) > 0
+    || Number(state.shop.lifetimeDeliveryOrders || 0) > 0
+    || Number(state.shop.lifetimeTips || 0) > 0
+    || Number(state.shop.tips || 0) > 0;
+  const lowTofuStock = Number(state.shop.tofuStock || 0) < 10;
   const upgrade = affordableShopUpgrade(state);
   if (activeDrive) {
     return {
@@ -3933,21 +4381,21 @@ function nextBestAction(gameState, options = {}) {
       disabled: true,
     };
   }
-  if (!firstDeliveryComplete) {
+  if (shopUnlocked && Number(state.shop.deliveryOrders || 0) > 0) {
     return {
-      type: "cup_test",
-      title: "Next: Take the Cup Test",
-      copy: "Complete your first delivery to wake up the shop.",
-      buttonLabel: "Take the Cup Test",
+      type: "fulfill_shop_order",
+      title: "Next: Fulfill Shop Order",
+      copy: "Hand off a prepared shop order to earn tips, reputation, and a little XP.",
+      buttonLabel: "Fulfill Shop Order",
       disabled: false,
     };
   }
-  if (!dailyComplete) {
+  if (!shopActionStarted) {
     return {
-      type: "cup_test",
-      title: "Next: Take the Cup Test",
-      copy: "Deliver today's cargo to earn XP, stamps, and shop rewards.",
-      buttonLabel: "Take the Cup Test",
+      type: "start_shop",
+      title: "Next: Start the Tofu Shop",
+      copy: "Pack your first order at home, then take the Cup Test when you're ready for a certified boost.",
+      buttonLabel: "Start the Shop",
       disabled: false,
     };
   }
@@ -3955,7 +4403,7 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "pack_tofu",
       title: "Next: Pack Tofu",
-      copy: "The shop is awake. Pack tofu to prepare future deliveries.",
+      copy: "Tofu Stock is low. Pack a few blocks or let the Tofu Press work.",
       buttonLabel: "Pack Tofu",
       disabled: false,
     };
@@ -3970,11 +4418,20 @@ function nextBestAction(gameState, options = {}) {
       upgradeId: upgrade.id,
     };
   }
+  if (!dailyComplete) {
+    return {
+      type: "cup_test",
+      title: "Next: Certified Cup Test",
+      copy: "Take the Cup Test when you're parked and ready for a certified smooth-delivery boost.",
+      buttonLabel: "Take the Cup Test",
+      disabled: false,
+    };
+  }
   return {
-    type: "cup_test",
-    title: "Next: Take the Cup Test",
-    copy: "Deliver today's cargo to earn XP, stamps, and shop rewards.",
-    buttonLabel: "Take the Cup Test",
+    type: "continue_shop",
+    title: "Next: Continue the Shop",
+    copy: "Let the press work, fulfill prepared orders, or take the Cup Test for certified progress.",
+    buttonLabel: "View Tofu Shop",
     disabled: false,
   };
 }
@@ -4008,6 +4465,14 @@ function renderGameDashboard(gameState = loadGameState()) {
       elements.gameCtaButton.dataset.nextUpgrade = action.upgradeId || "";
     }
   }
+  if (elements.gameCertifiedCtaButton) {
+    const showCertified = action.type !== "cup_test" && action.type !== "active_drive";
+    if (elements.gameCertifiedCtaButton.classList) {
+      elements.gameCertifiedCtaButton.classList.toggle("is-hidden", !showCertified);
+    }
+    elements.gameCertifiedCtaButton.disabled = appState.running || appState.calibrating;
+    elements.gameCertifiedCtaButton.textContent = "Take the Cup Test";
+  }
   if (elements.gameDailyProgress) {
     elements.gameDailyProgress.textContent = daily && daily.completed
       ? `Delivered today · ${formatPercent(daily.cargoCondition)}`
@@ -4039,7 +4504,7 @@ function renderGameDashboard(gameState = loadGameState()) {
   if (elements.gameShopTeaser) {
     elements.gameShopTeaser.textContent = reveal.shop
       ? nextShopStep(state)
-      : "The shop is quiet. Complete your first delivery to wake it up.";
+      : "The press is warming up. Play at home, then use Cup Test runs for certified boosts.";
   }
   if (elements.gamePassportEmpty) {
     elements.gamePassportEmpty.textContent = reveal.passport
@@ -4061,14 +4526,14 @@ function renderGameDashboard(gameState = loadGameState()) {
       ? "Park First"
       : reveal.shop
         ? "Pack Tofu"
-        : "Complete First Delivery";
+        : "Start the Shop";
   }
   if (elements.gameShopHelper) {
     elements.gameShopHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
       : reveal.shop
         ? "Shop Mode is for when you are parked. Do not interact while driving."
-        : "The shop is quiet. Complete your first delivery to wake it up.";
+        : "The press is warming up. Play at home, then use Cup Test runs for certified boosts.";
   }
 }
 
@@ -4112,12 +4577,102 @@ function renderShopUpgrade(upgrade, gameState) {
   `;
 }
 
+function renderShopGeneratorCard(generatorId, gameState) {
+  const state = normalizeGameState(gameState);
+  const rates = getShopGeneratorRates(state);
+  const activeDrive = appState.running || appState.calibrating;
+  const generator = state.shop.generators[generatorId];
+  const upgradeId = generatorId === "tofuPress" ? "tofu_press" : "prep_counter";
+  const upgrade = SHOP_UPGRADES.find((item) => item.id === upgradeId);
+  const currentLevel = upgrade
+    ? safeNonNegativeInteger(state.shop.upgrades[upgrade.id], 0, upgrade.maxLevel)
+    : 0;
+  const complete = upgrade ? currentLevel >= upgrade.maxLevel : true;
+  const cost = upgrade ? shopUpgradeCost(upgrade, currentLevel) : { costTofuStock: 0, costReputation: 0 };
+  const canUpgrade = Boolean(
+    upgrade
+    && generator.unlocked
+    && !complete
+    && state.shop.shopLevel >= upgrade.requiredShopLevel
+    && state.shop.tofuStock >= cost.costTofuStock
+    && state.shop.reputation >= cost.costReputation
+    && !activeDrive,
+  );
+  const costText = cost.costReputation
+    ? `${cost.costTofuStock} tofu · ${cost.costReputation} reputation`
+    : `${cost.costTofuStock} tofu`;
+  const label = generatorId === "tofuPress" ? "Tofu Press" : "Prep Counter";
+  const rate = generatorId === "tofuPress"
+    ? `+${rates.tofuPressPerMinute} tofu / min`
+    : `-${rates.prepTofuPerMinute} tofu / min · +${rates.prepOrdersPerMinute} orders / min`;
+  const status = !generator.unlocked
+    ? "Locked"
+    : generatorId === "prepCounter"
+      ? rates.prepStatus
+      : "Running";
+  const helper = !generator.unlocked
+    ? generatorId === "prepCounter"
+      ? "Unlocks at Shop Level 2 or after improving the Tofu Press."
+      : "The press is warming up. Start the shop while parked."
+    : generatorId === "tofuPress"
+      ? "Produces Tofu Stock over time while the shop is open or offline."
+      : "Turns Tofu Stock into Delivery Orders without blocking The Cup Test.";
+  const upgradeStatus = !generator.unlocked
+    ? "Locked"
+    : complete
+      ? "Complete"
+      : state.shop.shopLevel < upgrade.requiredShopLevel
+        ? `Requires Shop Level ${upgrade.requiredShopLevel}`
+        : costText;
+  return `
+    <div class="nospill-generator-item ${generator.unlocked ? "" : "is-locked"}">
+      <header>
+        <strong>${escapeHtml(label)} ${generator.level ? `Lv ${generator.level}` : ""}</strong>
+        <small>${escapeHtml(status)}</small>
+      </header>
+      <small>${escapeHtml(rate)}</small>
+      <small>${escapeHtml(helper)}</small>
+      <small>${escapeHtml(upgradeStatus)}</small>
+      <button
+        class="nospill-secondary"
+        type="button"
+        data-shop-upgrade="${escapeHtml(upgradeId)}"
+        ${canUpgrade ? "" : "disabled"}
+      >
+        ${complete ? "Installed" : "Upgrade"}
+      </button>
+    </div>
+  `;
+}
+
 function renderDeliveryWall(gameState = loadGameState()) {
   if (!elements.deliveryWallGrid) return;
   const state = normalizeGameState(gameState);
   const progress = state.merchProgress;
   const passport = deliveryPassportSummary(state);
-  const wallItems = [
+  const shopItems = [
+    {
+      id: "shop_level_badge",
+      label: "Shop Level Badge",
+      status: `Level ${state.shop.shopLevel}`,
+      unlocked: state.shop.shopLevel >= 2,
+    },
+    {
+      id: "delivery_counter_tee",
+      label: "Delivery Counter Tee",
+      status: `${state.shop.lifetimeDeliveryOrders} shop orders`,
+      unlocked: state.shop.lifetimeDeliveryOrders >= 25,
+    },
+    {
+      id: "angry_tofu_sticker",
+      label: "Angry Tofu Driver Sticker",
+      status: state.collection.unlockedCharacterIds.includes("angry_tofu_driver")
+        ? "Unlocked"
+        : "Locked",
+      unlocked: state.collection.unlockedCharacterIds.includes("angry_tofu_driver"),
+    },
+  ];
+  const certifiedItems = [
     {
       id: "nospill_club",
       label: "No-Spill Club Gear",
@@ -4145,7 +4700,7 @@ function renderDeliveryWall(gameState = loadGameState()) {
       unlocked: passport.recent.length > 0,
     },
   ];
-  elements.deliveryWallGrid.innerHTML = wallItems.map((item) => {
+  const renderWallItem = (item) => {
     const link = item.unlocked ? MERCH_LINKS[item.id] : null;
     const action = link
       ? `<a class="nospill-merch-link" href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Buy unlocked shirt</a>`
@@ -4159,7 +4714,19 @@ function renderDeliveryWall(gameState = loadGameState()) {
         ${action}
       </div>
     `;
-  }).join("");
+  };
+  elements.deliveryWallGrid.innerHTML = `
+    <div class="nospill-delivery-wall-group">
+      <h5>Shop Unlocks</h5>
+      <p>Shop Unlocks come from growing the Tofu Shop.</p>
+      ${shopItems.map(renderWallItem).join("")}
+    </div>
+    <div class="nospill-delivery-wall-group">
+      <h5>Certified Delivery Unlocks</h5>
+      <p>Certified Delivery Unlocks come from qualified smooth-driving results.</p>
+      ${certifiedItems.map(renderWallItem).join("")}
+    </div>
+  `;
 }
 
 function renderTofuShop(gameState = loadGameState()) {
@@ -4167,12 +4734,18 @@ function renderTofuShop(gameState = loadGameState()) {
   const reveal = progressiveRevealState(state);
   const shop = state.shop;
   const progress = shopLevelProgress(shop.reputation);
-  const rate = getShopProductionRate(state);
+  const generatorRates = getShopGeneratorRates(state);
   if (elements.shopLevelBadge) {
     elements.shopLevelBadge.textContent = reveal.shop ? `Shop Level ${shop.shopLevel}` : "Locked";
   }
   if (elements.shopTofuStock) {
     elements.shopTofuStock.textContent = reveal.shop ? String(shop.tofuStock) : "Locked";
+  }
+  if (elements.shopDeliveryOrders) {
+    elements.shopDeliveryOrders.textContent = reveal.shop ? String(shop.deliveryOrders) : "Locked";
+  }
+  if (elements.shopTips) {
+    elements.shopTips.textContent = reveal.shop ? String(shop.tips) : "Locked";
   }
   if (elements.shopReputation) {
     elements.shopReputation.textContent = reveal.shop ? String(shop.reputation) : "Locked";
@@ -4181,9 +4754,21 @@ function renderTofuShop(gameState = loadGameState()) {
     elements.shopLevelProgress.textContent =
       reveal.shop
         ? `Level ${progress.level} · ${progress.currentReputation}/${progress.nextReputation}`
-        : "Complete first delivery";
+        : "Start the shop";
   }
-  if (elements.shopIdleRate) elements.shopIdleRate.textContent = reveal.shop ? `${rate}/hr` : "Locked";
+  if (elements.shopIdleRate) {
+    elements.shopIdleRate.textContent = reveal.shop
+      ? `+${generatorRates.tofuPressPerMinute}/min`
+      : "Locked";
+  }
+  if (elements.shopOrderRate) {
+    elements.shopOrderRate.textContent = reveal.shop && shop.generators.prepCounter.unlocked
+      ? `+${generatorRates.prepOrdersPerMinute}/min`
+      : "Locked";
+  }
+  if (elements.shopPrepStatus) {
+    elements.shopPrepStatus.textContent = reveal.shop ? generatorRates.prepStatus : "Locked";
+  }
   if (elements.packTofuButton) {
     const activeDrive = appState.running || appState.calibrating;
     elements.packTofuButton.disabled = activeDrive || !reveal.shop;
@@ -4191,14 +4776,29 @@ function renderTofuShop(gameState = loadGameState()) {
       ? "Park First"
       : reveal.shop
         ? "Pack Tofu"
-        : "Complete First Delivery";
+        : "Start the Shop";
+  }
+  if (elements.fulfillShopOrderButton) {
+    const activeDrive = appState.running || appState.calibrating;
+    const canFulfill = reveal.shop && shop.deliveryOrders > 0 && !activeDrive;
+    elements.fulfillShopOrderButton.disabled = !canFulfill;
+    elements.fulfillShopOrderButton.textContent = activeDrive
+      ? "Park First"
+      : "Fulfill Shop Order";
   }
   if (elements.packTofuHelper) {
     elements.packTofuHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
       : reveal.shop
-        ? "The shop lights are on. Pack tofu while parked; smooth deliveries build reputation."
-        : "The shop is quiet. Complete your first delivery to wake it up.";
+        ? "Pack tofu while parked. The Tofu Press also adds stock over time."
+        : "The press is warming up. Start the shop while parked.";
+  }
+  if (elements.fulfillShopOrderHelper) {
+    elements.fulfillShopOrderHelper.textContent = appState.running || appState.calibrating
+      ? "Shop actions unlock after you finish and park."
+      : shop.deliveryOrders > 0
+        ? "Fulfill prepared shop orders at home for tips, reputation, and a little XP."
+        : "Prep Counter needs delivery orders first.";
   }
   if (elements.shopUpgradeList) {
     elements.shopUpgradeList.innerHTML = reveal.shop
@@ -4211,15 +4811,31 @@ function renderTofuShop(gameState = loadGameState()) {
             <strong>Tofu Press</strong>
             <small>Locked</small>
           </header>
-          <small>The press is still cold. Wake the shop with your first delivery.</small>
+          <small>The press is warming up. Start the shop while parked.</small>
+        </div>
+      `;
+  }
+  if (elements.shopGeneratorList) {
+    elements.shopGeneratorList.innerHTML = reveal.shop
+      ? [
+        renderShopGeneratorCard("tofuPress", state),
+        renderShopGeneratorCard("prepCounter", state),
+      ].join("")
+      : `
+        <div class="nospill-generator-item is-locked">
+          <header>
+            <strong>Tofu Press</strong>
+            <small>Locked</small>
+          </header>
+          <small>The press is warming up. Start the shop while parked.</small>
         </div>
       `;
   }
   if (elements.shopOfflineEarnings) {
     elements.shopOfflineEarnings.textContent =
       reveal.shop
-        ? `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock.`
-        : "No offline tofu yet. Wake the shop first.";
+        ? `While you were away: +${shop.offlineEarnings.tofuStock} tofu stock, +${shop.offlineEarnings.deliveryOrders} delivery orders.`
+        : "No offline tofu yet. Start the shop first.";
   }
   renderDeliveryWall(state);
 }
@@ -4434,7 +5050,7 @@ function renderDeliverySummary(summary) {
   const dailyDelivery = rewards.dailyDelivery || getDailyDelivery(summary.date || new Date());
   const dailyComplete = Boolean(rewards.dailyComplete);
   const qualified = isQualifiedSession(summary);
-  const shop = rewards.shop || { tofuStockGained: 0, reputationGained: 0 };
+  const shop = rewards.shop || { tofuStockGained: 0, tipsGained: 0, reputationGained: 0 };
   const shopState = shop.gameState
     ? normalizeGameState(shop.gameState).shop
     : normalizeGameState(rewards.gameState || loadGameState()).shop;
@@ -4463,8 +5079,14 @@ function renderDeliverySummary(summary) {
     : qualified
       ? `${dailyDelivery.cargo}: ${dailyDelivery.goal}`
       : "Take a normal qualified delivery when parked and ready.";
-  const shopRewardLine = (shop.tofuStockGained || shop.reputationGained)
-    ? `+${shop.tofuStockGained || 0} tofu · +${shop.reputationGained || 0} reputation`
+  const certifiedBoost = shop.certifiedBoost || { applied: false };
+  const certifiedBoostLine = certifiedBoost.applied
+    ? `+${certifiedBoost.reputationGained} reputation · +${certifiedBoost.tofuStockGained} tofu · +${certifiedBoost.tipsGained} tips · Tofu Press +${certifiedBoost.pressBoostPercent}%`
+    : qualified
+      ? "No certified boost earned"
+      : "Practice only - no certified boost";
+  const shopRewardLine = (shop.tofuStockGained || shop.tipsGained || shop.reputationGained)
+    ? `+${shop.tofuStockGained || 0} tofu · +${shop.tipsGained || 0} tips · +${shop.reputationGained || 0} reputation`
     : "No shop rewards from this practice";
   elements.deliverySummaryGrid.innerHTML = [
     summary.simulated
@@ -4492,6 +5114,7 @@ function renderDeliverySummary(summary) {
     summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
     summaryMetric("Shop Rewards", shopRewardLine),
+    summaryMetric("Certified Boost", certifiedBoostLine),
     summaryMetric("Shop Level", `Level ${shopState.shopLevel}`),
     summaryMetric("Delivery Passport", `${passport.total}/${passport.totalAvailable} stamps`),
     summaryMetric(
@@ -4507,6 +5130,56 @@ function renderDeliverySummary(summary) {
   }
 }
 
+function setShareActionsEnabled(enabled) {
+  [
+    elements.shareButton,
+    elements.copyButton,
+    elements.downloadButton,
+    elements.saveButton,
+  ].forEach((button) => {
+    if (button) button.disabled = !enabled;
+  });
+}
+
+function renderShopOrderResult(result) {
+  appState.lastSummary = null;
+  const state = normalizeGameState(result.gameState);
+  const shop = state.shop;
+  if (elements.summaryStatusLabel) {
+    elements.summaryStatusLabel.textContent = "Tofu Shop";
+  }
+  if (elements.summaryTitle) {
+    elements.summaryTitle.textContent = "Shop Order Complete";
+  }
+  if (elements.summaryWater) {
+    elements.summaryWater.textContent = `+${result.tipsGained} Tips`;
+  }
+  if (elements.returnDashboardButton) {
+    elements.returnDashboardButton.textContent = "Return to Tofu Shop";
+  }
+  if (elements.backSimulatorButton) {
+    elements.backSimulatorButton.classList.toggle("is-hidden", true);
+  }
+  if (elements.routeContext) elements.routeContext.classList.toggle("is-hidden", true);
+  if (elements.deliverySummaryGrid) {
+    elements.deliverySummaryGrid.innerHTML = [
+      summaryMetric("Tips Gained", `+${result.tipsGained}`),
+      summaryMetric("Reputation Gained", `+${result.reputationGained}`),
+      summaryMetric("XP Gained", `+${result.xpGained}`),
+      summaryMetric("Tofu Stock", String(shop.tofuStock)),
+      summaryMetric("Delivery Orders", String(shop.deliveryOrders)),
+      summaryMetric("Shop Level", `Level ${shop.shopLevel}`),
+      summaryMetric("Next Best Action", nextBestAction(state).title.replace(/^Next: /, "")),
+    ].join("");
+  }
+  if (elements.commuteMasteryCopy) {
+    elements.commuteMasteryCopy.textContent = result.report || "Shop order complete.";
+  }
+  setShareActionsEnabled(false);
+  renderGamePanels(state);
+  showView("summary");
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -4518,6 +5191,7 @@ function escapeHtml(value) {
 
 function renderSummary(summary) {
   appState.lastSummary = summary;
+  setShareActionsEnabled(true);
   const qualified = isQualifiedSession(summary);
   const summaryGameState = summary.deliveryRewards
     ? summary.deliveryRewards.gameState
@@ -4947,6 +5621,22 @@ function handlePackTofu() {
   });
 }
 
+function handleFulfillShopOrder() {
+  const result = fulfillShopOrder(loadGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  renderShopOrderResult(result);
+  playCosmeticSound("shop_pack_tofu", result.gameState, {
+    activeDrive: false,
+  });
+}
+
 function handleShopUpgradeClick(event) {
   const button = event.target && event.target.closest
     ? event.target.closest("[data-shop-upgrade]")
@@ -5256,14 +5946,23 @@ function handleNextBestAction() {
   const actionType = elements.gameCtaButton && elements.gameCtaButton.dataset
     ? elements.gameCtaButton.dataset.nextAction
     : "cup_test";
-  if (actionType === "pack_tofu") {
+  if (actionType === "start_shop" || actionType === "pack_tofu") {
     handlePackTofu();
+    return;
+  }
+  if (actionType === "fulfill_shop_order") {
+    handleFulfillShopOrder();
     return;
   }
   if (actionType === "buy_upgrade") {
     const upgradeId = elements.gameCtaButton.dataset.nextUpgrade || "";
     focusShopUpgrade(upgradeId);
     setSummaryStatusMessage("Choose an available shop upgrade while parked.");
+    return;
+  }
+  if (actionType === "continue_shop") {
+    focusShopUpgrade("");
+    setSummaryStatusMessage("Review the Tofu Shop while parked.");
     return;
   }
   if (actionType === "active_drive") return;
@@ -5275,6 +5974,9 @@ function bindEvents() {
     elements.introCtaButton.addEventListener("click", revealSetupFlow);
   }
   elements.gameCtaButton.addEventListener("click", handleNextBestAction);
+  if (elements.gameCertifiedCtaButton) {
+    elements.gameCertifiedCtaButton.addEventListener("click", revealSetupFlow);
+  }
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
     input.addEventListener("change", updateStartReadiness);
   });
@@ -5330,6 +6032,7 @@ function bindEvents() {
     elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
   }
   elements.packTofuButton.addEventListener("click", handlePackTofu);
+  elements.fulfillShopOrderButton.addEventListener("click", handleFulfillShopOrder);
   elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
   elements.characterList.addEventListener("click", handleCharacterSelect);
   elements.soundPackList.addEventListener("click", handleSoundPackSelect);
@@ -5350,6 +6053,7 @@ function cacheElements() {
     collectionSection: document.getElementById("delivery-crew"),
     introCtaButton: document.getElementById("intro-cta-button"),
     gameCtaButton: document.getElementById("game-cta-button"),
+    gameCertifiedCtaButton: document.getElementById("game-certified-cta-button"),
     gameNextActionTitle: document.getElementById("game-next-action-title"),
     gameNextActionCopy: document.getElementById("game-next-action-copy"),
     gameDailyTitle: document.getElementById("today-delivery-title"),
@@ -5427,11 +6131,18 @@ function cacheElements() {
     summaryDiscordCta: document.getElementById("summary-discord-cta"),
     shopLevelBadge: document.getElementById("shop-level-badge"),
     shopTofuStock: document.getElementById("shop-tofu-stock"),
+    shopDeliveryOrders: document.getElementById("shop-delivery-orders"),
+    shopTips: document.getElementById("shop-tips"),
     shopReputation: document.getElementById("shop-reputation"),
     shopLevelProgress: document.getElementById("shop-level-progress"),
     shopIdleRate: document.getElementById("shop-idle-rate"),
+    shopOrderRate: document.getElementById("shop-order-rate"),
+    shopPrepStatus: document.getElementById("shop-prep-status"),
     packTofuButton: document.getElementById("pack-tofu-button"),
     packTofuHelper: document.getElementById("pack-tofu-helper"),
+    fulfillShopOrderButton: document.getElementById("fulfill-shop-order-button"),
+    fulfillShopOrderHelper: document.getElementById("fulfill-shop-order-helper"),
+    shopGeneratorList: document.getElementById("shop-generator-list"),
     shopUpgradeList: document.getElementById("shop-upgrade-list"),
     deliveryWallGrid: document.getElementById("delivery-wall-grid"),
     shopOfflineEarnings: document.getElementById("shop-offline-earnings"),
@@ -5486,6 +6197,7 @@ function initNoSpillApp() {
   renderGamePanels(loadGameStateWithOfflineShopEarnings());
   renderDiscordCtas("landing");
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
+  startShopGeneratorTimer();
   if (!hasDeviceMotionSupport()) {
     setLandingStatus(
       "This browser has not exposed motion sensors yet. Start will check again on a phone.",

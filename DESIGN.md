@@ -201,47 +201,107 @@ unlocks, Delivery Passport, Tofu Shop, Delivery Crew, merch progress, and Next B
 Another Cup Test` is secondary, not the only path out of a result. Users should be able to review the
 updated shop state after every delivery before choosing another run.
 
-## Tofu Shop V1
+## Home Progression + Certified Delivery Boosts
 
-Tofu Shop V1 is the implemented cozy parked-only management layer. A compact Tofu Shop preview
-appears in the top `Today's Delivery` card, and the full shop appears near the Delivery Board. Shop
-actions are not shown during an active Cup Test. The UI copy must include the parked-only rule:
-`Shop Mode is for when you are parked. Do not interact while driving.`
+Home shop progression is the base game. A user should be able to play Tofu Driver comfortably while
+parked at home without granting sensor or location permissions. The Tofu Shop produces resources,
+prepares orders, and lets the player fulfill fictional shop orders locally. The physical Cup Test is
+an optional certified smooth-delivery boost and status path, not the gate for ordinary progression.
+
+First-run action hierarchy:
+
+- Primary: `Start the Tofu Shop`, which routes to parked shop play.
+- Secondary: `Take the Cup Test`, framed as an optional certified boost when the user is parked and
+  ready.
+- Only one primary CTA should be visually dominant.
+
+Home shop progression can grant ordinary local resources:
+
+- `Tofu Stock`
+- `Delivery Orders`
+- `Tips`
+- `Reputation`
+- small local XP
+- shop unlock progress
+
+Certified Cup Test results can grant special status and boosts:
+
+- bonus reputation, tofu stock, and tips based on Cargo Condition and qualification status
+- temporary Tofu Press production boost
+- Certified Delivery stamps and merch progress
+- special Delivery Complete report language
+
+Certified boosts must not scale with speed, exact route, street names, maps, high-G bragging, or
+route leaderboards. Practice Mode can grant modest local progress but must not grant certified merch
+progress. Simulated deliveries remain QA-only and are not trusted certified deliveries.
+
+Unlock presentation should split into two tracks:
+
+- `Shop Unlocks` come from growing the Tofu Shop.
+- `Certified Delivery Unlocks` come from qualified smooth-driving results.
+
+Avoid wording such as `real vs fake` or anything implying simulator/home play is fraudulent. Use
+`home shop`, `shop order`, `certified delivery`, and `qualified smooth-driving result`.
+
+## Tofu Shop V1 / Generator V2
+
+Tofu Shop V1 is the implemented cozy parked-only management layer. Generator V2 adds the first
+visible local incremental loop. The full shop can appear before the first real-world drive because
+home shop progression is the base game. Shop actions and generator controls are not shown during an
+active Cup Test. The UI copy must include the parked-only rule: `Shop Mode is for when you are
+parked. Do not interact while driving.`
 
 Shop resources are local-only:
 
 - `Tofu Stock` comes from completed deliveries, the parked-only Pack Tofu action, and capped idle
-  production from upgrades.
+  production from the Tofu Press generator.
+- `Delivery Orders` are produced by the Prep Counter from Tofu Stock. Delivery Orders are a shop
+  resource only in this version and are not required to take The Cup Test.
+- `Tips` come from fulfilled home shop orders and optional certified delivery boosts.
 - `Reputation` comes from qualified smooth deliveries, daily delivery completion, stamps, and
-  No-Spill / Perfect Pour outcomes. Packing tofu and idle production do not grant meaningful
-  reputation.
+  No-Spill / Perfect Pour outcomes, plus small home shop order handoffs. Packing tofu and idle
+  production do not grant meaningful reputation.
 - `Shop Level` is derived from reputation with `100 + level * 50` reputation required per level.
   Initial upgrades spend tofu stock and use reputation-derived Shop Level as the gate, so reputation
   does not go backward.
 
-Pack Tofu grants a small amount of tofu stock and is disabled while a Cup Test is active. It does
-not affect driving score and does not grant reputation.
+Pack Tofu grants a small amount of tofu stock and is disabled while a Cup Test is active. Fulfill
+Shop Order consumes one Delivery Order and grants tips, small reputation, and small XP without using
+sensors or implying a real drive occurred. It uses a lightweight `Shop Order Complete` result screen
+with share-card actions disabled. Neither action affects driving score.
 
-Idle production is calculated locally from `lastShopTickAt` when the user returns. Offline tofu
-stock is capped at 8 hours and does not grant reputation. There is no backend timer or worker.
+The live parked generator loop is local-only:
 
-The V1 upgrade catalog is static and uses safe shop language only:
+- `Tofu Press` starts as the first home generator and produces Tofu Stock over elapsed time.
+- `Prep Counter` unlocks after enough shop progress, consumes Tofu Stock, and produces Delivery
+  Orders.
+- Generator math uses timestamps, not frame count, and open-page elapsed time is clamped to avoid
+  large tab-sleep jumps.
+- Offline progress is calculated locally from `lastGeneratorTickAt` / `lastShopTickAt`, capped at
+  8 hours, and summarized as tofu stock plus delivery orders.
+- Idle generation does not grant reputation and does not affect real-world driving score.
+
+There is no backend timer, service worker, or worker process.
+
+The implemented shop upgrade catalog is static and uses safe shop language only:
 
 - Tofu Press
+- Prep Counter
 - Better Boxes
 - Shop Sign
 
 Upgrades can improve idle stock, delivery stock, or reputation presentation. They must not imply
 faster driving, better vehicle handling, stronger brakes, or any racing advantage.
 
-Completed deliveries call `applyDeliveryToShop()` after scoring. Tofu stock and reputation are
-based on Cargo Condition, qualification status, daily delivery completion, stamps, and existing
-daily reward reduction. Higher speed must not increase shop rewards. Practice sessions can grant
-limited tofu stock but no reputation by default; very short/unqualified sessions are capped.
+Completed Cup Tests call `applyDeliveryToShop()` after scoring. Tofu stock, tips, reputation, and
+certified boosts are based on Cargo Condition, qualification status, daily delivery completion,
+stamps, and existing daily reward reduction. Higher speed must not increase shop rewards. Practice
+sessions can grant limited local progress but no certified boost; very short/unqualified sessions
+are capped.
 
-The Delivery Wall shows No-Spill Club Gear, Perfect Pour Drop, Delivery Crew progress, and recent
-stamps. Locked merch links are hidden. Super Cute Collectibles remains the physical fulfillment
-partner and does not verify scores in the current MVP.
+The Delivery Wall separates `Shop Unlocks` from `Certified Delivery Unlocks`. Locked merch links are
+hidden. Super Cute Collectibles remains the physical fulfillment partner and does not verify scores
+in the current MVP.
 
 Story chapters, customers, contracts, apprentices, route maps, and prestige remain future scope in
 the idle incremental expansion section below. They are not part of Tofu Shop V1 runtime behavior.
@@ -451,15 +511,16 @@ confusion, not just hide or show systems.
 Action hierarchy:
 
 1. Active drive in progress: show only active-drive controls. Do not show shop actions.
-2. First-time user with no completed deliveries: `Next: Take the Cup Test`.
-3. Today's Delivery incomplete: `Next: Take the Cup Test`.
-4. Shop unlocked and tofu stock is low: `Next: Pack Tofu`.
+2. First-time user with no home shop action: `Next: Start the Tofu Shop`.
+3. Prepared Delivery Orders available: `Next: Fulfill Shop Order`.
+4. Tofu Stock is low: `Next: Pack Tofu`.
 5. Affordable shop upgrade exists: `Next: Buy an Upgrade`.
-6. Otherwise: `Next: Take the Cup Test`.
+6. Optional certified boost available: `Next: Certified Cup Test`.
+7. Otherwise: `Next: Continue the Shop`.
 
-`Take the Cup Test` owns first-run priority. `Pack Tofu` is a secondary parked shop action until the
-first delivery is complete and the shop has been introduced. If Pack Tofu is locked, the UI should
-say: `Complete your first delivery to wake up the shop.`
+`Start the Tofu Shop` owns first-run priority. `Take the Cup Test` remains available as a secondary
+certified action. Pack Tofu and Fulfill Shop Order are parked-only home actions and must not appear
+inside the active-drive screen.
 
 Only one primary CTA should be visually dominant in the top action area. Secondary shop actions can
 remain visible after unlock, but they must not compete with the top next-best-action card.
@@ -568,13 +629,15 @@ still useful, but should eventually respect unlock states.
 
 Current implementation uses this as a first pass:
 
-- Today's Delivery and the primary Cup Test CTA are visible immediately.
+- Today's Delivery and the primary Tofu Shop CTA are visible immediately.
 - The first-run page defaults to a story-like surface: brand, cup premise, Today's Delivery, one
   goal, one reward, one primary CTA, compact status, and minimal safety copy.
-- Tofu Shop, Delivery Passport, Delivery Crew, and Sound Packs appear as compact teaser cards first.
+- Tofu Shop is playable immediately; Delivery Passport, Delivery Crew, and Sound Packs appear as
+  compact teaser cards first.
 - The expanded Delivery Board, Tofu Shop, Delivery Wall, Delivery Crew, Sound Pack lists, and
   progress tools do not compete with the first delivery flow.
-- Pack Tofu and upgrades unlock after the first delivery wakes the shop.
+- Pack Tofu is available for parked home play; upgrades and Fulfill Shop Order appear when the
+  relevant resources exist.
 - Stamp details unlock after the first stamp-worthy delivery.
 - Crew and sound selection controls unlock only after character or sound-pack unlocks exist.
 - Export, import, and reset controls live in `Settings / Progress Tools`, not the first-run main

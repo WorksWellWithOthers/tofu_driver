@@ -12,9 +12,18 @@
 - Share and local save behavior are implemented client-side.
 - Delivery Log adds local XP, stamps, daily cargo missions, route labels, merch progress, and coarse route mastery fingerprints.
 - The landing page now starts with a game-first Today's Delivery dashboard, clear goal/reward,
-  and prominent `Take the Cup Test` CTA before dense setup controls.
-- Tofu Shop V1 adds parked-only tofu stock, reputation, shop levels, Pack Tofu, capped idle
-  production, three starter upgrades, and Delivery Wall progress.
+  and a home-shop Next Best Action before dense setup controls.
+- Home progression is now the base game: users can start the Tofu Shop, Pack Tofu, wait for
+  generators, and Fulfill Shop Orders without sensors or location access.
+- Tofu Shop V1 adds parked-only tofu stock, delivery orders, tips, reputation, shop levels,
+  Pack Tofu, Fulfill Shop Order, capped idle production, starter upgrades, and Delivery Wall progress.
+- Fulfill Shop Order uses a lightweight `Shop Order Complete` result screen with driving share-card
+  actions disabled.
+- Tofu Shop Generator V2 adds visible local ticking: Tofu Press produces Tofu Stock, and Prep
+  Counter converts Tofu Stock into Delivery Orders while parked or through capped offline progress.
+- Qualified Cup Test runs are framed as optional certified delivery boosts/status: they can grant
+  bonus shop rewards and temporary Tofu Press boosts without making real driving required for
+  ordinary shop progression.
 - The Collection Layer adds cosmetic Delivery Crew character unlocks and local Sound Pack unlocks
   for parked/result screens only.
 - Delivery Simulator is hidden by default and can be enabled locally with `?simulator=1` or
@@ -24,10 +33,10 @@
   progress stay behind Qualified Run criteria.
 - Post-run navigation returns users to the updated dashboard/Tofu Shop, with another Cup Test as a
   secondary action instead of the only exit from results.
-- First-run progressive reveal now keeps Today's Delivery and the Cup Test CTA prominent while the
-  expanded Delivery Board, Tofu Shop, Passport, Delivery Crew, and Sound Packs wait until they matter.
-- The top dashboard includes a Next Best Action card so first-run users see one primary action;
-  Pack Tofu becomes a parked shop action after the first delivery wakes the shop.
+- First-run progressive reveal now keeps Today's Delivery and the Tofu Shop CTA prominent while the
+  expanded Delivery Board, Passport, Delivery Crew, and Sound Packs wait until they matter.
+- The top dashboard includes a Next Best Action card so first-run users see one primary home-shop
+  action; Take the Cup Test remains available as a secondary certified action.
 - The active Cup Test canvas uses `frontend/nospill/assets/tofu-driver-app-image.png` as the tofu mascot in the slosh visualization.
 - The merch preview uses `frontend/nospill/assets/tofu-driver-shirt-1.png`.
 - The landing page identifies Super Cute Collectibles as the physical merch fulfillment partner.
@@ -48,7 +57,8 @@
 6. Play-test the progressive reveal gates on mobile and tune when shop, passport, crew, and sound
    details should expand.
 7. Play-test the first-run game dashboard on mobile and tune the amount of visible status if needed.
-8. Play-test Tofu Shop pacing after several real commutes and tune tofu stock / reputation costs.
+8. Play-test Tofu Shop pacing at home and tune tofu stock, delivery order, tips, generator,
+   reputation, and certified-boost rewards.
 9. Use Delivery Simulator scenarios for local QA of Delivery Complete, unlocks, shop rewards, and
    share sanitization before mobile road tests.
 10. Prototype the future idle expansion in the documented small-scope order: one fictional route,

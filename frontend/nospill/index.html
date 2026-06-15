@@ -68,11 +68,18 @@
 
         <div class="nospill-next-action-card" aria-label="Next best action">
           <p class="nospill-kicker">Next Best Action</p>
-          <h4 id="game-next-action-title">Next: Take the Cup Test</h4>
-          <p id="game-next-action-copy">Complete your first delivery to wake up the shop.</p>
-          <button class="nospill-primary nospill-game-primary-cta" id="game-cta-button" type="button">
-            Take the Cup Test
-          </button>
+          <h4 id="game-next-action-title">Next: Start the Tofu Shop</h4>
+          <p id="game-next-action-copy">
+            Pack your first order at home, then take the Cup Test when you&rsquo;re ready for a certified boost.
+          </p>
+          <div class="nospill-next-action-buttons">
+            <button class="nospill-primary nospill-game-primary-cta" id="game-cta-button" type="button">
+              Start the Shop
+            </button>
+            <button class="nospill-secondary" id="game-certified-cta-button" type="button">
+              Take the Cup Test
+            </button>
+          </div>
         </div>
 
         <div class="nospill-game-grid nospill-game-status-grid" aria-label="Driver status">
@@ -93,7 +100,7 @@
         <div class="nospill-teaser-grid" id="game-teaser-grid" aria-label="Locked future systems">
           <div class="nospill-teaser-card">
             <strong>Tofu Shop</strong>
-            <span>The shop is quiet. Complete your first delivery to wake it up.</span>
+            <span>The press is warming up. Play at home, then use Cup Test runs for certified boosts.</span>
           </div>
           <div class="nospill-teaser-card">
             <strong>Delivery Passport</strong>
@@ -261,7 +268,7 @@
           <strong id="shop-level-badge">Locked</strong>
         </div>
         <p>
-          Smooth deliveries build your reputation. Pack Tofu, upgrade the shop, and fill the Delivery Wall.
+          Home shop orders build the base game. Qualified Cup Test runs add certified boosts and status.
         </p>
         <p class="nospill-panel-helper nospill-shop-safety">
           Shop Mode is for when you are parked. Do not interact while driving.
@@ -273,6 +280,14 @@
             <strong id="shop-tofu-stock">Locked</strong>
           </div>
           <div>
+            <span>Delivery Orders</span>
+            <strong id="shop-delivery-orders">Locked</strong>
+          </div>
+          <div>
+            <span>Tips</span>
+            <strong id="shop-tips">Locked</strong>
+          </div>
+          <div>
             <span>Reputation</span>
             <strong id="shop-reputation">Locked</strong>
           </div>
@@ -281,18 +296,37 @@
             <strong id="shop-level-progress">Complete first delivery</strong>
           </div>
           <div>
-            <span>Idle Production</span>
+            <span>Tofu Stock Rate</span>
             <strong id="shop-idle-rate">Locked</strong>
+          </div>
+          <div>
+            <span>Delivery Orders Rate</span>
+            <strong id="shop-order-rate">Locked</strong>
+          </div>
+          <div>
+            <span>Prep Counter</span>
+            <strong id="shop-prep-status">Locked</strong>
           </div>
         </div>
 
         <div class="nospill-shop-action-row">
           <button class="nospill-primary" id="pack-tofu-button" type="button" disabled>
-            Complete First Delivery
+            Pack Tofu
+          </button>
+          <button class="nospill-secondary" id="fulfill-shop-order-button" type="button" disabled>
+            Fulfill Shop Order
           </button>
           <p class="nospill-panel-helper" id="pack-tofu-helper">
-            The shop is quiet. Complete your first delivery to wake it up.
+            Pack tofu while parked. The Tofu Press also adds stock over time.
           </p>
+          <p class="nospill-panel-helper" id="fulfill-shop-order-helper">
+            Prep Counter needs delivery orders first.
+          </p>
+        </div>
+
+        <div class="nospill-shop-panel" aria-labelledby="shop-generators-title">
+          <h4 id="shop-generators-title">Generators</h4>
+          <div class="nospill-generator-list" id="shop-generator-list"></div>
         </div>
 
         <div class="nospill-shop-panel" aria-labelledby="shop-upgrades-title">

@@ -1,9 +1,10 @@
 # Tofu Driver
 
-Tofu Driver is a browser-only smooth-driving experiment. It uses phone motion sensors to run
-`The Cup Test`: a simple challenge where the driver tries to keep a virtual cup from spilling.
-The current app layers a local-first `Delivery Log` and parked-only `Tofu Shop` over that challenge,
-where each run is framed as a fragile tofu cargo delivery and smooth deliveries build shop progress.
+Tofu Driver is a browser-only cozy delivery-management game with an optional smooth-driving
+certification path. The base game is the parked-only `Tofu Shop`: tofu stock ticks upward,
+delivery orders get prepared, and users can fulfill shop orders at home. `The Cup Test` uses phone
+motion sensors as a certified smooth-delivery boost where the driver tries to keep a virtual cup
+from spilling.
 
 The app is intentionally lightweight:
 
@@ -15,8 +16,9 @@ The app is intentionally lightweight:
 - local results stored only in browser `localStorage`
 - secret shirts and future physical merch fulfilled through Super Cute Collectibles
 - animated tofu cargo visualization driven by local motion data, not speed
-- story-first landing flow with Today's Delivery, one Next Best Action CTA, and compact teaser cards
-- parked-only Tofu Shop resources, three starter upgrades, and Delivery Wall progress
+- story-first landing flow with Today's Delivery, one home-shop Next Best Action CTA, and optional Cup Test certification
+- parked-only Tofu Shop resources, generator ticking, Fulfill Shop Order, starter upgrades, and Delivery Wall progress
+- home progression through Tofu Stock, Delivery Orders, Tips, Reputation, and Shop Level without sensors
 - consolidated Delivery/Practice Complete result screen that returns to the updated dashboard/shop
 - Practice Mode grants modest local progress; qualified delivery criteria gate Perfect Pour and merch progress
 - cosmetic Delivery Crew character unlocks and local Sound Pack unlocks

@@ -64,8 +64,12 @@ globalThis.updateCommuteMastery = updateCommuteMastery;
 globalThis.getShopLevel = getShopLevel;
 globalThis.getShopUpgradeCatalog = getShopUpgradeCatalog;
 globalThis.getShopProductionRate = getShopProductionRate;
+globalThis.getShopGeneratorRates = getShopGeneratorRates;
+globalThis.calculateShopGeneratorEarnings = calculateShopGeneratorEarnings;
+globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.packTofu = packTofu;
+globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.buyShopUpgrade = buyShopUpgrade;
 globalThis.applyDeliveryToShop = applyDeliveryToShop;
 globalThis.sanitizeShopStateForExport = sanitizeShopStateForExport;
@@ -279,8 +283,11 @@ function testTofuDriverBrandHierarchy() {
   assert(html.includes('Pack Tofu'));
   assert(html.includes('Delivery Wall'));
   assert(html.includes('Tofu Stock'));
+  assert(html.includes('Delivery Orders'));
   assert(html.includes('Reputation'));
-  assert(html.includes('Idle Production'));
+  assert(html.includes('Tofu Stock Rate'));
+  assert(html.includes('Delivery Orders Rate'));
+  assert(html.includes('Prep Counter'));
   assert(html.includes('Delivery Crew'));
   assert(html.includes('Character Unlocks'));
   assert(html.includes('Sound Effect Unlocks'));
@@ -293,6 +300,7 @@ function testTofuDriverBrandHierarchy() {
     html.indexOf('id="unsupported-view"'),
   );
   assert(!runViewHtml.includes('Pack Tofu'));
+  assert(!runViewHtml.includes('Fulfill Shop Order'));
   assert(!runViewHtml.includes('game-pack-tofu-button'));
   assert(!runViewHtml.includes('data-shop-upgrade'));
   assert(!runViewHtml.includes('data-character-id'));
@@ -335,21 +343,22 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('id="game-daily-goal"'));
   assert(html.includes('id="game-daily-reward"'));
   assert(html.includes('id="game-next-action-title"'));
-  assert(html.includes('Next: Take the Cup Test'));
-  assert(html.includes('Complete your first delivery to wake up the shop.'));
+  assert(html.includes('Next: Start the Tofu Shop'));
+  assert(html.includes('Pack your first order at home'));
+  assert(html.includes('id="game-certified-cta-button"'));
   assert(html.includes('id="game-driver-license"'));
   assert(html.includes('Level 1 &middot; Rookie Carrier'));
   assert(html.includes('id="game-total-xp"'));
   assert(html.includes('0 XP'));
   assert(html.includes('id="game-gear-progress"'));
   assert(html.includes('0/3'));
-  assert(html.includes('The shop is quiet. Complete your first delivery to wake it up.'));
+  assert(html.includes('The press is warming up. Play at home'));
   assert(html.includes('The passport opens after your first stamp-worthy delivery.'));
   assert(html.includes('No one is on shift yet. Your first delivery may attract help.'));
   assert(html.includes('New sounds unlock as your delivery reputation grows.'));
   assert(html.includes('id="game-teaser-grid"'));
   assert(html.includes('nospill-section nospill-delivery-log is-hidden'));
-  assert(html.includes('nospill-section nospill-tofu-shop is-hidden'));
+  assert(html.includes('id="tofu-shop"'));
   assert(html.includes('nospill-section nospill-collection is-hidden'));
   assert(html.includes('Settings / Progress Tools'));
   const firstRunMain = html.slice(dashboardIndex, html.indexOf('id="how-it-works"'));
@@ -357,6 +366,8 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(!firstRunMain.includes('Import Progress'));
   assert(!firstRunMain.includes('Reset Progress'));
   assert(html.includes('nospill-game-primary-cta'));
+  assert(html.includes('Fulfill Shop Order'));
+  assert(html.includes('Tips'));
   assert(html.indexOf('id="game-daily-goal"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-daily-reward"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-driver-license"'));
@@ -388,6 +399,7 @@ elements = {
   gameNextActionTitle: makeNode(),
   gameNextActionCopy: makeNode(),
   gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
   gameDailyProgress: makeNode(),
   gameDriverLicense: makeNode(),
   gameTotalXP: makeNode(),
@@ -417,10 +429,10 @@ globalThis.activeDashboardActionDisabled = elements.gameCtaButton.disabled;
 `, context);
 
   assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
-  assert.strictEqual(context.dashboardActionTitle, 'Next: Take the Cup Test');
-  assert.strictEqual(context.dashboardActionCopy, 'Complete your first delivery to wake up the shop.');
-  assert.strictEqual(context.dashboardActionLabel, 'Take the Cup Test');
-  assert.strictEqual(context.dashboardActionType, 'cup_test');
+  assert.strictEqual(context.dashboardActionTitle, 'Next: Start the Tofu Shop');
+  assert(context.dashboardActionCopy.includes('Pack your first order at home'));
+  assert.strictEqual(context.dashboardActionLabel, 'Start the Shop');
+  assert.strictEqual(context.dashboardActionType, 'start_shop');
   assert.strictEqual(context.dashboardTotalXp, '0 XP');
   assert.strictEqual(context.dashboardGear, '0/3');
   assert.strictEqual(context.dashboardTeasersHidden, false);
@@ -472,11 +484,18 @@ elements = {
   gamePackTofuButton: makeNode(),
   shopLevelBadge: makeNode(),
   shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
   shopReputation: makeNode(),
   shopLevelProgress: makeNode(),
   shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopPrepStatus: makeNode(),
   packTofuButton: makeNode(),
   packTofuHelper: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopGeneratorList: makeNode(),
   shopUpgradeList: makeNode(),
   deliveryWallGrid: makeNode(),
   shopOfflineEarnings: makeNode(),
@@ -503,6 +522,9 @@ globalThis.firstCollectionSectionHidden = elements.collectionSection.classListVa
 globalThis.firstPackDisabled = elements.packTofuButton.disabled;
 globalThis.firstPackText = elements.packTofuButton.textContent;
 globalThis.firstPackHelper = elements.packTofuHelper.textContent;
+globalThis.firstFulfillDisabled = elements.fulfillShopOrderButton.disabled;
+globalThis.firstFulfillHelper = elements.fulfillShopOrderHelper.textContent;
+globalThis.firstGeneratorHtml = elements.shopGeneratorList.innerHTML;
 globalThis.firstUpgradeHtml = elements.shopUpgradeList.innerHTML;
 globalThis.firstCharacterHtml = elements.characterList.innerHTML;
 globalThis.firstSoundHtml = elements.soundPackList.innerHTML;
@@ -521,6 +543,7 @@ globalThis.afterDashboardStock = elements.gameShopStock.textContent;
 globalThis.afterDashboardPassport = elements.gamePassportEmpty.textContent;
 globalThis.afterPackDisabled = elements.packTofuButton.disabled;
 globalThis.afterPackText = elements.packTofuButton.textContent;
+globalThis.afterGeneratorHtml = elements.shopGeneratorList.innerHTML;
 globalThis.afterUpgradeHtml = elements.shopUpgradeList.innerHTML;
 globalThis.afterCharacterHtml = elements.characterList.innerHTML;
 globalThis.afterSoundHtml = elements.soundPackList.innerHTML;
@@ -529,20 +552,26 @@ appState.running = true;
 renderTofuShop(simulated.gameState);
 renderCollectionPanel(simulated.gameState);
 globalThis.activePackDisabled = elements.packTofuButton.disabled;
+globalThis.activeGeneratorHtml = elements.shopGeneratorList.innerHTML;
 globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
 `, context);
 
-  assert.strictEqual(context.firstReveal.shop, false);
+  assert.strictEqual(context.firstReveal.shop, true);
   assert.strictEqual(context.firstReveal.passport, false);
   assert.strictEqual(context.firstReveal.crew, false);
   assert.strictEqual(context.firstReveal.sounds, false);
   assert.strictEqual(context.firstDeliveryBoardHidden, true);
-  assert.strictEqual(context.firstShopSectionHidden, true);
+  assert.strictEqual(context.firstShopSectionHidden, false);
   assert.strictEqual(context.firstCollectionSectionHidden, true);
-  assert.strictEqual(context.firstPackDisabled, true);
-  assert.strictEqual(context.firstPackText, 'Complete First Delivery');
-  assert(context.firstPackHelper.includes('The shop is quiet'));
-  assert(context.firstUpgradeHtml.includes('The press is still cold'));
+  assert.strictEqual(context.firstPackDisabled, false);
+  assert.strictEqual(context.firstPackText, 'Pack Tofu');
+  assert(context.firstPackHelper.includes('Pack tofu while parked'));
+  assert.strictEqual(context.firstFulfillDisabled, true);
+  assert(context.firstFulfillHelper.includes('Prep Counter needs delivery orders first'));
+  assert(context.firstGeneratorHtml.includes('Tofu Press'));
+  assert(context.firstGeneratorHtml.includes('+3 tofu / min'));
+  assert(context.firstGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(context.firstUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
   assert(context.firstCharacterHtml.includes('No one is on shift yet. Your first delivery may attract help.'));
   assert(!context.firstCharacterHtml.includes('data-character-id'));
   assert(context.firstSoundHtml.includes('New sounds unlock as your delivery reputation grows.'));
@@ -560,6 +589,9 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert(context.afterDashboardPassport.includes('/13 stamps collected.'));
   assert.strictEqual(context.afterPackDisabled, false);
   assert.strictEqual(context.afterPackText, 'Pack Tofu');
+  assert(context.afterGeneratorHtml.includes('Tofu Press'));
+  assert(context.afterGeneratorHtml.includes('+3 tofu / min'));
+  assert(context.afterGeneratorHtml.includes('Prep Counter'));
   assert(context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
   assert(context.afterCharacterHtml.includes('Angry Tofu Driver'));
   assert(context.afterCharacterHtml.includes('data-character-id="angry_tofu_driver"'));
@@ -567,6 +599,8 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert(context.afterSoundHtml.includes('data-sound-pack-id="retro_arcade"'));
   assert.strictEqual(context.afterPreviewDisabled, false);
   assert.strictEqual(context.activePackDisabled, true);
+  assert(context.activeGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(context.activeGeneratorHtml.includes('disabled'));
   assert.strictEqual(context.activePreviewDisabled, true);
 }
 
@@ -576,9 +610,15 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
   });
   const first = context.defaultGameState();
   const firstAction = context.nextBestAction(first, { date: new Date('2026-06-14T12:00:00.000Z') });
-  assert.strictEqual(firstAction.type, 'cup_test');
-  assert.strictEqual(firstAction.title, 'Next: Take the Cup Test');
-  assert.strictEqual(firstAction.buttonLabel, 'Take the Cup Test');
+  assert.strictEqual(firstAction.type, 'start_shop');
+  assert.strictEqual(firstAction.title, 'Next: Start the Tofu Shop');
+  assert.strictEqual(firstAction.buttonLabel, 'Start the Shop');
+
+  const startedShop = context.packTofu(first, { activeDrive: false }).gameState;
+  const packAction = context.nextBestAction(startedShop, {
+    date: new Date('2026-06-14T12:00:00.000Z'),
+  });
+  assert.strictEqual(packAction.type, 'pack_tofu');
 
   const incompleteDaily = context.applySimulatedDelivery(
     'shaky_practice',
@@ -588,22 +628,25 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
   const incompleteAction = context.nextBestAction(incompleteDaily, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
-  assert.strictEqual(incompleteAction.type, 'cup_test');
-  assert(incompleteAction.copy.includes("Deliver today's cargo"));
+  assert(['pack_tofu', 'fulfill_shop_order', 'buy_upgrade', 'cup_test'].includes(incompleteAction.type));
 
   const completeDaily = context.applySimulatedDelivery(
     'smooth_commute',
     first,
     { now: new Date('2026-06-14T12:00:00.000Z') },
   ).gameState;
-  const packAction = context.nextBestAction(completeDaily, {
+  const fulfillReady = JSON.parse(JSON.stringify(completeDaily));
+  fulfillReady.shop.deliveryOrders = 2;
+  const fulfillAction = context.nextBestAction(fulfillReady, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
-  assert.strictEqual(packAction.type, 'pack_tofu');
-  assert.strictEqual(packAction.title, 'Next: Pack Tofu');
+  assert.strictEqual(fulfillAction.type, 'fulfill_shop_order');
+  assert.strictEqual(fulfillAction.title, 'Next: Fulfill Shop Order');
 
   const funded = JSON.parse(JSON.stringify(completeDaily));
   funded.shop.tofuStock = 500;
+  funded.shop.deliveryOrders = 0;
+  funded.shop.lifetimeTofuPacked = 1;
   const upgradeAction = context.nextBestAction(funded, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
@@ -630,6 +673,7 @@ elements = {
   gameNextActionTitle: makeNode(),
   gameNextActionCopy: makeNode(),
   gameCtaButton: makeNode(),
+  gameCertifiedCtaButton: makeNode(),
   gameDailyProgress: makeNode(),
   gameDriverLicense: makeNode(),
   gameTotalXP: makeNode(),
@@ -651,9 +695,9 @@ globalThis.topActionTitle = elements.gameNextActionTitle.textContent;
 globalThis.topActionButton = elements.gameCtaButton.textContent;
 globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
 `, context);
-  assert.strictEqual(context.topActionTitle, 'Next: Take the Cup Test');
-  assert.strictEqual(context.topActionButton, 'Take the Cup Test');
-  assert.strictEqual(context.topActionType, 'cup_test');
+  assert.strictEqual(context.topActionTitle, 'Next: Start the Tofu Shop');
+  assert.strictEqual(context.topActionButton, 'Start the Shop');
+  assert.strictEqual(context.topActionType, 'start_shop');
 
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const actionStart = html.indexOf('class="nospill-next-action-card"');
@@ -663,6 +707,7 @@ globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
   );
   assert.strictEqual((actionArea.match(/nospill-primary/g) || []).length, 1);
   assert(!actionArea.includes('game-pack-tofu-button'));
+  assert(actionArea.includes('game-certified-cta-button'));
 }
 
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
@@ -1366,16 +1411,25 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   const context = loadNoSpillContext();
   const state = context.defaultGameState();
   assert.strictEqual(state.shop.tofuStock, 0);
+  assert.strictEqual(state.shop.deliveryOrders, 0);
+  assert.strictEqual(state.shop.tips, 0);
   assert.strictEqual(state.shop.reputation, 0);
   assert.strictEqual(state.shop.shopLevel, 1);
+  assert.strictEqual(state.shop.generators.tofuPress.unlocked, true);
+  assert.strictEqual(context.getShopGeneratorRates(state).tofuPressPerMinute, 3);
 
   const activePack = context.packTofu(state, { activeDrive: true });
   assert.strictEqual(activePack.ok, false);
   assert.strictEqual(activePack.gameState.shop.tofuStock, 0);
 
-  const lockedPack = context.packTofu(state, { activeDrive: false });
-  assert.strictEqual(lockedPack.ok, false);
-  assert(lockedPack.reason.includes('The shop is quiet'));
+  const firstHomePack = context.packTofu(state, { activeDrive: false });
+  assert.strictEqual(firstHomePack.ok, true);
+  assert.strictEqual(firstHomePack.gameState.shop.tofuStock, 1);
+  assert.strictEqual(firstHomePack.gameState.shop.reputation, 0);
+
+  const emptyOrder = context.fulfillShopOrder(firstHomePack.gameState, { activeDrive: false });
+  assert.strictEqual(emptyOrder.ok, false);
+  assert(emptyOrder.reason.includes('Prep Counter needs delivery orders first'));
 
   const delivery = context.applySimulatedDelivery(
     'smooth_commute',
@@ -1393,16 +1447,93 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
     parkedPack.gameState.shop.reputation,
     delivery.gameState.shop.reputation,
   );
+  assert.strictEqual(delivery.gameState.shop.generators.tofuPress.unlocked, true);
+  assert.strictEqual(delivery.gameState.shop.generators.tofuPress.level, 1);
+  assert.strictEqual(context.getShopGeneratorRates(delivery.gameState).tofuPressPerMinute, 3);
+
+  const tickState = JSON.parse(JSON.stringify(delivery.gameState));
+  tickState.shop.tofuStock = 0;
+  tickState.shop.generators.prepCounter = { unlocked: false, level: 0 };
+  tickState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
+  const ticked = context.applyShopGeneratorTick(
+    tickState,
+    new Date('2026-06-14T12:01:00.000Z'),
+  );
+  assert.strictEqual(ticked.changed, true);
+  assert.strictEqual(ticked.gameState.shop.tofuStock, 3);
+  assert.strictEqual(ticked.gameState.shop.deliveryOrders, 0);
+
+  const prepState = context.defaultGameState();
+  prepState.shop.tofuStock = 10;
+  prepState.shop.reputation = 160;
+  prepState.shop.shopLevel = context.getShopLevel(prepState.shop.reputation);
+  prepState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
+  const prepTick = context.applyShopGeneratorTick(
+    prepState,
+    new Date('2026-06-14T12:01:00.000Z'),
+  );
+  assert.strictEqual(prepTick.gameState.shop.generators.prepCounter.unlocked, true);
+  assert.strictEqual(prepTick.gameState.shop.deliveryOrders, 1);
+  assert.strictEqual(prepTick.gameState.shop.tofuStock, 11);
+  assert(prepTick.earnings.tofuConsumed > 0);
+
+  const consumeState = context.defaultGameState();
+  consumeState.shop.tofuStock = 10;
+  consumeState.shop.reputation = 300;
+  consumeState.shop.shopLevel = context.getShopLevel(consumeState.shop.reputation);
+  consumeState.shop.upgrades.prep_counter = 3;
+  consumeState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
+  const consumeTick = context.applyShopGeneratorTick(
+    consumeState,
+    new Date('2026-06-14T12:01:00.000Z'),
+  );
+  assert.strictEqual(consumeTick.gameState.shop.deliveryOrders, 4);
+  assert.strictEqual(consumeTick.gameState.shop.tofuStock, 5);
+  assert(consumeTick.earnings.tofuStock < 0);
+
+  const fulfilled = context.fulfillShopOrder(prepTick.gameState, { activeDrive: false });
+  assert.strictEqual(fulfilled.ok, true);
+  assert.strictEqual(fulfilled.tipsGained, 10);
+  assert.strictEqual(fulfilled.reputationGained, 1);
+  assert.strictEqual(fulfilled.xpGained, 4);
+  assert.strictEqual(fulfilled.gameState.shop.deliveryOrders, 0);
+  assert.strictEqual(fulfilled.gameState.shop.tips, 10);
+  assert.strictEqual(fulfilled.gameState.shop.reputation, prepTick.gameState.shop.reputation + 1);
+
+  const activeOrder = context.fulfillShopOrder(prepTick.gameState, { activeDrive: true });
+  assert.strictEqual(activeOrder.ok, false);
+  assert.strictEqual(activeOrder.gameState.shop.deliveryOrders, prepTick.gameState.shop.deliveryOrders);
+
+  const waitingState = context.defaultGameState();
+  waitingState.shop.reputation = 160;
+  waitingState.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
+  const waitingRates = context.getShopGeneratorRates(waitingState);
+  assert.strictEqual(waitingRates.prepStatus, 'Waiting for tofu stock');
+  const waitingTick = context.applyShopGeneratorTick(
+    waitingState,
+    new Date('2026-06-14T12:00:10.000Z'),
+  );
+  assert(waitingTick.gameState.shop.tofuStock >= 0);
+  assert(waitingTick.gameState.shop.deliveryOrders >= 0);
 
   const productionState = context.defaultGameState();
-  productionState.shop.upgrades.tofu_press = 2;
-  productionState.shop.lastShopTickAt = '2026-06-14T00:00:00.000Z';
+  productionState.shop.tofuStock = 100;
+  productionState.shop.reputation = 160;
+  productionState.shop.lastGeneratorTickAt = '2026-06-14T00:00:00.000Z';
   const offline = context.calculateOfflineShopEarnings(
     productionState,
     new Date('2026-06-14T10:00:00.000Z'),
   );
   assert.strictEqual(offline.cappedHours, 8);
-  assert.strictEqual(offline.tofuStock, 96);
+  assert(offline.tofuStock > 0);
+  assert(offline.deliveryOrders > 0);
+  const offlineApplied = context.applyShopGeneratorTick(
+    productionState,
+    new Date('2026-06-14T10:00:00.000Z'),
+    { maxSeconds: 8 * 3600 },
+  );
+  assert(offlineApplied.gameState.shop.tofuStock >= 0);
+  assert.strictEqual(offlineApplied.gameState.shop.deliveryOrders, offline.deliveryOrders);
 
   const insufficient = context.buyShopUpgrade('tofu_press', context.defaultGameState());
   assert.strictEqual(insufficient.ok, false);
@@ -1414,6 +1545,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   const upgraded = context.buyShopUpgrade('tofu_press', funded);
   assert.strictEqual(upgraded.ok, true);
   assert.strictEqual(upgraded.gameState.shop.upgrades.tofu_press, 1);
+  assert.strictEqual(upgraded.gameState.shop.generators.prepCounter.unlocked, true);
   assert(context.getShopProductionRate(upgraded.gameState) > 0);
 
   assert.strictEqual(context.getShopLevel(0), 1);
@@ -1421,7 +1553,7 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
   const catalog = context.getShopUpgradeCatalog();
   assert.strictEqual(
     JSON.stringify(catalog.map((upgrade) => upgrade.id)),
-    JSON.stringify(['tofu_press', 'better_boxes', 'shop_sign']),
+    JSON.stringify(['tofu_press', 'prep_counter', 'better_boxes', 'shop_sign']),
   );
   catalog.forEach((upgrade) => {
     const text = `${upgrade.name} ${upgrade.description} ${upgrade.effect}`;
@@ -1447,11 +1579,43 @@ function testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly() {
     distanceMiles: 6,
   }), baseState);
   assert.strictEqual(slow.shop.tofuStockGained, fast.shop.tofuStockGained);
+  assert.strictEqual(slow.shop.tipsGained, fast.shop.tipsGained);
   assert.strictEqual(slow.shop.reputationGained, fast.shop.reputationGained);
+  assert.strictEqual(
+    JSON.stringify(slow.shop.certifiedBoost),
+    JSON.stringify(fast.shop.certifiedBoost),
+  );
   assert(slow.shop.tofuStockGained > 0);
+  assert(slow.shop.tipsGained > 0);
   assert(slow.shop.reputationGained > 0);
+  assert.strictEqual(slow.shop.certifiedBoost.applied, true);
   assert(!('storyChapters' in slow.gameState.shop));
   assert(!('contracts' in slow.gameState.shop));
+
+  const generatorSlow = context.defaultGameState();
+  generatorSlow.shop.tofuStock = 100;
+  generatorSlow.shop.reputation = 160;
+  generatorSlow.recentSessions = [{ averageMovingSpeedMph: 12 }];
+  generatorSlow.shop.lastGeneratorTickAt = '2026-06-14T12:00:00.000Z';
+  const generatorFast = JSON.parse(JSON.stringify(generatorSlow));
+  generatorFast.recentSessions = [{ averageMovingSpeedMph: 90, topSpeedMph: 110 }];
+  assert.strictEqual(
+    JSON.stringify(context.getShopGeneratorRates(generatorSlow)),
+    JSON.stringify(context.getShopGeneratorRates(generatorFast)),
+  );
+  const slowGeneratorTick = context.applyShopGeneratorTick(
+    generatorSlow,
+    new Date('2026-06-14T12:01:00.000Z'),
+  );
+  const fastGeneratorTick = context.applyShopGeneratorTick(
+    generatorFast,
+    new Date('2026-06-14T12:01:00.000Z'),
+  );
+  assert.strictEqual(slowGeneratorTick.gameState.shop.tofuStock, fastGeneratorTick.gameState.shop.tofuStock);
+  assert.strictEqual(
+    slowGeneratorTick.gameState.shop.deliveryOrders,
+    fastGeneratorTick.gameState.shop.deliveryOrders,
+  );
 
   const practice = context.calculateDeliveryRewards(sampleDeliverySession({
     mode: 'basic',
@@ -1462,6 +1626,14 @@ function testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly() {
   }), context.defaultGameState());
   assert(practice.shop.tofuStockGained <= 8);
   assert.strictEqual(practice.shop.reputationGained, 0);
+  assert.strictEqual(practice.shop.certifiedBoost.applied, false);
+
+  const simulated = context.applySimulatedDelivery(
+    'smooth_commute',
+    context.defaultGameState(),
+    { now: new Date('2026-06-14T12:00:00.000Z'), excludeMerch: false },
+  );
+  assert.strictEqual(simulated.rewards.shop.certifiedBoost.applied, false);
 
   const exportedShop = context.sanitizeShopStateForExport(slow.gameState);
   assert(exportedShop.tofuStock > 0);
@@ -1730,6 +1902,10 @@ globalThis.unlockedWallHtml = elements.deliveryWallGrid.innerHTML;
 `, context);
 
   assert(context.lockedWallHtml.includes('No-Spill Club Gear'));
+  assert(context.lockedWallHtml.includes('Shop Unlocks'));
+  assert(context.lockedWallHtml.includes('Certified Delivery Unlocks'));
+  assert(context.lockedWallHtml.includes('Shop Unlocks come from growing the Tofu Shop.'));
+  assert(context.lockedWallHtml.includes('Certified Delivery Unlocks come from qualified smooth-driving results.'));
   assert(!context.lockedWallHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
   assert(!context.lockedWallHtml.includes('Buy unlocked shirt'));
   assert(context.unlockedWallHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
