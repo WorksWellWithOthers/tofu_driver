@@ -64,6 +64,9 @@
   smooth-control philosophy/proof.
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
+- `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
+  study and safely translates recursive production, next-milestone, station-milestone, automation,
+  achievement, challenge, and prestige lessons into future Tofu Shop concepts.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -94,14 +97,16 @@ Canonical references:
    and Shop Sign are clear.
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
-6. Expand balance tests only where playtesting reveals gaps:
+6. Consider the smallest Antimatter-inspired architecture slice only after first-loop playtesting:
+   a single Next Milestone bar or station milestone visibility, not automation/prestige/challenges.
+7. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-8. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+8. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+9. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-9. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-10. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+10. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+11. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Do not build advanced systems next. The First Loop Contract is now implemented enough for
 playtesting; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
@@ -125,6 +130,7 @@ Deferred until after the First Loop Contract is playtested:
 - Garage
 - Dream Garage / Project Car progression
 - Tofu Demand Board / Supplier Market / Garage Parts Market
+- Next Milestone bar / station milestone boosts / Counter Service automation
 - Shop Spirit
 - Rivals
 - License

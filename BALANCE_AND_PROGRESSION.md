@@ -85,6 +85,12 @@ screen space by solving a bottleneck the player has already felt.
 include demand boards, supplier offers, opportunity cards, and garage markets, but those systems
 should not be implemented until the First Loop Contract and first 10 minutes are playtested.
 
+`EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` is a future progression-architecture study
+only. Its safe translations include a single Next Milestone bar, station milestone boosts,
+automation after mastery, challenge-like shop trials, and later prestige visibility. These ideas
+should support the existing Tofu Shop cascade without copying reference theme, formulas, UI, names,
+or implementation details.
+
 ## 2. Core Loop
 
 The first playable loop has eight steps.
@@ -234,6 +240,20 @@ exact. Discrete missing requirements such as Prep Slots, ready orders, station c
 License Stars round up in disabled reasons. Small live balances may show short decimals when that is
 needed to make ticking visible, but long raw decimals should never be exposed.
 
+### Next Milestone Bar Target
+
+A future small UI slice may add one compact `Next Milestone` bar to Overview. It should show only
+the next relevant threshold, such as First 10 Orders, First 100 Tips, First Family Tofu Tray,
+Delivery Shelf unlock, Shop Sign unlock, or a much later License Exam preview.
+
+Rules:
+
+- one visible milestone at a time
+- no full future roadmap
+- no advanced tab unlock from raw idle accumulation alone
+- milestone changes should follow meaningful actions, stamps, or bottlenecks
+- current status: Documented only / future
+
 ### Order Size Ladder
 
 Raw Tofu Stock must not directly multiply Tips. Instead, stock matters because larger order types
@@ -273,6 +293,10 @@ Order design rules:
 
 The full shop progression borrows the structure of strong cascading incremental games, but every
 system is translated into shop, delivery, license, and courier language.
+
+External progression reference note: the Antimatter Dimensions audit reinforces this cascade rule.
+Later systems should make Tofu Press, Prep Counter, Delivery Shelf, Shop Sign, orders, and stamps
+more valuable rather than replacing them.
 
 | Tier | Station/System | Produces/Boosts | Consumes | Main Purpose | Unlock Timing | Player Decision |
 | ---: | --- | --- | --- | --- | --- | --- |

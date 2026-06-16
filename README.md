@@ -87,6 +87,9 @@ The static app uses hash routing:
   Tofu Shop spine, plus the V1 implementation slice boundaries
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md`: read-only external mechanics study translated into
   future-safe Tofu Driver shop/garage concepts; not implemented behavior
+- `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md`: read-only progression-architecture study
+  translated into future-safe Tofu Shop milestone, automation, stamp, challenge, and prestige
+  concepts; not implemented behavior
 - `IMPLEMENTATION_STATUS.md`: what is actually implemented, partial, placeholder, decorative,
   documented only, or non-goal, with file/test evidence
 - `PLAN.md`: tactical next steps, questions, and non-goals

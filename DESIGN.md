@@ -187,6 +187,10 @@ Current design principles:
 - Tofu Shop borrows the structure of cascading incremental games, but translates it into shop
   stations, prepared orders, fictional route cards, License Exams, and cozy delivery-management
   language.
+- External progression references may inform this cascade, but only after translation into Tofu
+  Driver language. The Antimatter Dimensions audit is useful for next-milestone bars, station
+  milestone boosts, automation-after-mastery, and prestige pacing; it is not a source for theme,
+  formulas, UI, names, or implementation details.
 - each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
@@ -511,10 +515,16 @@ Future shop/incremental ideas:
 - external mechanics reference study: `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` translates useful
   capacity, demand, opportunity, and goal-pressure lessons into safe Tofu Driver concepts without
   copying GPL code/content or incompatible theme
+- external progression-architecture study: `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md`
+  translates recursive production, next-milestone, automation, achievement, challenge, and prestige
+  lessons into safe future Tofu Shop concepts
 - Tofu Demand Board
 - Supplier Market
 - Customer Rush Events
 - Daily Opportunity Cards
+- Next Milestone bar
+- station milestone boosts
+- Counter Service / Regular Customers automation after mastery
 - covered project car reveal
 - Dream Garage
 - Garage Parts Market
