@@ -43,6 +43,8 @@ The static app uses hash routing:
   Project Car progression, and balance tests
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
+- `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md`: read-only external mechanics study translated into
+  future-safe Tofu Driver shop/garage concepts; not implemented behavior
 - `IMPLEMENTATION_STATUS.md`: what is actually implemented, partial, placeholder, decorative,
   documented only, or non-goal, with file/test evidence
 - `PLAN.md`: tactical next steps, questions, and non-goals

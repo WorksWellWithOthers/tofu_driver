@@ -38,6 +38,8 @@
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
+- `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
+  translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Discord, payments, accounts, backend sync, analytics, ads, service workers, and public profiles
@@ -92,6 +94,7 @@ Deferred until after the First Loop Contract is playtested:
 - Crew
 - Garage
 - Dream Garage / Project Car progression
+- Tofu Demand Board / Supplier Market / Garage Parts Market
 - Shop Spirit
 - Rivals
 - License

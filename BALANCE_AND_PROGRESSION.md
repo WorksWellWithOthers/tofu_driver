@@ -81,6 +81,10 @@ reason to exist.
 The first implementation priority is still the smallest fun loop. Larger systems should earn their
 screen space by solving a bottleneck the player has already felt.
 
+`EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` is a future mechanics study only. Its safe translations
+include demand boards, supplier offers, opportunity cards, and garage markets, but those systems
+should not be implemented until the First Loop Contract and first 10 minutes are playtested.
+
 ## 2. Core Loop
 
 The first playable loop has eight steps.

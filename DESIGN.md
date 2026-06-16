@@ -444,9 +444,19 @@ Long-arc inspiration:
 
 Future shop/incremental ideas:
 
+- external mechanics reference study: `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` translates useful
+  capacity, demand, opportunity, and goal-pressure lessons into safe Tofu Driver concepts without
+  copying GPL code/content or incompatible theme
+- Tofu Demand Board
+- Supplier Market
+- Customer Rush Events
+- Daily Opportunity Cards
 - covered project car reveal
 - Dream Garage
+- Garage Parts Market
 - staged project car builds
+- Dream Jar / Project Budget
+- Project Car Value
 - fictional closed-course events
 - project car completion or sale as prestige
 - next project car starts stronger
