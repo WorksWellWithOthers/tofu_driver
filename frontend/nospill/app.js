@@ -219,6 +219,7 @@ const SHOP_OFFLINE_CAP_HOURS = 8;
 const SHOP_GENERATOR_TICK_MS = 1000;
 const SHOP_GENERATOR_SAVE_MS = 5000;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
+const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
 const PREP_COUNTER_CONSUME_PER_ORDER = 2;
 const PREP_COUNTER_BASE_ORDERS_PER_SECOND = 1 / 40;
@@ -2025,6 +2026,13 @@ function defaultShopState() {
     ledger: [],
     lastShopTickAt: "",
     lastGeneratorTickAt: "",
+    counterService: {
+      running: false,
+      priority: "best_available",
+      lastHandoffAt: "",
+      lastResult: "",
+      lifetimeHandoffs: 0,
+    },
     offlineEarnings: {
       tofuStock: 0,
       deliveryOrders: 0,
@@ -2057,6 +2065,18 @@ function normalizeShopGenerators(generators) {
       ];
     }),
   );
+}
+
+function normalizeCounterService(counterService) {
+  const source = counterService && typeof counterService === "object" ? counterService : {};
+  const priority = source.priority === "simple_only" ? "simple_only" : "best_available";
+  return {
+    running: Boolean(source.running),
+    priority,
+    lastHandoffAt: typeof source.lastHandoffAt === "string" ? source.lastHandoffAt : "",
+    lastResult: typeof source.lastResult === "string" ? source.lastResult.slice(0, 180) : "",
+    lifetimeHandoffs: safeNonNegativeInteger(source.lifetimeHandoffs, 0, 1000000),
+  };
 }
 
 function normalizeUpgradeLevels(upgrades) {
@@ -2179,6 +2199,7 @@ function normalizeShopState(shop) {
     lastShopTickAt: typeof source.lastShopTickAt === "string" ? source.lastShopTickAt : "",
     lastGeneratorTickAt:
       typeof source.lastGeneratorTickAt === "string" ? source.lastGeneratorTickAt : "",
+    counterService: normalizeCounterService(source.counterService),
     offlineEarnings: {
       tofuStock: safeNonNegativeInteger(
         source.offlineEarnings && source.offlineEarnings.tofuStock,
@@ -3692,6 +3713,10 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
 function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   let next = normalizeGameState(gameState);
   const previous = normalizeGameState(next);
+  const optionNowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const fulfilledAt = Number.isFinite(optionNowMs)
+    ? new Date(optionNowMs).toISOString()
+    : new Date().toISOString();
   if (options.activeDrive) {
     return { ok: false, reason: "Shop actions unlock after you finish and park.", gameState: next };
   }
@@ -3747,7 +3772,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     next = awardShopStamp(next, "first_100_tips").gameState;
   }
   let stampFanfare = null;
-  if (firstShopOrderStampUnlocked) {
+  if (firstShopOrderStampUnlocked && !options.suppressFanfare) {
     const queued = queueStampFanfare(next, "first_shop_order", {
       tipsGained,
       reputationGained,
@@ -3757,26 +3782,30 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     stampFanfare = queued.stampFanfare;
   }
   let discoveryFanfare = null;
-  if (shouldRevealUpgradesSystem(previous, next)) {
+  if (shouldRevealUpgradesSystem(previous, next) && !options.suppressFanfare) {
     const queued = queueDiscoveryFanfare(next, "upgrades");
     next = queued.gameState;
     discoveryFanfare = queued.discoveryFanfare;
   }
   syncShopGenerators(next);
-  next.shop.lastShopTickAt = new Date().toISOString();
-  next = addLedgerEntry(
-    next,
-    "order",
-    `Fulfilled ${quantity} ${orderType.name}${quantity > 1 ? "s" : ""}.${firstShopOrderStampUnlocked ? " First Shop Order stamp earned." : ""}`,
-  );
-  next.recentRewards = [{
-    date: next.shop.lastShopTickAt,
-    type: "shop_order",
-    label: quantity > 1 ? `${orderType.name}s Complete` : `${orderType.name} Complete`,
-    tipsGained,
-    reputationGained,
-    xpGained,
-  }, ...next.recentRewards].slice(0, 12);
+  next.shop.lastShopTickAt = fulfilledAt;
+  if (!options.skipLedger) {
+    next = addLedgerEntry(
+      next,
+      "order",
+      `Fulfilled ${quantity} ${orderType.name}${quantity > 1 ? "s" : ""}.${firstShopOrderStampUnlocked ? " First Shop Order stamp earned." : ""}`,
+    );
+  }
+  if (!options.skipRecentReward) {
+    next.recentRewards = [{
+      date: next.shop.lastShopTickAt,
+      type: "shop_order",
+      label: quantity > 1 ? `${orderType.name}s Complete` : `${orderType.name} Complete`,
+      tipsGained,
+      reputationGained,
+      xpGained,
+    }, ...next.recentRewards].slice(0, 12);
+  }
   return {
     ok: true,
     reason: "",
@@ -3796,6 +3825,195 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     shopLevelAfter: next.shop.shopLevel,
     shopLevelChanged: next.shop.shopLevel > previousShopLevel,
     report: `${orderType.name}${quantity > 1 ? "s" : ""} complete. Packed and handed off from the counter.${firstShopOrderStampUnlocked ? " First Shop Order stamp discovered." : ""}`,
+  };
+}
+
+function isCounterServiceUnlocked(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.stamps.first_10_orders) || fulfilledShopOrderCount(state) >= 10;
+}
+
+function counterServicePriorityLabel(priority) {
+  return priority === "simple_only" ? "Simple Only" : "Best Available";
+}
+
+function counterServiceOrderType(gameState) {
+  const state = normalizeGameState(gameState);
+  const priority = state.shop.counterService.priority || "best_available";
+  const candidates = priority === "simple_only"
+    ? ["simple_tofu_box"]
+    : ["festival_bento", "family_tofu_tray", "simple_tofu_box"];
+  return candidates
+    .map((orderTypeId) => shopOrderTypeById(orderTypeId))
+    .find((orderType) => (
+      orderType
+      && shopOrderTypeUnlocked(orderType, state)
+      && maxFulfillableShopOrderQuantity(state, orderType) > 0
+    )) || null;
+}
+
+function counterServiceProgress(gameState, now = new Date()) {
+  const state = normalizeGameState(gameState);
+  const service = state.shop.counterService;
+  const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
+  const lastMs = Date.parse(service.lastHandoffAt || "");
+  if (!isCounterServiceUnlocked(state)) {
+    return {
+      unlocked: false,
+      running: false,
+      percent: 0,
+      etaSeconds: null,
+      message: "Unlocks after 10 fulfilled shop orders.",
+    };
+  }
+  if (!service.running || appState.running || appState.calibrating) {
+    return {
+      unlocked: true,
+      running: false,
+      percent: 0,
+      etaSeconds: null,
+      message: "Paused. Start Counter Service when you want automatic pickups.",
+    };
+  }
+  if (!Number.isFinite(nowMs) || !Number.isFinite(lastMs) || nowMs <= lastMs) {
+    return {
+      unlocked: true,
+      running: true,
+      percent: 0,
+      etaSeconds: COUNTER_SERVICE_HANDOFF_SECONDS,
+      message: `Next handoff in ${formatShopCount(COUNTER_SERVICE_HANDOFF_SECONDS)} seconds.`,
+    };
+  }
+  const elapsed = Math.max(0, (nowMs - lastMs) / 1000);
+  const interval = COUNTER_SERVICE_HANDOFF_SECONDS;
+  const progressSeconds = elapsed % interval;
+  const etaSeconds = Math.max(1, Math.ceil(interval - progressSeconds));
+  return {
+    unlocked: true,
+    running: true,
+    percent: clampPercent((progressSeconds / interval) * 100),
+    etaSeconds,
+    message: `Next handoff in ${formatShopCount(etaSeconds)} seconds.`,
+  };
+}
+
+function startCounterService(gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Counter Service runs only while parked.", gameState: next };
+  }
+  if (!isCounterServiceUnlocked(next)) {
+    return { ok: false, reason: "Unlocks after 10 fulfilled shop orders.", gameState: next };
+  }
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const nowIso = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.shop.counterService.running = true;
+  next.shop.counterService.priority = next.shop.counterService.priority || "best_available";
+  if (!Number.isFinite(Date.parse(next.shop.counterService.lastHandoffAt || ""))) {
+    next.shop.counterService.lastHandoffAt = nowIso;
+  }
+  next.shop.counterService.lastResult = "Counter Service started.";
+  next.shop.lastShopTickAt = nowIso;
+  return { ok: true, reason: "", gameState: next };
+}
+
+function pauseCounterService(gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Counter Service controls unlock after you finish and park.", gameState: next };
+  }
+  if (!isCounterServiceUnlocked(next)) {
+    return { ok: false, reason: "Unlocks after 10 fulfilled shop orders.", gameState: next };
+  }
+  next.shop.counterService.running = false;
+  next.shop.counterService.lastResult = "Counter Service paused.";
+  return { ok: true, reason: "", gameState: next };
+}
+
+function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { gameState: next, changed: false, completed: 0, message: "" };
+  }
+  if (!isCounterServiceUnlocked(next) || !next.shop.counterService.running) {
+    return { gameState: next, changed: false, completed: 0, message: "" };
+  }
+  const nowMs = now instanceof Date ? now.getTime() : Date.parse(now);
+  const nowIso = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  const lastMs = Date.parse(next.shop.counterService.lastHandoffAt || "");
+  if (!Number.isFinite(lastMs) || !Number.isFinite(nowMs)) {
+    next.shop.counterService.lastHandoffAt = nowIso;
+    return { gameState: next, changed: true, completed: 0, message: "" };
+  }
+  const maxSeconds = Number.isFinite(Number(options.maxSeconds))
+    ? Math.max(0, Number(options.maxSeconds))
+    : SHOP_OPEN_TICK_MAX_SECONDS;
+  const elapsedSeconds = Math.min(maxSeconds, Math.max(0, (nowMs - lastMs) / 1000));
+  const attempts = Math.floor(elapsedSeconds / COUNTER_SERVICE_HANDOFF_SECONDS);
+  if (attempts < 1) {
+    return { gameState: next, changed: false, completed: 0, message: "" };
+  }
+
+  const totals = {
+    completed: 0,
+    tips: 0,
+    reputation: 0,
+    xp: 0,
+    orderCounts: {},
+    lastOrderType: null,
+  };
+
+  for (let index = 0; index < attempts; index += 1) {
+    const orderType = counterServiceOrderType(next);
+    if (!orderType) break;
+    const result = fulfillShopOrders(next, 1, {
+      activeDrive: false,
+      orderTypeId: orderType.id,
+      suppressFanfare: true,
+      skipLedger: true,
+      skipRecentReward: true,
+      now,
+    });
+    if (!result.ok) break;
+    next = result.gameState;
+    totals.completed += 1;
+    totals.tips += result.tipsGained;
+    totals.reputation += result.reputationGained;
+    totals.xp += result.xpGained;
+    totals.orderCounts[orderType.name] = (totals.orderCounts[orderType.name] || 0) + 1;
+    totals.lastOrderType = orderType;
+  }
+
+  next.shop.counterService.lastHandoffAt = nowIso;
+  if (totals.completed > 0) {
+    next.shop.counterService.lifetimeHandoffs = safeNonNegativeInteger(
+      next.shop.counterService.lifetimeHandoffs + totals.completed,
+      0,
+      1000000,
+    );
+    const message = totals.completed === 1 && totals.lastOrderType
+      ? `Counter Service: ${totals.lastOrderType.name} complete · +${formatShopCount(totals.tips)} Tips`
+      : `Counter Service completed ${formatShopCount(totals.completed)} orders.`;
+    next.shop.counterService.lastResult = message;
+    next = addLedgerEntry(next, "automation", `${message} +${formatShopCount(totals.tips)} Tips, +${formatShopCount(totals.reputation)} Reputation, +${formatShopCount(totals.xp)} XP.`);
+    next.recentRewards = [{
+      date: nowIso,
+      type: "shop_order",
+      label: "Counter Service",
+      tipsGained: totals.tips,
+      reputationGained: totals.reputation,
+      xpGained: totals.xp,
+    }, ...next.recentRewards].slice(0, 12);
+  } else {
+    next.shop.counterService.lastResult = "Counter Service is waiting for prepared orders and tofu stock.";
+  }
+  next.shop.lastShopTickAt = nowIso;
+  return {
+    gameState: next,
+    changed: true,
+    completed: totals.completed,
+    message: next.shop.counterService.lastResult,
+    totals,
   };
 }
 
@@ -3873,16 +4091,29 @@ function tickOpenShopGenerators(now = new Date()) {
   const result = applyShopGeneratorTick(state, now, {
     maxSeconds: SHOP_OPEN_TICK_MAX_SECONDS,
   });
-  if (result.changed) {
-    appState.liveGameState = result.gameState;
-    renderGamePanels(result.gameState);
+  const serviceResult = applyCounterServiceTick(result.gameState, now, {
+    maxSeconds: SHOP_OPEN_TICK_MAX_SECONDS,
+  });
+  const changed = result.changed || serviceResult.changed;
+  const nextState = serviceResult.gameState;
+  if (changed) {
+    appState.liveGameState = nextState;
+    if (serviceResult.completed > 0 && serviceResult.message) {
+      appState.shopInlineResult = serviceResult.message;
+    }
+    renderGamePanels(nextState);
     const nowMs = now instanceof Date ? now.getTime() : Date.parse(now) || Date.now();
     if (!appState.lastShopGeneratorSaveAt || nowMs - appState.lastShopGeneratorSaveAt >= SHOP_GENERATOR_SAVE_MS) {
-      saveGameState(result.gameState);
+      saveGameState(nextState);
       appState.lastShopGeneratorSaveAt = nowMs;
     }
   }
-  return result;
+  return {
+    ...result,
+    gameState: nextState,
+    changed,
+    counterService: serviceResult,
+  };
 }
 
 function startShopGeneratorTimer() {
@@ -6538,6 +6769,15 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  if (shopUnlocked && isCounterServiceUnlocked(state) && !state.shop.counterService.running) {
+    return {
+      type: "start_counter_service",
+      title: "Next: Start Counter Service",
+      copy: "Manual fulfillment taught the loop. Counter Service can now handle prepared order pickups while the shop is open.",
+      buttonLabel: "Start Counter Service",
+      disabled: false,
+    };
+  }
   if (shopUnlocked && prep.ready < 1 && tidyAffordable && runway.isHealthy) {
     return {
       type: "buy_upgrade",
@@ -7146,6 +7386,63 @@ function renderStoryTeaserCard() {
   });
 }
 
+function renderCounterServiceCard(state) {
+  if (appState.running || appState.calibrating) return "";
+  if (!isCounterServiceUnlocked(state)) return "";
+  const service = state.shop.counterService;
+  const progress = counterServiceProgress(state, new Date());
+  const status = service.running ? "Running" : "Paused";
+  const startDisabled = service.running;
+  const pauseDisabled = !service.running;
+  return renderIdleCard({
+    title: "Counter Service",
+    status,
+    copy: "Regular customers can pick up prepared orders automatically.",
+    extra: `
+      <div class="nospill-counter-service">
+        <div class="nospill-counter-service-row">
+          <span>Rate</span>
+          <strong>1 handoff / ${formatShopCount(COUNTER_SERVICE_HANDOFF_SECONDS)} sec</strong>
+        </div>
+        <div class="nospill-counter-service-row">
+          <span>Priority</span>
+          <strong>${escapeHtml(counterServicePriorityLabel(service.priority))}</strong>
+        </div>
+        <div
+          class="nospill-counter-service-bar"
+          role="progressbar"
+          aria-label="Counter Service next handoff"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="${progress.percent}"
+        >
+          <span style="width: ${progress.percent}%"></span>
+        </div>
+        <small>${escapeHtml(progress.message)}</small>
+        ${service.lastResult ? `<small>${escapeHtml(service.lastResult)}</small>` : ""}
+      </div>
+    `,
+    actions: [
+      actionButton(
+        "Start Counter Service",
+        "data-counter-service-action",
+        "start",
+        startDisabled,
+        "nospill-primary",
+        "Counter Service is already running.",
+      ),
+      actionButton(
+        "Pause Counter Service",
+        "data-counter-service-action",
+        "pause",
+        pauseDisabled,
+        "nospill-secondary",
+        "Counter Service is already paused.",
+      ),
+    ],
+  });
+}
+
 function nextMilestoneProgress(current, required) {
   const safeRequired = Math.max(1, safeNonNegativeNumber(required, 1, SHOP_MAX_RESOURCE));
   const safeCurrent = safeNonNegativeNumber(current, 0, SHOP_MAX_RESOURCE);
@@ -7226,6 +7523,20 @@ function nextMilestoneForShop(gameState) {
     };
   }
 
+  if (isCounterServiceUnlocked(state)
+    && !state.shop.counterService.running
+    && safeNonNegativeInteger(state.shop.counterService.lifetimeHandoffs, 0, 1000000) < 1
+  ) {
+    return {
+      id: "counter_service_start",
+      name: "Counter Service",
+      progressText: "Unlocked after First 10 Orders",
+      percent: 100,
+      reward: "Automatic prepared-order pickups",
+      guidance: "Start Counter Service when manual order handoff starts feeling repetitive.",
+    };
+  }
+
   if (!state.stamps.first_family_tofu_tray) {
     const family = SHOP_ORDER_TYPES.find((orderType) => orderType.id === "family_tofu_tray");
     const unlocked = shopOrderTypeUnlocked(family, state);
@@ -7295,12 +7606,12 @@ function nextMilestoneForShop(gameState) {
   }
 
   return {
-    id: "counter_service_teaser",
-    name: "Counter Service Teaser",
-    progressText: "Future system documented",
+    id: "counter_service_tuning",
+    name: "Counter Service Tuning",
+    progressText: "Future upgrades documented",
     percent: 0,
-    reward: "Automation after mastery",
-    guidance: "Manual orders come first. Automation stays hidden until the core loop is tuned.",
+    reward: "Better automation later",
+    guidance: "Counter Service V1 is active. Future upgrades can improve priority, bulk, and stock reserves after playtesting.",
     future: true,
   };
 }
@@ -7355,6 +7666,7 @@ function renderOverviewPanel(state) {
       ${renderPreparingOrderCard(state)}
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
       ${renderOverviewImprovementCard(state)}
+      ${renderCounterServiceCard(state)}
       ${renderPassportTeaserCard(state)}
       ${renderStoryTeaserCard()}
       ${renderIdleCard({
@@ -8930,6 +9242,29 @@ function handleFulfillBestShopOrder() {
   handleFulfillShopOrder("1", bestOrder ? bestOrder.id : "simple_tofu_box");
 }
 
+function handleCounterServiceAction(action) {
+  const result = action === "pause"
+    ? pauseCounterService(currentGameState(), {
+        activeDrive: appState.running || appState.calibrating,
+        now: new Date(),
+      })
+    : startCounterService(currentGameState(), {
+        activeDrive: appState.running || appState.calibrating,
+        now: new Date(),
+      });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = action === "pause"
+    ? "Counter Service paused."
+    : "Counter Service started.";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(appState.shopInlineResult);
+}
+
 function handleShopUpgradeClick(event) {
   const button = event.target && event.target.closest
     ? event.target.closest("[data-shop-upgrade]")
@@ -9031,6 +9366,10 @@ function handleTofuShopPanelClick(event) {
     showShopOrderInlineResult(result);
     trackShopOrderFulfilledAnalytics(result);
     playCosmeticSound("shop_pack_tofu", result.gameState, { activeDrive: false });
+    return;
+  }
+  if (target.dataset.counterServiceAction) {
+    handleCounterServiceAction(target.dataset.counterServiceAction);
     return;
   }
   const actionMap = [
@@ -9431,6 +9770,10 @@ function handleNextBestAction() {
     appState.shopTab = "production";
     renderGamePanels(currentGameState());
     setSummaryStatusMessage("Choose the recommended shop station while parked.");
+    return;
+  }
+  if (actionType === "start_counter_service") {
+    handleCounterServiceAction("start");
     return;
   }
   if (actionType === "continue_shop") {

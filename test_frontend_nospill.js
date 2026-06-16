@@ -88,6 +88,12 @@ globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.fulfillShopOrders = fulfillShopOrders;
+globalThis.isCounterServiceUnlocked = isCounterServiceUnlocked;
+globalThis.counterServiceOrderType = counterServiceOrderType;
+globalThis.counterServiceProgress = counterServiceProgress;
+globalThis.startCounterService = startCounterService;
+globalThis.pauseCounterService = pauseCounterService;
+globalThis.applyCounterServiceTick = applyCounterServiceTick;
 globalThis.buildStampFanfare = buildStampFanfare;
 globalThis.showStampFanfare = showStampFanfare;
 globalThis.hideStampFanfare = hideStampFanfare;
@@ -2721,6 +2727,8 @@ function testTofuShopNextMilestoneBarGuidesImplementedSpine() {
   afterTen.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
   afterTen.shop.tofuStock = 12;
   afterTen.shop.deliveryOrders = 1;
+  assert.strictEqual(context.nextMilestoneForShop(afterTen).id, 'counter_service_start');
+  afterTen.shop.counterService.running = true;
   const familyMilestone = context.nextMilestoneForShop(afterTen);
   assert.strictEqual(familyMilestone.id, 'first_family_tofu_tray');
   assert(familyMilestone.progressText.includes('Need 24 Tofu Stock and 1 ready order'));
@@ -2805,6 +2813,187 @@ appState.running = false;
   assert(!source.includes('sendBeacon'));
   assert(!source.includes('netWorth'));
   assert(!source.includes('enterpriseValue'));
+}
+
+function testCounterServiceV1AutomatesEarnedShopHandoffs() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const fresh = context.defaultGameState();
+  assert.strictEqual(context.isCounterServiceUnlocked(fresh), false);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+renderTofuShop(${JSON.stringify(fresh)});
+globalThis.counterFreshHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(!context.counterFreshHtml.includes('Counter Service'));
+
+  const unlocked = context.defaultGameState();
+  unlocked.shop.lifetimeDeliveryOrders = 10;
+  unlocked.shop.deliveryOrders = 0;
+  unlocked.shop.tofuStock = 100;
+  unlocked.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+  unlocked.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+  unlocked.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
+  unlocked.shop.stationUpgrades.prep_counter_faster = 1;
+  assert.strictEqual(context.isCounterServiceUnlocked(unlocked), true);
+  assert.strictEqual(unlocked.shop.counterService.running, false);
+
+  vm.runInContext(`
+renderTofuShop(${JSON.stringify(unlocked)});
+globalThis.counterUnlockedHtml = elements.shopTabPanel.innerHTML;
+globalThis.counterUnlockedAction = nextBestAction(${JSON.stringify(unlocked)}, { date: new Date('2026-06-15T12:00:00.000Z') });
+globalThis.counterUnlockedMilestone = nextMilestoneForShop(${JSON.stringify(unlocked)});
+`, context);
+  assert(context.counterUnlockedHtml.includes('Counter Service'));
+  assert(context.counterUnlockedHtml.includes('Regular customers can pick up prepared orders automatically.'));
+  assert(context.counterUnlockedHtml.includes('1 handoff / 10 sec'));
+  assert(context.counterUnlockedHtml.includes('Best Available'));
+  assert(context.counterUnlockedHtml.includes('Start Counter Service'));
+  assert(context.counterUnlockedHtml.includes('Pause Counter Service'));
+  assert.strictEqual(context.counterUnlockedAction.type, 'start_counter_service');
+  assert.strictEqual(context.counterUnlockedMilestone.id, 'counter_service_start');
+
+  const started = context.startCounterService(unlocked, {
+    now: new Date('2026-06-15T12:00:00.000Z'),
+  });
+  assert.strictEqual(started.ok, true);
+  assert.strictEqual(started.gameState.shop.counterService.running, true);
+  assert.strictEqual(started.gameState.shop.counterService.lastResult, 'Counter Service started.');
+
+  const paused = context.pauseCounterService(started.gameState, {
+    now: new Date('2026-06-15T12:00:02.000Z'),
+  });
+  assert.strictEqual(paused.ok, true);
+  assert.strictEqual(paused.gameState.shop.counterService.running, false);
+
+  const bestSource = JSON.parse(JSON.stringify(started.gameState));
+  bestSource.shop.deliveryOrders = 3;
+  bestSource.shop.tofuStock = 200;
+  bestSource.shop.reputation = 50;
+  bestSource.shop.lifetimeReputation = 50;
+  bestSource.shop.shopLevel = 2;
+  const bestType = context.counterServiceOrderType(bestSource);
+  assert.strictEqual(bestType.id, 'festival_bento');
+  const bestTick = context.applyCounterServiceTick(bestSource, new Date('2026-06-15T12:00:10.000Z'));
+  assert.strictEqual(bestTick.completed, 1);
+  assert.strictEqual(bestTick.gameState.shop.deliveryOrders, 1);
+  assert.strictEqual(bestTick.gameState.shop.tofuStock, 125);
+  assert.strictEqual(bestTick.gameState.shop.tips, 130);
+  assert.strictEqual(bestTick.gameState.totalXP, 70);
+  assert(bestTick.message.includes('Festival Bento'));
+  assert.strictEqual(bestTick.gameState.shop.counterService.lifetimeHandoffs, 1);
+  assert(bestTick.gameState.shop.ledger[0].text.includes('Counter Service'));
+  assert(!bestTick.gameState.shop.ledger[0].text.includes('undefined'));
+
+  const familySource = JSON.parse(JSON.stringify(started.gameState));
+  familySource.shop.deliveryOrders = 1;
+  familySource.shop.tofuStock = 30;
+  const familyType = context.counterServiceOrderType(familySource);
+  assert.strictEqual(familyType.id, 'family_tofu_tray');
+  const familyTick = context.applyCounterServiceTick(familySource, new Date('2026-06-15T12:00:10.000Z'));
+  assert.strictEqual(familyTick.completed, 1);
+  assert.strictEqual(familyTick.gameState.shop.tips, 45);
+  assert.strictEqual(familyTick.gameState.shop.tofuStock, 6);
+
+  const simpleSource = JSON.parse(JSON.stringify(started.gameState));
+  simpleSource.shop.deliveryOrders = 1;
+  simpleSource.shop.tofuStock = 6;
+  const simpleType = context.counterServiceOrderType(simpleSource);
+  assert.strictEqual(simpleType.id, 'simple_tofu_box');
+  const simpleTick = context.applyCounterServiceTick(simpleSource, new Date('2026-06-15T12:00:10.000Z'));
+  assert.strictEqual(simpleTick.completed, 1);
+  assert.strictEqual(simpleTick.gameState.shop.tips, 10);
+  assert.strictEqual(simpleTick.gameState.shop.reputation, 1);
+  assert.strictEqual(simpleTick.gameState.totalXP, 8);
+  assert(simpleTick.gameState.shop.deliveryOrders >= 0);
+  assert(simpleTick.gameState.shop.tofuStock >= 0);
+
+  const batchSource = JSON.parse(JSON.stringify(started.gameState));
+  batchSource.shop.deliveryOrders = 3;
+  batchSource.shop.tofuStock = 100;
+  const batchTick = context.applyCounterServiceTick(batchSource, new Date('2026-06-15T12:00:30.000Z'));
+  assert.strictEqual(batchTick.completed, 3);
+  assert(batchTick.message.includes('Counter Service completed 3 orders.'));
+  assert.strictEqual(batchTick.gameState.shop.ledger.filter((entry) => entry.text.includes('Counter Service')).length, 1);
+
+  const offlineSource = JSON.parse(JSON.stringify(started.gameState));
+  offlineSource.shop.deliveryOrders = 3;
+  offlineSource.shop.tofuStock = 100;
+  const offlineTick = context.applyShopGeneratorTick(offlineSource, new Date('2026-06-15T13:00:00.000Z'), {
+    maxSeconds: 3600,
+  });
+  assert.strictEqual(offlineTick.gameState.shop.tips, offlineSource.shop.tips);
+  assert.strictEqual(offlineTick.gameState.shop.counterService.lifetimeHandoffs, 0);
+
+  const activeSource = JSON.parse(JSON.stringify(started.gameState));
+  activeSource.shop.deliveryOrders = 1;
+  activeSource.shop.tofuStock = 100;
+  vm.runInContext(`
+appState.running = true;
+globalThis.counterActiveStart = startCounterService(${JSON.stringify(unlocked)}, { activeDrive: true, now: new Date('2026-06-15T12:00:00.000Z') });
+globalThis.counterActiveTick = applyCounterServiceTick(${JSON.stringify(activeSource)}, new Date('2026-06-15T12:00:10.000Z'), { activeDrive: true });
+renderTofuShop(${JSON.stringify(activeSource)});
+globalThis.counterActiveHtml = elements.shopTabPanel.innerHTML;
+appState.running = false;
+`, context);
+  assert.strictEqual(context.counterActiveStart.ok, false);
+  assert.strictEqual(context.counterActiveTick.completed, 0);
+  assert(!context.counterActiveHtml.includes('Counter Service'));
+
+  vm.runInContext(`
+appState.shopInlineResult = "";
+appState.summaryMode = null;
+appState.liveGameState = ${JSON.stringify(batchSource)};
+saveGameState(appState.liveGameState);
+tickOpenShopGenerators(new Date('2026-06-15T12:00:30.000Z'));
+globalThis.counterInlineMessage = appState.shopInlineResult;
+globalThis.counterSummaryMode = appState.summaryMode;
+globalThis.counterSavedState = currentGameState();
+`, context);
+  assert(context.counterInlineMessage.includes('Counter Service completed'));
+  assert.strictEqual(context.counterSummaryMode, null);
+  assert(context.counterSavedState.shop.counterService.lifetimeHandoffs >= 1);
+
+  const manualAfterUnlock = context.fulfillShopOrders(unlocked, 1, {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+  });
+  assert.strictEqual(manualAfterUnlock.ok, false);
+  const manualReady = JSON.parse(JSON.stringify(unlocked));
+  manualReady.shop.deliveryOrders = 1;
+  manualReady.shop.tofuStock = 100;
+  const manual = context.fulfillShopOrders(manualReady, 1, {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+  });
+  assert.strictEqual(manual.ok, true);
+  assert.strictEqual(manual.tipsGained, 10);
+
+  const progress = context.counterServiceProgress(started.gameState, new Date('2026-06-15T12:00:05.000Z'));
+  assert(progress.percent > 0 && progress.percent < 100);
+  assert(!String(progress.percent).includes('.'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -5267,6 +5456,7 @@ function run() {
   testShopOrderTypeProgressionAndRewards();
   testCoreGameSpineV1MilestonesAndSupportStations();
   testTofuShopNextMilestoneBarGuidesImplementedSpine();
+  testCounterServiceV1AutomatesEarnedShopHandoffs();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

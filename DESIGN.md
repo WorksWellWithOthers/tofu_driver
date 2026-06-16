@@ -211,8 +211,10 @@ Current design principles:
 - Core Game Spine V1 adds the first short milestone ladder after the first stamp: First Upgrade
   Purchased, First Family Tofu Tray, First 10 Orders, and First 100 Tips. Delivery Shelf is the
   first throughput support station, and Shop Sign is the first Reputation support station.
+- Counter Service V1 is the first earned automation layer: after First 10 Orders, regular customers
+  can pick up prepared orders automatically while the page is open and the player is parked.
 - Regular Customers, Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige remain
-  deferred until the V1 spine has been playtested and tuned.
+  deferred until Counter Service and the V1 spine have been playtested and tuned.
 - Fulfill Shop Order requires at least one ready Delivery Order.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
 - Tips buy more production, stations, and upgrades.

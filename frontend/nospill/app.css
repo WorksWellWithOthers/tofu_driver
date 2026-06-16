@@ -818,6 +818,55 @@
   font-weight: 800;
 }
 
+.nospill-counter-service {
+  display: grid;
+  gap: 7px;
+  border: 1px solid rgba(244, 247, 239, 0.10);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(110, 198, 255, 0.055);
+}
+
+.nospill-counter-service-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nospill-counter-service-row span,
+.nospill-counter-service small {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.nospill-counter-service-row span {
+  text-transform: uppercase;
+}
+
+.nospill-counter-service-row strong {
+  color: #f4f7ef;
+}
+
+.nospill-counter-service-bar {
+  position: relative;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 247, 239, 0.13);
+  border-radius: 999px;
+  background: #070a0a;
+}
+
+.nospill-counter-service-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 3px;
+  border-radius: inherit;
+  background: #6ec6ff;
+  transition: width 220ms ease;
+}
+
 .nospill-order-prep {
   display: grid;
   gap: 8px;
@@ -891,7 +940,8 @@
   }
 
   .nospill-next-milestone-head,
-  .nospill-next-milestone-progress {
+  .nospill-next-milestone-progress,
+  .nospill-counter-service-row {
     display: grid;
     gap: 4px;
   }

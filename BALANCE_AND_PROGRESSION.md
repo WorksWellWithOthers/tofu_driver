@@ -255,7 +255,7 @@ Implemented target order:
 5. First 100 Tips.
 6. Delivery Shelf unlock.
 7. Shop Sign unlock.
-8. Counter Service teaser as documented future direction only.
+8. Counter Service start, after First 10 Orders if it has not been acknowledged yet.
 
 Rules:
 
@@ -270,6 +270,27 @@ Rules:
 - no Net Worth counter, asset valuation, business valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
+
+### Counter Service V1
+
+Counter Service is the first earned automation layer. It unlocks after First 10 Orders and starts
+paused, because manual fulfillment should teach the stock-to-orders-to-Tips loop before automation
+removes the repeated handoff chore.
+
+V1 behavior:
+
+- parked/shop only; it never runs during an active Cup Test
+- active-page only; it does not auto-fulfill during offline progress
+- default priority is `Best Available`: Festival Bento, then Family Tofu Tray, then Simple Tofu Box
+  when each order type is unlocked and affordable
+- rate is 1 automated handoff every 10 seconds
+- it consumes the same ready Delivery Orders and Tofu Stock as manual fulfillment
+- it grants the same Tips, Reputation, and XP as manual fulfillment
+- feedback is inline and ledger entries are batched/rate-limited so automation does not spam
+  result screens or fanfares
+- future upgrades may add bulk handoff, stock reserves, and priority tuning, but those are not in V1
+
+Regular Customers remain future. Counter Service is the current narrow automation slice.
 
 ### Order Size Ladder
 
@@ -321,8 +342,8 @@ more valuable rather than replacing them.
 | 2 | Prep Counter | Delivery Orders | Tofu Stock | turns stock into money opportunities | immediately | buy more counters when stock is healthy but orders are slow |
 | 3 | Delivery Shelf | Prep Counter throughput/order handling | Tips, Prep Slots | makes the order pipeline scale without click spam | 10 to 20 minutes | buy support when counters become cramped |
 | 4 | Shop Sign | Reputation gains and Regular Customer unlock pressure | Tips, Prep Slots | shifts focus from pure Tips to shop visibility | 20 to 40 minutes | invest when the next system is reputation-gated |
-| 5 | Regular Customers | passive Tips from simple orders | Delivery Orders if available | reduces manual money conversion chores | 30 to 60+ minutes | choose passive income versus more raw production |
-| 6 | Counter Service | order handoff automation | ready Delivery Orders and Tofu Stock reserves | removes repeated fulfillment clicks after manual mastery | after First 10 Orders plus support upgrade | choose automation priority and stock reserve |
+| 5 | Counter Service | order handoff automation | ready Delivery Orders and Tofu Stock reserves | removes repeated fulfillment clicks after manual mastery | after First 10 Orders | start/pause automation while preserving manual control |
+| 6 | Regular Customers | passive Tips from simple orders | Delivery Orders if available | reduces manual money conversion chores beyond handoff automation | 30 to 60+ minutes | choose passive income versus more raw production |
 | 7 | Shop Street / Fictional Route Cards | Tips, Reputation, Shop Reach, Route Knowledge, stamps | Tofu Stock, Delivery Orders | adds story goals and mastery without real roads | 40 to 90 minutes | spend resources on route cards or keep scaling shop |
 | 8 | Apprentice Driver | automated fictional route/shop task output | Delivery Orders, route slots | removes chores after the player understands them | 1 to 2 hours | assign limited crew to the best fictional task |
 | 9 | Dispatcher Desk | automation efficiency and crew assignment clarity | Tips, Prep Slots | makes automation legible and scalable | 2 to 4 hours | invest in coordination instead of raw stations |
@@ -334,8 +355,8 @@ Each tier should make earlier tiers more valuable:
 - Larger orders make both Tofu Press and Prep Counter matter.
 - Delivery Shelf makes Prep Counter scaling feel smooth.
 - Shop Sign makes Reputation and later systems visible.
-- Regular Customers make order production useful even while idle.
 - Counter Service makes manual order fulfillment a mastered chore rather than a forever-click.
+- Regular Customers later make order production useful even while idle.
 - Fictional routes turn shop resources into story, reach, and mastery.
 - Apprentice Driver and Dispatcher Desk automate repeated fictional tasks after they are understood.
 - Regional Tofu Network turns a matured shop into a prestige-scale economy.
@@ -587,6 +608,26 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - V1 runtime behavior: unlocks when Reputation reaches 10, lifetime Tips reaches 100, or Delivery
   Shelf is owned; it is a Reputation support station and does not reveal Routes by itself.
 - Status: V1 implemented / needs balance tuning
+
+#### Counter Service
+
+- Stable id: `counter_service`
+- Label: `Counter Service`
+- Unlock condition: First 10 Orders / 10 manually fulfilled shop orders
+- Starting cost: none in V1
+- Cost growth: none in V1
+- Produces: automatic fulfilled-order rewards while the page is open
+- Consumes: ready Delivery Orders and the Tofu Stock required by the selected order type
+- Base production rate: 1 handoff / 10 seconds
+- Priority: Best Available, ordered Festival Bento -> Family Tofu Tray -> Simple Tofu Box
+- Milestone thresholds: future upgrades only
+- Associated upgrades: future bulk handoff, stock reserve, priority tuning
+- Urgent when: prepared-order fulfillment becomes repetitive after the player has learned the loop
+- Less urgent when: the player still needs manual order choices to understand stock/order costs
+- Expected first use: after First 10 Orders
+- V1 runtime behavior: starts paused, can be started/paused from Overview, runs only while parked and
+  the page is open, and never auto-fulfills offline
+- Status: V1 implemented / needs playtest tuning
 
 #### Regular Customers
 
@@ -1498,6 +1539,7 @@ Starter first-loop balance sheet:
 | first_shop_order_stamp | First Shop Order Stamp | First Loop | First order fulfilled | automatic | none | none | 0 | 1.0 | Unlock first stamp, Stamp Fanfare, and Passport teaser | 0:00 to 1:00 | immediate | Collection reveal | View Passport | none | Local-only stamp; fanfare repeats are suppressed | Implemented |
 | delivery_shelf | Delivery Shelf | First Shop | 10 to 20 minutes or 25 orders fulfilled | Tips/Prep Slots available | Tips | station growth | 800 | 1.17 | Prep Counter support/capacity | 10 to 20 minutes | TBD | Scaling order flow | Buy Delivery Shelf | none | Shop only | Partial |
 | shop_sign | Shop Sign | First Shop | 10 Reputation or reputation gate | Tips available | Tips | station growth | 300 | 1.18 | +50% Reputation/order target or route unlock support | 20 to 40 minutes | TBD | Reputation unlock pressure | Buy Shop Sign | none | Shop only | Partial |
+| counter_service | Counter Service | First Automation | First 10 Orders | manually started and page open | ready orders + Tofu Stock | flat interval | 0 | 1.0 | 1 automatic best-available handoff / 10 seconds | after 10 orders | immediate after unlock | Repeated manual handoff chore | Start Counter Service | repeated Fulfill clicks | Parked-only, active-page-only, no offline auto-fulfillment | Implemented V1 |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
 
 ## Implementation Slices
@@ -1514,9 +1556,10 @@ already exists.
 | 4. Passport First Stamp | Make first collection moment rewarding without showing full catalog | `app.js`, tests, docs | First Shop Order stamp reveal, View Passport teaser, stamp persists | deep Passport filters/categories |
 | 5. Delivery Shelf / Shop Sign | Add first-shop support systems after the core loop is stable | `app.js`, tests, docs | reveal timing, Tips costs, throughput/reputation effects, no first-screen clutter | full route network |
 | 6. First Route Card | Introduce Shop Street as fictional parked content | `app.js`, tests, docs | route cost/reward, fictional copy, no real road language, route stamp | maps, real routes, route leaderboards |
-| 7. First Automation | Let Apprentice Driver remove repeated fictional chores | `app.js`, tests, docs | hire/assign state, consumes orders, local rewards, no real driving requirement | full crew management |
-| 8. First License Exam | Add first prestige decision after a plateau | `app.js`, tests, docs | requirements, confirmation, reset/persist contract, Stars/perks | multiple exams, monetization |
-| 9. Post-License Rebuild | Make permanent perks accelerate the early loop | `app.js`, tests, docs | perk purchase, fresh run benefits, no Cup Test scoring effect | late regional network unless needed |
+| 7. Counter Service V1 | Let the counter remove repeated prepared-order handoffs after manual mastery | `app.js`, tests, docs | First 10 Orders unlock, Start/Pause, active-page-only handoff tick, Best Available priority, no offline auto-fulfillment | Regular Customers, crew, route automation, bulk automation upgrades |
+| 8. First Automation Expansion | Let Apprentice Driver or Regular Customers remove later repeated fictional chores | `app.js`, tests, docs | hire/assign or passive-customer state, consumes orders, local rewards, no real driving requirement | full crew management |
+| 9. First License Exam | Add first prestige decision after a plateau | `app.js`, tests, docs | requirements, confirmation, reset/persist contract, Stars/perks | multiple exams, monetization |
+| 10. Post-License Rebuild | Make permanent perks accelerate the early loop | `app.js`, tests, docs | perk purchase, fresh run benefits, no Cup Test scoring effect | late regional network unless needed |
 
 ## 16. Status Audit
 
@@ -1550,6 +1593,7 @@ progression contract.
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs 20 Tips, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
+| Counter Service | Implemented | state, Overview card, active-page tick, tests | starts paused after First 10 Orders and auto-fulfills Best Available orders every 10 seconds while parked/open | tune rate, priority, and future upgrades after playtesting |
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
