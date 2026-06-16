@@ -91,6 +91,11 @@ automation after mastery, challenge-like shop trials, and later prestige visibil
 should support the existing Tofu Shop cascade without copying reference theme, formulas, UI, names,
 or implementation details.
 
+`EXTERNAL_REFERENCE_INCREMENTAL_GAME_DESIGN_TRANSCRIPTS_AUDIT.md` is a transcript synthesis study.
+Its useful lessons for this file are: keep the first five to ten minutes tight, show a visible next
+goal, make upgrades solve the current bottleneck, delegate repeated actions after mastery, add
+novelty when repetition starts, and avoid turning future systems into early UI clutter.
+
 ## 2. Core Loop
 
 The first playable loop has eight steps.
@@ -295,6 +300,30 @@ V1 behavior:
 - future upgrades may add bulk handoff, stock reserves, and priority tuning, but those are not in V1
 
 Regular Customers remain future. Counter Service is the current narrow automation slice.
+
+Transcript-derived tuning notes:
+
+- Counter Service should not erase Tofu Stock pressure; if automation stalls, the correct next
+  decision is stock supply, press upgrades, or order-size choice.
+- Counter Service upgrades are intentionally finite in V1 so they create a clear bump without
+  becoming a new infinite click/purchase treadmill.
+- After Counter Service is tuned, the next automation candidate should add a new decision or sink,
+  not merely remove all remaining interaction.
+
+### Transcript-Derived Progression Rules
+
+- First-session tuning matters more than broad feature count. Prioritize the first order, first
+  upgrade, First 10 Orders, and first automation handoff over later systems.
+- The game should alternate between `I can handle this now` and `I need a new support layer`.
+  Larger orders, Delivery Shelf, Shop Sign, and Counter Service should each create that push-pull.
+- Station milestone boosts are a strong `Soon` candidate because they keep old stations relevant
+  without adding a new currency or tab.
+- New resource sinks should create choices. Dream Garage, project cars, and Net Worth remain useful
+  future sinks only after Tips and shop automation are fun locally.
+- Prestige should remain a visible later goal, not an early tab. License Exam belongs after a real
+  shop plateau.
+- Avoid expanding social/status, premium cosmetics, and endgame valuation before the local shop loop
+  has repeatable motivation.
 
 ### Order Size Ladder
 

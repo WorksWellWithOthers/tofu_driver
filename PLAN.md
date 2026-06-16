@@ -85,6 +85,10 @@
   achievement, challenge, and prestige lessons into future Tofu Shop concepts. It now includes a
   concrete future target order for the Next Milestone bar, station boosts, Counter Service, Regular
   Customers, locked License preview, and later Shop Trials.
+- `EXTERNAL_REFERENCE_INCREMENTAL_GAME_DESIGN_TRANSCRIPTS_AUDIT.md` documents two incremental-game
+  design transcripts. Its main planning implications are to playtest the first five to ten minutes,
+  keep active play and idle progress balanced, automate mastered chores, add small novelty beats
+  when repetition begins, and avoid early UI/currency/system overload.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -118,17 +122,20 @@ Canonical references:
 6. Playtest Counter Service V1: confirm First 10 Orders is the right unlock, the 10/8/6/4 second
    upgrade path feels helpful without deleting choices, and active-page-only automation does not
    skip pacing.
-7. Tune the implemented Next Milestone Bar against playtest behavior, then consider station
-   milestone visibility. Do not jump to Regular Customers, License prestige, or Shop Trials until
-   Counter Service proves the manual loop needs more automation.
-8. Expand balance tests only where playtesting reveals gaps:
+7. Tune the implemented Next Milestone Bar against playtest behavior, then consider Station
+   Milestone Boosts V1 as the next low-clutter compounding layer.
+8. Add novelty only when playtesting shows repetition: candidate order is station milestones,
+   Counter Service tuning, Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
+   Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
+   Worth systems until the local shop loop keeps a player engaged.
+9. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-9. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-10. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+10. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+11. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-11. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-12. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+12. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+13. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Do not build advanced systems next. The First Loop Contract is now implemented enough for
 playtesting; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
@@ -165,7 +172,7 @@ Deferred until after the First Loop Contract is playtested:
 - Dream Garage / Project Car progression
 - Ultimate Net Worth / business valuation / franchise scaling / car manufacturing / aerospace
 - Tofu Demand Board / Supplier Market / Garage Parts Market
-- station milestone boosts / Shop Trials
+- Shop Trials
 - Shop Spirit
 - Rivals
 - License

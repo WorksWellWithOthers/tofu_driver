@@ -1,5 +1,10 @@
 # Core Game Spine Audit
 
+Status note: this audit is historical. The Core Game Spine V1 work called for here has since been
+implemented and tracked in `IMPLEMENTATION_STATUS.md`. The audit remains useful as rationale for
+why the current plan still prioritizes first-loop tuning, milestone pacing, and
+automation-after-mastery before broader systems.
+
 ## Executive Summary
 
 Tofu Shop now has a working first loop: Tofu Press creates Tofu Stock, Prep Counter prepares

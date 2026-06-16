@@ -193,6 +193,9 @@ Current design principles:
   Driver language. The Antimatter Dimensions audit is useful for next-milestone bars, station
   milestone boosts, visible locked prestige goals, automation-after-mastery, safe shop trials, and
   prestige pacing; it is not a source for theme, formulas, UI, names, or implementation details.
+- The incremental design transcript audit reinforces four durable rules: make the first five
+  minutes obvious, balance active play with idle progress, delegate repeated chores only after
+  mastery, and add novelty through earned shop layers rather than early UI clutter.
 - each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
@@ -223,6 +226,9 @@ Current design principles:
   `Use Token`. Route-related Spirit actions stay hidden until fictional route systems matter.
 - Regular Customers, Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige remain
   deferred until Counter Service and the V1 spine have been playtested and tuned.
+- New active decisions should replace automated chores. When Counter Service removes repeated order
+  handoffs, the next decisions should be stock supply, service rate, larger orders, or later support
+  stations, not more mandatory clicking.
 - Fulfill Shop Order requires at least one ready Delivery Order.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
 - Tips buy more production, stations, and upgrades.
