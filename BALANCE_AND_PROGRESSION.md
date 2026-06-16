@@ -246,12 +246,27 @@ A future small UI slice may add one compact `Next Milestone` bar to Overview. It
 the next relevant threshold, such as First 10 Orders, First 100 Tips, First Family Tofu Tray,
 Delivery Shelf unlock, Shop Sign unlock, or a much later License Exam preview.
 
+Candidate target order:
+
+1. First Shop Order.
+2. First Upgrade Purchased.
+3. First 10 Orders.
+4. First Family Tofu Tray.
+5. First 100 Tips.
+6. Delivery Shelf unlock.
+7. Shop Sign unlock.
+8. Regular Customers unlock.
+9. covered-car story beat, if not already seen.
+10. First License Exam preview, much later.
+
 Rules:
 
 - one visible milestone at a time
 - no full future roadmap
 - no advanced tab unlock from raw idle accumulation alone
 - milestone changes should follow meaningful actions, stamps, or bottlenecks
+- visible locked goals are allowed only when they clarify the next phase; they should not become
+  clickable advanced tabs during the first loop
 - current status: Documented only / future
 
 ### Order Size Ladder
@@ -305,10 +320,11 @@ more valuable rather than replacing them.
 | 3 | Delivery Shelf | Prep Counter throughput/order handling | Tips, Prep Slots | makes the order pipeline scale without click spam | 10 to 20 minutes | buy support when counters become cramped |
 | 4 | Shop Sign | Reputation gains and Regular Customer unlock pressure | Tips, Prep Slots | shifts focus from pure Tips to shop visibility | 20 to 40 minutes | invest when the next system is reputation-gated |
 | 5 | Regular Customers | passive Tips from simple orders | Delivery Orders if available | reduces manual money conversion chores | 30 to 60+ minutes | choose passive income versus more raw production |
-| 6 | Shop Street / Fictional Route Cards | Tips, Reputation, Shop Reach, Route Knowledge, stamps | Tofu Stock, Delivery Orders | adds story goals and mastery without real roads | 40 to 90 minutes | spend resources on route cards or keep scaling shop |
-| 7 | Apprentice Driver | automated fictional route/shop task output | Delivery Orders, route slots | removes chores after the player understands them | 1 to 2 hours | assign limited crew to the best fictional task |
-| 8 | Dispatcher Desk | automation efficiency and crew assignment clarity | Tips, Prep Slots | makes automation legible and scalable | 2 to 4 hours | invest in coordination instead of raw stations |
-| 9 | Regional Tofu Network | broad lower-tier multipliers and prestige requirements | high Tips, Shop Reach, License progress | late-game scale and prestige pressure | after first License Exam | build a network or prepare for the next exam |
+| 6 | Counter Service | order handoff automation | ready Delivery Orders and Tofu Stock reserves | removes repeated fulfillment clicks after manual mastery | after First 10 Orders plus support upgrade | choose automation priority and stock reserve |
+| 7 | Shop Street / Fictional Route Cards | Tips, Reputation, Shop Reach, Route Knowledge, stamps | Tofu Stock, Delivery Orders | adds story goals and mastery without real roads | 40 to 90 minutes | spend resources on route cards or keep scaling shop |
+| 8 | Apprentice Driver | automated fictional route/shop task output | Delivery Orders, route slots | removes chores after the player understands them | 1 to 2 hours | assign limited crew to the best fictional task |
+| 9 | Dispatcher Desk | automation efficiency and crew assignment clarity | Tips, Prep Slots | makes automation legible and scalable | 2 to 4 hours | invest in coordination instead of raw stations |
+| 10 | Regional Tofu Network | broad lower-tier multipliers and prestige requirements | high Tips, Shop Reach, License progress | late-game scale and prestige pressure | after first License Exam | build a network or prepare for the next exam |
 
 Each tier should make earlier tiers more valuable:
 
@@ -317,6 +333,7 @@ Each tier should make earlier tiers more valuable:
 - Delivery Shelf makes Prep Counter scaling feel smooth.
 - Shop Sign makes Reputation and later systems visible.
 - Regular Customers make order production useful even while idle.
+- Counter Service makes manual order fulfillment a mastered chore rather than a forever-click.
 - Fictional routes turn shop resources into story, reach, and mastery.
 - Apprentice Driver and Dispatcher Desk automate repeated fictional tasks after they are understood.
 - Regional Tofu Network turns a matured shop into a prestige-scale economy.

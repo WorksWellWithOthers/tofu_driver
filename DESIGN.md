@@ -189,8 +189,8 @@ Current design principles:
   language.
 - External progression references may inform this cascade, but only after translation into Tofu
   Driver language. The Antimatter Dimensions audit is useful for next-milestone bars, station
-  milestone boosts, automation-after-mastery, and prestige pacing; it is not a source for theme,
-  formulas, UI, names, or implementation details.
+  milestone boosts, visible locked prestige goals, automation-after-mastery, safe shop trials, and
+  prestige pacing; it is not a source for theme, formulas, UI, names, or implementation details.
 - each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
@@ -525,6 +525,8 @@ Future shop/incremental ideas:
 - Next Milestone bar
 - station milestone boosts
 - Counter Service / Regular Customers automation after mastery
+- visible locked License Exam goal after a real shop plateau
+- safe Shop Trials / Festival Orders after the first shop loop is stable
 - covered project car reveal
 - Dream Garage
 - Garage Parts Market

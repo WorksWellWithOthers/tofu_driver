@@ -66,7 +66,9 @@
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
   study and safely translates recursive production, next-milestone, station-milestone, automation,
-  achievement, challenge, and prestige lessons into future Tofu Shop concepts.
+  achievement, challenge, and prestige lessons into future Tofu Shop concepts. It now includes a
+  concrete future target order for the Next Milestone bar, station boosts, Counter Service, Regular
+  Customers, locked License preview, and later Shop Trials.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -98,7 +100,8 @@ Canonical references:
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
 6. Consider the smallest Antimatter-inspired architecture slice only after first-loop playtesting:
-   a single Next Milestone bar or station milestone visibility, not automation/prestige/challenges.
+   a single Next Milestone bar or station milestone visibility, not Counter Service,
+   Regular Customers, License prestige, or Shop Trials.
 7. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
@@ -130,7 +133,7 @@ Deferred until after the First Loop Contract is playtested:
 - Garage
 - Dream Garage / Project Car progression
 - Tofu Demand Board / Supplier Market / Garage Parts Market
-- Next Milestone bar / station milestone boosts / Counter Service automation
+- Next Milestone bar / station milestone boosts / Counter Service automation / Shop Trials
 - Shop Spirit
 - Rivals
 - License
