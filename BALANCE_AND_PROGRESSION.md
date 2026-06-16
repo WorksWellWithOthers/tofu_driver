@@ -338,12 +338,12 @@ Transcript-derived tuning notes:
 - Avoid expanding social/status, premium cosmetics, and endgame valuation before the local shop loop
   has repeatable motivation.
 
-Near-term candidate:
+Current station-milestone scope:
 
-Station Milestone Boosts V1 should be the smallest possible version if implemented next. Prefer
-inline milestones for existing stations over a new tab: 5 Tofu Presses, 10 Tofu Presses, 5 Prep
-Counters, and 10 Prep Counters. Each should show one clear before/after production bump, use inline
-feedback rather than a major fanfare, and remain shop-only with no Cup Test scoring effect.
+Station Milestone Boosts V1 is implemented as the smallest ownership-threshold layer: 5/10 Tofu
+Presses, 5/10 Prep Counters, 5/10 Delivery Shelves, and 5/10 Shop Signs. Each uses inline feedback,
+shows one clear production/support bump, and remains shop-only with no Cup Test scoring effect.
+Higher thresholds such as 25+ owned stations remain future tuning candidates.
 
 ### Order Size Ladder
 
