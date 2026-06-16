@@ -230,7 +230,7 @@ const SHOP_ORDER_TYPES = [
     id: "simple_tofu_box",
     name: "Simple Tofu Box",
     unlock: "available immediately",
-    tofuRequired: 2,
+    tofuRequired: 6,
     deliveryOrdersRequired: 1,
     tips: SHOP_ORDER_TIPS_REWARD,
     reputation: SHOP_ORDER_REPUTATION_REWARD,
@@ -241,7 +241,7 @@ const SHOP_ORDER_TYPES = [
     id: "family_tofu_tray",
     name: "Family Tofu Tray",
     unlock: "after 5 fulfilled orders or Shop Level 2",
-    tofuRequired: 8,
+    tofuRequired: 24,
     deliveryOrdersRequired: 1,
     tips: 45,
     reputation: 3,
@@ -252,7 +252,7 @@ const SHOP_ORDER_TYPES = [
     id: "festival_bento",
     name: "Festival Bento",
     unlock: "after 25 fulfilled orders or 50 Reputation",
-    tofuRequired: 20,
+    tofuRequired: 75,
     deliveryOrdersRequired: 2,
     tips: 130,
     reputation: 8,
@@ -6495,7 +6495,7 @@ function renderOrdersPanel(state) {
       ${renderIdleCard({
         title: "Preparing Next Order",
         status: `${prep.progressPercent}% prepared`,
-        copy: `${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${formatShopCost(PREP_COUNTER_CONSUME_PER_ORDER)}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
+        copy: `${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Prep Counter tofu per prepared order: ${formatShopCost(PREP_COUNTER_CONSUME_PER_ORDER)}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
         extra: renderOrderPrepProgress(state),
       })}
     </div>

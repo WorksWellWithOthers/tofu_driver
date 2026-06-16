@@ -241,9 +241,9 @@ require more tofu and pay better rewards.
 
 | Order Type | Unlock | Tofu Required | Delivery Orders Required | Tips | Reputation | XP | Purpose | Expected First Use | Status |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | --- | --- | --- |
-| Simple Tofu Box | available immediately | 2 | 1 | 10 | 1 | 8 | tutorial order; teaches that orders become Tips | 0:00 | Implemented |
-| Family Tofu Tray | after 5 fulfilled orders or Shop Level 2 | 8 | 1 | 45 | 3 | 24 | first moment extra Tofu Stock matters | 5 to 10 minutes | Implemented |
-| Festival Bento | after 25 fulfilled orders or 50 Reputation | 20 | 2 | 130 | 8 | 70 | first big payout and first multi-order sink | 20 to 40 minutes | Implemented |
+| Simple Tofu Box | available immediately | 6 | 1 | 10 | 1 | 8 | tutorial order; teaches that orders become Tips and stock is a real input | 0:00 | Implemented |
+| Family Tofu Tray | after 5 fulfilled orders or Shop Level 2 | 24 | 1 | 45 | 3 | 24 | first moment extra Tofu Stock matters | 5 to 10 minutes | Implemented |
+| Festival Bento | after 25 fulfilled orders or 50 Reputation | 75 | 2 | 130 | 8 | 70 | first big payout and first multi-order sink | 20 to 40 minutes | Implemented |
 | Catering Crate | after Delivery Shelf/Shop Sign are meaningful | 50 | 5 | 400 | 20 | 180 | mid-game stock sink | First day | Future/hidden |
 | Neighborhood Bundle | after first fictional route progress | 90 | 8 | 850 | 35 | 320 | connects shop orders to the route/network phase | First day or later | Future |
 | Regional Tofu Order | after first License Exam or Regional Tofu Network preview | 250 | 20 | 3000 | 120 | 1100 | late-game stock sink and prestige runway test | Post-License | Future |
@@ -403,9 +403,9 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pack_tofu | Pack Tofu | Shop | First Loop | Shop visible | Parked; shop unlocked | Park first. | none | Adds small Tofu Stock | 0 to 2 minutes, backup only | Low Tofu Stock | Pack Tofu | Implemented |
 | fulfill_shop_order | Fulfill Shop Order | Shop/Orders | First Loop | Delivery Orders visible | Ready Orders >= 1; parked | Need 1 prepared order. Prep Counter is preparing the next order. | 1 Delivery Order | Grants Tips, Reputation, XP; ledger/result feedback | 0:00 to 0:30 | Converts orders into purchase currency | Fulfill Shop Order | Implemented |
-| fulfill_simple_tofu_box | Fulfill Simple Tofu Box | Orders | First Loop | Immediately | 2 Tofu Stock and 1 ready order | Need 1 prepared order or more Tofu Stock. | 2 Tofu Stock, 1 Delivery Order | +10 Tips, +1 Reputation, +8 XP | 0:00 to 0:30 | Tutorial money conversion | Fulfill Shop Order | Implemented |
-| fulfill_family_tofu_tray | Fulfill Family Tofu Tray | Orders | First Shop | 5 fulfilled orders or Shop Level 2 | 8 Tofu Stock and 1 ready order | Need Family unlock, ready order, or more Tofu Stock. | 8 Tofu Stock, 1 Delivery Order | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | Makes extra Tofu Stock valuable | Fulfill Family Tofu Tray | Implemented |
-| fulfill_festival_bento | Fulfill Festival Bento | Orders | First Shop / later | 25 fulfilled orders or 50 Reputation | 20 Tofu Stock and 2 ready orders | Need Festival unlock, 2 ready orders, or more Tofu Stock. | 20 Tofu Stock, 2 Delivery Orders | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | First big payout | Fulfill Festival Bento | Implemented |
+| fulfill_simple_tofu_box | Fulfill Simple Tofu Box | Orders | First Loop | Immediately | 6 Tofu Stock and 1 ready order | Need 1 prepared order or more Tofu Stock. | 6 Tofu Stock, 1 Delivery Order | +10 Tips, +1 Reputation, +8 XP | 0:00 to 0:30 | Tutorial money conversion and first stock-pressure lesson | Fulfill Shop Order | Implemented |
+| fulfill_family_tofu_tray | Fulfill Family Tofu Tray | Orders | First Shop | 5 fulfilled orders or Shop Level 2 | 24 Tofu Stock and 1 ready order | Need Family unlock, ready order, or more Tofu Stock. | 24 Tofu Stock, 1 Delivery Order | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | Makes extra Tofu Stock valuable | Fulfill Family Tofu Tray | Implemented |
+| fulfill_festival_bento | Fulfill Festival Bento | Orders | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 Tofu Stock and 2 ready orders | Need Festival unlock, 2 ready orders, or more Tofu Stock. | 75 Tofu Stock, 2 Delivery Orders | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | First big payout | Fulfill Festival Bento | Implemented |
 | fulfill_catering_crate | Fulfill Catering Crate | Orders | Later | Future mid-game | TBD | Hidden until later. | 50 Tofu Stock, 5 Delivery Orders target | +400 Tips, +20 Reputation, +180 XP target | Later | Mid-game stock sink | Fulfill Catering Crate | Future |
 | fulfill_10_orders | Fulfill 10 Orders | Orders | First Shop | Ready Orders can exceed 10 | Ready Orders >= 10; parked | Need 10 ready Delivery Orders. | 10 Delivery Orders | Grants 10x order rewards | 10 to 20 minutes | Reduces repeated order clicks | Fulfill 10 Orders | Implemented, reveal timing pending |
 | fulfill_max_simple_orders | Fulfill Max Simple Orders | Orders | First Loop / First Shop | Multiple Simple Tofu Boxes can be fulfilled and larger orders are not the best option | Enough Tofu Stock and ready orders for at least 2 Simple Tofu Boxes | Need more Tofu Stock or ready Delivery Orders. | max affordable Simple Tofu Boxes | Converts simple orders into Tips/Reputation/XP | 5 to 10 minutes | Avoids repeated tutorial-order clicks | Fulfill Max Simple Orders | Implemented |
@@ -1242,8 +1242,8 @@ Starter first-loop balance sheet:
 | id | label | phase | visibleAt | enabledWhen | primaryResource | costFormula | baseCost | growthRate | effectFormula | expectedUnlockTime | expectedTimeToBuy | bottleneckSolved | nextBestActionText | replacesOrAutomates | safetyNotes | status |
 | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- | --- |
 | fulfill_shop_order | Fulfill Shop Order | First Loop | Start | Ready Orders >= 1 | Delivery Orders | flat | 1 order | 1.0 | +10 Tips, +1 Reputation, +8 XP | 0:00 | immediate | Converts orders to spendable progress | Fulfill Simple Tofu Box | none | Parked-only, no sensors | Implemented |
-| family_tofu_tray | Family Tofu Tray | First Shop | 5 fulfilled orders or Shop Level 2 | 8 stock and 1 ready order | Tofu Stock, Delivery Orders | flat | 8 stock + 1 order | 1.0 | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | when unlocked and stocked | Extra stock has value | Fulfill Family Tofu Tray | simple order only | Shop only | Implemented |
-| festival_bento | Festival Bento | First Shop / later | 25 fulfilled orders or 50 Reputation | 20 stock and 2 ready orders | Tofu Stock, Delivery Orders | flat | 20 stock + 2 orders | 1.0 | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | when unlocked and stocked | First big payout | Fulfill Festival Bento | smaller orders | Shop only | Implemented |
+| family_tofu_tray | Family Tofu Tray | First Shop | 5 fulfilled orders or Shop Level 2 | 24 stock and 1 ready order | Tofu Stock, Delivery Orders | flat | 24 stock + 1 order | 1.0 | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | when unlocked and stocked | Extra stock has value | Fulfill Family Tofu Tray | simple order only | Shop only | Implemented |
+| festival_bento | Festival Bento | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 stock and 2 ready orders | Tofu Stock, Delivery Orders | flat | 75 stock + 2 orders | 1.0 | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | when unlocked and stocked | First big payout | Fulfill Festival Bento | smaller orders | Shop only | Implemented |
 | tofu_press | Tofu Press | First Loop | Start | always owned; buys require Tips | Tips | baseCost * growthRate ^ owned | 15 | 1.15 | +0.10 stock/sec target each | 0:00 | about 2 orders for first extra | Low Tofu Stock | Buy Tofu Press | Pack Tofu pressure | Shop only | Implemented, target value gap |
 | prep_counter | Prep Counter | First Loop | Start | always owned; buys require Tips/Prep Slots | Tips, Prep Slots | baseCost * growthRate ^ owned | 50 | 1.16 | +0.025 orders/sec target each; consumes 2 stock/order | 0:00 | 4 to 6 minutes for first extra | Slow/no Delivery Orders | Buy Prep Counter | manual waiting | Shop only | Implemented, target cost gap |
 | steady_pressing | Steady Pressing | First Loop | Stock runway low or extra Tofu Presses make stock growth relevant | Tips >= 20 | Tips | upgrade growth | 20 | TBD | Tofu Press output x1.5 at level 1 | 1 to 5 minutes when stock is low | about 2 simple orders in a stock-bottleneck state | Slow stock rebuild | Buy Steady Pressing | none | Shop language only | Implemented |
@@ -1335,9 +1335,9 @@ Starting state:
 First action:
 
 - first order grants Tips, Reputation, and XP
-- Simple Tofu Box consumes 2 Tofu Stock and 1 Delivery Order
-- Family Tofu Tray unlocks after its condition, consumes 8 Tofu Stock, and pays more Tips
-- Festival Bento unlocks after its condition, consumes 20 Tofu Stock and 2 Delivery Orders, and pays the first big reward
+- Simple Tofu Box consumes 6 Tofu Stock and 1 Delivery Order
+- Family Tofu Tray unlocks after its condition, consumes 24 Tofu Stock, and pays more Tips
+- Festival Bento unlocks after its condition, consumes 75 Tofu Stock and 2 Delivery Orders, and pays the first big reward
 - raw Tofu Stock does not directly multiply Tips
 - Fulfill Max is labeled with the selected/best order type
 - First Shop Order stamp unlocks or is revealed after the first order

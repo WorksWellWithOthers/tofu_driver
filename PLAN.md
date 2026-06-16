@@ -23,7 +23,8 @@
   relevant Prep Counter upgrade when order prep is the bottleneck, Steady Pressing is stock-specific,
   empty upgrade panels are hidden, and early upgrade cards show before/after impact.
 - The Orders panel has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
-  Bento consume typed Tofu Stock/Delivery Order costs and pay typed Tips/Reputation/XP rewards.
+  Bento consume meaningful typed Tofu Stock/Delivery Order costs and pay typed
+  Tips/Reputation/XP rewards.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
   Reputation, and XP.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points

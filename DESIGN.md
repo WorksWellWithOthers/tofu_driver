@@ -166,6 +166,8 @@ Current design principles:
   Tips/Reputation/XP rewards. This order-size ladder is the intended bridge between stockpiles and
   higher payouts. Raw Tofu Stock should not directly multiply Tips.
 - The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, and Festival Bento.
+  The current first-loop stock costs are 6, 24, and 75 Tofu Stock respectively, so stock pressure
+  appears early and larger order types become the main stock sink.
   Catering Crate and larger network orders are future/hidden until the core loop and first-shop
   pacing are proven.
 - Fulfill Shop Order requires at least one ready Delivery Order.
