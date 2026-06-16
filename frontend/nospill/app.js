@@ -796,6 +796,7 @@ const appState = {
   purchaseMultiplier: 1,
   summaryMode: null,
   shopResultCanFulfillAnother: false,
+  currentStampFanfare: null,
 };
 
 let elements = {};
@@ -1285,6 +1286,7 @@ function defaultGameState() {
     },
     recentRewards: [],
     recentSessions: [],
+    seenStampFanfareIds: [],
     xpByDate: {},
     routeMastery: {},
     shop: defaultShopState(),
@@ -1396,6 +1398,54 @@ function addLedgerEntry(gameState, type, text, date = new Date()) {
     ...next.shop.ledger,
   ].slice(0, LEDGER_MAX_ENTRIES);
   return next;
+}
+
+function stampFanfareTitle(stampId) {
+  if (stampId === "first_shop_order") return "First Stamp Earned";
+  return "Stamp Earned";
+}
+
+function stampFanfareCopy(stampId) {
+  if (stampId === "first_shop_order") {
+    return "The passport opens. Your first shop order is recorded.";
+  }
+  return "A new passport stamp has been recorded.";
+}
+
+function buildStampFanfare(stampId, rewards = {}) {
+  const label = STAMP_LABELS[stampId] || "Passport Stamp";
+  return {
+    stampId,
+    title: stampFanfareTitle(stampId),
+    stampLabel: label,
+    copy: stampFanfareCopy(stampId),
+    rewards: {
+      tips: safeNonNegativeInteger(rewards.tipsGained, 0, SHOP_MAX_RESOURCE),
+      reputation: safeNonNegativeInteger(rewards.reputationGained, 0, SHOP_MAX_RESOURCE),
+      xp: safeNonNegativeInteger(rewards.xpGained, 0, SHOP_MAX_RESOURCE),
+    },
+  };
+}
+
+function markStampFanfareSeen(gameState, stampId) {
+  const next = normalizeGameState(gameState);
+  if (typeof stampId !== "string" || !stampId) return next;
+  if (!next.seenStampFanfareIds.includes(stampId)) {
+    next.seenStampFanfareIds = [...next.seenStampFanfareIds, stampId].slice(0, 200);
+  }
+  return next;
+}
+
+function queueStampFanfare(gameState, stampId, rewards = {}) {
+  const state = normalizeGameState(gameState);
+  if (state.seenStampFanfareIds.includes(stampId)) {
+    return { gameState: state, stampFanfare: null };
+  }
+  const next = markStampFanfareSeen(state, stampId);
+  return {
+    gameState: next,
+    stampFanfare: buildStampFanfare(stampId, rewards),
+  };
 }
 
 function defaultShopState() {
@@ -1715,6 +1765,7 @@ function normalizeGameState(stored) {
     },
     recentRewards: Array.isArray(source.recentRewards) ? source.recentRewards.slice(0, 12) : [],
     recentSessions: Array.isArray(source.recentSessions) ? source.recentSessions.slice(0, 20) : [],
+    seenStampFanfareIds: normalizeIdList(source.seenStampFanfareIds),
     xpByDate:
       source.xpByDate && typeof source.xpByDate === "object"
         ? { ...source.xpByDate }
@@ -3136,6 +3187,16 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   if (next.shop.lifetimeTips >= 100 && !next.stamps.first_100_tips) {
     next.stamps.first_100_tips = { date: new Date().toISOString(), label: STAMP_LABELS.first_100_tips };
   }
+  let stampFanfare = null;
+  if (firstShopOrderStampUnlocked) {
+    const queued = queueStampFanfare(next, "first_shop_order", {
+      tipsGained,
+      reputationGained,
+      xpGained,
+    });
+    next = queued.gameState;
+    stampFanfare = queued.stampFanfare;
+  }
   syncShopGenerators(next);
   next.shop.lastShopTickAt = new Date().toISOString();
   next = addLedgerEntry(
@@ -3163,6 +3224,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     reputationGained,
     xpGained,
     firstShopOrderStampUnlocked,
+    stampFanfare,
     shopLevelBefore: previousShopLevel,
     shopLevelAfter: next.shop.shopLevel,
     shopLevelChanged: next.shop.shopLevel > previousShopLevel,
@@ -7354,6 +7416,64 @@ function setSummaryMode(mode, options = {}) {
   appState.shopResultCanFulfillAnother = Boolean(options.canFulfillAnother);
 }
 
+function stampFanfareRewardMetric(label, value) {
+  return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function hideStampFanfare() {
+  appState.currentStampFanfare = null;
+  if (elements.stampFanfare) {
+    elements.stampFanfare.classList.add("is-hidden");
+    elements.stampFanfare.classList.remove("is-animated");
+    elements.stampFanfare.classList.remove("is-static");
+  }
+}
+
+function showStampFanfare(fanfare, gameState = loadGameState()) {
+  if (!fanfare || appState.running || appState.calibrating || !elements.stampFanfare) {
+    return { shown: false, sound: { played: false, reason: appState.running || appState.calibrating ? "active-drive" : "unavailable" } };
+  }
+  const reducedMotion = prefersReducedMotion();
+  appState.currentStampFanfare = fanfare;
+  elements.stampFanfare.classList.remove("is-hidden");
+  elements.stampFanfare.classList.toggle("is-animated", !reducedMotion);
+  elements.stampFanfare.classList.toggle("is-static", reducedMotion);
+  if (elements.stampFanfareTitle) elements.stampFanfareTitle.textContent = fanfare.title || "Stamp Earned";
+  if (elements.stampFanfareName) elements.stampFanfareName.textContent = fanfare.stampLabel || "Passport Stamp";
+  if (elements.stampFanfareCopy) elements.stampFanfareCopy.textContent = fanfare.copy || "A new passport stamp has been recorded.";
+  if (elements.stampFanfareRewards) {
+    const rewards = fanfare.rewards || {};
+    elements.stampFanfareRewards.innerHTML = [
+      stampFanfareRewardMetric("Tips", `+${formatShopCount(rewards.tips || 0)}`),
+      stampFanfareRewardMetric("Reputation", `+${formatShopCount(rewards.reputation || 0)}`),
+      stampFanfareRewardMetric("XP", `+${formatShopCount(rewards.xp || 0)}`),
+    ].join("");
+  }
+  if (elements.stampFanfareCard && typeof elements.stampFanfareCard.focus === "function") {
+    elements.stampFanfareCard.focus();
+  }
+  const sound = playCosmeticSound("stamp_fanfare", gameState, { activeDrive: false });
+  return { shown: true, sound, reducedMotion };
+}
+
+function continueFromStampFanfare() {
+  hideStampFanfare();
+  if (elements.landingView || elements.summaryView) {
+    returnToDashboard("shop");
+  } else {
+    renderGamePanels(currentGameState());
+  }
+}
+
+function viewPassportFromStampFanfare() {
+  hideStampFanfare();
+  const state = currentGameState();
+  setAppSurface("shop", { updateHash: true, scroll: true });
+  appState.shopTab = isPassportTabUnlocked(state) ? "passport" : "overview";
+  renderGamePanels(state);
+  setSummaryStatusMessage("Passport stamp recorded.");
+}
+
 function renderShopOrderResult(result) {
   appState.lastSummary = null;
   const state = normalizeGameState(result.gameState);
@@ -7407,6 +7527,7 @@ function renderShopOrderResult(result) {
   setShareActionsEnabled(false);
   renderGamePanels(state);
   showView("summary");
+  showStampFanfare(result.stampFanfare, state);
 }
 
 function escapeHtml(value) {
@@ -8380,6 +8501,12 @@ function bindEvents() {
   if (elements.gameCertifiedCtaButton) {
     elements.gameCertifiedCtaButton.addEventListener("click", revealSetupFlow);
   }
+  if (elements.stampFanfareContinue) {
+    elements.stampFanfareContinue.addEventListener("click", continueFromStampFanfare);
+  }
+  if (elements.stampFanfarePassport) {
+    elements.stampFanfarePassport.addEventListener("click", viewPassportFromStampFanfare);
+  }
   if (elements.brandPrimaryCta) {
     elements.brandPrimaryCta.addEventListener("click", () => {
       if (appState.running || appState.calibrating) return;
@@ -8416,6 +8543,9 @@ function bindEvents() {
       if (appState.running || appState.calibrating) return;
       setAppSurface(surfaceFromHash(window.location.hash), { updateHash: false });
       renderGamePanels(loadGameState());
+    });
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && appState.currentStampFanfare) hideStampFanfare();
     });
   }
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
@@ -8648,6 +8778,14 @@ function cacheElements() {
     backSimulatorButton: document.getElementById("back-simulator-button"),
     newRunButton: document.getElementById("new-run-button"),
     summaryStatus: document.getElementById("summary-status"),
+    stampFanfare: document.getElementById("stamp-fanfare"),
+    stampFanfareCard: document.getElementById("stamp-fanfare-card"),
+    stampFanfareTitle: document.getElementById("stamp-fanfare-title"),
+    stampFanfareName: document.getElementById("stamp-fanfare-name"),
+    stampFanfareCopy: document.getElementById("stamp-fanfare-copy"),
+    stampFanfareRewards: document.getElementById("stamp-fanfare-rewards"),
+    stampFanfareContinue: document.getElementById("stamp-fanfare-continue"),
+    stampFanfarePassport: document.getElementById("stamp-fanfare-passport"),
   };
 }
 

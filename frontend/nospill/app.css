@@ -848,6 +848,94 @@
   font-weight: 800;
 }
 
+.nospill-stamp-fanfare {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  background: rgba(3, 7, 8, 0.76);
+}
+
+.nospill-stamp-fanfare.is-hidden {
+  display: none;
+}
+
+.nospill-stamp-fanfare-card {
+  width: min(500px, 100%);
+  display: grid;
+  gap: 14px;
+  border: 1px solid rgba(240, 185, 90, 0.48);
+  border-radius: 12px;
+  padding: 22px;
+  background: #101719;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
+}
+
+.nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card {
+  animation: stamp-pop 360ms ease-out;
+}
+
+.nospill-stamp-mark {
+  width: fit-content;
+  max-width: 100%;
+  border: 2px solid rgba(240, 185, 90, 0.7);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #ffe2a8;
+  background: rgba(240, 185, 90, 0.12);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0;
+}
+
+.nospill-stamp-rewards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.nospill-stamp-rewards div {
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(244, 247, 239, 0.045);
+}
+
+.nospill-stamp-rewards span {
+  display: block;
+  color: #9ee9bf;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-stamp-rewards strong {
+  color: #f4f7ef;
+}
+
+.nospill-stamp-actions {
+  margin-top: 4px;
+}
+
+@keyframes stamp-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card {
+    animation: none;
+  }
+}
+
 .nospill-step-grid div {
   min-height: 76px;
   display: grid;

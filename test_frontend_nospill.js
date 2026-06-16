@@ -81,6 +81,10 @@ globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.fulfillShopOrders = fulfillShopOrders;
+globalThis.buildStampFanfare = buildStampFanfare;
+globalThis.showStampFanfare = showStampFanfare;
+globalThis.hideStampFanfare = hideStampFanfare;
+globalThis.continueFromStampFanfare = continueFromStampFanfare;
 globalThis.buyShopStation = buyShopStation;
 globalThis.buyStationUpgrade = buyStationUpgrade;
 globalThis.completeFictionalRoute = completeFictionalRoute;
@@ -1745,6 +1749,182 @@ globalThis.shopFallbackRewardText = elements.recentReward.textContent;
   assert.strictEqual(context.shopFallbackRewardText, '+4 XP · Shop Order');
   assert(!context.shopRecentRewardText.includes('undefined'));
   assert(!context.shopFallbackRewardText.includes('undefined'));
+}
+
+function testFirstStampFanfareCelebratesAndPersists() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('id="stamp-fanfare"'));
+  assert(html.includes('role="dialog"'));
+  assert(html.includes('aria-modal="true"'));
+  assert(html.includes('First Stamp Earned'));
+  assert(html.includes('First Shop Order'));
+  assert(html.includes('Continue the Shop'));
+  assert(html.includes('View Passport'));
+  const localStorage = makeLocalStorage();
+  const context = loadNoSpillContext({
+    window: {
+      localStorage,
+      matchMedia: () => ({ matches: false }),
+    },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const classes = new Set(['is-hidden']);
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    focused: false,
+    classList: {
+      add(className) { classes.add(className); },
+      remove(className) { classes.delete(className); },
+      toggle(className, force) {
+        const active = force === undefined ? !classes.has(className) : Boolean(force);
+        if (active) classes.add(className);
+        else classes.delete(className);
+      },
+      contains(className) { return classes.has(className); },
+      toString() { return Array.from(classes).join(' '); },
+    },
+    focus() { node.focused = true; },
+  };
+  node.className = () => Array.from(classes).join(' ');
+  return node;
+}
+elements = {
+  stampFanfare: makeNode(),
+  stampFanfareCard: makeNode(),
+  stampFanfareTitle: makeNode(),
+  stampFanfareName: makeNode(),
+  stampFanfareCopy: makeNode(),
+  stampFanfareRewards: makeNode(),
+  landingView: null,
+  summaryView: null,
+};
+appState.running = false;
+appState.calibrating = false;
+appState.audioLevel = 'muted';
+appState.audioEnabled = true;
+const source = defaultGameState();
+const result = fulfillShopOrders(source, 1, {
+  activeDrive: false,
+  orderTypeId: "simple_tofu_box",
+});
+globalThis.fanfareOk = result.ok;
+globalThis.fanfareSeenIds = result.gameState.seenStampFanfareIds.slice();
+globalThis.fanfarePayload = result.stampFanfare;
+globalThis.fanfareLedgerText = result.gameState.shop.ledger[0].text;
+saveGameState(result.gameState);
+globalThis.reloadedSeenIds = loadGameState().seenStampFanfareIds.slice();
+const secondSource = normalizeGameState(result.gameState);
+secondSource.shop.tofuStock = 10;
+secondSource.shop.deliveryOrders = 1;
+const second = fulfillShopOrders(secondSource, 1, {
+  activeDrive: false,
+  orderTypeId: "simple_tofu_box",
+});
+globalThis.secondFanfare = second.stampFanfare;
+const shown = showStampFanfare(result.stampFanfare, result.gameState);
+globalThis.fanfareShown = shown.shown;
+globalThis.fanfareSoundReason = shown.sound.reason;
+globalThis.fanfareTitle = elements.stampFanfareTitle.textContent;
+globalThis.fanfareStampName = elements.stampFanfareName.textContent;
+globalThis.fanfareCopy = elements.stampFanfareCopy.textContent;
+globalThis.fanfareRewardsHtml = elements.stampFanfareRewards.innerHTML;
+globalThis.fanfareIsAnimated = elements.stampFanfare.classList.contains('is-animated');
+globalThis.fanfareIsHiddenBeforeContinue = elements.stampFanfare.classList.contains('is-hidden');
+globalThis.fanfareFocused = elements.stampFanfareCard.focused;
+continueFromStampFanfare();
+globalThis.fanfareHiddenAfterContinue = elements.stampFanfare.classList.contains('is-hidden');
+appState.running = true;
+const activeDriveShow = showStampFanfare(result.stampFanfare, result.gameState);
+globalThis.activeDriveFanfareShown = activeDriveShow.shown;
+globalThis.activeDriveFanfareReason = activeDriveShow.sound.reason;
+`, context);
+
+  assert.strictEqual(context.fanfareOk, true);
+  assert.strictEqual(context.fanfareSeenIds.join(','), 'first_shop_order');
+  assert.strictEqual(context.reloadedSeenIds.join(','), 'first_shop_order');
+  assert.strictEqual(context.secondFanfare, null);
+  assert.strictEqual(context.fanfarePayload.title, 'First Stamp Earned');
+  assert.strictEqual(context.fanfarePayload.stampLabel, 'First Shop Order');
+  assert.strictEqual(context.fanfarePayload.copy, 'The passport opens. Your first shop order is recorded.');
+  assert.strictEqual(context.fanfarePayload.rewards.tips, 10);
+  assert.strictEqual(context.fanfarePayload.rewards.reputation, 1);
+  assert.strictEqual(context.fanfarePayload.rewards.xp, 8);
+  assert(context.fanfareLedgerText.includes('First Shop Order stamp earned'));
+  assert.strictEqual(context.fanfareShown, true);
+  assert.strictEqual(context.fanfareSoundReason, 'muted');
+  assert.strictEqual(context.fanfareTitle, 'First Stamp Earned');
+  assert.strictEqual(context.fanfareStampName, 'First Shop Order');
+  assert.strictEqual(context.fanfareCopy, 'The passport opens. Your first shop order is recorded.');
+  assert(context.fanfareRewardsHtml.includes('Tips'));
+  assert(context.fanfareRewardsHtml.includes('+10'));
+  assert(context.fanfareRewardsHtml.includes('Reputation'));
+  assert(context.fanfareRewardsHtml.includes('+1'));
+  assert(context.fanfareRewardsHtml.includes('XP'));
+  assert(context.fanfareRewardsHtml.includes('+8'));
+  assert.strictEqual(context.fanfareIsAnimated, true);
+  assert.strictEqual(context.fanfareIsHiddenBeforeContinue, false);
+  assert.strictEqual(context.fanfareFocused, true);
+  assert.strictEqual(context.fanfareHiddenAfterContinue, true);
+  assert.strictEqual(context.activeDriveFanfareShown, false);
+  assert.strictEqual(context.activeDriveFanfareReason, 'active-drive');
+}
+
+function testStampFanfareReducedMotionUsesStaticState() {
+  const context = loadNoSpillContext({
+    window: {
+      localStorage: makeLocalStorage(),
+      matchMedia: () => ({ matches: true }),
+    },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const classes = new Set(['is-hidden']);
+  return {
+    textContent: "",
+    innerHTML: "",
+    classList: {
+      add(className) { classes.add(className); },
+      remove(className) { classes.delete(className); },
+      toggle(className, force) {
+        const active = force === undefined ? !classes.has(className) : Boolean(force);
+        if (active) classes.add(className);
+        else classes.delete(className);
+      },
+      contains(className) { return classes.has(className); },
+    },
+    focus() {},
+  };
+}
+elements = {
+  stampFanfare: makeNode(),
+  stampFanfareCard: makeNode(),
+  stampFanfareTitle: makeNode(),
+  stampFanfareName: makeNode(),
+  stampFanfareCopy: makeNode(),
+  stampFanfareRewards: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.audioLevel = 'muted';
+const shown = showStampFanfare(buildStampFanfare('first_shop_order', {
+  tipsGained: 10,
+  reputationGained: 1,
+  xpGained: 8,
+}), defaultGameState());
+globalThis.reducedShown = shown.shown;
+globalThis.reducedMotion = shown.reducedMotion;
+globalThis.staticClass = elements.stampFanfare.classList.contains('is-static');
+globalThis.animatedClass = elements.stampFanfare.classList.contains('is-animated');
+`, context);
+
+  assert.strictEqual(context.reducedShown, true);
+  assert.strictEqual(context.reducedMotion, true);
+  assert.strictEqual(context.staticClass, true);
+  assert.strictEqual(context.animatedClass, false);
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -4235,6 +4415,8 @@ function run() {
   testTofuStockRunwayGuidesEarlyPurchases();
   testCompactTofuShopNumberFormatting();
   testShopRecentRewardUsesSafeFallbackLabel();
+  testFirstStampFanfareCelebratesAndPersists();
+  testStampFanfareReducedMotionUsesStaticState();
   testShopOrderTypeProgressionAndRewards();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();

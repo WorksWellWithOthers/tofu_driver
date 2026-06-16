@@ -188,6 +188,9 @@ Current design principles:
   best action, ready orders, Prep Counter progress, the best available order card, and one relevant
   station or upgrade. A new player should not need to open Orders to understand or play the first
   loop.
+- The first Passport stamp should be a Stamp Fanfare moment. The celebration is local-only,
+  repeat-suppressed per stamp, accessible, and parked/result-screen only. It must never interrupt an
+  active Cup Test, and it should respect reduced-motion and audio settings.
 - Detailed tabs are earned. Orders can remain as a detailed support panel, Production should focus
   on station ownership, and Upgrades should appear only when at least one relevant upgrade is
   visible or close.

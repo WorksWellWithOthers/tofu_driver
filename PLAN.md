@@ -25,6 +25,8 @@
 - Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
   progress, the best available order card, and the relevant next station/upgrade so the first loop
   is playable without opening Orders.
+- The first Passport stamp now triggers a local Stamp Fanfare on the shop-order result path, with
+  repeat suppression, accessible dialog semantics, reduced-motion handling, and muted-audio respect.
 - Tofu Shop tabs are progressively revealed by meaningful milestones and story beats rather than
   raw idle accumulation. Routes, Training, Garage, Crew, Shop Spirit, Rivals, License, full
   Passport, and full Ledger stay hidden during the first loop unless earned.

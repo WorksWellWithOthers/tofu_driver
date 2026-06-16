@@ -738,7 +738,7 @@ First-time users should not see every system. Each system should move through th
 | Reveal Moment | Visible | Teaser-Locked | Hidden |
 | --- | --- | --- | --- |
 | Immediately | Tofu Stock, Delivery Orders, Tips, Reputation/XP, Fulfill Shop Order, Tofu Press, Prep Counter, Take Cup Test secondary | Buy Tofu Press if unaffordable; simple upgrade hint only if useful | Routes, Crew, Garage, Spirit, Rivals, License, deep Passport, character/sound economy |
-| After first order | Shop Order Complete result, Tips source, First Shop Order stamp teaser, relevant Tidy Packaging card if Prep Counter is the bottleneck | Passport preview | Routes, Crew, Garage, Spirit, Rivals, License |
+| After first order | Shop Order Complete result, Tips source, First Shop Order Stamp Fanfare, relevant Tidy Packaging card if Prep Counter is the bottleneck | Passport preview | Routes, Crew, Garage, Spirit, Rivals, License |
 | After first upgrade | clearer Production/Upgrade cards with before/after rate previews | Steady Pressing only when stock is the bottleneck | Full route network, Crew, Spirit, Rivals, License |
 | After first stamp | Passport card/panel with first stamp details | Next stamp hint | Large stamp catalog |
 | After 10 minutes | Delivery Shelf/Shop Sign path | Route teaser | Crew, Garage, Spirit, Rivals, License action |
@@ -762,6 +762,9 @@ Early UI rule:
   related milestone, bottleneck, purchased upgrade/station, discovered stamp, or story beat.
 - Offline progress may create resources and a welcome-back summary, but it should not reveal Routes,
   Garage, Shop Spirit, Rivals, License, or full Passport/Ledger panels by itself.
+- The first Passport stamp should trigger a Stamp Fanfare / Stamp Celebration. The fanfare shows
+  the stamp name and order rewards, suppresses repeats through local seen-fanfare state, respects
+  reduced motion and muted audio, and never appears during active driving.
 
 ### Reveal Rules By System
 
@@ -1258,7 +1261,7 @@ Starter first-loop balance sheet:
 | steady_pressing | Steady Pressing | First Loop | Stock runway low or extra Tofu Presses make stock growth relevant | Tips >= 20 | Tips | upgrade growth | 20 | TBD | Tofu Press output x1.5 at level 1 | 1 to 5 minutes when stock is low | about 2 simple orders in a stock-bottleneck state | Slow stock rebuild | Buy Steady Pressing | none | Shop language only | Implemented |
 | double_mold | Double Mold | First Shop | Own 3 Tofu Presses | Tips >= 40 | Tips | flat or upgrade growth | 40 | TBD | Tofu Press output x2 | 3 to 8 minutes | TBD | First stock plateau | Buy Double Mold | none | Shop language only | Implemented, tuning pending |
 | tidy_packaging | Tidy Packaging | First Loop | First order complete and Prep Counter/order throughput bottleneck | Tips >= 20 | Tips | upgrade growth | 20 | TBD | Prep Counter output x1.5 | 1 to 3 minutes | about 2 simple orders | Slow order prep | Buy Tidy Packaging | none | Shop language only | Implemented |
-| first_shop_order_stamp | First Shop Order Stamp | First Loop | First order fulfilled | automatic | none | none | 0 | 1.0 | Unlock first stamp and Passport teaser | 0:00 to 1:00 | immediate | Collection reveal | View Passport | none | Local-only stamp | Implemented |
+| first_shop_order_stamp | First Shop Order Stamp | First Loop | First order fulfilled | automatic | none | none | 0 | 1.0 | Unlock first stamp, Stamp Fanfare, and Passport teaser | 0:00 to 1:00 | immediate | Collection reveal | View Passport | none | Local-only stamp; fanfare repeats are suppressed | Implemented |
 | delivery_shelf | Delivery Shelf | First Shop | 10 to 20 minutes or 25 orders fulfilled | Tips/Prep Slots available | Tips | station growth | 800 | 1.17 | Prep Counter support/capacity | 10 to 20 minutes | TBD | Scaling order flow | Buy Delivery Shelf | none | Shop only | Partial |
 | shop_sign | Shop Sign | First Shop | 10 Reputation or reputation gate | Tips available | Tips | station growth | 300 | 1.18 | +50% Reputation/order target or route unlock support | 20 to 40 minutes | TBD | Reputation unlock pressure | Buy Shop Sign | none | Shop only | Partial |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
