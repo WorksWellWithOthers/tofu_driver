@@ -13,8 +13,8 @@
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
 - Fresh shop state starts with Tofu Stock, one ready Delivery Order, and a running Prep Counter so
   the first order can be fulfilled immediately.
-- Fractional Delivery Order progress is shown as ready orders plus Prep Counter preparation
-  progress/ETA, not as a raw decimal order count.
+- Fractional Delivery Order progress is shown as ready orders plus a Prep Counter progress bar,
+  supporting percent/ETA copy, and pause state, not as a raw decimal order count.
 - Tofu Stock now has player-facing runway copy: it is an input for Prep Counter, not the purchase
   currency, and the UI can show when stock is enough for now.
 - The Orders panel has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival

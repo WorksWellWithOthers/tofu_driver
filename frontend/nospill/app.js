@@ -2649,12 +2649,14 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
   const carry = shop.generatorCarry || {};
   const useCarry = options.useCarry !== false;
   const tofuTotal = rates.tofuPressPerSecond * elapsedSeconds + (useCarry ? Number(carry.tofuStock || 0) : 0);
-  const orderTotal = rates.prepOrdersPerSecond * elapsedSeconds + (useCarry ? Number(carry.deliveryOrders || 0) : 0);
   const tipsTotal = rates.customerTipsPerSecond * elapsedSeconds + (useCarry ? Number(carry.tips || 0) : 0);
   const reputationTotal = rates.passiveReputationPerSecond * elapsedSeconds + (useCarry ? Number(carry.reputation || 0) : 0);
   const tofuProduced = Math.floor(tofuTotal);
-  const possibleOrders = Math.floor(orderTotal);
   const availableTofu = safeNonNegativeInteger(shop.tofuStock + tofuProduced);
+  const prepCanProgress = availableTofu >= PREP_COUNTER_CONSUME_PER_ORDER;
+  const orderTotal = (prepCanProgress ? rates.prepOrdersPerSecond * elapsedSeconds : 0)
+    + (useCarry ? Number(carry.deliveryOrders || 0) : 0);
+  const possibleOrders = Math.floor(orderTotal);
   const deliveryOrders = Math.min(
     possibleOrders,
     Math.floor(availableTofu / PREP_COUNTER_CONSUME_PER_ORDER),
@@ -6147,7 +6149,7 @@ function renderShopTabPanel(tabId, state) {
   return renderOverviewPanel(state);
 }
 
-function renderIdleCard({ title, status, copy, actions = [], locked = false }) {
+function renderIdleCard({ title, status, copy, actions = [], locked = false, extra = "" }) {
   return `
     <div class="nospill-idle-card ${locked ? "is-locked" : ""}">
       <header>
@@ -6155,6 +6157,7 @@ function renderIdleCard({ title, status, copy, actions = [], locked = false }) {
         <small>${escapeHtml(status || "")}</small>
       </header>
       <small>${escapeHtml(copy || "")}</small>
+      ${extra}
       ${actions.length ? `<div class="nospill-idle-actions">${actions.join("")}</div>` : ""}
     </div>
   `;
@@ -6256,6 +6259,50 @@ function renderProductionPanel(state) {
   `;
 }
 
+function renderOrderPrepProgress(state) {
+  const prep = orderPrepProgress(state);
+  const progressPercent = Math.max(0, Math.min(100, prep.progressPercent));
+  let label = "Preparing next order";
+  let copy = prep.etaSeconds !== null
+    ? `About ${prep.etaSeconds} seconds remaining.`
+    : prep.message;
+  let stateClass = "is-running";
+  if (prep.ready > 0) {
+    label = "Next order preparing";
+    copy = "Ready orders can be fulfilled now.";
+  } else if (prep.waitingForTofu) {
+    label = "Prep paused";
+    copy = "Need more Tofu Stock.";
+    stateClass = "is-paused";
+  } else if (!prep.running) {
+    label = "Prep idle";
+    stateClass = "is-paused";
+  }
+  return `
+    <div class="nospill-order-prep ${stateClass}">
+      <div class="nospill-order-prep-head">
+        <span>Ready Orders</span>
+        <strong>${prep.ready}</strong>
+      </div>
+      <div class="nospill-order-prep-copy">
+        <strong>${escapeHtml(label)}</strong>
+        <small>${escapeHtml(copy)}</small>
+      </div>
+      <div
+        class="nospill-order-prep-bar"
+        role="progressbar"
+        aria-label="Preparing next delivery order"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="${progressPercent}"
+      >
+        <span style="width: ${progressPercent}%"></span>
+      </div>
+      <small>${progressPercent}% prepared</small>
+    </div>
+  `;
+}
+
 function renderOrdersPanel(state) {
   const prep = orderPrepProgress(state);
   const runway = tofuStockRunway(state);
@@ -6299,7 +6346,8 @@ function renderOrdersPanel(state) {
       ${renderIdleCard({
         title: "Preparing Next Order",
         status: `${prep.progressPercent}% prepared`,
-        copy: `${prep.message} ${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${PREP_COUNTER_CONSUME_PER_ORDER}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
+        copy: `${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${PREP_COUNTER_CONSUME_PER_ORDER}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
+        extra: renderOrderPrepProgress(state),
       })}
     </div>
   `;

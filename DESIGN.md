@@ -156,8 +156,10 @@ Current design principles:
 - each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
-- Delivery Orders may be fractional internally, but UI should show ready orders plus preparation
-  progress and ETA.
+- Delivery Orders may be fractional internally, but UI should show ready orders plus a Prep Counter
+  progress bar, supporting percentage, and ETA rather than a raw decimal.
+- Prep Counter progress should pause when Tofu Stock is insufficient, and should not jump backward
+  unless a ready order is completed.
 - Tofu Stock is an ingredient/runway resource, not the purchase currency. The UI should explain how
   many orders current stock can support.
 - Larger shop order types can consume more Tofu Stock and ready Delivery Orders for better local

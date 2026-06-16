@@ -206,8 +206,14 @@ Display target:
 
 ```text
 Ready Orders: 0
-Next Order: 30% prepared
+Preparing next order
+[progress bar at 30%]
+About 28 seconds remaining
 ```
+
+The progress bar is the primary visual. Percentage and ETA are supporting text. If Tofu Stock is
+insufficient, the Prep Counter should show a paused state and keep the current progress instead of
+advancing or jumping. When ready orders exist, the bar remains secondary to fulfillment actions.
 
 Fulfill Shop Order requires at least 1 ready order.
 
