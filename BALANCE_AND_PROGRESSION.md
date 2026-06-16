@@ -27,6 +27,18 @@ Don't Spill the Cup is the iconic smooth-driving challenge and optional certifie
 path. It can make the shop feel special, but ordinary shop progression must not require physical
 driving.
 
+Idle-first rule:
+
+- manual actions teach the loop
+- automation replaces repeated labor
+- player decisions, not clicking speed, drive progression
+- every repeated manual action needs an automation exit
+- good actions are buying upgrades, solving bottlenecks, starting or pausing Counter Service,
+  spending Shop Spirit, choosing future business direction, building/keeping/selling cars later,
+  and choosing prestige/reset timing later
+- bad repeated labor is clicking hundreds of times to make tofu, manually fulfilling every order
+  forever, clicking faster to progress faster, or clicking during active driving
+
 Tofu Shop is:
 
 - a one-loop incremental game that earns the right to unfold

@@ -83,6 +83,8 @@ The static app uses hash routing:
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /
   Project Car progression, future Net Worth endgame direction, and balance tests
+  Tofu Shop is idle-first: manual actions teach the loop, repeated labor earns automation exits,
+  and decisions rather than clicking speed drive progression.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
 - `CORE_GAME_SPINE_AUDIT.md`: evidence audit for what is real versus scaffolding in the current

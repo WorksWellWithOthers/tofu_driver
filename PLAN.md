@@ -11,6 +11,8 @@
 - Qualified Run Mode is opt-in and may request location only after explicit start.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
+- Tofu Shop is idle-first, not clicker-first: manual actions teach the loop, automation exits
+  repeated labor, and player decisions rather than clicking speed drive progression.
 - Fresh shop state starts with Tofu Stock, one ready Delivery Order, and a running Prep Counter so
   the first order can be fulfilled immediately.
 - Fractional Delivery Order progress is shown as ready orders plus a Prep Counter progress bar,

@@ -196,6 +196,14 @@ Current design principles:
 - The incremental design transcript audit reinforces four durable rules: make the first five
   minutes obvious, balance active play with idle progress, delegate repeated chores only after
   mastery, and add novelty through earned shop layers rather than early UI clutter.
+- Tofu Shop is idle-first, not clicker-first. Manual actions teach the loop, automation replaces
+  repeated labor, and player decisions, not clicking speed, drive progression. Every repeated
+  manual action needs an automation exit.
+- Good player actions include buying upgrades, solving bottlenecks, starting or pausing Counter
+  Service, spending Shop Spirit, and later choosing business direction, car-build direction, or a
+  prestige reset. Bad repeated labor includes clicking hundreds of times to make tofu, manually
+  fulfilling every order forever, clicking faster to progress faster, or clicking during active
+  driving.
 - Raw external transcripts and reference notes are source material, not product canon. Keep durable
   design takeaways in audit files and translate every idea into Tofu Driver language before it
   reaches player-facing copy.
