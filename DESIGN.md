@@ -175,6 +175,8 @@ Current design principles:
 - Pack Tofu is a backup/manual Tofu Stock action, not the main money action.
 - Recommendations should follow the current bottleneck: promote Tofu Press when stock is low, but
   promote Prep Counter, order prep, or Tidy Packaging when stock is plentiful and orders are slow.
+- Early upgrades must solve a bottleneck the player has already felt. Do not make the Upgrades
+  panel prominent when it only contains locked, irrelevant, or non-actionable cards.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
   are needed.

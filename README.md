@@ -41,6 +41,8 @@ The static app uses hash routing:
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /
   Project Car progression, and balance tests
+- `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
+  slice for meaningful early upgrades and reveal timing
 - `IMPLEMENTATION_STATUS.md`: what is actually implemented, partial, placeholder, decorative,
   documented only, or non-goal, with file/test evidence
 - `PLAN.md`: tactical next steps, questions, and non-goals
