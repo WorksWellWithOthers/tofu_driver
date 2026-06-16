@@ -191,6 +191,9 @@ Current design principles:
 - The first Passport stamp should be a Stamp Fanfare moment. The celebration is local-only,
   repeat-suppressed per stamp, accessible, and parked/result-screen only. It must never interrupt an
   active Cup Test, and it should respect reduced-motion and audio settings.
+- The first hidden shop system should use a Discovery Fanfare. Upgrades are the first system reveal
+  when a meaningful bottleneck-solving upgrade appears. System reveals are local-only,
+  repeat-suppressed per system id, and should create curiosity without listing the future roadmap.
 - Detailed tabs are earned. Orders can remain as a detailed support panel, Production should focus
   on station ownership, and Upgrades should appear only when at least one relevant upgrade is
   visible or close.

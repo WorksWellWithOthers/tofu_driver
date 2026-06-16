@@ -27,6 +27,8 @@
   is playable without opening Orders.
 - The first Passport stamp now triggers a local Stamp Fanfare on the shop-order result path, with
   repeat suppression, accessible dialog semantics, reduced-motion handling, and muted-audio respect.
+- The first hidden shop system reveal now uses a local Discovery Fanfare: Upgrades are revealed
+  when a meaningful upgrade appears, and the reveal is suppressed after it has been seen once.
 - Tofu Shop tabs are progressively revealed by meaningful milestones and story beats rather than
   raw idle accumulation. Routes, Training, Garage, Crew, Shop Spirit, Rivals, License, full
   Passport, and full Ledger stay hidden during the first loop unless earned.

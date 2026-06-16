@@ -738,7 +738,7 @@ First-time users should not see every system. Each system should move through th
 | Reveal Moment | Visible | Teaser-Locked | Hidden |
 | --- | --- | --- | --- |
 | Immediately | Tofu Stock, Delivery Orders, Tips, Reputation/XP, Fulfill Shop Order, Tofu Press, Prep Counter, Take Cup Test secondary | Buy Tofu Press if unaffordable; simple upgrade hint only if useful | Routes, Crew, Garage, Spirit, Rivals, License, deep Passport, character/sound economy |
-| After first order | Shop Order Complete result, Tips source, First Shop Order Stamp Fanfare, relevant Tidy Packaging card if Prep Counter is the bottleneck | Passport preview | Routes, Crew, Garage, Spirit, Rivals, License |
+| After first order | Shop Order Complete result, Tips source, First Shop Order Stamp Fanfare, Upgrades Discovery Fanfare when a meaningful upgrade appears, relevant Tidy Packaging card if Prep Counter is the bottleneck | Passport preview | Routes, Crew, Garage, Spirit, Rivals, License |
 | After first upgrade | clearer Production/Upgrade cards with before/after rate previews | Steady Pressing only when stock is the bottleneck | Full route network, Crew, Spirit, Rivals, License |
 | After first stamp | Passport card/panel with first stamp details | Next stamp hint | Large stamp catalog |
 | After 10 minutes | Delivery Shelf/Shop Sign path | Route teaser | Crew, Garage, Spirit, Rivals, License action |
@@ -765,6 +765,10 @@ Early UI rule:
 - The first Passport stamp should trigger a Stamp Fanfare / Stamp Celebration. The fanfare shows
   the stamp name and order rewards, suppresses repeats through local seen-fanfare state, respects
   reduced motion and muted audio, and never appears during active driving.
+- The first meaningful hidden shop system should trigger a Discovery Fanfare / New System Revealed
+  moment. Upgrades are the preferred first reveal when Tidy Packaging, Steady Pressing, or another
+  bottleneck-solving upgrade becomes visible. Future systems should use the same pattern only after
+  milestone-based discovery, not raw idle currency accumulation.
 
 ### Reveal Rules By System
 
@@ -772,7 +776,7 @@ Early UI rule:
 | --- | --- | --- | --- |
 | Orders | never hidden in shop | none | immediately, with Simple Tofu Box |
 | Production | never hidden in shop | advanced station hints only when close | immediately for Tofu Press and Prep Counter |
-| Upgrades | before first order, except a subtle hint if useful | after first order or when close to affordable | after first upgrade path is understood |
+| Upgrades | before first meaningful upgrade appears | Discovery Fanfare when a bottleneck-solving upgrade becomes visible | after first upgrade path is understood |
 | Passport | before first stamp-worthy action | after first order/result as compact teaser | after multiple stamps or when collection matters |
 | Ledger | before meaningful history exists | after several events or meaningful offline return | after history helps explain what changed |
 | Routes | first 10 minutes | after Reputation/Shop Sign begins to matter | after a route story beat or route-ready station milestone |

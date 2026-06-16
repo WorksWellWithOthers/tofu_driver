@@ -85,6 +85,11 @@ globalThis.buildStampFanfare = buildStampFanfare;
 globalThis.showStampFanfare = showStampFanfare;
 globalThis.hideStampFanfare = hideStampFanfare;
 globalThis.continueFromStampFanfare = continueFromStampFanfare;
+globalThis.buildDiscoveryFanfare = buildDiscoveryFanfare;
+globalThis.showDiscoveryFanfare = showDiscoveryFanfare;
+globalThis.hideDiscoveryFanfare = hideDiscoveryFanfare;
+globalThis.continueFromDiscoveryFanfare = continueFromDiscoveryFanfare;
+globalThis.viewSystemFromDiscoveryFanfare = viewSystemFromDiscoveryFanfare;
 globalThis.buyShopStation = buyShopStation;
 globalThis.buyStationUpgrade = buyStationUpgrade;
 globalThis.completeFictionalRoute = completeFictionalRoute;
@@ -1925,6 +1930,199 @@ globalThis.animatedClass = elements.stampFanfare.classList.contains('is-animated
   assert.strictEqual(context.reducedMotion, true);
   assert.strictEqual(context.staticClass, true);
   assert.strictEqual(context.animatedClass, false);
+}
+
+function testDiscoveryFanfareRevealsUpgradesOnce() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('id="discovery-fanfare"'));
+  assert(html.includes('role="dialog"'));
+  assert(html.includes('New Shop System Revealed'));
+  assert(html.includes('Upgrades'));
+  assert(html.includes('More shop systems are hidden for now'));
+
+  const localStorage = makeLocalStorage();
+  const context = loadNoSpillContext({
+    window: {
+      localStorage,
+      matchMedia: () => ({ matches: false }),
+    },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const classes = new Set(['is-hidden']);
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    focused: false,
+    classList: {
+      add(className) { classes.add(className); },
+      remove(className) { classes.delete(className); },
+      toggle(className, force) {
+        const active = force === undefined ? !classes.has(className) : Boolean(force);
+        if (active) classes.add(className);
+        else classes.delete(className);
+      },
+      contains(className) { return classes.has(className); },
+    },
+    focus() { node.focused = true; },
+    scrollIntoView() {},
+  };
+  return node;
+}
+elements = {
+  discoveryFanfare: makeNode(),
+  discoveryFanfareCard: makeNode(),
+  discoveryFanfareTitle: makeNode(),
+  discoveryFanfareSystem: makeNode(),
+  discoveryFanfareCopy: makeNode(),
+  discoveryFanfareSecondary: makeNode(),
+  discoveryFanfareView: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  tofuShopSection: makeNode(),
+  landingView: makeNode(),
+  runView: makeNode(),
+  unsupportedView: makeNode(),
+  summaryView: makeNode(),
+  surfaceNavButtons: [],
+  surfaceSections: [],
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.audioLevel = 'muted';
+appState.audioEnabled = true;
+const source = defaultGameState();
+source.shop.tofuStock = 100;
+source.shop.deliveryOrders = 1;
+const result = fulfillShopOrders(source, 1, {
+  activeDrive: false,
+  orderTypeId: "simple_tofu_box",
+});
+globalThis.discoveryOk = result.ok;
+globalThis.discoveryPayload = result.discoveryFanfare;
+globalThis.discoverySeenIds = result.gameState.seenSystemRevealIds.slice();
+saveGameState(result.gameState);
+globalThis.discoveryReloadedSeenIds = loadGameState().seenSystemRevealIds.slice();
+const secondSource = normalizeGameState(result.gameState);
+secondSource.shop.tofuStock = 100;
+secondSource.shop.deliveryOrders = 1;
+const second = fulfillShopOrders(secondSource, 1, {
+  activeDrive: false,
+  orderTypeId: "simple_tofu_box",
+});
+globalThis.secondDiscovery = second.discoveryFanfare;
+const shown = showDiscoveryFanfare(result.discoveryFanfare, result.gameState);
+globalThis.discoveryShown = shown.shown;
+globalThis.discoverySoundReason = shown.sound.reason;
+globalThis.discoveryTitle = elements.discoveryFanfareTitle.textContent;
+globalThis.discoverySystem = elements.discoveryFanfareSystem.textContent;
+globalThis.discoveryCopy = elements.discoveryFanfareCopy.textContent;
+globalThis.discoverySecondary = elements.discoveryFanfareSecondary.textContent;
+globalThis.discoveryButton = elements.discoveryFanfareView.textContent;
+globalThis.discoveryAnimated = elements.discoveryFanfare.classList.contains('is-animated');
+globalThis.discoveryHiddenBeforeContinue = elements.discoveryFanfare.classList.contains('is-hidden');
+globalThis.discoveryFocused = elements.discoveryFanfareCard.focused;
+continueFromDiscoveryFanfare();
+globalThis.discoveryHiddenAfterContinue = elements.discoveryFanfare.classList.contains('is-hidden');
+showDiscoveryFanfare(result.discoveryFanfare, result.gameState);
+viewSystemFromDiscoveryFanfare();
+globalThis.discoveryViewTab = appState.shopTab;
+globalThis.discoveryHighlightedTab = appState.highlightedShopTab;
+globalThis.discoveryTabHtml = elements.shopTabList.innerHTML;
+const raw = defaultGameState();
+raw.shop.tips = 10000;
+raw.shop.reputation = 1000;
+raw.shop.tofuStock = 5000;
+renderTofuShop(raw);
+globalThis.rawSystemRevealIds = raw.seenSystemRevealIds.slice();
+globalThis.rawDiscoveryHidden = elements.discoveryFanfare.classList.contains('is-hidden');
+appState.running = true;
+const activeShow = showDiscoveryFanfare(result.discoveryFanfare, result.gameState);
+globalThis.activeDiscoveryShown = activeShow.shown;
+globalThis.activeDiscoveryReason = activeShow.sound.reason;
+`, context);
+
+  assert.strictEqual(context.discoveryOk, true);
+  assert.strictEqual(context.discoveryPayload.title, 'New Shop System Revealed');
+  assert.strictEqual(context.discoveryPayload.systemLabel, 'Upgrades');
+  assert(context.discoveryPayload.copy.includes('The shop has another layer'));
+  assert(context.discoveryPayload.secondaryCopy.includes('More shop systems are hidden for now'));
+  assert.strictEqual(context.discoverySeenIds.join(','), 'upgrades');
+  assert.strictEqual(context.discoveryReloadedSeenIds.join(','), 'upgrades');
+  assert.strictEqual(context.secondDiscovery, null);
+  assert.strictEqual(context.discoveryShown, true);
+  assert.strictEqual(context.discoverySoundReason, 'muted');
+  assert.strictEqual(context.discoveryTitle, 'New Shop System Revealed');
+  assert.strictEqual(context.discoverySystem, 'Upgrades');
+  assert(context.discoveryCopy.includes('Upgrades help solve bottlenecks'));
+  assert(context.discoverySecondary.includes('Keep fulfilling orders and hitting milestones'));
+  assert.strictEqual(context.discoveryButton, 'View Upgrades');
+  assert.strictEqual(context.discoveryAnimated, true);
+  assert.strictEqual(context.discoveryHiddenBeforeContinue, false);
+  assert.strictEqual(context.discoveryFocused, true);
+  assert.strictEqual(context.discoveryHiddenAfterContinue, true);
+  assert.strictEqual(context.discoveryViewTab, 'upgrades');
+  assert.strictEqual(context.discoveryHighlightedTab, 'upgrades');
+  assert(context.discoveryTabHtml.includes('data-shop-tab="upgrades"'));
+  assert(context.discoveryTabHtml.includes('is-revealed'));
+  assert.strictEqual(context.rawSystemRevealIds.length, 0);
+  assert.strictEqual(context.rawDiscoveryHidden, true);
+  assert.strictEqual(context.activeDiscoveryShown, false);
+  assert.strictEqual(context.activeDiscoveryReason, 'active-drive');
+}
+
+function testDiscoveryFanfareReducedMotionUsesStaticState() {
+  const context = loadNoSpillContext({
+    window: {
+      localStorage: makeLocalStorage(),
+      matchMedia: () => ({ matches: true }),
+    },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const classes = new Set(['is-hidden']);
+  return {
+    textContent: "",
+    innerHTML: "",
+    classList: {
+      add(className) { classes.add(className); },
+      remove(className) { classes.delete(className); },
+      toggle(className, force) {
+        const active = force === undefined ? !classes.has(className) : Boolean(force);
+        if (active) classes.add(className);
+        else classes.delete(className);
+      },
+      contains(className) { return classes.has(className); },
+    },
+    focus() {},
+  };
+}
+elements = {
+  discoveryFanfare: makeNode(),
+  discoveryFanfareCard: makeNode(),
+  discoveryFanfareTitle: makeNode(),
+  discoveryFanfareSystem: makeNode(),
+  discoveryFanfareCopy: makeNode(),
+  discoveryFanfareSecondary: makeNode(),
+  discoveryFanfareView: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.audioLevel = 'muted';
+const shown = showDiscoveryFanfare(buildDiscoveryFanfare('upgrades'), defaultGameState());
+globalThis.reducedDiscoveryShown = shown.shown;
+globalThis.reducedDiscoveryMotion = shown.reducedMotion;
+globalThis.discoveryStaticClass = elements.discoveryFanfare.classList.contains('is-static');
+globalThis.discoveryAnimatedClass = elements.discoveryFanfare.classList.contains('is-animated');
+`, context);
+
+  assert.strictEqual(context.reducedDiscoveryShown, true);
+  assert.strictEqual(context.reducedDiscoveryMotion, true);
+  assert.strictEqual(context.discoveryStaticClass, true);
+  assert.strictEqual(context.discoveryAnimatedClass, false);
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -4417,6 +4615,8 @@ function run() {
   testShopRecentRewardUsesSafeFallbackLabel();
   testFirstStampFanfareCelebratesAndPersists();
   testStampFanfareReducedMotionUsesStaticState();
+  testDiscoveryFanfareRevealsUpgradesOnce();
+  testDiscoveryFanfareReducedMotionUsesStaticState();
   testShopOrderTypeProgressionAndRewards();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();

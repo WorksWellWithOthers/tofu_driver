@@ -797,6 +797,9 @@ const appState = {
   summaryMode: null,
   shopResultCanFulfillAnother: false,
   currentStampFanfare: null,
+  currentDiscoveryFanfare: null,
+  pendingDiscoveryFanfare: null,
+  highlightedShopTab: "",
 };
 
 let elements = {};
@@ -1287,6 +1290,7 @@ function defaultGameState() {
     recentRewards: [],
     recentSessions: [],
     seenStampFanfareIds: [],
+    seenSystemRevealIds: [],
     xpByDate: {},
     routeMastery: {},
     shop: defaultShopState(),
@@ -1446,6 +1450,57 @@ function queueStampFanfare(gameState, stampId, rewards = {}) {
     gameState: next,
     stampFanfare: buildStampFanfare(stampId, rewards),
   };
+}
+
+function systemRevealDefinition(systemId) {
+  const definitions = {
+    upgrades: {
+      systemId: "upgrades",
+      title: "New Shop System Revealed",
+      systemLabel: "Upgrades",
+      copy: "The shop has another layer. Upgrades help solve bottlenecks as the counter grows.",
+      secondaryCopy: "More shop systems are hidden for now. Keep fulfilling orders and hitting milestones to discover them.",
+      primaryAction: "View Upgrades",
+      tabId: "upgrades",
+    },
+  };
+  return definitions[systemId] || null;
+}
+
+function buildDiscoveryFanfare(systemId) {
+  const definition = systemRevealDefinition(systemId);
+  return definition ? { ...definition } : null;
+}
+
+function markSystemRevealSeen(gameState, systemId) {
+  const next = normalizeGameState(gameState);
+  if (typeof systemId !== "string" || !systemId) return next;
+  if (!next.seenSystemRevealIds.includes(systemId)) {
+    next.seenSystemRevealIds = [...next.seenSystemRevealIds, systemId].slice(0, 200);
+  }
+  return next;
+}
+
+function queueDiscoveryFanfare(gameState, systemId) {
+  const state = normalizeGameState(gameState);
+  const fanfare = buildDiscoveryFanfare(systemId);
+  if (!fanfare || state.seenSystemRevealIds.includes(systemId)) {
+    return { gameState: state, discoveryFanfare: null };
+  }
+  const next = markSystemRevealSeen(state, systemId);
+  return {
+    gameState: next,
+    discoveryFanfare: fanfare,
+  };
+}
+
+function shouldRevealUpgradesSystem(previousState, nextState) {
+  const before = normalizeGameState(previousState);
+  const after = normalizeGameState(nextState);
+  if (after.seenSystemRevealIds.includes("upgrades")) return false;
+  return visibleRelevantStationUpgrades(before).length === 0
+    && visibleRelevantStationUpgrades(after).length > 0
+    && fulfilledShopOrderCount(after) > fulfilledShopOrderCount(before);
 }
 
 function defaultShopState() {
@@ -1766,6 +1821,7 @@ function normalizeGameState(stored) {
     recentRewards: Array.isArray(source.recentRewards) ? source.recentRewards.slice(0, 12) : [],
     recentSessions: Array.isArray(source.recentSessions) ? source.recentSessions.slice(0, 20) : [],
     seenStampFanfareIds: normalizeIdList(source.seenStampFanfareIds),
+    seenSystemRevealIds: normalizeIdList(source.seenSystemRevealIds),
     xpByDate:
       source.xpByDate && typeof source.xpByDate === "object"
         ? { ...source.xpByDate }
@@ -3140,6 +3196,7 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
 
 function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   let next = normalizeGameState(gameState);
+  const previous = normalizeGameState(next);
   if (options.activeDrive) {
     return { ok: false, reason: "Shop actions unlock after you finish and park.", gameState: next };
   }
@@ -3197,6 +3254,12 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     next = queued.gameState;
     stampFanfare = queued.stampFanfare;
   }
+  let discoveryFanfare = null;
+  if (shouldRevealUpgradesSystem(previous, next)) {
+    const queued = queueDiscoveryFanfare(next, "upgrades");
+    next = queued.gameState;
+    discoveryFanfare = queued.discoveryFanfare;
+  }
   syncShopGenerators(next);
   next.shop.lastShopTickAt = new Date().toISOString();
   next = addLedgerEntry(
@@ -3225,6 +3288,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     xpGained,
     firstShopOrderStampUnlocked,
     stampFanfare,
+    discoveryFanfare,
     shopLevelBefore: previousShopLevel,
     shopLevelAfter: next.shop.shopLevel,
     shopLevelChanged: next.shop.shopLevel > previousShopLevel,
@@ -6365,11 +6429,15 @@ function renderShopTabs(state) {
   const visibleTabs = SHOP_TABS.filter((tab) => tab.unlock(state));
   elements.shopTabList.innerHTML = visibleTabs.map((tab) => {
     const unlocked = tab.unlock(state);
+    const classes = [
+      tab.id === activeTab ? "is-active" : "",
+      tab.id === appState.highlightedShopTab ? "is-revealed" : "",
+    ].filter(Boolean).join(" ");
     return `
       <button
         type="button"
         data-shop-tab="${escapeHtml(tab.id)}"
-        class="${tab.id === activeTab ? "is-active" : ""}"
+        class="${escapeHtml(classes)}"
         ${unlocked ? "" : "disabled"}
       >
         ${escapeHtml(tab.label)}
@@ -7427,6 +7495,11 @@ function hideStampFanfare() {
     elements.stampFanfare.classList.remove("is-animated");
     elements.stampFanfare.classList.remove("is-static");
   }
+  if (appState.pendingDiscoveryFanfare) {
+    const pending = appState.pendingDiscoveryFanfare;
+    appState.pendingDiscoveryFanfare = null;
+    showDiscoveryFanfare(pending.fanfare, pending.gameState);
+  }
 }
 
 function showStampFanfare(fanfare, gameState = loadGameState()) {
@@ -7456,6 +7529,36 @@ function showStampFanfare(fanfare, gameState = loadGameState()) {
   return { shown: true, sound, reducedMotion };
 }
 
+function hideDiscoveryFanfare() {
+  appState.currentDiscoveryFanfare = null;
+  if (elements.discoveryFanfare) {
+    elements.discoveryFanfare.classList.add("is-hidden");
+    elements.discoveryFanfare.classList.remove("is-animated");
+    elements.discoveryFanfare.classList.remove("is-static");
+  }
+}
+
+function showDiscoveryFanfare(fanfare, gameState = loadGameState()) {
+  if (!fanfare || appState.running || appState.calibrating || !elements.discoveryFanfare) {
+    return { shown: false, sound: { played: false, reason: appState.running || appState.calibrating ? "active-drive" : "unavailable" } };
+  }
+  const reducedMotion = prefersReducedMotion();
+  appState.currentDiscoveryFanfare = fanfare;
+  elements.discoveryFanfare.classList.remove("is-hidden");
+  elements.discoveryFanfare.classList.toggle("is-animated", !reducedMotion);
+  elements.discoveryFanfare.classList.toggle("is-static", reducedMotion);
+  if (elements.discoveryFanfareTitle) elements.discoveryFanfareTitle.textContent = fanfare.title || "New Shop System Revealed";
+  if (elements.discoveryFanfareSystem) elements.discoveryFanfareSystem.textContent = fanfare.systemLabel || "New System";
+  if (elements.discoveryFanfareCopy) elements.discoveryFanfareCopy.textContent = fanfare.copy || "The shop has another layer.";
+  if (elements.discoveryFanfareSecondary) elements.discoveryFanfareSecondary.textContent = fanfare.secondaryCopy || "More shop systems are hidden for now.";
+  if (elements.discoveryFanfareView) elements.discoveryFanfareView.textContent = fanfare.primaryAction || "View System";
+  if (elements.discoveryFanfareCard && typeof elements.discoveryFanfareCard.focus === "function") {
+    elements.discoveryFanfareCard.focus();
+  }
+  const sound = playCosmeticSound("discovery_fanfare", gameState, { activeDrive: false });
+  return { shown: true, sound, reducedMotion };
+}
+
 function continueFromStampFanfare() {
   hideStampFanfare();
   if (elements.landingView || elements.summaryView) {
@@ -7472,6 +7575,24 @@ function viewPassportFromStampFanfare() {
   appState.shopTab = isPassportTabUnlocked(state) ? "passport" : "overview";
   renderGamePanels(state);
   setSummaryStatusMessage("Passport stamp recorded.");
+}
+
+function continueFromDiscoveryFanfare() {
+  hideDiscoveryFanfare();
+  setAppSurface("shop", { updateHash: true, scroll: true });
+  appState.shopTab = "overview";
+  renderGamePanels(currentGameState());
+}
+
+function viewSystemFromDiscoveryFanfare() {
+  const fanfare = appState.currentDiscoveryFanfare;
+  hideDiscoveryFanfare();
+  const state = currentGameState();
+  setAppSurface("shop", { updateHash: true, scroll: true });
+  appState.shopTab = fanfare && fanfare.tabId ? fanfare.tabId : "overview";
+  appState.highlightedShopTab = appState.shopTab;
+  renderGamePanels(state);
+  setSummaryStatusMessage(`${fanfare && fanfare.systemLabel ? fanfare.systemLabel : "New system"} revealed.`);
 }
 
 function renderShopOrderResult(result) {
@@ -7527,7 +7648,17 @@ function renderShopOrderResult(result) {
   setShareActionsEnabled(false);
   renderGamePanels(state);
   showView("summary");
-  showStampFanfare(result.stampFanfare, state);
+  const stamp = showStampFanfare(result.stampFanfare, state);
+  if (result.discoveryFanfare) {
+    if (stamp.shown) {
+      appState.pendingDiscoveryFanfare = {
+        fanfare: result.discoveryFanfare,
+        gameState: state,
+      };
+    } else {
+      showDiscoveryFanfare(result.discoveryFanfare, state);
+    }
+  }
 }
 
 function escapeHtml(value) {
@@ -8507,6 +8638,12 @@ function bindEvents() {
   if (elements.stampFanfarePassport) {
     elements.stampFanfarePassport.addEventListener("click", viewPassportFromStampFanfare);
   }
+  if (elements.discoveryFanfareView) {
+    elements.discoveryFanfareView.addEventListener("click", viewSystemFromDiscoveryFanfare);
+  }
+  if (elements.discoveryFanfareContinue) {
+    elements.discoveryFanfareContinue.addEventListener("click", continueFromDiscoveryFanfare);
+  }
   if (elements.brandPrimaryCta) {
     elements.brandPrimaryCta.addEventListener("click", () => {
       if (appState.running || appState.calibrating) return;
@@ -8546,6 +8683,7 @@ function bindEvents() {
     });
     window.addEventListener("keydown", (event) => {
       if (event.key === "Escape" && appState.currentStampFanfare) hideStampFanfare();
+      if (event.key === "Escape" && appState.currentDiscoveryFanfare) hideDiscoveryFanfare();
     });
   }
   document.querySelectorAll("[data-safety-check]").forEach((input) => {
@@ -8786,6 +8924,14 @@ function cacheElements() {
     stampFanfareRewards: document.getElementById("stamp-fanfare-rewards"),
     stampFanfareContinue: document.getElementById("stamp-fanfare-continue"),
     stampFanfarePassport: document.getElementById("stamp-fanfare-passport"),
+    discoveryFanfare: document.getElementById("discovery-fanfare"),
+    discoveryFanfareCard: document.getElementById("discovery-fanfare-card"),
+    discoveryFanfareTitle: document.getElementById("discovery-fanfare-title"),
+    discoveryFanfareSystem: document.getElementById("discovery-fanfare-system"),
+    discoveryFanfareCopy: document.getElementById("discovery-fanfare-copy"),
+    discoveryFanfareSecondary: document.getElementById("discovery-fanfare-secondary"),
+    discoveryFanfareView: document.getElementById("discovery-fanfare-view"),
+    discoveryFanfareContinue: document.getElementById("discovery-fanfare-continue"),
   };
 }
 

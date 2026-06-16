@@ -848,7 +848,8 @@
   font-weight: 800;
 }
 
-.nospill-stamp-fanfare {
+.nospill-stamp-fanfare,
+.nospill-discovery-fanfare {
   position: fixed;
   inset: 0;
   z-index: 40;
@@ -858,11 +859,13 @@
   background: rgba(3, 7, 8, 0.76);
 }
 
-.nospill-stamp-fanfare.is-hidden {
+.nospill-stamp-fanfare.is-hidden,
+.nospill-discovery-fanfare.is-hidden {
   display: none;
 }
 
-.nospill-stamp-fanfare-card {
+.nospill-stamp-fanfare-card,
+.nospill-discovery-fanfare-card {
   width: min(500px, 100%);
   display: grid;
   gap: 14px;
@@ -873,11 +876,13 @@
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.42);
 }
 
-.nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card {
+.nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card,
+.nospill-discovery-fanfare.is-animated .nospill-discovery-fanfare-card {
   animation: stamp-pop 360ms ease-out;
 }
 
-.nospill-stamp-mark {
+.nospill-stamp-mark,
+.nospill-system-mark {
   width: fit-content;
   max-width: 100%;
   border: 2px solid rgba(240, 185, 90, 0.7);
@@ -888,6 +893,12 @@
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: 0;
+}
+
+.nospill-system-mark {
+  border-color: rgba(158, 233, 191, 0.65);
+  color: #9ee9bf;
+  background: rgba(158, 233, 191, 0.1);
 }
 
 .nospill-stamp-rewards {
@@ -919,6 +930,16 @@
   margin-top: 4px;
 }
 
+.nospill-discovery-actions {
+  margin-top: 4px;
+}
+
+.nospill-shop-tabs button.is-revealed {
+  border-color: rgba(158, 233, 191, 0.72);
+  color: #f4f7ef;
+  box-shadow: 0 0 0 2px rgba(158, 233, 191, 0.14);
+}
+
 @keyframes stamp-pop {
   0% {
     opacity: 0;
@@ -931,7 +952,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card {
+  .nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card,
+  .nospill-discovery-fanfare.is-animated .nospill-discovery-fanfare-card {
     animation: none;
   }
 }
