@@ -17,13 +17,48 @@ Fanfare so progression moments are visible without exposing the full future road
 - No backend is required for the current MVP.
 - No account system.
 - No payment flow.
-- No analytics or tracking.
+- Optional PostHog product analytics is disabled unless configured.
+- PostHog autocapture and session recording are disabled by default.
 - No upload of raw motion or GPS samples.
 - No upload of route traces, maps, street names, coordinates, or speed logs.
 - Basic Mode does not request location.
 - Qualified Run Mode requests location only after opt-in/start.
 - Scoring and rewards prioritize smoothness, not speed.
 - Shop, crew, sound, upgrade, and reward actions are parked-only.
+
+## Optional Analytics
+
+PostHog analytics is configured through runtime settings and no-ops when disabled or missing a key.
+The browser project key is public configuration, but real keys should not be committed.
+
+Runtime config:
+
+- `TOFU_DRIVER_POSTHOG_ENABLED`
+- `TOFU_DRIVER_POSTHOG_KEY`
+- `TOFU_DRIVER_POSTHOG_HOST`
+- `TOFU_DRIVER_POSTHOG_DEBUG`
+
+Local opt-out:
+
+```js
+localStorage.setItem("tofuDriverAnalyticsOptOut", "true")
+```
+
+Tracked events are product-scoped with the `tofu_driver_` prefix and use safe categories or buckets:
+route views, Cup Test start/completion, shop order fulfillment, station/upgrade purchases, share
+attempts, offline progress seen, simulator/dev events, and progress-tool clicks. Analytics must
+never send raw GPS, raw motion, speed, acceleration vectors, route traces, maps, street names,
+coordinates, exact distance, localStorage dumps, save files, share-card contents, or user-entered
+personal information.
+
+Sticker/QR links may include sanitized attribution params:
+
+- `utm_source`
+- `utm_medium`
+- `utm_campaign`
+- `utm_content`
+- `td_source`
+- `td_campaign`
 
 ## App Routes
 
@@ -39,6 +74,7 @@ The static app uses hash routing:
 - `frontend/nospill/index.html`: app shell
 - `frontend/nospill/app.css`: app styling
 - `frontend/nospill/app.js`: motion, scoring, shop, sharing, and local storage logic
+- `frontend/nospill/runtime-config.js`: disabled default runtime config for optional analytics
 - `frontend/nospill/assets/`: app raster artwork
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction

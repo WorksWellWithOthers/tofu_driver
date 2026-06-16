@@ -63,8 +63,11 @@
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
-- Discord, payments, accounts, backend sync, analytics, ads, service workers, and public profiles
-  are not part of the current MVP.
+- Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
+  disabled or missing a key. Autocapture/session recording are disabled, route views are manual, and
+  event properties are sanitized/coarse.
+- Discord, payments, accounts, backend sync, ads, service workers, and public profiles are not part
+  of the current MVP.
 
 Canonical references:
 
@@ -92,8 +95,10 @@ Canonical references:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
 7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-8. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-9. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+8. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+   Driver PostHog browser key exists.
+9. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+10. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Do not build advanced systems next. The First Loop Contract is now implemented enough for
 playtesting; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
@@ -157,8 +162,8 @@ Deferred until after the First Loop Contract is playtested:
 - No React or framework migration.
 - No accounts.
 - No backend sync.
-- No analytics or tracking.
-- No network calls/uploads.
+- No analytics beyond explicitly configured, privacy-safe PostHog product events.
+- No network calls/uploads beyond explicitly configured PostHog analytics.
 - No service workers.
 - No payment flow.
 - No pay-to-progress, paid score boosts, paid speed boosts, loot boxes, or intrusive ads.

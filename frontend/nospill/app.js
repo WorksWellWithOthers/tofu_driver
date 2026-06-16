@@ -803,10 +803,439 @@ const appState = {
   currentDiscoveryFanfare: null,
   pendingDiscoveryFanfare: null,
   highlightedShopTab: "",
+  simulatorViewedTracked: false,
+  offlineProgressAnalyticsKey: "",
 };
 
 let elements = {};
 let tofuCargoMascotImage = null;
+
+const ANALYTICS_OPT_OUT_KEY = "tofuDriverAnalyticsOptOut";
+const ANALYTICS_EVENT_PREFIX = "tofu_driver_";
+const ANALYTICS_ATTRIBUTION_KEYS = [
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_content",
+  "td_source",
+  "td_campaign",
+];
+const ANALYTICS_DENIED_PROPERTY_KEYS = new Set([
+  "gps",
+  "lat",
+  "lng",
+  "latitude",
+  "longitude",
+  "coordinates",
+  "coords",
+  "route",
+  "routetrace",
+  "street",
+  "address",
+  "location",
+  "map",
+  "speed",
+  "averagespeed",
+  "topspeed",
+  "speedhistory",
+  "rawmotion",
+  "motion",
+  "acceleration",
+  "gforce",
+  "devicemotion",
+  "sensor",
+  "sensordiagnostics",
+  "localstorage",
+  "savefile",
+  "exactdistance",
+  "distancemiles",
+  "licenseplate",
+]);
+
+const analyticsState = {
+  initialized: false,
+  enabled: false,
+  scriptLoading: false,
+  lastRouteView: "",
+  firstPageViewTracked: false,
+  attribution: null,
+  returnVisitTracked: false,
+  shopStartedTracked: false,
+  firstLoopTracked: false,
+};
+
+function booleanConfigValue(value) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  const normalized = String(value || "").trim().toLowerCase();
+  return ["1", "true", "yes", "on"].includes(normalized);
+}
+
+function analyticsConfig() {
+  const source = typeof window !== "undefined" && window.TOFU_DRIVER_CONFIG
+    ? window.TOFU_DRIVER_CONFIG
+    : {};
+  return {
+    enabled: booleanConfigValue(source.posthogEnabled || source.TOFU_DRIVER_POSTHOG_ENABLED),
+    key: String(source.posthogKey || source.TOFU_DRIVER_POSTHOG_KEY || "").trim(),
+    host: String(source.posthogHost || source.TOFU_DRIVER_POSTHOG_HOST || "https://us.i.posthog.com").trim(),
+    debug: booleanConfigValue(source.posthogDebug || source.TOFU_DRIVER_POSTHOG_DEBUG),
+  };
+}
+
+function analyticsLocalStorage() {
+  try {
+    return typeof window !== "undefined" && window.localStorage ? window.localStorage : null;
+  } catch (_) {
+    return null;
+  }
+}
+
+function analyticsOptedOut() {
+  const storage = analyticsLocalStorage();
+  return Boolean(storage && storage.getItem(ANALYTICS_OPT_OUT_KEY) === "true");
+}
+
+function setAnalyticsOptOut(optedOut) {
+  const storage = analyticsLocalStorage();
+  if (storage) {
+    if (optedOut) storage.setItem(ANALYTICS_OPT_OUT_KEY, "true");
+    else storage.removeItem(ANALYTICS_OPT_OUT_KEY);
+  }
+  if (typeof window !== "undefined" && window.posthog) {
+    if (optedOut && typeof window.posthog.opt_out_capturing === "function") {
+      window.posthog.opt_out_capturing();
+    } else if (!optedOut && typeof window.posthog.opt_in_capturing === "function") {
+      window.posthog.opt_in_capturing();
+    }
+  }
+}
+
+function respectsDoNotTrack() {
+  const nav = typeof navigator !== "undefined" ? navigator : null;
+  const win = typeof window !== "undefined" ? window : null;
+  const value = nav && (nav.doNotTrack || nav.msDoNotTrack)
+    ? nav.doNotTrack || nav.msDoNotTrack
+    : win && win.doNotTrack;
+  return ["1", "yes"].includes(String(value || "").toLowerCase());
+}
+
+function safeAnalyticsString(value, maxLength = 80) {
+  return String(value || "")
+    .trim()
+    .replace(/[^A-Za-z0-9_-]/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .slice(0, maxLength);
+}
+
+function normalizedAnalyticsKey(key) {
+  return String(key || "").replace(/[^A-Za-z0-9]/g, "").toLowerCase();
+}
+
+function sanitizeAnalyticsProperties(properties = {}) {
+  if (!properties || typeof properties !== "object" || Array.isArray(properties)) return {};
+  return Object.entries(properties).reduce((safe, [key, value]) => {
+    const normalizedKey = normalizedAnalyticsKey(key);
+    if (!normalizedKey || ANALYTICS_DENIED_PROPERTY_KEYS.has(normalizedKey)) return safe;
+    if (value === null || value === undefined) return safe;
+    if (typeof value === "boolean") {
+      safe[key] = value;
+    } else if (typeof value === "number") {
+      if (Number.isFinite(value)) safe[key] = value;
+    } else if (typeof value === "string") {
+      const trimmed = value.trim();
+      if (trimmed && trimmed.length <= 120) safe[key] = trimmed;
+    }
+    return safe;
+  }, {});
+}
+
+function safeCampaignProperties(searchValue = null) {
+  const search = searchValue !== null
+    ? String(searchValue || "")
+    : typeof window !== "undefined" && window.location
+      ? String(window.location.search || "")
+      : "";
+  if (!search) return {};
+  let params;
+  try {
+    params = new URLSearchParams(search.charAt(0) === "?" ? search : `?${search}`);
+  } catch (_) {
+    return {};
+  }
+  return ANALYTICS_ATTRIBUTION_KEYS.reduce((safe, key) => {
+    const value = safeAnalyticsString(params.get(key) || "", 64);
+    if (value) safe[key] = value;
+    return safe;
+  }, {});
+}
+
+function analyticsCanRun(config = analyticsConfig()) {
+  return Boolean(config.enabled && config.key && !analyticsOptedOut() && !respectsDoNotTrack());
+}
+
+function postHogInitOptions(config) {
+  return {
+    api_host: config.host,
+    capture_pageview: false,
+    autocapture: false,
+    disable_session_recording: true,
+    disable_surveys: true,
+    loaded(posthog) {
+      if (config.debug && typeof console !== "undefined" && console.debug) {
+        console.debug("[analytics] posthog_loaded");
+      }
+      if (config.debug && posthog && typeof posthog.debug === "function") posthog.debug();
+    },
+  };
+}
+
+function postHogScriptHost(host) {
+  const normalized = String(host || "https://us.i.posthog.com").replace(/\/+$/, "");
+  if (/\.i\.posthog\.com$/i.test(normalized)) {
+    return normalized.replace(/\.i\.posthog\.com$/i, "-assets.i.posthog.com");
+  }
+  return normalized;
+}
+
+function initPostHogClient(config) {
+  if (typeof window === "undefined" || !window.posthog || typeof window.posthog.init !== "function") {
+    return false;
+  }
+  try {
+    window.posthog.init(config.key, postHogInitOptions(config));
+    analyticsState.initialized = true;
+    analyticsState.enabled = true;
+    return true;
+  } catch (_) {
+    analyticsState.initialized = false;
+    analyticsState.enabled = false;
+    return false;
+  }
+}
+
+function initAnalytics() {
+  const config = analyticsConfig();
+  if (!analyticsCanRun(config)) {
+    analyticsState.enabled = false;
+    analyticsState.initialized = false;
+    return false;
+  }
+  analyticsState.attribution = safeCampaignProperties();
+  if (initPostHogClient(config)) return true;
+  if (
+    typeof window === "undefined"
+    || typeof window.posthog !== "undefined"
+    || typeof document === "undefined"
+    || analyticsState.scriptLoading
+  ) {
+    return false;
+  }
+  window.posthog = {
+    _i: [],
+    init(apiKey, options, name) {
+      this._i.push([apiKey, options, name]);
+    },
+  };
+  initPostHogClient(config);
+  if (
+    typeof document === "undefined"
+    || analyticsState.scriptLoading
+  ) {
+    return false;
+  }
+  analyticsState.scriptLoading = true;
+  try {
+    const script = document.createElement("script");
+    script.async = true;
+    script.src = `${postHogScriptHost(config.host)}/static/array.js`;
+    script.onload = () => {
+      analyticsState.scriptLoading = false;
+      initPostHogClient(config);
+    };
+    script.onerror = () => {
+      analyticsState.scriptLoading = false;
+      analyticsState.enabled = false;
+      analyticsState.initialized = false;
+    };
+    (document.head || document.documentElement).appendChild(script);
+    return true;
+  } catch (_) {
+    analyticsState.scriptLoading = false;
+    analyticsState.enabled = false;
+    analyticsState.initialized = false;
+    return false;
+  }
+}
+
+function trackEvent(eventName, properties = {}) {
+  const config = analyticsConfig();
+  if (!analyticsCanRun(config)) return false;
+  if (!analyticsState.initialized && !initAnalytics()) return false;
+  if (typeof window === "undefined" || !window.posthog || typeof window.posthog.capture !== "function") {
+    return false;
+  }
+  const safeName = String(eventName || "").startsWith(ANALYTICS_EVENT_PREFIX)
+    ? String(eventName)
+    : `${ANALYTICS_EVENT_PREFIX}${safeAnalyticsString(eventName || "event", 80)}`;
+  const baseProperties = sanitizeAnalyticsProperties(properties);
+  const attribution = analyticsState.firstPageViewTracked ? {} : analyticsState.attribution || safeCampaignProperties();
+  try {
+    window.posthog.capture(safeName, sanitizeAnalyticsProperties({
+      ...attribution,
+      ...baseProperties,
+    }));
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
+function analyticsViewName(surface) {
+  if (surface === "shop") return "shop";
+  if (surface === "crew") return "crew";
+  if (surface === "settings") return "settings";
+  return "cup_test";
+}
+
+function trackRouteView(surface) {
+  const view = analyticsViewName(surface);
+  if (analyticsState.lastRouteView === view) return false;
+  analyticsState.lastRouteView = view;
+  const firstVisit = !analyticsState.firstPageViewTracked;
+  trackEvent("tofu_driver_page_view", { view, first_visit: firstVisit });
+  analyticsState.firstPageViewTracked = true;
+  if (view === "cup_test") trackEvent("tofu_driver_cup_test_viewed", { view });
+  if (view === "shop") trackEvent("tofu_driver_shop_viewed", { view });
+  if (!analyticsState.returnVisitTracked) {
+    const storage = analyticsLocalStorage();
+    const today = new Date().toISOString().slice(0, 10);
+    const lastVisit = storage ? storage.getItem("tofuDriverAnalyticsLastVisitDate") : "";
+    if (storage) storage.setItem("tofuDriverAnalyticsLastVisitDate", today);
+    if (lastVisit && lastVisit !== today) {
+      trackEvent("tofu_driver_return_visit", { view });
+    }
+    analyticsState.returnVisitTracked = true;
+  }
+  return true;
+}
+
+function cargoConditionBucket(value) {
+  const percent = Number(value || 0);
+  if (percent < 50) return "0_49";
+  if (percent < 80) return "50_79";
+  if (percent < 95) return "80_94";
+  return "95_100";
+}
+
+function shopResourceBucket(value) {
+  const amount = Math.max(0, Number(value || 0));
+  if (amount < 1) return "0";
+  if (amount < 10) return "1_9";
+  if (amount < 100) return "10_99";
+  if (amount < 1000) return "100_999";
+  if (amount < 10000) return "1k_9k";
+  return "10k_plus";
+}
+
+function quantityBucket(value) {
+  const amount = Math.max(0, Number(value || 0));
+  if (amount <= 1) return "1";
+  if (amount < 10) return "2_9";
+  if (amount < 100) return "10_99";
+  return "100_plus";
+}
+
+function modeAnalyticsLabel(mode) {
+  if (mode === "qualified") return "qualified";
+  if (mode === "simulated") return "simulated";
+  return "basic";
+}
+
+function trackCupTestStartedAnalytics(options = {}) {
+  return trackEvent("tofu_driver_cup_test_started", {
+    mode: modeAnalyticsLabel(options.mode || appState.mode),
+    simulator: Boolean(options.simulator),
+  });
+}
+
+function trackCupTestCompletedAnalytics(summary) {
+  if (!summary) return false;
+  const qualified = isQualifiedSession(summary);
+  return trackEvent("tofu_driver_cup_test_completed", {
+    mode: modeAnalyticsLabel(summary.mode),
+    simulator: Boolean(summary.simulated),
+    qualification_status: summary.qualificationStatus || (qualified ? "qualified" : "practice_only"),
+    cargo_condition_bucket: cargoConditionBucket(summary.cargoCondition ?? summary.waterLeft),
+    rank: displayRankForSession(summary),
+    practice_only: !qualified,
+    certified_boost_earned: Boolean(summary.deliveryRewards && summary.deliveryRewards.shop && summary.deliveryRewards.shop.certifiedBoost && summary.deliveryRewards.shop.certifiedBoost.applied),
+  });
+}
+
+function shopAnalyticsProperties(gameState = currentGameState()) {
+  const state = normalizeGameState(gameState);
+  return {
+    shop_level: safeNonNegativeInteger(state.shop.shopLevel, 1, 1000),
+    tips_bucket: shopResourceBucket(state.shop.tips),
+    tofu_stock_bucket: shopResourceBucket(state.shop.tofuStock),
+    delivery_order_bucket: shopResourceBucket(readyDeliveryOrders(state.shop)),
+    first_shop_order_completed: Boolean(state.stamps.first_shop_order),
+    first_loop_completed: Boolean(state.stamps.first_shop_order && state.stamps.first_upgrade_purchased),
+  };
+}
+
+function trackShopOrderFulfilledAnalytics(result) {
+  if (!result || !result.ok) return false;
+  const state = normalizeGameState(result.gameState);
+  if (!analyticsState.shopStartedTracked) {
+    trackEvent("tofu_driver_shop_started", shopAnalyticsProperties(state));
+    analyticsState.shopStartedTracked = true;
+  }
+  const tracked = trackEvent("tofu_driver_shop_order_fulfilled", {
+    ...shopAnalyticsProperties(state),
+    order_type: result.orderType && result.orderType.id ? result.orderType.id : "shop_order",
+    quantity_bucket: quantityBucket(result.quantity),
+    first_order: Boolean(result.firstShopOrderStampUnlocked),
+  });
+  if (!analyticsState.firstLoopTracked && state.stamps.first_shop_order && state.stamps.first_upgrade_purchased) {
+    trackEvent("tofu_driver_first_loop_completed", shopAnalyticsProperties(state));
+    analyticsState.firstLoopTracked = true;
+  }
+  return tracked;
+}
+
+function trackShopPurchaseAnalytics(eventName, result, idKey) {
+  if (!result || !result.ok) return false;
+  const state = normalizeGameState(result.gameState);
+  const props = {
+    ...shopAnalyticsProperties(state),
+    quantity_bucket: quantityBucket(result.quantity || 1),
+  };
+  if (idKey === "upgrade_id" && result.upgrade) props.upgrade_id = result.upgrade.id;
+  if (idKey === "generator_id" && result.station) props.generator_id = result.station.id;
+  const tracked = trackEvent(eventName, props);
+  if (!analyticsState.firstLoopTracked && state.stamps.first_shop_order && state.stamps.first_upgrade_purchased) {
+    trackEvent("tofu_driver_first_loop_completed", shopAnalyticsProperties(state));
+    analyticsState.firstLoopTracked = true;
+  }
+  return tracked;
+}
+
+function trackShareAnalytics(eventName, summary, extra = {}) {
+  if (!summary) return false;
+  const resultType = summary.simulated
+    ? "simulated"
+    : isQualifiedSession(summary)
+      ? "qualified"
+      : "practice";
+  return trackEvent(eventName, {
+    result_type: resultType,
+    simulator: Boolean(summary.simulated),
+    ...extra,
+  });
+}
 
 function clamp(value, minValue, maxValue) {
   return Math.min(maxValue, Math.max(minValue, value));
@@ -4579,9 +5008,11 @@ async function requestMotionPermission() {
     try {
       const response = await DeviceMotion.requestPermission();
       if (response !== "granted") {
+        trackEvent("tofu_driver_motion_permission_denied", { mode: modeAnalyticsLabel(appState.mode) });
         return { ok: false, reason: "Motion permission was not granted." };
       }
     } catch (_) {
+      trackEvent("tofu_driver_motion_permission_denied", { mode: modeAnalyticsLabel(appState.mode) });
       return { ok: false, reason: "Motion permission could not be requested." };
     }
   }
@@ -4698,6 +5129,7 @@ function finishCalibration() {
   appState.startPerformanceMs = performance.now();
   appState.startIso = new Date().toISOString();
   appState.lastMotionMs = null;
+  trackCupTestStartedAnalytics({ mode: appState.mode, simulator: false });
   setRunStatus("Run started. Keep inputs smooth. Listen for the tone.");
   updateAudioCoach();
   scheduleRender();
@@ -4760,6 +5192,7 @@ function handleLocationSample(position) {
 function handleLocationError(error) {
   if (error && error.code === 1) {
     appState.geoStatus = "denied";
+    trackEvent("tofu_driver_geolocation_permission_denied", { mode: "qualified" });
     setRunStatus("Qualified verification permission was denied. This run can continue as Practice Only.");
     return;
   }
@@ -5246,6 +5679,7 @@ function renderBrandShelf() {
 
 function setAppSurface(surface = "cup-test", options = {}) {
   const nextSurface = surface === "cup-test" || surface === "crew" ? surface : "shop";
+  const previousSurface = appState.surface;
   appState.surface = nextSurface;
   if (elements.surfaceSections) {
     elements.surfaceSections.forEach((section) => {
@@ -5269,6 +5703,10 @@ function setAppSurface(surface = "cup-test", options = {}) {
   if (options.scroll && elements.landingView && typeof elements.landingView.scrollIntoView === "function") {
     elements.landingView.scrollIntoView({ behavior: "smooth", block: "start" });
   }
+  if (options.trackNav && previousSurface !== nextSurface) {
+    trackEvent("tofu_driver_nav_clicked", { target_view: analyticsViewName(nextSurface) });
+  }
+  trackRouteView(nextSurface);
 }
 
 function initializeAppSurface() {
@@ -7174,6 +7612,21 @@ function renderTofuShop(gameState = loadGameState()) {
     const offlineOrders = Number(shop.offlineEarnings && shop.offlineEarnings.deliveryOrders || 0);
     const offlineTips = Number(shop.offlineEarnings && shop.offlineEarnings.tips || 0);
     const hasOfflineEarnings = reveal.shop && (offlineTofu > 0.005 || offlineOrders > 0.005 || offlineTips > 0.005);
+    const offlineHours = Number(shop.offlineEarnings && shop.offlineEarnings.cappedHours || 0);
+    const offlineKey = hasOfflineEarnings
+      ? `${formatShopCount(offlineTofu)}:${formatShopCount(offlineOrders)}:${formatShopCount(offlineTips)}:${formatShopCount(offlineHours)}`
+      : "";
+    if (hasOfflineEarnings && appState.offlineProgressAnalyticsKey !== offlineKey) {
+      trackEvent("tofu_driver_offline_progress_seen", {
+        capped: offlineHours >= SHOP_OFFLINE_CAP_HOURS,
+        duration_bucket: offlineHours >= 8
+          ? "8h_plus"
+          : offlineHours >= 1
+            ? "1h_8h"
+            : "under_1h",
+      });
+      appState.offlineProgressAnalyticsKey = offlineKey;
+    }
     elements.shopOfflineEarnings.textContent = hasOfflineEarnings
       ? `While you were away: +${formatShopCount(offlineTofu)} tofu stock, +${formatShopCount(offlineOrders)} delivery orders${offlineTips > 0.005 ? `, +${formatShopCount(offlineTips)} tips` : ""}.`
       : "";
@@ -7323,6 +7776,10 @@ function renderSimulatorPanel() {
     !enabled || activeDrive || appState.surface !== "cup-test",
   );
   if (!enabled) return;
+  if (!activeDrive && appState.surface === "cup-test" && !appState.simulatorViewedTracked) {
+    trackEvent("tofu_driver_simulator_viewed", { mode: "simulated" });
+    appState.simulatorViewedTracked = true;
+  }
   if (elements.simulatorScenarioSelect && !elements.simulatorScenarioSelect.options.length) {
     elements.simulatorScenarioSelect.innerHTML = getSimulatorScenarios()
       .map((scenario) => `<option value="${escapeHtml(scenario.id)}">${escapeHtml(scenario.name)}</option>`)
@@ -7732,6 +8189,7 @@ function escapeHtml(value) {
 
 function renderSummary(summary) {
   appState.lastSummary = summary;
+  trackCupTestCompletedAnalytics(summary);
   setSummaryMode("cup-test");
   setShareActionsEnabled(true);
   const qualified = isQualifiedSession(summary);
@@ -8036,16 +8494,20 @@ async function shareCardFile(text) {
 async function shareResult() {
   if (!appState.lastSummary) return;
   const text = buildShareText(appState.lastSummary);
+  trackShareAnalytics("tofu_driver_share_clicked", appState.lastSummary, { share_type: "web_share" });
   if (typeof navigator !== "undefined" && navigator.share) {
     try {
       if (await shareCardFile(text)) {
         setSummaryStatusMessage("Share card ready.");
+        trackShareAnalytics("tofu_driver_share_succeeded", appState.lastSummary, { share_type: "download_card" });
         return;
       }
       await navigator.share({ title: APP_BRAND, text });
       setSummaryStatusMessage("Share summary ready.");
+      trackShareAnalytics("tofu_driver_share_succeeded", appState.lastSummary, { share_type: "web_share" });
       return;
     } catch (_) {
+      trackShareAnalytics("tofu_driver_share_failed", appState.lastSummary, { share_type: "web_share" });
       // Fall through to copy.
     }
   }
@@ -8058,6 +8520,7 @@ async function shareResult() {
 async function copyShareText() {
   if (!appState.lastSummary) return false;
   const text = buildShareText(appState.lastSummary);
+  trackShareAnalytics("tofu_driver_share_clicked", appState.lastSummary, { share_type: "copy_summary" });
   try {
     if (
       typeof navigator === "undefined"
@@ -8068,17 +8531,21 @@ async function copyShareText() {
     }
     await navigator.clipboard.writeText(text);
     setSummaryStatusMessage("Summary copied.");
+    trackShareAnalytics("tofu_driver_share_succeeded", appState.lastSummary, { share_type: "copy_summary" });
     return true;
   } catch (_) {
     setSummaryStatusMessage(`Copy unavailable. Summary: ${text}`);
+    trackShareAnalytics("tofu_driver_share_failed", appState.lastSummary, { share_type: "copy_summary" });
     return false;
   }
 }
 
 async function downloadShareCard() {
+  trackShareAnalytics("tofu_driver_share_clicked", appState.lastSummary, { share_type: "download_card" });
   const blob = await canvasToBlob(elements.shareCanvas);
   if (!blob) {
     setSummaryStatusMessage("Card image could not be generated. Try Copy Summary instead.");
+    trackShareAnalytics("tofu_driver_share_failed", appState.lastSummary, { share_type: "download_card" });
     return;
   }
   const url = URL.createObjectURL(blob);
@@ -8090,9 +8557,11 @@ async function downloadShareCard() {
   link.remove();
   URL.revokeObjectURL(url);
   setSummaryStatusMessage("Card downloaded.");
+  trackShareAnalytics("tofu_driver_share_succeeded", appState.lastSummary, { share_type: "download_card" });
 }
 
 async function exportProgress() {
+  trackEvent("tofu_driver_export_clicked", {});
   const text = exportGameProgress(currentGameState());
   try {
     if (
@@ -8110,6 +8579,7 @@ async function exportProgress() {
 }
 
 function importProgress() {
+  trackEvent("tofu_driver_import_clicked", {});
   if (appState.running || appState.calibrating) {
     setSummaryStatusMessage("Progress cannot be imported during an active drive.");
     return;
@@ -8130,6 +8600,7 @@ function importProgress() {
 }
 
 function resetProgress() {
+  trackEvent("tofu_driver_reset_clicked", {});
   if (appState.running || appState.calibrating) {
     setSummaryStatusMessage("Progress cannot be reset during an active drive.");
     return;
@@ -8148,6 +8619,7 @@ function resetProgress() {
   const gameState = currentGameState();
   renderGamePanels(gameState);
   setSummaryStatusMessage("Tofu Driver progress reset on this device.");
+  trackEvent("tofu_driver_reset_confirmed", {});
 }
 
 function handlePackTofu() {
@@ -8179,6 +8651,7 @@ function handleFulfillShopOrder(requestedQuantity = 1, orderTypeId = "simple_tof
   }
   saveGameState(result.gameState);
   showShopOrderInlineResult(result);
+  trackShopOrderFulfilledAnalytics(result);
   playCosmeticSound("shop_pack_tofu", result.gameState, {
     activeDrive: false,
   });
@@ -8222,6 +8695,11 @@ function saveShopActionResult(result, successMessage) {
   renderGamePanels(result.gameState);
   setSummaryStatusMessage(successMessage);
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+  if (result.station) {
+    trackShopPurchaseAnalytics("tofu_driver_generator_purchased", result, "generator_id");
+  } else if (result.upgrade) {
+    trackShopPurchaseAnalytics("tofu_driver_shop_upgrade_purchased", result, "upgrade_id");
+  }
   return true;
 }
 
@@ -8241,7 +8719,7 @@ function handleTofuShopPanelClick(event) {
     return;
   }
   if (target.dataset.surfaceTarget) {
-    setAppSurface(target.dataset.surfaceTarget, { updateHash: true, scroll: true });
+    setAppSurface(target.dataset.surfaceTarget, { updateHash: true, scroll: true, trackNav: true });
     renderGamePanels(currentGameState());
     return;
   }
@@ -8281,6 +8759,7 @@ function handleTofuShopPanelClick(event) {
     }
     saveGameState(result.gameState);
     showShopOrderInlineResult(result);
+    trackShopOrderFulfilledAnalytics(result);
     playCosmeticSound("shop_pack_tofu", result.gameState, { activeDrive: false });
     return;
   }
@@ -8402,6 +8881,10 @@ function handleApplySimulatedDelivery() {
   const result = applySimulatedDelivery(scenarioId, currentGameState(), {
     excludeMerch,
   });
+  trackEvent("tofu_driver_simulator_scenario_run", {
+    scenario_id: safeAnalyticsString(scenarioId, 64),
+    simulator: true,
+  });
   saveGameState(result.gameState);
   renderSummary(result.summary);
   const unlockCount =
@@ -8463,8 +8946,13 @@ async function startRun() {
     updateStartReadiness();
     return;
   }
+  trackEvent("tofu_driver_cup_test_setup_started", {
+    mode: modeAnalyticsLabel(appState.mode),
+    simulator: false,
+  });
   stopAxisPreview();
   if (!hasDeviceMotionSupport()) {
+    trackEvent("tofu_driver_sensor_unavailable", { mode: modeAnalyticsLabel(appState.mode) });
     showUnsupported("DeviceMotion is not available in this browser.");
     return;
   }
@@ -8721,7 +9209,7 @@ function bindEvents() {
       const target = elements.brandSecondaryCta.dataset.brandAction === "cup-test"
         ? "cup-test"
         : "shop";
-      setAppSurface(target, { updateHash: true, scroll: true });
+      setAppSurface(target, { updateHash: true, scroll: true, trackNav: true });
       renderGamePanels(loadGameState());
     });
   }
@@ -8730,7 +9218,7 @@ function bindEvents() {
       button.addEventListener("click", () => {
         if (appState.running || appState.calibrating) return;
         const surface = button.dataset.surfaceTarget === "cup-test" ? "cup-test" : "shop";
-        setAppSurface(surface, { updateHash: true, scroll: true });
+        setAppSurface(surface, { updateHash: true, scroll: true, trackNav: true });
         renderGamePanels(loadGameState());
       });
     });
@@ -8995,6 +9483,7 @@ function cacheElements() {
 
 function initNoSpillApp() {
   cacheElements();
+  initAnalytics();
   const clubState = loadClubState();
   appState.mountConfig = normalizeMountConfig(clubState.mountConfig);
   appState.audioLevel = normalizeAudioLevel(clubState.audioLevel);

@@ -70,10 +70,13 @@ These rules are authoritative for all current and future features:
 - Basic Mode must not request location.
 - Qualified Run Mode may request location only after explicit opt-in/start.
 - Do not upload raw motion, raw GPS, route traces, coordinates, maps, street names, speed logs, or
-  license plates by default.
+  license plates.
 - Keep the current MVP local-first and static-browser friendly.
-- Do not add accounts, backend sync, analytics, payments, ads, service workers, uploads, or network
-  calls unless a future request explicitly changes scope.
+- Optional product analytics may be enabled only through explicit PostHog runtime config. Analytics
+  must use safe events, coarse buckets, and route/view categories only; it must never weaken the
+  safety/privacy contract.
+- Do not add accounts, backend sync, payments, ads, service workers, uploads, or network calls
+  beyond explicitly configured PostHog analytics.
 - Do not make safety certification, insurance, legal compliance, or real-world driving protection
   claims.
 
@@ -96,6 +99,33 @@ motion samples, speed logs, route traces, maps, coordinates, or street names.
 
 The app should remain usable as static HTML/CSS/JavaScript. Current implementation uses vanilla
 browser APIs.
+
+## Analytics Contract
+
+Tofu Driver may use optional PostHog analytics to understand whether visitors reach the Cup Test,
+start runs, visit Tofu Shop, complete the first shop loop, return later, use sticker/QR links, or
+share results.
+
+Analytics rules:
+
+- disabled by default unless `TOFU_DRIVER_POSTHOG_ENABLED` and `TOFU_DRIVER_POSTHOG_KEY` are set
+- no-op if disabled, missing a key, blocked, or locally opted out
+- local opt-out flag: `tofuDriverAnalyticsOptOut=true`
+- event names use the `tofu_driver_` prefix
+- autocapture and session recording are disabled
+- page/route views are tracked manually
+- campaign attribution is limited to sanitized `utm_*`, `td_source`, and `td_campaign` values
+- active-drive telemetry is never tracked
+
+Allowed analytics properties are coarse and product-safe: view name, mode category, simulator flag,
+qualification status, cargo condition bucket, visible rank label, shop level, coarse resource
+buckets, order type id, station/upgrade ids, first-loop booleans, share type, result type, and
+sanitized campaign values.
+
+Never send raw GPS samples, raw motion samples, acceleration vectors, G-force streams, speed, speed
+history, top speed, average speed, exact distance, coordinates, maps, route traces, street names,
+location names, license plates, raw localStorage dumps, exported save files, share-card image
+contents, sensor diagnostics, or mount calibration raw values.
 
 ## Progressive Reveal
 

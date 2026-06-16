@@ -34,6 +34,9 @@ function loadNoSpillContext(options = {}) {
     console,
     window: options.window || {},
   };
+  if (options.navigator) context.navigator = options.navigator;
+  if (options.document) context.document = options.document;
+  if (options.URLSearchParams) context.URLSearchParams = options.URLSearchParams;
   vm.createContext(context);
   vm.runInContext(
     `${source}
@@ -162,6 +165,19 @@ globalThis.APP_BRAND = APP_BRAND;
 globalThis.CHALLENGE_NAME = CHALLENGE_NAME;
 globalThis.CLUB_NAME = CLUB_NAME;
 globalThis.TOP_BADGE = TOP_BADGE;
+globalThis.analyticsConfig = analyticsConfig;
+globalThis.initAnalytics = initAnalytics;
+globalThis.trackEvent = trackEvent;
+globalThis.trackRouteView = trackRouteView;
+globalThis.setAnalyticsOptOut = setAnalyticsOptOut;
+globalThis.sanitizeAnalyticsProperties = sanitizeAnalyticsProperties;
+globalThis.safeCampaignProperties = safeCampaignProperties;
+globalThis.cargoConditionBucket = cargoConditionBucket;
+globalThis.trackCupTestStartedAnalytics = trackCupTestStartedAnalytics;
+globalThis.trackCupTestCompletedAnalytics = trackCupTestCompletedAnalytics;
+globalThis.trackShopOrderFulfilledAnalytics = trackShopOrderFulfilledAnalytics;
+globalThis.trackShareAnalytics = trackShareAnalytics;
+globalThis.shopResourceBucket = shopResourceBucket;
 globalThis.DISCORD_CONFIG = DISCORD_CONFIG;
 globalThis.MERCH_LABELS = MERCH_LABELS;
 globalThis.MERCH_LINKS = MERCH_LINKS;
@@ -188,6 +204,48 @@ function makeLocalStorage(initial = {}) {
       store.delete(key);
     },
   };
+}
+
+function makeAnalyticsContext(config = {}, initialStorage = {}) {
+  const captures = [];
+  const initCalls = [];
+  const storage = makeLocalStorage(initialStorage);
+  const window = {
+    TOFU_DRIVER_CONFIG: {
+      posthogEnabled: false,
+      posthogKey: '',
+      posthogHost: 'https://us.i.posthog.com',
+      posthogDebug: false,
+      ...config,
+    },
+    localStorage: storage,
+    location: {
+      search: '?td_source=sticker&td_campaign=anime_con_2026&utm_content=front-window!!!',
+    },
+    posthog: {
+      init(key, options) {
+        initCalls.push({ key, options });
+      },
+      capture(event, properties) {
+        captures.push({ event, properties });
+      },
+      opt_out_capturing() {
+        window.optedOut = true;
+      },
+      opt_in_capturing() {
+        window.optedIn = true;
+      },
+    },
+  };
+  const context = loadNoSpillContext({
+    window,
+    navigator: { doNotTrack: '0' },
+    URLSearchParams,
+  });
+  context.analyticsCaptures = captures;
+  context.analyticsInitCalls = initCalls;
+  context.analyticsWindow = window;
+  return context;
 }
 
 function assertNoSensitiveStorageData(value) {
@@ -2765,6 +2823,143 @@ function testNoSpillClientDoesNotUploadRawRunData() {
   }
 }
 
+function testPostHogAnalyticsNoOpsWithoutConfigAndHonorsOptOut() {
+  const disabled = makeAnalyticsContext({ posthogEnabled: false, posthogKey: 'ph_public' });
+  assert.strictEqual(disabled.initAnalytics(), false);
+  assert.strictEqual(disabled.analyticsInitCalls.length, 0);
+  assert.strictEqual(disabled.trackEvent('tofu_driver_page_view', { view: 'shop' }), false);
+  assert.strictEqual(disabled.analyticsCaptures.length, 0);
+
+  const missingKey = makeAnalyticsContext({ posthogEnabled: true, posthogKey: '' });
+  assert.strictEqual(missingKey.initAnalytics(), false);
+  assert.strictEqual(missingKey.analyticsInitCalls.length, 0);
+  assert.strictEqual(missingKey.analyticsCaptures.length, 0);
+
+  const optedOut = makeAnalyticsContext(
+    { posthogEnabled: true, posthogKey: 'ph_public_tofu' },
+    { tofuDriverAnalyticsOptOut: 'true' },
+  );
+  assert.strictEqual(optedOut.initAnalytics(), false);
+  assert.strictEqual(optedOut.trackEvent('tofu_driver_page_view', { view: 'shop' }), false);
+  assert.strictEqual(optedOut.analyticsCaptures.length, 0);
+  optedOut.setAnalyticsOptOut(false);
+  assert.strictEqual(optedOut.analyticsWindow.localStorage.getItem('tofuDriverAnalyticsOptOut'), null);
+  assert.strictEqual(optedOut.analyticsWindow.optedIn, true);
+  optedOut.setAnalyticsOptOut(true);
+  assert.strictEqual(optedOut.analyticsWindow.localStorage.getItem('tofuDriverAnalyticsOptOut'), 'true');
+  assert.strictEqual(optedOut.analyticsWindow.optedOut, true);
+}
+
+function testPostHogAnalyticsInitializesWithPrivacyOptions() {
+  const context = makeAnalyticsContext({
+    posthogEnabled: true,
+    posthogKey: 'ph_public_tofu',
+    posthogHost: 'https://eu.i.posthog.com',
+  });
+  assert.strictEqual(context.initAnalytics(), true);
+  assert.strictEqual(context.analyticsInitCalls.length, 1);
+  assert.strictEqual(context.analyticsInitCalls[0].key, 'ph_public_tofu');
+  assert.strictEqual(context.analyticsInitCalls[0].options.api_host, 'https://eu.i.posthog.com');
+  assert.strictEqual(context.analyticsInitCalls[0].options.capture_pageview, false);
+  assert.strictEqual(context.analyticsInitCalls[0].options.autocapture, false);
+  assert.strictEqual(context.analyticsInitCalls[0].options.disable_session_recording, true);
+  assert.strictEqual(context.analyticsInitCalls[0].options.disable_surveys, true);
+}
+
+function testAnalyticsSanitizerDropsDangerousKeysAndCampaignsAreSafe() {
+  const context = makeAnalyticsContext({ posthogEnabled: true, posthogKey: 'ph_public_tofu' });
+  const sanitized = context.sanitizeAnalyticsProperties({
+    view: 'shop',
+    gps: 'raw',
+    lat: 47.6,
+    latitude: 47.6,
+    lng: -122.3,
+    longitude: -122.3,
+    coordinates: 'x',
+    routeTrace: 'trace',
+    street: 'Main',
+    address: 'home',
+    speed: 72,
+    averageSpeed: 55,
+    topSpeed: 100,
+    rawMotion: 'motion',
+    motion: 'motion',
+    acceleration: 'vector',
+    gForce: 1.2,
+    deviceMotion: 'event',
+    sensor: 'diag',
+    localStorage: '{}',
+    saveFile: '{}',
+    exactDistance: 12.4,
+    distanceMiles: 12.4,
+    ok_number: 12,
+    ok_bool: true,
+  });
+  assert.deepStrictEqual(Object.keys(sanitized).sort(), ['ok_bool', 'ok_number', 'view']);
+  const campaign = context.safeCampaignProperties('?td_source=sticker!!!&td_campaign=anime_con_2026&utm_content=front-window');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(campaign)), {
+    utm_content: 'front-window',
+    td_source: 'sticker',
+    td_campaign: 'anime_con_2026',
+  });
+}
+
+function testAnalyticsRouteCupShopAndShareEventsUseSafeProperties() {
+  const context = makeAnalyticsContext({ posthogEnabled: true, posthogKey: 'ph_public_tofu' });
+  assert.strictEqual(context.initAnalytics(), true);
+  context.trackRouteView('cup-test');
+  context.trackRouteView('shop');
+  assert(context.analyticsCaptures.some((capture) => capture.event === 'tofu_driver_page_view' && capture.properties.view === 'cup_test'));
+  assert(context.analyticsCaptures.some((capture) => capture.event === 'tofu_driver_cup_test_viewed'));
+  assert(context.analyticsCaptures.some((capture) => capture.event === 'tofu_driver_page_view' && capture.properties.view === 'shop'));
+  assert(context.analyticsCaptures.some((capture) => capture.event === 'tofu_driver_shop_viewed'));
+  const firstPage = context.analyticsCaptures.find((capture) => capture.event === 'tofu_driver_page_view');
+  assert.strictEqual(firstPage.properties.td_source, 'sticker');
+  assert.strictEqual(firstPage.properties.td_campaign, 'anime_con_2026');
+
+  context.trackCupTestStartedAnalytics({ mode: 'basic', simulator: false });
+  const cupStart = context.analyticsCaptures.find((capture) => capture.event === 'tofu_driver_cup_test_started');
+  assert.deepStrictEqual(JSON.parse(JSON.stringify(cupStart.properties)), { mode: 'basic', simulator: false });
+
+  const summary = sampleDeliverySession({
+    mode: 'qualified',
+    waterLeft: 92,
+    qualificationStatus: 'qualified',
+    qualificationLabel: 'Qualified',
+    simulated: false,
+  });
+  summary.cargoCondition = 92;
+  summary.deliveryRewards = {
+    shop: { certifiedBoost: { applied: true } },
+  };
+  context.trackCupTestCompletedAnalytics(summary);
+  const cupCompleted = context.analyticsCaptures.find((capture) => capture.event === 'tofu_driver_cup_test_completed');
+  assert.strictEqual(cupCompleted.properties.mode, 'qualified');
+  assert.strictEqual(cupCompleted.properties.cargo_condition_bucket, '80_94');
+  assert.strictEqual(cupCompleted.properties.certified_boost_earned, true);
+  assert(!('distanceMiles' in cupCompleted.properties));
+  assert(!('speed' in cupCompleted.properties));
+  assert(!('motion' in cupCompleted.properties));
+
+  const state = context.defaultGameState();
+  const result = context.fulfillShopOrders(state, 1, { orderTypeId: 'simple_tofu_box' });
+  assert.strictEqual(result.ok, true);
+  context.trackShopOrderFulfilledAnalytics(result);
+  const shopEvent = context.analyticsCaptures.find((capture) => capture.event === 'tofu_driver_shop_order_fulfilled');
+  assert.strictEqual(shopEvent.properties.order_type, 'simple_tofu_box');
+  assert.strictEqual(shopEvent.properties.shop_level, 1);
+  assert.strictEqual(shopEvent.properties.first_order, true);
+  assert('tips_bucket' in shopEvent.properties);
+  assert(!('tips' in shopEvent.properties));
+  assert(!('tofuStock' in shopEvent.properties));
+
+  context.trackShareAnalytics('tofu_driver_share_clicked', summary, { share_type: 'web_share' });
+  const shareEvent = context.analyticsCaptures.find((capture) => capture.event === 'tofu_driver_share_clicked');
+  assert.strictEqual(shareEvent.properties.share_type, 'web_share');
+  assert.strictEqual(shareEvent.properties.result_type, 'qualified');
+  assert(!('text' in shareEvent.properties));
+}
+
 function testNoSpillLiveSummaryAndShareAvoidSensitiveDetails() {
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(!source.includes('Location denied. This run'));
@@ -4857,6 +5052,10 @@ function run() {
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
   testDiscordCtaConfigAndRendering();
+  testPostHogAnalyticsNoOpsWithoutConfigAndHonorsOptOut();
+  testPostHogAnalyticsInitializesWithPrivacyOptions();
+  testAnalyticsSanitizerDropsDangerousKeysAndCampaignsAreSafe();
+  testAnalyticsRouteCupShopAndShareEventsUseSafeProperties();
   testNoSpillClientDoesNotUploadRawRunData();
   testNoSpillLiveSummaryAndShareAvoidSensitiveDetails();
   testShareConfigAndCardData();

@@ -9,7 +9,7 @@ serve HTTPS, because mobile browsers generally require HTTPS for motion/location
 - Static file hosting
 - Correct MIME types for `.html`, `.css`, `.js`, and images
 - No backend required for the current MVP
-- No analytics or third-party scripts unless explicitly added later
+- Optional PostHog analytics only when explicitly configured with Tofu Driver runtime env vars
 - Cloud Run service `tofu-driver` in project `tofu-driver` currently serves the static app from an
   Nginx container with `min-instances=0`
 
@@ -52,6 +52,35 @@ make prod PROJECT_ID="tofu-driver" REGION="us-central1" SERVICE="tofu-driver"
 
 The source deploy uses `Dockerfile` and `nginx.conf`. The app should not require Cloud SQL, Redis,
 or any external application infrastructure.
+
+## Optional PostHog Analytics
+
+The container generates `/static/nospill/runtime-config.js` at startup from environment variables.
+If analytics is disabled or the key is missing, the browser analytics helper is a no-op and the app
+does not load the PostHog SDK.
+
+Environment variables:
+
+- `TOFU_DRIVER_POSTHOG_ENABLED`: set to `true` to enable PostHog
+- `TOFU_DRIVER_POSTHOG_KEY`: Tofu Driver browser/project API key
+- `TOFU_DRIVER_POSTHOG_HOST`: PostHog host, default `https://us.i.posthog.com`
+- `TOFU_DRIVER_POSTHOG_DEBUG`: optional debug logging
+
+Example:
+
+```bash
+gcloud run services update tofu-driver \
+  --project="tofu-driver" \
+  --region="us-central1" \
+  --set-env-vars TOFU_DRIVER_POSTHOG_ENABLED=true,TOFU_DRIVER_POSTHOG_HOST=https://us.i.posthog.com \
+  --set-secrets TOFU_DRIVER_POSTHOG_KEY=tofu-driver-posthog-key:latest
+```
+
+Use a Tofu Driver PostHog browser key. Do not reuse Cavrino project keys. PostHog autocapture and
+session recording are disabled in app code; page views are tracked manually. Analytics events must
+not include raw GPS, raw motion, acceleration vectors, speed, exact distance, route traces, maps,
+street names, coordinates, localStorage dumps, exported save files, share-card contents, or
+user-entered personal information.
 
 When changing `frontend/nospill/app.js` or `frontend/nospill/app.css`, bump the matching query
 string in `frontend/nospill/index.html` before deploy, for example:
