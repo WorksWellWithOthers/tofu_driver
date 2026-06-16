@@ -17,6 +17,8 @@
   supporting percent/ETA copy, and pause state, not as a raw decimal order count.
 - Tofu Stock now has player-facing runway copy: it is an input for Prep Counter, not the purchase
   currency, and the UI can show when stock is enough for now.
+- Player-facing Tofu Shop values, costs, and rewards use compact incremental formatting as they
+  grow; internal values remain exact.
 - The Orders panel has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume typed Tofu Stock/Delivery Order costs and pay typed Tips/Reputation/XP rewards.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,

@@ -76,6 +76,7 @@ globalThis.shopOrderTypeUnlocked = shopOrderTypeUnlocked;
 globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
 globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
+globalThis.formatCompactNumber = formatCompactNumber;
 globalThis.formatShopBalance = formatShopBalance;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
@@ -1503,6 +1504,148 @@ globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.g
   assert.strictEqual(context.lowAction.stationId, 'tofu_press');
   assert(context.lowAction.copy.includes('Tofu Stock is low'));
   assert.strictEqual(context.lowTickNonNegative, true);
+}
+
+function testCompactTofuShopNumberFormatting() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  assert.strictEqual(context.formatCompactNumber(999), '999');
+  assert.strictEqual(context.formatCompactNumber(1049), '1.05K');
+  assert.strictEqual(context.formatCompactNumber(12840), '12.8K');
+  assert.strictEqual(context.formatCompactNumber(999999), '1M');
+  assert.strictEqual(context.formatCompactNumber(2400000), '2.4M');
+  assert.strictEqual(context.formatCompactNumber(1000000000), '1B');
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopUpgradeList: makeNode(),
+  shopGeneratorList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+const high = defaultGameState();
+high.totalXP = 2400000;
+high.shop.tofuStock = 2400000;
+high.shop.deliveryOrders = 12840;
+high.shop.tips = 1000000000;
+high.shop.reputation = 1000000000;
+high.shop.shopLevel = getShopLevel(high.shop.reputation);
+high.shop.prepSlots = 1049;
+high.shop.shopReach = 12840;
+high.shop.shopSpirit = 2400000;
+high.shop.licenseStars = 1000000000;
+high.shop.lifetimeDeliveryOrders = 5;
+high.stamps.first_shop_order = { date: "2026-06-15T00:00:00.000Z", label: "First Shop Order" };
+renderTofuShop(high);
+globalThis.compactTofuStockText = elements.shopTofuStock.textContent;
+globalThis.compactOrdersText = elements.shopDeliveryOrders.textContent;
+globalThis.compactTipsText = elements.shopTips.textContent;
+globalThis.compactReputationText = elements.shopReputation.textContent;
+globalThis.compactLevelProgressText = elements.shopLevelProgress.textContent;
+globalThis.compactPrepSlotsText = elements.shopPrepSlots.textContent;
+globalThis.compactReachText = elements.shopReach.textContent;
+globalThis.compactSpiritText = elements.shopSpirit.textContent;
+globalThis.compactStarsText = elements.shopLicenseStars.textContent;
+globalThis.compactStateTips = high.shop.tips;
+globalThis.compactStateStock = high.shop.tofuStock;
+appState.shopTab = "orders";
+renderTofuShop(high);
+globalThis.compactOrdersHtml = elements.shopTabPanel.innerHTML;
+const costly = defaultGameState();
+costly.shop.tips = 1000000000;
+costly.shop.prepSlots = 0.35;
+costly.shop.stations.tofu_press = 50;
+costly.shop.stations.prep_counter = 1;
+costly.shop.stationUpgrades.network_calendar = 1;
+costly.shop.stations.regional_network = 1;
+costly.shop.reputation = 2000;
+costly.shop.shopLevel = getShopLevel(costly.shop.reputation);
+costly.stamps.first_shop_order = { date: "2026-06-15T00:00:00.000Z", label: "First Shop Order" };
+appState.shopTab = "production";
+renderTofuShop(costly);
+globalThis.compactProductionHtml = elements.shopTabPanel.innerHTML;
+costly.shop.tips = 0;
+appState.shopTab = "upgrades";
+renderTofuShop(costly);
+globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
+`, context);
+
+  assert.strictEqual(context.compactTofuStockText, '2.4M');
+  assert.strictEqual(context.compactOrdersText, '12.8K ready');
+  assert.strictEqual(context.compactTipsText, '1B');
+  assert.strictEqual(context.compactReputationText, '1B');
+  assert(/[KMB]/.test(context.compactLevelProgressText));
+  assert(context.compactPrepSlotsText.includes('1.05K/'));
+  assert.strictEqual(context.compactReachText, '12.8K');
+  assert(context.compactSpiritText.includes('K/'));
+  assert.strictEqual(context.compactStarsText, '100K');
+  assert.strictEqual(context.compactStateTips, 1000000000);
+  assert.strictEqual(context.compactStateStock, 2400000);
+  assert(context.compactOrdersHtml.includes('Fulfill Max Simple Tofu Box x12.8K'));
+  assert(context.compactOrdersHtml.includes('Reward: +128K Tips'));
+  assert(context.compactOrdersHtml.includes('Reward: +578K Tips'));
+  assert(context.compactOrdersHtml.includes('Uses: 103K tofu stock, 12.8K ready orders'));
+  assert(context.compactProductionHtml.includes('K Tips'));
+  assert(context.compactProductionHtml.includes('Need 1 more Prep Slot'));
+  assert(context.compactUpgradeHtml.includes('K Tips'));
+  assert(context.compactUpgradeHtml.includes('K more Tips'));
+  const visible = [
+    context.compactOrdersHtml,
+    context.compactProductionHtml,
+    context.compactUpgradeHtml,
+  ].join('\n');
+  assert(!visible.includes('undefined'));
+  assert(!/\d+\.\d{4,}/.test(visible));
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -3986,6 +4129,7 @@ function run() {
   testEarlyShopResourceFunnelMakesTipsObvious();
   testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal();
   testTofuStockRunwayGuidesEarlyPurchases();
+  testCompactTofuShopNumberFormatting();
   testShopOrderTypeProgressionAndRewards();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();

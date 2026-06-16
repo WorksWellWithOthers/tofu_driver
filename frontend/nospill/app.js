@@ -2434,18 +2434,51 @@ function getShopProductionRate(gameState) {
   return getShopGeneratorRates(gameState).tofuPressPerSecond * 3600;
 }
 
+const COMPACT_NUMBER_SUFFIXES = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"];
+
+function trimCompactNumber(value, decimals) {
+  return Number(value.toFixed(decimals)).toString();
+}
+
+function formatCompactNumber(value) {
+  const number = Number(value || 0);
+  if (!Number.isFinite(number)) return "0";
+  const sign = number < 0 ? "-" : "";
+  const absolute = Math.abs(number);
+  if (absolute < 1000) return `${sign}${Math.floor(absolute)}`;
+  let suffixIndex = Math.min(
+    COMPACT_NUMBER_SUFFIXES.length - 1,
+    Math.floor(Math.log10(absolute) / 3),
+  );
+  let scaled = absolute / Math.pow(1000, suffixIndex);
+  if (scaled >= 999.95 && suffixIndex < COMPACT_NUMBER_SUFFIXES.length - 1) {
+    suffixIndex += 1;
+    scaled /= 1000;
+  }
+  const decimals = scaled < 10 ? 2 : scaled < 100 ? 1 : 0;
+  return `${sign}${trimCompactNumber(scaled, decimals)}${COMPACT_NUMBER_SUFFIXES[suffixIndex]}`;
+}
+
+function formatShopCount(value) {
+  return formatCompactNumber(Math.floor(safeNonNegativeNumber(value, 0, SHOP_MAX_RESOURCE)));
+}
+
+function formatShopCost(value) {
+  return formatCompactNumber(Math.ceil(safeNonNegativeNumber(value, 0, SHOP_MAX_RESOURCE)));
+}
+
 function formatShopRate(rate) {
   const value = Number(rate || 0);
   if (!Number.isFinite(value) || value <= 0) return "0";
+  if (value >= 1000) return formatCompactNumber(value);
   if (value >= 1) return String(roundTo(value, 1));
   return String(roundTo(value, 3));
 }
 
 function formatShopBalance(value, carry = 0) {
   const total = safeNonNegativeNumber(value, 0) + safeNonNegativeNumber(carry, 0, 1000);
-  if (total >= 100) return String(Math.floor(total));
-  if (Number.isInteger(total)) return String(total);
-  return String(roundTo(total, 2));
+  if (total < 100 && !Number.isInteger(total)) return String(roundTo(total, 2));
+  return formatCompactNumber(total);
 }
 
 function readyDeliveryOrders(shop) {
@@ -2510,11 +2543,12 @@ function shopOrderDisabledReason(orderType, gameState, unlocked = shopOrderTypeU
     if (orderType.deliveryOrdersRequired === 1) {
       return `Need 1 prepared order. ${prep.message}`;
     }
-    return `Need ${orderType.deliveryOrdersRequired} ready Delivery Order${orderType.deliveryOrdersRequired === 1 ? "" : "s"}. ${prep.message}`;
+    const missingOrders = Math.ceil(orderType.deliveryOrdersRequired - readyOrders);
+    return `Need ${formatShopCount(missingOrders)} more ready order${missingOrders === 1 ? "" : "s"}. ${prep.message}`;
   }
   if (state.shop.tofuStock < orderType.tofuRequired) {
     const tofuNeeded = Math.max(1, Math.ceil(orderType.tofuRequired - state.shop.tofuStock));
-    return `Need ${tofuNeeded} more tofu stock. Pack tofu or buy a Tofu Press.`;
+    return `Need ${formatShopCost(tofuNeeded)} more tofu stock. Pack tofu or buy a Tofu Press.`;
   }
   return "";
 }
@@ -2579,22 +2613,23 @@ function tofuStockRunway(gameState) {
     : null;
   let label = "Neutral";
   const orderLabel = orderType.id === "simple_tofu_box" ? "order" : orderType.name;
-  let message = `Tofu Stock can support ${ordersRemaining} more ${orderLabel}${ordersRemaining === 1 || orderType.id !== "simple_tofu_box" ? "" : "s"}.`;
+  const remainingLabel = formatShopCount(ordersRemaining);
+  let message = `Tofu Stock can support ${remainingLabel} more ${orderLabel}${ordersRemaining === 1 || orderType.id !== "simple_tofu_box" ? "" : "s"}.`;
   if (ordersRemaining >= 10) {
     label = "Enough";
     message = orderType.id === "simple_tofu_box"
-      ? `Enough tofu for ${ordersRemaining} more orders. Tofu Stock feeds Prep Counter, but it is not the bottleneck right now.`
-      : `Enough tofu for ${ordersRemaining} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}. Bigger orders use more tofu and pay more Tips.`;
+      ? `Enough tofu for ${remainingLabel} more orders. Tofu Stock feeds Prep Counter, but it is not the bottleneck right now.`
+      : `Enough tofu for ${remainingLabel} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}. Bigger orders use more tofu and pay more Tips.`;
   } else if (ordersRemaining >= 3) {
     label = "Watch";
     message = orderType.id === "simple_tofu_box"
-      ? `Tofu Stock can support ${ordersRemaining} more orders. Keep an eye on it as Prep Counter scales.`
-      : `Tofu Stock can support ${ordersRemaining} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}.`;
+      ? `Tofu Stock can support ${remainingLabel} more orders. Keep an eye on it as Prep Counter scales.`
+      : `Tofu Stock can support ${remainingLabel} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}.`;
   } else if (ordersRemaining > 0) {
     label = "Low";
     message = orderType.id === "simple_tofu_box"
-      ? `Tofu Stock is getting low: enough for ${ordersRemaining} more order${ordersRemaining === 1 ? "" : "s"}.`
-      : `Tofu Stock is getting low: enough for ${ordersRemaining} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}.`;
+      ? `Tofu Stock is getting low: enough for ${remainingLabel} more order${ordersRemaining === 1 ? "" : "s"}.`
+      : `Tofu Stock is getting low: enough for ${remainingLabel} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}.`;
   } else {
     label = "Empty";
     message = "Need more Tofu Stock. Pack tofu or buy a Tofu Press.";
@@ -2876,9 +2911,9 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   if (!unlocked) return station.unlock || "Locked.";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  if (tipsNeeded > 0) return `Need ${tipsNeeded} more Tips. Fulfill shop orders to earn Tips.`;
+  if (tipsNeeded > 0) return `Need ${formatShopCost(tipsNeeded)} more Tips. Fulfill shop orders to earn Tips.`;
   const prepNeeded = Math.max(0, Math.ceil(safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots));
-  if (prepNeeded > 0) return `Need ${prepNeeded} more Prep Slot${prepNeeded === 1 ? "" : "s"}`;
+  if (prepNeeded > 0) return `Need ${formatShopCount(prepNeeded)} more Prep Slot${prepNeeded === 1 ? "" : "s"}`;
   return "";
 }
 
@@ -2930,7 +2965,7 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
   if (level >= upgrade.maxLevel) return "Maxed";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  return tipsNeeded > 0 ? `Need ${tipsNeeded} more Tips. Fulfill shop orders to earn Tips.` : "";
+  return tipsNeeded > 0 ? `Need ${formatShopCost(tipsNeeded)} more Tips. Fulfill shop orders to earn Tips.` : "";
 }
 
 function buyQuantityFromRequest(gameState, station, requested) {
@@ -5634,9 +5669,9 @@ function renderDeliveryLog(gameState = loadGameState()) {
     elements.dailyGoal.textContent = `${mission.description} ${mission.focus}: ${mission.goal}`;
   }
   if (elements.dailyReward) elements.dailyReward.textContent = mission.reward;
-  if (elements.driverTotalXP) elements.driverTotalXP.textContent = String(state.totalXP);
+  if (elements.driverTotalXP) elements.driverTotalXP.textContent = formatShopCount(state.totalXP);
   if (elements.driverNextXP) {
-    elements.driverNextXP.textContent = `${progress.currentXP}/${progress.nextXP} XP`;
+    elements.driverNextXP.textContent = `${formatShopCount(progress.currentXP)}/${formatShopCount(progress.nextXP)} XP`;
   }
   if (elements.driverStreak) {
     const current = Number(state.streak.current || 0);
@@ -5658,7 +5693,7 @@ function renderDeliveryLog(gameState = loadGameState()) {
   }
   if (elements.recentReward) {
     elements.recentReward.textContent = recentReward
-      ? `+${recentReward.xpGained} XP · ${recentReward.routeType}`
+      ? `+${formatShopCount(recentReward.xpGained)} XP · ${recentReward.routeType}`
       : "No rewards yet";
   }
 }
@@ -5682,7 +5717,7 @@ function nextShopStep(gameState) {
     nextUpgrade.maxLevel,
   );
   const cost = stationUpgradeCostTips(nextUpgrade, currentLevel);
-  return `${nextUpgrade.name}: ${cost} Tips`;
+  return `${nextUpgrade.name}: ${formatShopCost(cost)} Tips`;
 }
 
 function affordableShopUpgrade(gameState) {
@@ -5882,7 +5917,7 @@ function renderGameDashboard(gameState = loadGameState()) {
   if (elements.gameDriverLicense) {
     elements.gameDriverLicense.textContent = `Level ${progress.level} · ${getDriverLicense(progress.level)}`;
   }
-  if (elements.gameTotalXP) elements.gameTotalXP.textContent = `${state.totalXP} XP`;
+  if (elements.gameTotalXP) elements.gameTotalXP.textContent = `${formatShopCount(state.totalXP)} XP`;
   if (elements.gameStreak) {
     const current = Number(state.streak.current || 0);
     elements.gameStreak.textContent = `${current} ${current === 1 ? "day" : "days"}`;
@@ -6037,12 +6072,12 @@ function renderShopGeneratorCard(generatorId, gameState) {
         <strong>${escapeHtml(label)}</strong>
         <small>${escapeHtml(status)}</small>
       </header>
-      <small>Owned: ${owned}</small>
+      <small>Owned: ${formatShopCount(owned)}</small>
       <small>${escapeHtml(rate)}</small>
       <small>${escapeHtml(helper)}</small>
-      ${station ? `<small>Next: ${cost} Tips${station.prepSlotCost ? ` · ${station.prepSlotCost} Prep Slot` : ""}</small>` : ""}
+      ${station ? `<small>Next: ${formatShopCost(cost)} Tips${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Slot` : ""}</small>` : ""}
       <div class="nospill-idle-actions">
-        ${actionButton(`Buy ${label} · ${cost} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
+        ${actionButton(`Buy ${label} · ${formatShopCost(cost)} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
         ${actionButton(`Buy Max ${label}`, "data-shop-station-max", stationId, !canBuy, "nospill-secondary", disabledReason)}
       </div>
     </div>
@@ -6057,13 +6092,13 @@ function renderStationUpgradeCard(upgrade, gameState) {
   const unlocked = Boolean(station && stationIsUnlocked(station, state) && stationUpgradeIsRevealed(upgrade, state));
   const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, cost, level);
   const canBuy = unlocked && level < upgrade.maxLevel && !disabledReason;
-  const status = level >= upgrade.maxLevel ? "Maxed" : `${cost} Tips`;
+  const status = level >= upgrade.maxLevel ? "Maxed" : `${formatShopCost(cost)} Tips`;
   return renderIdleCard({
     title: `${upgrade.name} Lv ${level}`,
     status,
     copy: unlocked ? upgrade.effect : stationUpgradeRevealReason(upgrade, state),
     locked: !unlocked,
-    actions: [actionButton(`Buy ${upgrade.name} · ${cost} Tips`, "data-station-upgrade", upgrade.id, !canBuy, "nospill-secondary", disabledReason)],
+    actions: [actionButton(`Buy ${upgrade.name} · ${formatShopCost(cost)} Tips`, "data-station-upgrade", upgrade.id, !canBuy, "nospill-secondary", disabledReason)],
   });
 }
 
@@ -6244,13 +6279,13 @@ function renderProductionPanel(state) {
         const reason = stationPurchaseDisabledReason(station, state, cost, unlocked);
         return renderIdleCard({
           title: station.name,
-          status: unlocked ? `${cost} tips · ${station.prepSlotCost} Prep Slot` : "Locked",
+          status: unlocked ? `${formatShopCost(cost)} tips · ${formatShopCount(station.prepSlotCost)} Prep Slot` : "Locked",
           copy: unlocked
-            ? `Owned: ${owned}. ${stationPurposeCopy(station.id, state)} Milestone x${stationMilestoneMultiplier(owned)}.`
+            ? `Owned: ${formatShopCount(owned)}. ${stationPurposeCopy(station.id, state)} Milestone x${stationMilestoneMultiplier(owned)}.`
             : station.unlock,
           locked: !unlocked,
           actions: [
-            actionButton(`Buy ${station.name} · ${cost} Tips`, "data-shop-station", station.id, !canBuy, "nospill-secondary", reason),
+            actionButton(`Buy ${station.name} · ${formatShopCost(cost)} Tips`, "data-shop-station", station.id, !canBuy, "nospill-secondary", reason),
             actionButton(`Buy Max ${station.name}`, "data-shop-station-max", station.id, !canBuy, "nospill-secondary", reason),
           ],
         });
@@ -6314,10 +6349,10 @@ function renderOrdersPanel(state) {
       const maxQuantity = maxFulfillableShopOrderQuantity(state, orderType);
       const disabledReason = shopOrderDisabledReason(orderType, state, unlocked);
       const canFulfill = unlocked && maxQuantity > 0 && !disabledReason;
-      const costCopy = `Uses ${orderType.tofuRequired} tofu stock and ${orderType.deliveryOrdersRequired} ready order${orderType.deliveryOrdersRequired === 1 ? "" : "s"}.`;
-      const rewardCopy = `Reward: +${orderType.tips} Tips, +${orderType.reputation} Reputation, +${orderType.xp} XP.`;
+      const costCopy = `Uses ${formatShopCost(orderType.tofuRequired)} tofu stock and ${formatShopCount(orderType.deliveryOrdersRequired)} ready order${orderType.deliveryOrdersRequired === 1 ? "" : "s"}.`;
+      const rewardCopy = `Reward: +${formatShopCount(orderType.tips)} Tips, +${formatShopCount(orderType.reputation)} Reputation, +${formatShopCount(orderType.xp)} XP.`;
       const maxRewardCopy = maxQuantity > 1
-        ? `Fulfill Max ${orderType.name} x${maxQuantity} · Reward: +${orderType.tips * maxQuantity} Tips, +${orderType.reputation * maxQuantity} Reputation, +${orderType.xp * maxQuantity} XP · Uses: ${orderType.tofuRequired * maxQuantity} tofu stock, ${orderType.deliveryOrdersRequired * maxQuantity} ready orders`
+        ? `Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)} · Reward: +${formatShopCount(orderType.tips * maxQuantity)} Tips, +${formatShopCount(orderType.reputation * maxQuantity)} Reputation, +${formatShopCount(orderType.xp * maxQuantity)} XP · Uses: ${formatShopCost(orderType.tofuRequired * maxQuantity)} tofu stock, ${formatShopCount(orderType.deliveryOrdersRequired * maxQuantity)} ready orders`
         : "";
       return renderIdleCard({
         title: orderType.name,
@@ -6329,7 +6364,7 @@ function renderOrdersPanel(state) {
         actions: [
           fulfillOrderButton(`Fulfill ${orderType.name}`, orderType.id, "1", !canFulfill, "nospill-primary", disabledReason),
           maxQuantity > 1
-            ? fulfillOrderButton(`Fulfill Max ${orderType.name} x${maxQuantity}`, orderType.id, "max", false, "nospill-secondary")
+            ? fulfillOrderButton(`Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)}`, orderType.id, "max", false, "nospill-secondary")
             : "",
           maxRewardCopy ? `<small class="nospill-action-reason">${escapeHtml(maxRewardCopy)}</small>` : "",
         ],
@@ -6338,7 +6373,7 @@ function renderOrdersPanel(state) {
   return `
     <h4>Orders</h4>
     <p class="nospill-panel-helper">Tofu Stock becomes Delivery Orders. Delivery Orders become Tips.</p>
-    <p class="nospill-panel-helper">Prep Counter uses ${PREP_COUNTER_CONSUME_PER_ORDER} tofu stock to prepare 1 delivery order.</p>
+    <p class="nospill-panel-helper">Prep Counter uses ${formatShopCost(PREP_COUNTER_CONSUME_PER_ORDER)} tofu stock to prepare 1 delivery order.</p>
     <p class="nospill-panel-helper">Tofu Stock prepares orders. Bigger orders use more tofu and pay more Tips.</p>
     <p class="nospill-panel-helper">Fulfill prepared shop orders to earn Tips. Tips buy stations and upgrades.</p>
     <div class="nospill-idle-grid">
@@ -6346,7 +6381,7 @@ function renderOrdersPanel(state) {
       ${renderIdleCard({
         title: "Preparing Next Order",
         status: `${prep.progressPercent}% prepared`,
-        copy: `${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${PREP_COUNTER_CONSUME_PER_ORDER}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
+        copy: `${runway.message} Tofu Stock available: ${formatShopBalance(state.shop.tofuStock, state.shop.generatorCarry && state.shop.generatorCarry.tofuStock)}. Tofu required per order: ${formatShopCost(PREP_COUNTER_CONSUME_PER_ORDER)}. Prep Counter: +${formatShopRate(rates.prepOrdersPerSecond)} orders/sec.`,
         extra: renderOrderPrepProgress(state),
       })}
     </div>
@@ -6366,7 +6401,7 @@ function renderRoutesPanel(state) {
           title: route.name,
           status: unlocked ? `Mastery ${routeState.mastery}%` : "Locked",
           copy: unlocked
-            ? `${route.difficulty}. Costs ${route.tofuCost} tofu and ${route.orderCost} orders.`
+            ? `${route.difficulty}. Costs ${formatShopCost(route.tofuCost)} tofu and ${formatShopCount(route.orderCost)} orders.`
             : route.unlock,
           locked: !unlocked,
           actions: [actionButton("Start Route Card", "data-shop-route", route.id, !unlocked || !affordable)],
@@ -6383,8 +6418,8 @@ function renderTrainingPanel(state) {
     <div class="nospill-idle-grid">
       ${TRAINING_DRILLS.map((drill) => renderIdleCard({
         title: drill.name,
-        status: `${drill.costTips} tips`,
-        copy: `Grants ${drill.cupStabilityXP} Cup Stability XP to ${SKILL_LABELS[drill.skill]}.`,
+        status: `${formatShopCost(drill.costTips)} tips`,
+        copy: `Grants ${formatShopCount(drill.cupStabilityXP)} Cup Stability XP to ${SKILL_LABELS[drill.skill]}.`,
         actions: [actionButton("Run Drill", "data-training-drill", drill.id, state.shop.tips < drill.costTips)],
       })).join("")}
     </div>
@@ -6401,7 +6436,7 @@ function renderGaragePanel(state) {
         const cost = Math.ceil(upgrade.costTips * Math.pow(1.25, level));
         return renderIdleCard({
           title: `${upgrade.name} Lv ${level}`,
-          status: level >= upgrade.maxLevel ? "Maxed" : `${cost} tips`,
+          status: level >= upgrade.maxLevel ? "Maxed" : `${formatShopCost(cost)} tips`,
           copy: `${upgrade.effect}.`,
           actions: [actionButton("Upgrade Garage", "data-garage-upgrade", upgrade.id, level >= upgrade.maxLevel || state.shop.tips < cost)],
         });
@@ -6419,8 +6454,8 @@ function renderCrewPanel(state) {
         const owned = safeNonNegativeInteger(state.shop.crew[role.id], 0, 1000);
         const cost = Math.ceil(role.costTips * Math.pow(1.35, owned));
         return renderIdleCard({
-          title: `${role.name} x${owned}`,
-          status: `${cost} tips`,
+          title: `${role.name} x${formatShopCount(owned)}`,
+          status: `${formatShopCost(cost)} tips`,
           copy: `${role.effect} Unlock: ${role.unlock}.`,
           actions: [actionButton("Hire", "data-crew-role", role.id, state.shop.tips < cost)],
         });
@@ -6438,21 +6473,21 @@ function renderSpiritPanel(state) {
         const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
         const cost = Math.ceil(generator.costTips * Math.pow(1.22, owned));
         return renderIdleCard({
-          title: `${generator.name} x${owned}`,
-          status: `${cost} tips`,
+          title: `${generator.name} x${formatShopCount(owned)}`,
+          status: `${formatShopCost(cost)} tips`,
           copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
           actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost)],
         });
       }).join("")}
       ${SHOP_SPIRIT_BOOSTS.map((boost) => renderIdleCard({
         title: boost.name,
-        status: `${boost.costSpirit} Shop Spirit`,
+        status: `${formatShopCost(boost.costSpirit)} Shop Spirit`,
         copy: boost.description,
         actions: [actionButton("Use Boost", "data-spirit-boost", boost.id, state.shop.shopSpirit < boost.costSpirit)],
       })).join("")}
       ${FESTIVAL_BOOSTS.map((boost) => renderIdleCard({
         title: boost.name,
-        status: `${state.shop.festivalBoosts[boost.id] || 0} ready`,
+        status: `${formatShopCount(state.shop.festivalBoosts[boost.id] || 0)} ready`,
         copy: "Consumable parked-only Festival Boost token.",
         actions: [actionButton("Use Festival Boost", "data-festival-boost", boost.id, !state.shop.festivalBoosts[boost.id])],
       })).join("")}
@@ -6489,9 +6524,9 @@ function renderRivalsPanel(state) {
         const affordable = state.shop.deliveryOrders >= rival.orderCost && state.shop.shopSpirit >= rival.spiritCost;
         return renderIdleCard({
           title: rival.name,
-          status: unlocked ? `${rival.orderCost} orders · ${rival.spiritCost} spirit` : "Locked",
+          status: unlocked ? `${formatShopCount(rival.orderCost)} orders · ${formatShopCost(rival.spiritCost)} spirit` : "Locked",
           copy: unlocked
-            ? `Friendly showcase reward: ${rival.tipsReward} tips and ${rival.reputationReward} reputation.`
+            ? `Friendly showcase reward: ${formatShopCount(rival.tipsReward)} tips and ${formatShopCount(rival.reputationReward)} reputation.`
             : rival.unlock,
           locked: !unlocked,
           actions: [actionButton("Start Rival Shop Challenge", "data-rival-challenge", rival.id, !unlocked || !affordable)],
@@ -6549,8 +6584,8 @@ function renderLicensePanel(state) {
       })}
       ${LICENSE_PERKS.map((perk) => renderIdleCard({
         title: perk.name,
-        status: `${perk.costStars} License Star${perk.costStars > 1 ? "s" : ""}`,
-        copy: `${perk.effect} Owned ${state.shop.licensePerks[perk.id] || 0}.`,
+        status: `${formatShopCount(perk.costStars)} License Star${perk.costStars > 1 ? "s" : ""}`,
+        copy: `${perk.effect} Owned ${formatShopCount(state.shop.licensePerks[perk.id] || 0)}.`,
         actions: [actionButton("Buy License Perk", "data-license-perk", perk.id, state.shop.licenseStars < perk.costStars)],
       })).join("")}
     </div>
@@ -6645,7 +6680,7 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopDeliveryOrders) {
     elements.shopDeliveryOrders.textContent = reveal.shop
-      ? `${prep.ready} ready`
+      ? `${formatShopCount(prep.ready)} ready`
       : "Locked";
   }
   if (elements.shopTips) {
@@ -6661,7 +6696,7 @@ function renderTofuShop(gameState = loadGameState()) {
   if (elements.shopLevelProgress) {
     elements.shopLevelProgress.textContent =
       reveal.shop
-        ? `Level ${progress.level} · ${progress.currentReputation}/${progress.nextReputation}`
+        ? `Level ${progress.level} · ${formatShopCount(progress.currentReputation)}/${formatShopCount(progress.nextReputation)}`
         : "Start the shop";
   }
   if (elements.shopIdleRate) {
@@ -6694,19 +6729,19 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopPrepSlots) {
     elements.shopPrepSlots.textContent = reveal.shop
-      ? `${Math.floor(shop.prepSlots)}/${getPrepSlotMax(shop)}`
+      ? `${formatShopCount(shop.prepSlots)}/${formatShopCount(getPrepSlotMax(shop))}`
       : "Locked";
   }
   if (elements.shopReach) {
-    elements.shopReach.textContent = reveal.shop ? String(shop.shopReach) : "Locked";
+    elements.shopReach.textContent = reveal.shop ? formatShopCount(shop.shopReach) : "Locked";
   }
   if (elements.shopSpirit) {
     elements.shopSpirit.textContent = reveal.shop
-      ? `${Math.floor(shop.shopSpirit)}/${getShopSpiritMax(shop)}`
+      ? `${formatShopCount(shop.shopSpirit)}/${formatShopCount(getShopSpiritMax(shop))}`
       : "Locked";
   }
   if (elements.shopLicenseStars) {
-    elements.shopLicenseStars.textContent = reveal.shop ? String(shop.licenseStars) : "Locked";
+    elements.shopLicenseStars.textContent = reveal.shop ? formatShopCount(shop.licenseStars) : "Locked";
   }
   if (elements.shopBuyMultiplier) {
     elements.shopBuyMultiplier.value = String(shop.purchaseMultiplier || appState.purchaseMultiplier || 1);
@@ -6796,7 +6831,7 @@ function renderTofuShop(gameState = loadGameState()) {
     const offlineTips = Number(shop.offlineEarnings && shop.offlineEarnings.tips || 0);
     const hasOfflineEarnings = reveal.shop && (offlineTofu > 0.005 || offlineOrders > 0.005 || offlineTips > 0.005);
     elements.shopOfflineEarnings.textContent = hasOfflineEarnings
-      ? `While you were away: +${Math.floor(offlineTofu)} tofu stock, +${Math.floor(offlineOrders)} delivery orders${offlineTips > 0.005 ? `, +${Math.floor(offlineTips)} tips` : ""}.`
+      ? `While you were away: +${formatShopCount(offlineTofu)} tofu stock, +${formatShopCount(offlineOrders)} delivery orders${offlineTips > 0.005 ? `, +${formatShopCount(offlineTips)} tips` : ""}.`
       : "";
   }
   renderDeliveryWall(state);
@@ -7056,12 +7091,12 @@ function renderDeliverySummary(summary) {
       : "Take a normal qualified delivery when parked and ready.";
   const certifiedBoost = shop.certifiedBoost || { applied: false };
   const certifiedBoostLine = certifiedBoost.applied
-    ? `+${certifiedBoost.reputationGained} reputation · +${certifiedBoost.tofuStockGained} tofu · +${certifiedBoost.tipsGained} tips · Tofu Press +${certifiedBoost.pressBoostPercent}%`
+    ? `+${formatShopCount(certifiedBoost.reputationGained)} reputation · +${formatShopCount(certifiedBoost.tofuStockGained)} tofu · +${formatShopCount(certifiedBoost.tipsGained)} tips · Tofu Press +${certifiedBoost.pressBoostPercent}%`
     : qualified
       ? "No certified boost earned"
       : "Practice only - no certified boost";
   const shopRewardLine = (shop.tofuStockGained || shop.tipsGained || shop.reputationGained)
-    ? `+${shop.tofuStockGained || 0} tofu · +${shop.tipsGained || 0} tips · +${shop.reputationGained || 0} reputation`
+    ? `+${formatShopCount(shop.tofuStockGained || 0)} tofu · +${formatShopCount(shop.tipsGained || 0)} tips · +${formatShopCount(shop.reputationGained || 0)} reputation`
     : "No shop rewards from this practice";
   elements.deliverySummaryGrid.innerHTML = [
     summary.simulated
@@ -7085,7 +7120,7 @@ function renderDeliverySummary(summary) {
     summaryMetric("Next Focus", coach.nextFocus),
     summaryMetric("Selected Crew", crew ? crew.name : "No crew selected yet"),
     summaryMetric("New Unlock", newUnlockLine),
-    summaryMetric("XP Gained", rewards.xpGained ? `+${rewards.xpGained}` : "+0"),
+    summaryMetric("XP Gained", rewards.xpGained ? `+${formatShopCount(rewards.xpGained)}` : "+0"),
     summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
     summaryMetric("Shop Rewards", shopRewardLine),
@@ -7147,7 +7182,7 @@ function renderShopOrderResult(result) {
     elements.summaryTitle.textContent = "Shop Order Complete";
   }
   if (elements.summaryWater) {
-    elements.summaryWater.textContent = `+${result.tipsGained} Tips`;
+    elements.summaryWater.textContent = `+${formatShopCount(result.tipsGained)} Tips`;
   }
   if (elements.returnDashboardButton) {
     elements.returnDashboardButton.textContent = canFulfillAnother
@@ -7167,16 +7202,16 @@ function renderShopOrderResult(result) {
   if (elements.deliverySummaryGrid) {
     elements.deliverySummaryGrid.innerHTML = [
       summaryMetric("Order", result.orderType ? `${result.orderType.name}. Packed and handed off from the counter.` : "Packed and handed off from the counter.", "nospill-is-good"),
-      summaryMetric("Tofu Used", `-${result.tofuUsed || 0}`),
-      summaryMetric("Ready Orders Used", `-${result.deliveryOrdersUsed || result.quantity || 0}`),
-      summaryMetric("Tips Gained", `+${result.tipsGained}`),
-      summaryMetric("Reputation Gained", `+${result.reputationGained}`),
-      summaryMetric("XP Gained", `+${result.xpGained}`),
+      summaryMetric("Tofu Used", `-${formatShopCount(result.tofuUsed || 0)}`),
+      summaryMetric("Ready Orders Used", `-${formatShopCount(result.deliveryOrdersUsed || result.quantity || 0)}`),
+      summaryMetric("Tips Gained", `+${formatShopCount(result.tipsGained)}`),
+      summaryMetric("Reputation Gained", `+${formatShopCount(result.reputationGained)}`),
+      summaryMetric("XP Gained", `+${formatShopCount(result.xpGained)}`),
       result.firstShopOrderStampUnlocked
         ? summaryMetric("Stamp Discovered", STAMP_LABELS.first_shop_order, "nospill-is-good")
         : "",
-      summaryMetric("Tofu Stock", String(shop.tofuStock)),
-      summaryMetric("Delivery Orders", String(shop.deliveryOrders)),
+      summaryMetric("Tofu Stock", formatShopBalance(shop.tofuStock)),
+      summaryMetric("Delivery Orders", formatShopCount(shop.deliveryOrders)),
       summaryMetric("Shop Level", `Level ${shop.shopLevel}`),
       summaryMetric("Next Best Action", nextBestAction(state).title.replace(/^Next: /, "")),
     ].join("");
@@ -7629,7 +7664,7 @@ function handlePackTofu() {
   }
   saveGameState(result.gameState);
   renderGamePanels(result.gameState);
-  setSummaryStatusMessage(`Packed tofu: +${result.tofuStockGained} tofu stock.`);
+  setSummaryStatusMessage(`Packed tofu: +${formatShopCount(result.tofuStockGained)} tofu stock.`);
   playCosmeticSound("shop_pack_tofu", result.gameState, {
     activeDrive: false,
   });
@@ -7729,12 +7764,12 @@ function handleTofuShopPanelClick(event) {
     const state = currentGameState();
     const quantity = state.shop.purchaseMultiplier || appState.purchaseMultiplier || 1;
     const result = buyShopStation(target.dataset.shopStation, state, quantity);
-    saveShopActionResult(result, result.ok ? `Bought ${result.quantity} ${result.station.name}.` : "");
+    saveShopActionResult(result, result.ok ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.` : "");
     return;
   }
   if (target.dataset.shopStationMax) {
     const result = buyShopStation(target.dataset.shopStationMax, currentGameState(), "max");
-    saveShopActionResult(result, result.ok ? `Bought ${result.quantity} ${result.station.name}.` : "");
+    saveShopActionResult(result, result.ok ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.` : "");
     return;
   }
   if (target.dataset.fulfillOrders) {
@@ -7777,7 +7812,7 @@ function handleTofuShopPanelClick(event) {
       || typeof window.confirm !== "function"
       || window.confirm("Take the Local Delivery License Exam and reset selected shop progress?");
     const result = takeLicenseExam(currentGameState(), { confirmed });
-    saveShopActionResult(result, result.ok ? `License Exam passed. +${result.starsEarned} License Stars.` : "");
+    saveShopActionResult(result, result.ok ? `License Exam passed. +${formatShopCount(result.starsEarned)} License Stars.` : "");
     return;
   }
   if (target.dataset.devUnlock) {

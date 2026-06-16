@@ -182,6 +182,8 @@ Current design principles:
 - XP/levels provide visible progress.
 - Offline progress is capped and summarized.
 - Production is displayed per second.
+- Large player-facing shop values use compact incremental formatting; internal resource values
+  remain exact.
 - Buttons must be honest: wired and responsive, disabled with a reason, or hidden.
 
 Advanced shop systems already exist as broad scaffolding or partial systems. They should not

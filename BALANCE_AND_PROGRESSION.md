@@ -217,6 +217,19 @@ advancing or jumping. When ready orders exist, the bar remains secondary to fulf
 
 Fulfill Shop Order requires at least 1 ready order.
 
+### Number Formatting
+
+Player-facing Tofu Shop values should use compact incremental formatting as values grow:
+
+```text
+K, M, B, T, Qa, Qi, Sx, Sp, Oc, No, Dc
+```
+
+Formatting is display-only. Internal resource values, costs, rewards, and progress state remain
+exact. Discrete missing requirements such as Prep Slots, ready orders, station counts, stamps, and
+License Stars round up in disabled reasons. Small live balances may show short decimals when that is
+needed to make ticking visible, but long raw decimals should never be exposed.
+
 ### Order Size Ladder
 
 Raw Tofu Stock must not directly multiply Tips. Instead, stock matters because larger order types
