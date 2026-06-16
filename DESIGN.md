@@ -184,6 +184,13 @@ Current design principles:
   already healthy.
 - Early upgrade cards should show before/after impact, such as a better order-prep cadence or
   higher stock/sec, before asking the player to spend Tips.
+- Overview is the main first-loop play surface. It should include the current bottleneck, the next
+  best action, ready orders, Prep Counter progress, the best available order card, and one relevant
+  station or upgrade. A new player should not need to open Orders to understand or play the first
+  loop.
+- Detailed tabs are earned. Orders can remain as a detailed support panel, Production should focus
+  on station ownership, and Upgrades should appear only when at least one relevant upgrade is
+  visible or close.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
   are needed.
@@ -210,9 +217,11 @@ dominate the first session until the core loop is paced and understandable:
 - Delivery Ledger
 
 The current MVP loop remains the priority. Routes, Crew, Garage, Shop Spirit, Rivals, and License
-are later-phase systems until the core loop feels good. Use `BALANCE_AND_PROGRESSION.md` for
-pacing, formulas, sources/sinks, upgrade ladders, button inventories, unresolved balance questions,
-and implementation audit.
+are later-phase systems until the core loop feels good. These systems should unlock from meaningful
+milestones such as first upgrades, larger orders, station purchases, route story beats, or repeated
+chores, not from raw idle currency accumulation alone. Use `BALANCE_AND_PROGRESSION.md` for pacing,
+formulas, sources/sinks, upgrade ladders, button inventories, unresolved balance questions, and
+implementation audit.
 
 ## Dream Garage / Project Car Fantasy
 

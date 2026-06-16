@@ -22,6 +22,12 @@
 - The P0/P1 `FIRST_LOOP_AUDIT.md` findings have been implemented: Tidy Packaging is the first
   relevant Prep Counter upgrade when order prep is the bottleneck, Steady Pressing is stock-specific,
   empty upgrade panels are hidden, and early upgrade cards show before/after impact.
+- Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
+  progress, the best available order card, and the relevant next station/upgrade so the first loop
+  is playable without opening Orders.
+- Tofu Shop tabs are progressively revealed by meaningful milestones and story beats rather than
+  raw idle accumulation. Routes, Training, Garage, Crew, Shop Spirit, Rivals, License, full
+  Passport, and full Ledger stay hidden during the first loop unless earned.
 - The Orders panel has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume meaningful typed Tofu Stock/Delivery Order costs and pay typed
   Tips/Reputation/XP rewards.
@@ -65,8 +71,8 @@ Canonical references:
    disabled reasons, and larger-order reveal timing.
 4. Playtest and tune the first 10 minutes:
    confirm the first order, first upgrade, first bottleneck, and first stamp are clear.
-5. Hide or down-rank advanced systems during the first 10 minutes unless the balance spec says they
-   should be visible.
+5. Continue visual QA on first-loop reveal: verify Overview stays focused, Orders/Production remain
+   support panels, and advanced systems stay hidden until earned.
 6. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.

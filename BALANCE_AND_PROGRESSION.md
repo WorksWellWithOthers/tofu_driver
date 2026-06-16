@@ -748,11 +748,20 @@ First-time users should not see every system. Each system should move through th
 
 Early UI rule:
 
+- Overview is the first-loop play surface. It should show Current Bottleneck, Next Best Action,
+  Ready Orders, Prep Counter progress, one best available order card, one relevant next
+  station/upgrade card, and optional Cup Test as a secondary card.
+- Orders is a detailed support panel, not required for the first loop.
+- Production is the station-buying/detail panel and should not simply duplicate Overview.
 - Do not show full locked sublists.
 - Do not show a visible roadmap of every future unlock.
 - Do not make settings/debug/QA prominent.
 - Do not show Delivery Crew, character selection, or sound selection inside the main early shop
   overview.
+- Do not reveal broad systems from raw idle accumulation alone. A tab should appear because of a
+  related milestone, bottleneck, purchased upgrade/station, discovered stamp, or story beat.
+- Offline progress may create resources and a welcome-back summary, but it should not reveal Routes,
+  Garage, Shop Spirit, Rivals, License, or full Passport/Ledger panels by itself.
 
 ### Reveal Rules By System
 
@@ -761,9 +770,9 @@ Early UI rule:
 | Orders | never hidden in shop | none | immediately, with Simple Tofu Box |
 | Production | never hidden in shop | advanced station hints only when close | immediately for Tofu Press and Prep Counter |
 | Upgrades | before first order, except a subtle hint if useful | after first order or when close to affordable | after first upgrade path is understood |
-| Passport | before first stamp-worthy action | after first order/result | after first stamp reveal |
-| Ledger | before meaningful events exist | after first result/offline event | after several events or when the player asks for history |
-| Routes | first 10 minutes | after Reputation/Shop Sign begins to matter | after first route unlock condition |
+| Passport | before first stamp-worthy action | after first order/result as compact teaser | after multiple stamps or when collection matters |
+| Ledger | before meaningful history exists | after several events or meaningful offline return | after history helps explain what changed |
+| Routes | first 10 minutes | after Reputation/Shop Sign begins to matter | after a route story beat or route-ready station milestone |
 | Crew | first hour | after first route progress or repeated chores | after the first automation slice |
 | Garage | first hour | after route cards need fictional stability/flavor | after route loop exists |
 | Dream Garage | first shop loop | after First 100 Tips or Shop Level 2 as covered-car teaser | after 10 fulfilled orders or first Family Tofu Tray |

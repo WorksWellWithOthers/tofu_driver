@@ -969,6 +969,19 @@ fractionalPrep.shop.prepSlots = 0.35;
 appState.shopTab = "production";
 renderTofuShop(fractionalPrep);
 globalThis.fractionalPrepHtml = elements.shopTabPanel.innerHTML;
+const rawAccumulated = defaultGameState();
+rawAccumulated.shop.tips = 10000;
+rawAccumulated.shop.reputation = 1000;
+rawAccumulated.shop.tofuStock = 5000;
+rawAccumulated.shop.shopLevel = 10;
+rawAccumulated.level = 10;
+appState.shopTab = "overview";
+renderTofuShop(rawAccumulated);
+globalThis.rawAccumulatedTabsHtml = elements.shopTabList.innerHTML;
+appState.shopTab = "routes";
+renderTofuShop(rawAccumulated);
+globalThis.rawAccumulatedActiveTab = appState.shopTab;
+globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
 `, context);
 
   assert(context.freshGeneratorHtml.includes('Buy Tofu Press'));
@@ -998,10 +1011,11 @@ globalThis.fractionalPrepHtml = elements.shopTabPanel.innerHTML;
   assert(!context.afterOrderUpgradeHtml.includes('Better Boxes'));
   assert(!context.afterOrderUpgradeHtml.includes('Shop Sign'));
   assert(context.afterOrderTabsHtml.includes('Upgrades'));
-  assert(context.afterOrderTabsHtml.includes('Passport'));
+  assert(!context.afterOrderTabsHtml.includes('Passport'));
   assert(context.afterFirstStampPassportHtml.includes('First Shop Order'));
   assert(context.afterFirstStampPassportHtml.includes('Teaser'));
-  assert(context.afterFirstStampPassportHtml.includes('Keep growing the shop to discover this stamp.'));
+  assert(context.afterFirstStampPassportHtml.includes('Passport Stamp Found'));
+  assert(context.afterFirstStampPassportHtml.includes('More stamps stay tucked away until the shop grows.'));
   assert(!context.afterFirstStampPassportHtml.includes('Perfect Pour'));
   assert(!context.afterFirstStampPassportHtml.includes('No-Spill Club'));
   assert(context.leveledGeneratorHtml.includes('Tofu Press'));
@@ -1016,6 +1030,12 @@ globalThis.fractionalPrepHtml = elements.shopTabPanel.innerHTML;
   assert(context.positiveOfflineText.includes('delivery orders'));
   assert(context.fractionalPrepHtml.includes('Need 1 more Prep Slot'));
   assert(!context.fractionalPrepHtml.includes('0.65'));
+  ['Routes', 'Training', 'Crew', 'Garage', 'Shop Spirit', 'Rivals', 'License', 'Passport'].forEach((label) => {
+    assert(!context.rawAccumulatedTabsHtml.includes(`>${label}<`), label);
+  });
+  assert.strictEqual(context.rawAccumulatedActiveTab, 'overview');
+  assert(context.rawAccumulatedRouteFallbackHtml.includes('Overview'));
+  assert(!context.rawAccumulatedRouteFallbackHtml.includes('Start Route Card'));
 }
 
 function testEarlyShopResourceFunnelMakesTipsObvious() {
@@ -1157,6 +1177,11 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Tips'));
   assert(context.funnelOverviewHtml.includes('Tips come from fulfilled shop orders.'));
   assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Tips buy upgrades.'));
+  assert(context.funnelOverviewHtml.includes('Preparing Next Order'));
+  assert(context.funnelOverviewHtml.includes('role="progressbar"'));
+  assert(context.funnelOverviewHtml.includes('Simple Tofu Box'));
+  assert(context.funnelOverviewHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
+  assert(context.funnelOverviewHtml.includes('Fulfill Max Simple Tofu Box x83'));
   assert(context.funnelOverviewHtml.includes('Optional Certified Boost'));
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
   assert(context.funnelOrdersHtml.includes('Fulfill prepared shop orders to earn Tips'));
