@@ -8,6 +8,10 @@ Tofu Driver is a static browser app with two connected experiences:
 The Cup Test can provide optional certified smooth-delivery boosts for the shop, but ordinary Tofu
 Shop progression is playable at home without sensors or location.
 
+Tofu Shop starts with a focused first loop and reveals depth over time. The first Passport stamp
+uses a local Stamp Fanfare, and the first meaningful hidden shop system uses a local Discovery
+Fanfare so progression moments are visible without exposing the full future roadmap.
+
 ## Privacy And Safety Stance
 
 - No backend is required for the current MVP.
