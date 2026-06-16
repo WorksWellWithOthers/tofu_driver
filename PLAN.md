@@ -25,6 +25,9 @@
 - Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
   progress, the best available order card, and the relevant next station/upgrade so the first loop
   is playable without opening Orders.
+- Tofu Shop Overview now includes Next Milestone Bar V1. It shows one current implemented shop goal
+  at a time, pairs with Next Best Action, and can show a small `$1T fictional Net Worth` long-road
+  line after an early milestone without implementing a Net Worth counter or valuation system.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
   stays inline with compact reward feedback so repeated order handoffs do not block the loop.
 - Tofu Shop tab panels are scoped: Production owns station buying, Upgrades owns upgrade buying,
@@ -103,9 +106,9 @@ Canonical references:
    and Shop Sign are clear.
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
-6. Consider the smallest Antimatter-inspired architecture slice only after first-loop playtesting:
-   a single Next Milestone bar or station milestone visibility, not Counter Service,
-   Regular Customers, License prestige, or Shop Trials.
+6. Tune the implemented Next Milestone Bar against playtest behavior, then consider station
+   milestone visibility. Do not jump to Counter Service, Regular Customers, License prestige, or
+   Shop Trials until the manual loop clearly needs them.
 7. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
@@ -134,8 +137,8 @@ Future endgame/business sequence:
 
 1. Keep the $1T Net Worth target as design direction only.
 2. Stabilize and tune the First Loop Contract.
-3. Add Next Milestone bar, station milestones, and Counter Service only if playtesting supports
-   them.
+3. Tune Next Milestone Bar V1, then add station milestones and Counter Service only if playtesting
+   supports them.
 4. Add Dream Garage teaser and Stage 0 before any valuation system.
 5. Add business valuation only after Dream Garage, project-car sale, and franchise loops are fun.
 6. Add social showcase/scout concepts only after a privacy/account/backend design exists.
@@ -150,7 +153,7 @@ Deferred until after the First Loop Contract is playtested:
 - Dream Garage / Project Car progression
 - Ultimate Net Worth / business valuation / franchise scaling / car manufacturing / aerospace
 - Tofu Demand Board / Supplier Market / Garage Parts Market
-- Next Milestone bar / station milestone boosts / Counter Service automation / Shop Trials
+- station milestone boosts / Counter Service automation / Shop Trials
 - Shop Spirit
 - Rivals
 - License

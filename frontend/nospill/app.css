@@ -740,6 +740,84 @@
   line-height: 1.25;
 }
 
+.nospill-available-badge {
+  justify-self: start;
+  border: 1px solid rgba(85, 217, 138, 0.36);
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: #bdf7d4;
+  background: rgba(85, 217, 138, 0.10);
+  font-size: 0.66rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nospill-next-milestone {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(110, 198, 255, 0.22);
+  border-radius: 8px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(110, 198, 255, 0.10), rgba(244, 247, 239, 0.035));
+}
+
+.nospill-next-milestone p {
+  margin: 0;
+  color: #d8e3dc;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.nospill-next-milestone-head,
+.nospill-next-milestone-progress {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nospill-next-milestone-head span,
+.nospill-next-milestone-progress span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-next-milestone-head strong {
+  color: #f4f7ef;
+}
+
+.nospill-next-milestone-progress strong {
+  color: #9ee9bf;
+}
+
+.nospill-next-milestone-bar {
+  position: relative;
+  height: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(244, 247, 239, 0.13);
+  border-radius: 999px;
+  background: #070a0a;
+}
+
+.nospill-next-milestone-bar span {
+  position: absolute;
+  inset: 0 auto 0 0;
+  min-width: 3px;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #55d98a, #f7d66b);
+  transition: width 220ms ease;
+}
+
+.nospill-long-road {
+  border-top: 1px solid rgba(244, 247, 239, 0.10);
+  padding-top: 8px;
+  color: #f7d66b !important;
+  font-weight: 800;
+}
+
 .nospill-order-prep {
   display: grid;
   gap: 8px;
@@ -810,6 +888,12 @@
   .nospill-order-prep-copy small {
     max-width: none;
     text-align: left;
+  }
+
+  .nospill-next-milestone-head,
+  .nospill-next-milestone-progress {
+    display: grid;
+    gap: 4px;
   }
 }
 

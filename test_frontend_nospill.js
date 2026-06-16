@@ -7,6 +7,7 @@ const ROOT = __dirname;
 const NOSPILL_DIR = path.join(ROOT, 'frontend', 'nospill');
 const NOSPILL_ASSETS_DIR = path.join(NOSPILL_DIR, 'assets');
 const NOSPILL_JS = path.join(NOSPILL_DIR, 'app.js');
+const NOSPILL_CSS = path.join(NOSPILL_DIR, 'app.css');
 const NOSPILL_HTML = path.join(NOSPILL_DIR, 'index.html');
 
 function walkFiles(dir) {
@@ -74,6 +75,9 @@ globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
 globalThis.startShopGeneratorTimer = startShopGeneratorTimer;
 globalThis.orderPrepProgress = orderPrepProgress;
 globalThis.tofuStockRunway = tofuStockRunway;
+globalThis.clampPercent = clampPercent;
+globalThis.nextMilestoneForShop = nextMilestoneForShop;
+globalThis.renderNextMilestoneCard = renderNextMilestoneCard;
 globalThis.getShopOrderTypes = getShopOrderTypes;
 globalThis.shopOrderTypeUnlocked = shopOrderTypeUnlocked;
 globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
@@ -2685,6 +2689,124 @@ globalThis.spinePassportHtml = elements.shopTabPanel.innerHTML;
   assert(!context.spinePassportHtml.includes('License Exam'));
 }
 
+function testTofuShopNextMilestoneBarGuidesImplementedSpine() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  assert.strictEqual(context.clampPercent(-10), 0);
+  assert.strictEqual(context.clampPercent(42.4), 42);
+  assert.strictEqual(context.clampPercent(150), 100);
+
+  const fresh = context.defaultGameState();
+  assert.strictEqual(context.nextMilestoneForShop(fresh).id, 'first_shop_order');
+  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('First Shop Order'), true);
+  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('Reward:'), true);
+  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('$1T fictional Net Worth'), false);
+
+  const afterFirst = context.fulfillShopOrders(fresh, 1, {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+  }).gameState;
+  assert.strictEqual(context.nextMilestoneForShop(afterFirst).id, 'first_upgrade_purchased');
+
+  const afterUpgrade = JSON.parse(JSON.stringify(afterFirst));
+  afterUpgrade.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
+  afterUpgrade.shop.stationUpgrades.prep_counter_faster = 1;
+  afterUpgrade.shop.lifetimeDeliveryOrders = 7;
+  assert.strictEqual(context.nextMilestoneForShop(afterUpgrade).id, 'first_10_orders');
+
+  const afterTen = JSON.parse(JSON.stringify(afterUpgrade));
+  afterTen.shop.lifetimeDeliveryOrders = 10;
+  afterTen.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+  afterTen.shop.tofuStock = 12;
+  afterTen.shop.deliveryOrders = 1;
+  const familyMilestone = context.nextMilestoneForShop(afterTen);
+  assert.strictEqual(familyMilestone.id, 'first_family_tofu_tray');
+  assert(familyMilestone.progressText.includes('Need 24 Tofu Stock and 1 ready order'));
+  assert(familyMilestone.percent >= 0 && familyMilestone.percent <= 100);
+
+  const afterFamily = JSON.parse(JSON.stringify(afterTen));
+  afterFamily.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray', date: '2026-06-15T12:00:00.000Z' };
+  afterFamily.shop.lifetimeTips = 60;
+  assert.strictEqual(context.nextMilestoneForShop(afterFamily).id, 'first_100_tips');
+  assert(context.renderNextMilestoneCard(afterFamily).includes('$1T fictional Net Worth'));
+
+  const afterHundred = JSON.parse(JSON.stringify(afterFamily));
+  afterHundred.shop.lifetimeTips = 100;
+  afterHundred.stamps.first_100_tips = { label: 'First 100 Tips', date: '2026-06-15T12:00:00.000Z' };
+  assert.strictEqual(context.nextMilestoneForShop(afterHundred).id, 'delivery_shelf_unlock');
+
+  const afterShelf = JSON.parse(JSON.stringify(afterHundred));
+  afterShelf.shop.stations.delivery_shelf = 1;
+  assert.strictEqual(context.nextMilestoneForShop(afterShelf).id, 'shop_sign_unlock');
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+renderTofuShop(${JSON.stringify(fresh)});
+globalThis.nextMilestoneFreshHtml = elements.shopTabPanel.innerHTML;
+globalThis.nextMilestoneFreshTabHtml = elements.shopTabList.innerHTML;
+renderTofuShop(${JSON.stringify(afterFamily)});
+globalThis.nextMilestoneLongRoadHtml = elements.shopTabPanel.innerHTML;
+const missingFamilyTofu = ${JSON.stringify(afterTen)};
+missingFamilyTofu.shop.tofuStock = 0;
+missingFamilyTofu.shop.deliveryOrders = 1;
+renderTofuShop(missingFamilyTofu);
+globalThis.nextMilestoneMissingOrderHtml = elements.shopTabPanel.innerHTML;
+appState.running = true;
+renderTofuShop(${JSON.stringify(fresh)});
+globalThis.activeDriveMilestoneHtml = elements.shopTabPanel.innerHTML;
+appState.running = false;
+`, context);
+
+  assert(context.nextMilestoneFreshHtml.includes('Next Milestone'));
+  assert(context.nextMilestoneFreshHtml.includes('First Shop Order'));
+  assert(context.nextMilestoneFreshHtml.includes('Simple Tofu Box'));
+  assert(context.nextMilestoneFreshHtml.includes('Ready Orders'));
+  assert(context.nextMilestoneFreshHtml.includes('Preparing next delivery order'));
+  assert(context.nextMilestoneFreshHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
+  assert(context.nextMilestoneFreshHtml.includes('nospill-available-badge'));
+  assert(context.nextMilestoneFreshHtml.includes('Available'));
+  assert(context.nextMilestoneFreshHtml.includes('Current Bottleneck'));
+  assert(!context.nextMilestoneFreshHtml.includes('$1T fictional Net Worth'));
+  assert(context.nextMilestoneLongRoadHtml.includes('Long road: $1T fictional Net Worth'));
+  assert(!context.nextMilestoneLongRoadHtml.includes('Net Worth:'));
+  assert(!context.nextMilestoneLongRoadHtml.includes('Company Value'));
+  assert(context.nextMilestoneMissingOrderHtml.includes('Need 24 more tofu stock'));
+  assert(!context.nextMilestoneMissingOrderHtml.includes('0.649941'));
+  assert(!context.activeDriveMilestoneHtml.includes('Next Milestone'));
+
+  const activeAction = context.nextBestAction(afterUpgrade, { date: new Date('2026-06-15T12:00:00.000Z') });
+  assert.notStrictEqual(activeAction.title, context.nextMilestoneForShop(afterUpgrade).name);
+
+  const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
+  assert(css.includes('.nospill-available-badge'));
+  assert(css.includes('button:focus-visible'));
+  assert(css.includes('.nospill-next-milestone-bar'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+  assert(!source.includes('netWorth'));
+  assert(!source.includes('enterpriseValue'));
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -5144,6 +5266,7 @@ function run() {
   testCoveredCarTeaserIsOneTimeStoryBeatOnly();
   testShopOrderTypeProgressionAndRewards();
   testCoreGameSpineV1MilestonesAndSupportStations();
+  testTofuShopNextMilestoneBarGuidesImplementedSpine();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

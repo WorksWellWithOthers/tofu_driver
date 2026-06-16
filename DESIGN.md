@@ -577,7 +577,8 @@ Future shop/incremental ideas:
 - Supplier Market
 - Customer Rush Events
 - Daily Opportunity Cards
-- Next Milestone bar
+- Next Milestone bar V1 is implemented for the current shop spine; future work should tune targets
+  rather than expose the full roadmap
 - station milestone boosts
 - Counter Service / Regular Customers automation after mastery
 - visible locked License Exam goal after a real shop plateau

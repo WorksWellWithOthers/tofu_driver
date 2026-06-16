@@ -3140,6 +3140,11 @@ function shopOrderDisabledReason(orderType, gameState, unlocked = shopOrderTypeU
   return "";
 }
 
+function clampPercent(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(100, Math.round(value)));
+}
+
 function bestFulfillableShopOrderType(gameState) {
   const state = normalizeGameState(gameState);
   return SHOP_ORDER_TYPES
@@ -7072,6 +7077,9 @@ function renderShopOrderCard(orderType, gameState, options = {}) {
   const maxRewardCopy = maxQuantity > 1
     ? `Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)} · Reward: +${formatShopCount(orderType.tips * maxQuantity)} Tips, +${formatShopCount(orderType.reputation * maxQuantity)} Reputation, +${formatShopCount(orderType.xp * maxQuantity)} XP · Uses: ${formatShopCost(orderType.tofuRequired * maxQuantity)} tofu stock, ${formatShopCount(orderType.deliveryOrdersRequired * maxQuantity)} ready orders`
     : "";
+  const availability = canFulfill
+    ? `<small class="nospill-available-badge">Available</small>`
+    : "";
   return renderIdleCard({
     title: orderType.name,
     status: unlocked ? `Ready Orders: ${formatShopCount(prep.ready)}` : "Locked",
@@ -7079,6 +7087,7 @@ function renderShopOrderCard(orderType, gameState, options = {}) {
       ? `${costCopy} ${rewardCopy} ${options.compact ? "" : `${orderType.purpose}.`}`.trim()
       : shopOrderUnlockReason(orderType),
     locked: !unlocked,
+    extra: availability,
     actions: [
       fulfillOrderButton(`Fulfill ${orderType.name}`, orderType.id, "1", !canFulfill, "nospill-primary", disabledReason),
       maxQuantity > 1
@@ -7137,12 +7146,208 @@ function renderStoryTeaserCard() {
   });
 }
 
+function nextMilestoneProgress(current, required) {
+  const safeRequired = Math.max(1, safeNonNegativeNumber(required, 1, SHOP_MAX_RESOURCE));
+  const safeCurrent = safeNonNegativeNumber(current, 0, SHOP_MAX_RESOURCE);
+  return {
+    current: Math.min(safeCurrent, safeRequired),
+    required: safeRequired,
+    percent: clampPercent((safeCurrent / safeRequired) * 100),
+  };
+}
+
+function stationUnlockProgressFor(stationId, gameState) {
+  const state = normalizeGameState(gameState);
+  if (stationId === "delivery_shelf") {
+    const orderProgress = nextMilestoneProgress(fulfilledShopOrderCount(state), 10);
+    if (state.stamps.first_family_tofu_tray) {
+      return { current: 1, required: 1, percent: 100, text: "Family Tofu Tray fulfilled" };
+    }
+    return {
+      ...orderProgress,
+      text: `${formatShopCount(orderProgress.current)} / ${formatShopCount(orderProgress.required)} orders fulfilled`,
+    };
+  }
+  if (stationId === "shop_sign") {
+    const repProgress = nextMilestoneProgress(state.shop.reputation, 10);
+    const tipProgress = nextMilestoneProgress(state.shop.lifetimeTips, 100);
+    const stationProgress = state.shop.stations.delivery_shelf > 0
+      ? { current: 1, required: 1, percent: 100, text: "Delivery Shelf owned" }
+      : repProgress.percent >= tipProgress.percent
+        ? {
+            ...repProgress,
+            text: `${formatShopCount(repProgress.current)} / ${formatShopCount(repProgress.required)} Reputation`,
+          }
+        : {
+            ...tipProgress,
+            text: `${formatShopCost(tipProgress.current)} / ${formatShopCost(tipProgress.required)} lifetime Tips`,
+          };
+    return stationProgress;
+  }
+  return { current: 0, required: 1, percent: 0, text: "Keep growing the shop" };
+}
+
+function nextMilestoneForShop(gameState) {
+  const state = normalizeGameState(gameState);
+  const fulfilled = fulfilledShopOrderCount(state);
+  if (!state.stamps.first_shop_order && fulfilled < 1) {
+    const progress = nextMilestoneProgress(fulfilled, 1);
+    return {
+      id: "first_shop_order",
+      name: "First Shop Order",
+      progressText: `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} order fulfilled`,
+      percent: progress.percent,
+      reward: "First Passport stamp",
+      guidance: "Fulfill the Simple Tofu Box to open the passport.",
+    };
+  }
+
+  if (!state.stamps.first_upgrade_purchased && !hasShopStationUpgrade(state)) {
+    const progress = nextMilestoneProgress(hasShopStationUpgrade(state) ? 1 : 0, 1);
+    return {
+      id: "first_upgrade_purchased",
+      name: "First Upgrade Purchased",
+      progressText: `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} upgrade purchased`,
+      percent: progress.percent,
+      reward: "Upgrade stamp and a new shop layer",
+      guidance: "Buy the bottleneck-solving upgrade or station when it becomes affordable.",
+    };
+  }
+
+  if (!state.stamps.first_10_orders && fulfilled < 10) {
+    const progress = nextMilestoneProgress(fulfilled, 10);
+    return {
+      id: "first_10_orders",
+      name: "First 10 Orders",
+      progressText: `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} orders fulfilled`,
+      percent: progress.percent,
+      reward: "New shop support",
+      guidance: "Keep converting prepared orders into Tips.",
+    };
+  }
+
+  if (!state.stamps.first_family_tofu_tray) {
+    const family = SHOP_ORDER_TYPES.find((orderType) => orderType.id === "family_tofu_tray");
+    const unlocked = shopOrderTypeUnlocked(family, state);
+    const ready = readyDeliveryOrders(state.shop);
+    const tofuProgress = nextMilestoneProgress(state.shop.tofuStock, family.tofuRequired);
+    const orderProgress = nextMilestoneProgress(ready, family.deliveryOrdersRequired);
+    const unlockProgress = nextMilestoneProgress(fulfilled, 5);
+    const percent = unlocked
+      ? Math.min(tofuProgress.percent, orderProgress.percent)
+      : unlockProgress.percent;
+    return {
+      id: "first_family_tofu_tray",
+      name: "First Family Tofu Tray",
+      progressText: unlocked
+        ? `Need ${formatShopCost(family.tofuRequired)} Tofu Stock and ${formatShopCount(family.deliveryOrdersRequired)} ready order`
+        : `${formatShopCount(unlockProgress.current)} / ${formatShopCount(unlockProgress.required)} orders before Family Tofu Tray`,
+      percent,
+      reward: "Larger shop orders",
+      guidance: unlocked
+        ? "Build enough stock and one ready order for a larger payout."
+        : "Fulfill a few more orders to reveal the first larger order.",
+    };
+  }
+
+  if (!state.stamps.first_100_tips && state.shop.lifetimeTips < 100) {
+    const progress = nextMilestoneProgress(state.shop.lifetimeTips, 100);
+    return {
+      id: "first_100_tips",
+      name: "First 100 Tips",
+      progressText: `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} lifetime Tips`,
+      percent: progress.percent,
+      reward: "Long-road story beat",
+      guidance: "Fulfill orders and buy upgrades that improve the counter.",
+    };
+  }
+
+  const deliveryShelf = shopStationById("delivery_shelf");
+  if (deliveryShelf && state.shop.stations.delivery_shelf < 1) {
+    const unlocked = stationIsUnlocked(deliveryShelf, state);
+    const progress = stationUnlockProgressFor("delivery_shelf", state);
+    return {
+      id: "delivery_shelf_unlock",
+      name: "Delivery Shelf Unlock",
+      progressText: unlocked ? "Delivery Shelf is ready in Production" : progress.text,
+      percent: unlocked ? 100 : progress.percent,
+      reward: "Prep Counter support",
+      guidance: unlocked
+        ? "Buy Delivery Shelf when order throughput needs support."
+        : "Keep fulfilling orders to earn the first support station.",
+    };
+  }
+
+  const shopSign = shopStationById("shop_sign");
+  if (shopSign && state.shop.stations.shop_sign < 1) {
+    const unlocked = stationIsUnlocked(shopSign, state);
+    const progress = stationUnlockProgressFor("shop_sign", state);
+    return {
+      id: "shop_sign_unlock",
+      name: "Shop Sign Unlock",
+      progressText: unlocked ? "Shop Sign is ready in Production" : progress.text,
+      percent: unlocked ? 100 : progress.percent,
+      reward: "Reputation support",
+      guidance: unlocked
+        ? "Buy Shop Sign when reputation starts to matter."
+        : "Earn Reputation or lifetime Tips to make the shop known.",
+    };
+  }
+
+  return {
+    id: "counter_service_teaser",
+    name: "Counter Service Teaser",
+    progressText: "Future system documented",
+    percent: 0,
+    reward: "Automation after mastery",
+    guidance: "Manual orders come first. Automation stays hidden until the core loop is tuned.",
+    future: true,
+  };
+}
+
+function shouldShowNetWorthHorizon(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.stamps.first_100_tips || state.stamps.first_family_tofu_tray);
+}
+
+function renderNextMilestoneCard(state) {
+  if (appState.running || appState.calibrating) return "";
+  const milestone = nextMilestoneForShop(state);
+  const percent = clampPercent(milestone.percent);
+  return `
+    <section class="nospill-next-milestone" aria-label="Next shop milestone">
+      <div class="nospill-next-milestone-head">
+        <span>Next Milestone</span>
+        <strong>${escapeHtml(milestone.name)}</strong>
+      </div>
+      <div class="nospill-next-milestone-progress">
+        <span>${escapeHtml(milestone.progressText)}</span>
+        <strong>${formatShopCount(percent)}%</strong>
+      </div>
+      <div
+        class="nospill-next-milestone-bar"
+        role="progressbar"
+        aria-label="${escapeHtml(`Progress toward ${milestone.name}`)}"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="${percent}"
+      >
+        <span style="width: ${percent}%"></span>
+      </div>
+      <p><strong>Reward:</strong> ${escapeHtml(milestone.reward)}</p>
+      <p>${escapeHtml(milestone.guidance)}</p>
+      ${shouldShowNetWorthHorizon(state) ? `<p class="nospill-long-road">Long road: $1T fictional Net Worth · Current era: Tofu Shop</p>` : ""}
+    </section>
+  `;
+}
+
 function renderOverviewPanel(state) {
   const bottleneck = currentBottleneck(state);
   const runway = tofuStockRunway(state);
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
   return `
     <h4>Overview</h4>
+    ${renderNextMilestoneCard(state)}
     <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
     <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.</p>
     <p class="nospill-panel-helper">Tips buy upgrades. ${escapeHtml(runway.message)}</p>

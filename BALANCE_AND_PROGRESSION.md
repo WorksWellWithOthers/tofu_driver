@@ -240,13 +240,13 @@ exact. Discrete missing requirements such as Prep Slots, ready orders, station c
 License Stars round up in disabled reasons. Small live balances may show short decimals when that is
 needed to make ticking visible, but long raw decimals should never be exposed.
 
-### Next Milestone Bar Target
+### Next Milestone Bar
 
-A future small UI slice may add one compact `Next Milestone` bar to Overview. It should show only
-the next relevant threshold, such as First 10 Orders, First 100 Tips, First Family Tofu Tray,
-Delivery Shelf unlock, Shop Sign unlock, or a much later License Exam preview.
+Next Milestone Bar V1 is implemented as a compact Overview card. It shows one relevant shop goal at
+a time, not the full roadmap, and pairs with Next Best Action: the milestone says what the player is
+working toward, while Next Best Action says what to do now.
 
-Candidate target order:
+Implemented target order:
 
 1. First Shop Order.
 2. First Upgrade Purchased.
@@ -255,9 +255,7 @@ Candidate target order:
 5. First 100 Tips.
 6. Delivery Shelf unlock.
 7. Shop Sign unlock.
-8. Regular Customers unlock.
-9. covered-car story beat, if not already seen.
-10. First License Exam preview, much later.
+8. Counter Service teaser as documented future direction only.
 
 Rules:
 
@@ -267,7 +265,11 @@ Rules:
 - milestone changes should follow meaningful actions, stamps, or bottlenecks
 - visible locked goals are allowed only when they clarify the next phase; they should not become
   clickable advanced tabs during the first loop
-- current status: Documented only / future
+- the optional long-horizon `$1T fictional Net Worth` line may appear only after an early shop
+  milestone such as First Family Tofu Tray or First 100 Tips
+- no Net Worth counter, asset valuation, business valuation, or social system is implemented by
+  this bar
+- current status: Implemented V1
 
 ### Order Size Ladder
 
