@@ -47,6 +47,8 @@ Default visitor behavior:
 - The first page is `Don't Spill the Cup`.
 - Cup page primary CTA: `Take the Cup Test`.
 - Cup page secondary CTA: visit or start the Tofu Shop.
+- Cup result screens can include a small parked CTA back to Tofu Shop so Cup-first visitors discover
+  the home progression loop without interrupting active driving.
 - Tofu Shop page primary CTA: the current shop loop, such as `Fulfill Shop Order` or the next shop
   action.
 - Delivery Crew is reachable when character/sound systems are relevant.
@@ -213,6 +215,12 @@ Current design principles:
   first throughput support station, and Shop Sign is the first Reputation support station.
 - Counter Service V1 is the first earned automation layer: after First 10 Orders, regular customers
   can pick up prepared orders automatically while the page is open and the player is parked.
+- Counter Service should display its useful rate or blocked state honestly. If it is supplied and
+  running, shop income can include a `Tips/min when supplied` line; if it lacks stock or ready
+  orders, the UI should say what is missing rather than showing a misleading zero.
+- Shop Spirit actions should use action-specific language: generators use `Buy`, instant actions use
+  `Spend Spirit`, timed effects use `Start Effect` or a specific effect name, and tokens use
+  `Use Token`. Route-related Spirit actions stay hidden until fictional route systems matter.
 - Regular Customers, Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige remain
   deferred until Counter Service and the V1 spine have been playtested and tuned.
 - Fulfill Shop Order requires at least one ready Delivery Order.

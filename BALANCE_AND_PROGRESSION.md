@@ -283,11 +283,15 @@ V1 behavior:
 - active-page only; it does not auto-fulfill during offline progress
 - default priority is `Best Available`: Festival Bento, then Family Tofu Tray, then Simple Tofu Box
   when each order type is unlocked and affordable
-- rate is 1 automated handoff every 10 seconds
+- rate is 1 automated handoff every 10 seconds before upgrades
+- Overview shows a Counter Service income/status line: `+X Tips/min when supplied`, or a clear
+  waiting state for missing Tofu Stock or ready orders
 - it consumes the same ready Delivery Orders and Tofu Stock as manual fulfillment
 - it grants the same Tips, Reputation, and XP as manual fulfillment
 - feedback is inline and ledger entries are batched/rate-limited so automation does not spam
   result screens or fanfares
+- V1 finite upgrades improve handoff interval: Order Bell `10s -> 8s`, Wider Counter `8s -> 6s`,
+  and Pickup Routine `6s -> 4s`
 - future upgrades may add bulk handoff, stock reserves, and priority tuning, but those are not in V1
 
 Regular Customers remain future. Counter Service is the current narrow automation slice.
@@ -493,8 +497,10 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | start_shop_street | Start Shop Street | Routes | First Automation | First fictional route discovered | Enough Tofu Stock and Delivery Orders | Build Reputation or Shop Reach to unlock fictional route cards. | Tofu Stock and Delivery Orders | Grants Tips, Reputation, Route Knowledge, Shop Reach, route stamp chance | 40 to 90 minutes | New mid-game goal | Start Shop Street | Placeholder |
 | hire_apprentice_driver | Hire Apprentice Driver | Crew | First Automation | First route progress exists | Enough Tips/Prep Slots | Unlocks after route progress. | Tips plus Prep Slot | Begins fictional automation path | 1 to 2 hours | Manual route/order chores | Hire Apprentice Driver | Placeholder |
 | assign_crew | Assign Crew | Crew | First Automation | Crew member hired | Route/crew slot available | Hire crew first. | Delivery Orders or route slot | Assigns fictional automation | 1 to 2 hours | Repeated route handling | Assign Crew | Placeholder |
-| buy_tea_kettle | Buy Tea Kettle | Shop Spirit | Festival / Spirit | Stable production; Spirit layer unlocked | Enough Tips/Prep Slots | Unlocks after stable shop production. | Tips plus Prep Slot | Generates Shop Spirit/sec | Later | Boost energy generation | Buy Tea Kettle | Placeholder |
-| use_shop_spirit_boost | Use Shop Spirit Boost | Shop Spirit | Festival / Spirit | Shop Spirit available | Enough Shop Spirit; parked | Need Shop Spirit. | Shop Spirit | Temporary shop-only production boost | Later | Short active shop burst | Use Shop Spirit Boost | Placeholder |
+| buy_tea_kettle | Buy Tea Kettle | Shop Spirit | Festival / Spirit | Stable production; Spirit layer unlocked | Enough Tips/Prep Slots | Need Tips. | Tips plus Prep Slot | Generates Shop Spirit/sec | Later | Boost energy generation | Buy Tea Kettle | Placeholder |
+| spend_shop_spirit | Spend Spirit | Shop Spirit | Festival / Spirit | Shop Spirit available and action matters | Enough Shop Spirit; parked | Need Spirit and current wallet amount. | Shop Spirit | Instant parked-only action such as tofu stock or ready orders | Later | Short active shop recovery | Spend X Spirit | Placeholder |
+| start_spirit_effect | Start Effect | Shop Spirit | Festival / Spirit | Timed effect matters | Enough Shop Spirit; parked; effect not already active | Need Spirit, or effect already active. | Shop Spirit | Starts a timed shop-only effect with visible duration/remaining state | Later | Short active shop burst | Start Lunch Hour / Start Double Batch | Placeholder |
+| use_spirit_token | Use Token | Shop Spirit | Festival / Spirit | Festival token exists and route/story context is relevant | Token ready; parked | Need token ready. | token | Consumes a parked-only token | Later | Event/token payoff | Use Token | Placeholder |
 | view_ledger | View Ledger | Ledger | First Shop | meaningful events exist | Always | Complete a shop action first. | none | Opens capped local event history | 10 to 20 minutes | Explains what changed | View Ledger | Implemented |
 | view_license_exam | View License Exam | License | First License | License requirements preview unlocked | Always | Keep growing the shop. | none | Shows requirements and reset preview | 2 to 4 hours preview | Long-term goal clarity | View License Exam | Placeholder |
 | take_license_exam | Take License Exam | License | First License | Requirements met | Confirmation accepted | Requirements not met. | selected shop progress reset | Grants 1 to 3 License Stars | 4 to 6 hours | Plateau/reset decision | Take License Exam | Placeholder |
@@ -620,13 +626,15 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Consumes: ready Delivery Orders and the Tofu Stock required by the selected order type
 - Base production rate: 1 handoff / 10 seconds
 - Priority: Best Available, ordered Festival Bento -> Family Tofu Tray -> Simple Tofu Box
-- Milestone thresholds: future upgrades only
-- Associated upgrades: future bulk handoff, stock reserve, priority tuning
+- Milestone thresholds: Order Bell after unlock, Wider Counter after Order Bell and 20 fulfilled
+  orders, Pickup Routine after Wider Counter and First Family Tofu Tray
+- Associated upgrades: Order Bell, Wider Counter, Pickup Routine; future bulk handoff, stock
+  reserve, and priority tuning remain documented only
 - Urgent when: prepared-order fulfillment becomes repetitive after the player has learned the loop
 - Less urgent when: the player still needs manual order choices to understand stock/order costs
 - Expected first use: after First 10 Orders
 - V1 runtime behavior: starts paused, can be started/paused from Overview, runs only while parked and
-  the page is open, and never auto-fulfills offline
+  the page is open, shows income or blocked-state copy, and never auto-fulfills offline
 - Status: V1 implemented / needs playtest tuning
 
 #### Regular Customers
@@ -1539,7 +1547,7 @@ Starter first-loop balance sheet:
 | first_shop_order_stamp | First Shop Order Stamp | First Loop | First order fulfilled | automatic | none | none | 0 | 1.0 | Unlock first stamp, Stamp Fanfare, and Passport teaser | 0:00 to 1:00 | immediate | Collection reveal | View Passport | none | Local-only stamp; fanfare repeats are suppressed | Implemented |
 | delivery_shelf | Delivery Shelf | First Shop | 10 to 20 minutes or 25 orders fulfilled | Tips/Prep Slots available | Tips | station growth | 800 | 1.17 | Prep Counter support/capacity | 10 to 20 minutes | TBD | Scaling order flow | Buy Delivery Shelf | none | Shop only | Partial |
 | shop_sign | Shop Sign | First Shop | 10 Reputation or reputation gate | Tips available | Tips | station growth | 300 | 1.18 | +50% Reputation/order target or route unlock support | 20 to 40 minutes | TBD | Reputation unlock pressure | Buy Shop Sign | none | Shop only | Partial |
-| counter_service | Counter Service | First Automation | First 10 Orders | manually started and page open | ready orders + Tofu Stock | flat interval | 0 | 1.0 | 1 automatic best-available handoff / 10 seconds | after 10 orders | immediate after unlock | Repeated manual handoff chore | Start Counter Service | repeated Fulfill clicks | Parked-only, active-page-only, no offline auto-fulfillment | Implemented V1 |
+| counter_service | Counter Service | First Automation | First 10 Orders | manually started and page open | ready orders + Tofu Stock | interval upgrades | 0 | 1.0 | 1 automatic best-available handoff / 10 seconds, upgradeable to 8/6/4 seconds | after 10 orders | immediate after unlock | Repeated manual handoff chore | Start Counter Service | repeated Fulfill clicks | Parked-only, active-page-only, no offline auto-fulfillment | Implemented V1 |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
 
 ## Implementation Slices
@@ -1556,7 +1564,7 @@ already exists.
 | 4. Passport First Stamp | Make first collection moment rewarding without showing full catalog | `app.js`, tests, docs | First Shop Order stamp reveal, View Passport teaser, stamp persists | deep Passport filters/categories |
 | 5. Delivery Shelf / Shop Sign | Add first-shop support systems after the core loop is stable | `app.js`, tests, docs | reveal timing, Tips costs, throughput/reputation effects, no first-screen clutter | full route network |
 | 6. First Route Card | Introduce Shop Street as fictional parked content | `app.js`, tests, docs | route cost/reward, fictional copy, no real road language, route stamp | maps, real routes, route leaderboards |
-| 7. Counter Service V1 | Let the counter remove repeated prepared-order handoffs after manual mastery | `app.js`, tests, docs | First 10 Orders unlock, Start/Pause, active-page-only handoff tick, Best Available priority, no offline auto-fulfillment | Regular Customers, crew, route automation, bulk automation upgrades |
+| 7. Counter Service V1 | Let the counter remove repeated prepared-order handoffs after manual mastery | `app.js`, tests, docs | First 10 Orders unlock, Start/Pause, active-page-only handoff tick, Best Available priority, finite interval upgrades, no offline auto-fulfillment | Regular Customers, crew, route automation, bulk automation upgrades |
 | 8. First Automation Expansion | Let Apprentice Driver or Regular Customers remove later repeated fictional chores | `app.js`, tests, docs | hire/assign or passive-customer state, consumes orders, local rewards, no real driving requirement | full crew management |
 | 9. First License Exam | Add first prestige decision after a plateau | `app.js`, tests, docs | requirements, confirmation, reset/persist contract, Stars/perks | multiple exams, monetization |
 | 10. Post-License Rebuild | Make permanent perks accelerate the early loop | `app.js`, tests, docs | perk purchase, fresh run benefits, no Cup Test scoring effect | late regional network unless needed |
@@ -1593,7 +1601,7 @@ progression contract.
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs 20 Tips, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
-| Counter Service | Implemented | state, Overview card, active-page tick, tests | starts paused after First 10 Orders and auto-fulfills Best Available orders every 10 seconds while parked/open | tune rate, priority, and future upgrades after playtesting |
+| Counter Service | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, and can improve to 8/6/4 second handoffs through Order Bell, Wider Counter, and Pickup Routine | tune rates and future bulk/priority upgrades after playtesting |
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
@@ -1601,7 +1609,7 @@ progression contract.
 | Project car stages | Documented only | Stage 0 through Stage 3 tables/lists | covered car, daily build, closed-course build, dream build are defined | no runtime state/UI yet |
 | Fictional closed-course events | Documented only | event table and safety rules | future event names/rewards are specified | no event queues/results yet |
 | Project car completion/sale prestige | Documented only | Builder Stars design | future prestige direction is specified | no Builder Stars state yet |
-| Shop Spirit | Placeholder | Spirit resources/boost helpers | boosts can affect shop layer | hide until stable production |
+| Shop Spirit | Placeholder | Spirit resources/boost helpers and panel copy | wallet shows Tips, Shop Spirit, Spirit/sec, and multiplier; actions are classified as Buy, Spend Spirit, Start Effect, or Use Token; route-related Spirit items stay hidden until route story beats matter | keep hidden until stable production and add token earning rules later |
 | Rivals | Placeholder | challenge helpers | friendly challenge scaffold exists | keep hidden until later |
 | License Exam | Placeholder | exam/perk helpers | reset/perk concept exists | tune requirements and reset strategy |
 | Passport | Partial | stamp labels/panel | stamps can unlock | staged reveal and details |

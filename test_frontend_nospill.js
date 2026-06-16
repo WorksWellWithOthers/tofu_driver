@@ -90,6 +90,8 @@ globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.fulfillShopOrders = fulfillShopOrders;
 globalThis.isCounterServiceUnlocked = isCounterServiceUnlocked;
 globalThis.counterServiceOrderType = counterServiceOrderType;
+globalThis.counterServiceIntervalSeconds = counterServiceIntervalSeconds;
+globalThis.counterServiceIncomeStatus = counterServiceIncomeStatus;
 globalThis.counterServiceProgress = counterServiceProgress;
 globalThis.startCounterService = startCounterService;
 globalThis.pauseCounterService = pauseCounterService;
@@ -396,7 +398,7 @@ function testTofuDriverBrandHierarchy() {
   assert(html.includes('data-surface-target="crew"'));
   assert(html.includes('data-surface-target="cup-test"'));
   assert(html.includes('Certified Challenge'));
-  assert(html.includes('Keep the cup steady. Drive smoothly. Boost the Tofu Shop.'));
+  assert(html.includes('Practice smooth driving, then fund the dream in the Tofu Shop.'));
   assert(html.includes('id="brand-primary-cta"'));
   assert(html.includes('id="brand-secondary-cta"'));
   assert(html.includes("Don't Spill the Cup"));
@@ -415,7 +417,7 @@ function testTofuDriverBrandHierarchy() {
   assert(html.includes('Reputation'));
   assert(html.includes('Tofu Stock/sec'));
   assert(html.includes('Delivery Orders/sec'));
-  assert(html.includes('Tips/sec'));
+  assert(html.includes('Shop income'));
   assert(html.includes('Reputation/sec'));
   assert(html.includes('Shop Spirit/sec'));
   assert(!/\/ ?min\b/i.test(html));
@@ -2996,6 +2998,181 @@ globalThis.counterSavedState = currentGameState();
   assert(!source.includes('sendBeacon'));
 }
 
+function testCounterServicePolishStatsUpgradesAndSpiritPanel() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const state = context.defaultGameState();
+  state.shop.lifetimeDeliveryOrders = 10;
+  state.shop.deliveryOrders = 5;
+  state.shop.tofuStock = 500;
+  state.shop.tips = 1000;
+  state.shop.reputation = 50;
+  state.shop.shopLevel = context.getShopLevel(state.shop.reputation);
+  state.shop.prepSlots = 20;
+  state.shop.counterService.running = true;
+  state.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+  state.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+  state.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+  state.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
+  assert.strictEqual(context.counterServiceIntervalSeconds(state), 10);
+  assert(context.counterServiceIncomeStatus(state).text.includes('Counter Service: +'));
+  assert(context.counterServiceIncomeStatus(state).text.includes('Tips/min when supplied'));
+
+  const stockBlocked = JSON.parse(JSON.stringify(state));
+  stockBlocked.shop.tofuStock = 0;
+  assert.strictEqual(context.counterServiceIncomeStatus(stockBlocked).text, 'Counter Service waiting for Tofu Stock');
+  const orderBlocked = JSON.parse(JSON.stringify(state));
+  orderBlocked.shop.deliveryOrders = 0;
+  assert.strictEqual(context.counterServiceIncomeStatus(orderBlocked).text, 'Counter Service waiting for ready orders');
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+renderTofuShop(${JSON.stringify(state)});
+globalThis.counterIncomeText = elements.shopTipsRate.textContent;
+renderTofuShop(${JSON.stringify(stockBlocked)});
+globalThis.counterStockBlockedText = elements.shopTipsRate.textContent;
+renderTofuShop(${JSON.stringify(orderBlocked)});
+globalThis.counterOrderBlockedText = elements.shopTipsRate.textContent;
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(state)});
+globalThis.counterUpgradeHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.counterIncomeText.includes('Counter Service: +'));
+  assert(context.counterIncomeText.includes('Tips/min when supplied'));
+  assert.strictEqual(context.counterStockBlockedText, 'Counter Service waiting for Tofu Stock');
+  assert.strictEqual(context.counterOrderBlockedText, 'Counter Service waiting for ready orders');
+  assert(context.counterUpgradeHtml.includes('Order Bell'));
+  assert(context.counterUpgradeHtml.includes('1 handoff / 10 sec -&gt; 1 handoff / 8 sec'));
+  assert(!context.counterUpgradeHtml.includes('Wider Counter'));
+  assert(!context.counterUpgradeHtml.includes('Pickup Routine'));
+
+  const bell = context.buyStationUpgrade('counter_service_bell', state);
+  assert.strictEqual(bell.ok, true);
+  assert.strictEqual(context.counterServiceIntervalSeconds(bell.gameState), 8);
+  const wideLocked = JSON.parse(JSON.stringify(bell.gameState));
+  wideLocked.shop.lifetimeDeliveryOrders = 19;
+  vm.runInContext(`
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(wideLocked)});
+globalThis.wideLockedHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(!context.wideLockedHtml.includes('Wider Counter'));
+  const wideReady = JSON.parse(JSON.stringify(bell.gameState));
+  wideReady.shop.lifetimeDeliveryOrders = 20;
+  const wide = context.buyStationUpgrade('counter_service_wide', wideReady);
+  assert.strictEqual(wide.ok, true);
+  assert.strictEqual(context.counterServiceIntervalSeconds(wide.gameState), 6);
+  const routineLocked = context.buyStationUpgrade('counter_service_routine', wide.gameState);
+  assert.strictEqual(routineLocked.ok, false);
+  const routineReady = JSON.parse(JSON.stringify(wide.gameState));
+  routineReady.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray', date: '2026-06-15T12:00:00.000Z' };
+  routineReady.shop.tips = 600;
+  const routine = context.buyStationUpgrade('counter_service_routine', routineReady);
+  assert.strictEqual(routine.ok, true);
+  assert.strictEqual(context.counterServiceIntervalSeconds(routine.gameState), 4);
+
+  const pileup = JSON.parse(JSON.stringify(state));
+  pileup.shop.stationUpgrades.counter_service_bell = 0;
+  pileup.shop.counterService.running = true;
+  pileup.shop.deliveryOrders = 6;
+  pileup.shop.tofuStock = 1000;
+  pileup.shop.tips = 1000;
+  const pileupAction = context.nextBestAction(pileup);
+  assert.strictEqual(pileupAction.type, 'buy_upgrade');
+  assert.strictEqual(pileupAction.upgradeId, 'counter_service_bell');
+  const paused = JSON.parse(JSON.stringify(state));
+  paused.shop.counterService.running = false;
+  paused.shop.deliveryOrders = 6;
+  const pausedAction = context.nextBestAction(paused);
+  assert.strictEqual(pausedAction.type, 'start_counter_service');
+  const stockAction = context.nextBestAction(stockBlocked);
+  assert(['pack_tofu', 'buy_station', 'buy_upgrade'].includes(stockAction.type));
+
+  const spirit = context.defaultGameState();
+  spirit.shop.tips = 41900;
+  spirit.shop.shopSpirit = 12;
+  spirit.shop.reputation = 900;
+  spirit.shop.shopLevel = context.getShopLevel(spirit.shop.reputation);
+  spirit.shop.lifetimeDeliveryOrders = 60;
+  spirit.shop.stations.delivery_shelf = 1;
+  spirit.shop.stations.shop_sign = 1;
+  spirit.shop.spiritGenerators.tea_kettle = 1;
+  spirit.shop.festivalBoosts.press_token = 1;
+  spirit.shop.activeFestivalBoosts = [{
+    id: 'busy_lunch',
+    label: 'Busy Lunch Hour',
+    multiplier: 1.5,
+    expiresAt: '2099-01-01T00:00:00.000Z',
+    source: 'shop_spirit',
+  }];
+  vm.runInContext(`
+appState.shopTab = "spirit";
+renderTofuShop(${JSON.stringify(spirit)});
+globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.spiritPanelHtml.includes('Shop Spirit wallet'));
+  assert(context.spiritPanelHtml.includes('Tips'));
+  assert(context.spiritPanelHtml.includes('41.9K'));
+  assert(context.spiritPanelHtml.includes('Shop Spirit'));
+  assert(context.spiritPanelHtml.includes('12 /'));
+  assert(context.spiritPanelHtml.includes('Spirit/sec'));
+  assert(context.spiritPanelHtml.includes('Buy Multiplier'));
+  assert(!context.spiritPanelHtml.includes('Use Boost'));
+  assert(!context.spiritPanelHtml.includes('Use Festival Boost'));
+  assert(context.spiritPanelHtml.includes('Spend 10 Spirit'));
+  assert(context.spiritPanelHtml.includes('Start Double Batch'));
+  assert(context.spiritPanelHtml.includes('Use Token'));
+  assert(context.spiritPanelHtml.includes('Duration:'));
+  assert(context.spiritPanelHtml.includes('Active for about'));
+  assert(context.spiritPanelHtml.includes('Need 3 Spirit'));
+  assert(context.spiritPanelHtml.includes('You have 12'));
+  assert(!context.spiritPanelHtml.includes('Calm Shop Focus'));
+
+  const activeSpirit = context.useShopSpiritBoost('busy_lunch', spirit);
+  assert.strictEqual(activeSpirit.ok, false);
+  assert(activeSpirit.reason.includes('already active'));
+  const hiddenRouteToken = context.useFestivalBoost('calm_focus_token', spirit);
+  assert.strictEqual(hiddenRouteToken.ok, false);
+  assert(hiddenRouteToken.reason.includes('Route-focused'));
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -5050,6 +5227,7 @@ function testResultScreenShowsGameSummarySections() {
   assert(source.includes('returnDashboardButton.addEventListener("click"'));
   assert(source.includes('backSimulatorButton.addEventListener("click"'));
   assert(source.includes('function returnToDashboard'));
+  assert(source.includes('"Visit Tofu Shop"'));
   const summaryStart = html.indexOf('id="summary-view"');
   const summaryEnd = html.indexOf('id="landing-view"', summaryStart + 1);
   const summaryHtml = html.slice(summaryStart, summaryEnd > summaryStart ? summaryEnd : undefined);
@@ -5457,6 +5635,7 @@ function run() {
   testCoreGameSpineV1MilestonesAndSupportStations();
   testTofuShopNextMilestoneBarGuidesImplementedSpine();
   testCounterServiceV1AutomatesEarnedShopHandoffs();
+  testCounterServicePolishStatsUpgradesAndSpiritPanel();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

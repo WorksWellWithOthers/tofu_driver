@@ -30,7 +30,13 @@
   line after an early milestone without implementing a Net Worth counter or valuation system.
 - Counter Service V1 is the first earned automation layer. It unlocks after First 10 Orders, starts
   paused, auto-fulfills Best Available prepared orders every 10 seconds only while parked and the
-  page is open, and does not run during offline progress.
+  page is open, shows supplied/blocked shop-income status, can be upgraded through Order Bell,
+  Wider Counter, and Pickup Routine, and does not run during offline progress.
+- Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
+  language and local wallet context: generators use Buy, instant actions spend Spirit, timed effects
+  show duration/active state, and tokens use Use Token.
+- Cup-first visitors now get clearer parked paths into Tofu Shop from the landing copy and Cup Test
+  result action without making the shop a driving-time prompt.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
   stays inline with compact reward feedback so repeated order handoffs do not block the loop.
 - Tofu Shop tab panels are scoped: Production owns station buying, Upgrades owns upgrade buying,
@@ -109,8 +115,9 @@ Canonical references:
    and Shop Sign are clear.
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
-6. Playtest Counter Service V1: confirm First 10 Orders is the right unlock, 1 handoff / 10 seconds
-   feels helpful without deleting choices, and active-page-only automation does not skip pacing.
+6. Playtest Counter Service V1: confirm First 10 Orders is the right unlock, the 10/8/6/4 second
+   upgrade path feels helpful without deleting choices, and active-page-only automation does not
+   skip pacing.
 7. Tune the implemented Next Milestone Bar against playtest behavior, then consider station
    milestone visibility. Do not jump to Regular Customers, License prestige, or Shop Trials until
    Counter Service proves the manual loop needs more automation.

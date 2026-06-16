@@ -417,6 +417,9 @@ const STATION_UPGRADES = [
   { id: "delivery_shelf_double", stationId: "delivery_shelf", name: "Double Stack", costTips: 320, effect: "Delivery Shelf capacity +30%", maxLevel: 8 },
   { id: "shop_sign_faster", stationId: "shop_sign", name: "Brighter Sign", costTips: 360, effect: "Reputation from orders +20%", maxLevel: 8 },
   { id: "shop_sign_double", stationId: "shop_sign", name: "Word of Mouth", costTips: 520, effect: "Customer tip gain +20%", maxLevel: 8 },
+  { id: "counter_service_bell", stationId: "counter_service", name: "Order Bell", costTips: 180, effect: "Counter Service interval 10 sec -> 8 sec", maxLevel: 1 },
+  { id: "counter_service_wide", stationId: "counter_service", name: "Wider Counter", costTips: 320, effect: "Counter Service interval 8 sec -> 6 sec", maxLevel: 1 },
+  { id: "counter_service_routine", stationId: "counter_service", name: "Pickup Routine", costTips: 520, effect: "Counter Service interval 6 sec -> 4 sec", maxLevel: 1 },
   { id: "regular_customer_faster", stationId: "regular_customer", name: "Loyalty Card", costTips: 650, effect: "Regular Customer tips +25%", maxLevel: 8 },
   { id: "regular_customer_double", stationId: "regular_customer", name: "Bring a Friend", costTips: 880, effect: "Regular Customer output +50%", maxLevel: 8 },
   { id: "route_familiarity", stationId: "delivery_route", name: "Route Familiarity", costTips: 1000, effect: "Fictional route rewards +20%", maxLevel: 8 },
@@ -3567,6 +3570,9 @@ function shopUpgradeById(upgradeId) {
 function stationUpgradeRevealReason(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
+  if (upgrade.id === "counter_service_bell") return "Unlocks after Counter Service arrives";
+  if (upgrade.id === "counter_service_wide") return "Unlocks after Order Bell and 20 fulfilled orders";
+  if (upgrade.id === "counter_service_routine") return "Unlocks after Wider Counter and First Family Tofu Tray";
   if (upgrade.id === "tofu_press_faster") return "Unlocks when Tofu Stock is the bottleneck";
   if (upgrade.id === "tofu_press_double") return "Unlocks after owning 3 Tofu Presses";
   if (upgrade.id === "prep_counter_faster") return "Unlocks when Prep Counter is the bottleneck";
@@ -3583,9 +3589,18 @@ function stationUpgradeRevealReason(upgrade, gameState) {
 function stationUpgradeIsRevealed(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
+  if (upgrade.id === "counter_service_bell") return isCounterServiceUnlocked(state);
+  if (upgrade.id === "counter_service_wide") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_bell, 0, 1) > 0
+      && orders >= 20;
+  }
+  if (upgrade.id === "counter_service_routine") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_wide, 0, 1) > 0
+      && Boolean(state.stamps.first_family_tofu_tray);
+  }
   if (upgrade.id === "tofu_press_faster") return (hasFirstShopOrder(state) && isStockBottleneck(state)) || state.shop.stations.tofu_press >= 2;
   if (upgrade.id === "tofu_press_double") return state.shop.stations.tofu_press >= 3 || orders >= 3;
-  if (upgrade.id === "prep_counter_faster") return isOrderPrepBottleneck(state) || orders >= 2 || state.shop.stations.prep_counter >= 2;
+  if (upgrade.id === "prep_counter_faster") return isOrderPrepBottleneck(state) || orders >= 1 || state.shop.stations.prep_counter >= 2;
   if (upgrade.id === "prep_counter_double") return state.shop.stations.prep_counter >= 2 || orders >= 10;
   if (upgrade.stationId === "delivery_shelf") return state.shop.stations.delivery_shelf > 0;
   if (upgrade.stationId === "shop_sign") return state.shop.stations.shop_sign > 0 || state.shop.reputation >= 10;
@@ -3603,6 +3618,8 @@ function visibleStationUpgrades(gameState) {
 
 function upgradeRelevanceScore(upgrade, gameState) {
   const state = normalizeGameState(gameState);
+  const readyPileup = readyDeliveryOrders(state.shop) >= 3 && tofuStockRunway(state).isHealthy;
+  if (readyPileup && upgrade.stationId === "counter_service") return 0;
   if (isOrderPrepBottleneck(state)) {
     if (upgrade.id === "prep_counter_faster") return 0;
     if (upgrade.id === "prep_counter_double") return 1;
@@ -3639,6 +3656,15 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
 function stationUpgradePreviewText(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+  if (upgrade.stationId === "counter_service") {
+    const beforeSeconds = counterServiceIntervalSeconds(state);
+    const preview = normalizeGameState(state);
+    preview.shop.stationUpgrades[upgrade.id] = Math.min(upgrade.maxLevel, level + 1);
+    const afterSeconds = counterServiceIntervalSeconds(preview);
+    const beforePerMinute = roundTo(60 / beforeSeconds, 1);
+    const afterPerMinute = roundTo(60 / afterSeconds, 1);
+    return `Counter Service: 1 handoff / ${formatShopCount(beforeSeconds)} sec -> 1 handoff / ${formatShopCount(afterSeconds)} sec (${beforePerMinute}/min -> ${afterPerMinute}/min).`;
+  }
   const before = getShopGeneratorRates(state);
   const preview = normalizeGameState(state);
   preview.shop.stationUpgrades[upgrade.id] = Math.min(upgrade.maxLevel, level + 1);
@@ -3659,6 +3685,9 @@ function stationUpgradePreviewText(upgrade, gameState) {
 }
 
 function stationUpgradeWhyItMatters(upgrade) {
+  if (upgrade.id === "counter_service_bell") return "Helps Counter Service keep up with prepared orders.";
+  if (upgrade.id === "counter_service_wide") return "Keeps larger order queues from piling up.";
+  if (upgrade.id === "counter_service_routine") return "Makes automatic pickups feel smooth after Family Trays.";
   if (upgrade.id === "prep_counter_faster") return "Makes the next order arrive faster.";
   if (upgrade.id === "prep_counter_double") return "Turns extra counters into a bigger throughput jump.";
   if (upgrade.id === "tofu_press_faster") return "Helps when Tofu Stock is running low.";
@@ -3837,6 +3866,14 @@ function counterServicePriorityLabel(priority) {
   return priority === "simple_only" ? "Simple Only" : "Best Available";
 }
 
+function counterServiceIntervalSeconds(gameState) {
+  const state = normalizeGameState(gameState);
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_routine, 0, 1) > 0) return 4;
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_wide, 0, 1) > 0) return 6;
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_bell, 0, 1) > 0) return 8;
+  return COUNTER_SERVICE_HANDOFF_SECONDS;
+}
+
 function counterServiceOrderType(gameState) {
   const state = normalizeGameState(gameState);
   const priority = state.shop.counterService.priority || "best_available";
@@ -3876,16 +3913,17 @@ function counterServiceProgress(gameState, now = new Date()) {
     };
   }
   if (!Number.isFinite(nowMs) || !Number.isFinite(lastMs) || nowMs <= lastMs) {
+    const interval = counterServiceIntervalSeconds(state);
     return {
       unlocked: true,
       running: true,
       percent: 0,
-      etaSeconds: COUNTER_SERVICE_HANDOFF_SECONDS,
-      message: `Next handoff in ${formatShopCount(COUNTER_SERVICE_HANDOFF_SECONDS)} seconds.`,
+      etaSeconds: interval,
+      message: `Next handoff in ${formatShopCount(interval)} seconds.`,
     };
   }
   const elapsed = Math.max(0, (nowMs - lastMs) / 1000);
-  const interval = COUNTER_SERVICE_HANDOFF_SECONDS;
+  const interval = counterServiceIntervalSeconds(state);
   const progressSeconds = elapsed % interval;
   const etaSeconds = Math.max(1, Math.ceil(interval - progressSeconds));
   return {
@@ -3949,7 +3987,8 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     ? Math.max(0, Number(options.maxSeconds))
     : SHOP_OPEN_TICK_MAX_SECONDS;
   const elapsedSeconds = Math.min(maxSeconds, Math.max(0, (nowMs - lastMs) / 1000));
-  const attempts = Math.floor(elapsedSeconds / COUNTER_SERVICE_HANDOFF_SECONDS);
+  const interval = counterServiceIntervalSeconds(next);
+  const attempts = Math.floor(elapsedSeconds / interval);
   if (attempts < 1) {
     return { gameState: next, changed: false, completed: 0, message: "" };
   }
@@ -4014,6 +4053,53 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     completed: totals.completed,
     message: next.shop.counterService.lastResult,
     totals,
+  };
+}
+
+function counterServiceIncomeStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!isCounterServiceUnlocked(state)) {
+    return {
+      active: false,
+      text: "+0/sec",
+      status: "locked",
+      tipsPerMinute: 0,
+    };
+  }
+  if (!state.shop.counterService.running) {
+    return {
+      active: false,
+      text: "Counter Service paused",
+      status: "paused",
+      tipsPerMinute: 0,
+    };
+  }
+  const ready = readyDeliveryOrders(state.shop);
+  if (ready < 1) {
+    return {
+      active: false,
+      text: "Counter Service waiting for ready orders",
+      status: "waiting_orders",
+      tipsPerMinute: 0,
+    };
+  }
+  const orderType = counterServiceOrderType(state);
+  if (!orderType) {
+    return {
+      active: false,
+      text: "Counter Service waiting for Tofu Stock",
+      status: "waiting_stock",
+      tipsPerMinute: 0,
+    };
+  }
+  const interval = counterServiceIntervalSeconds(state);
+  const tipsPerMinute = (orderType.tips * 60) / interval;
+  return {
+    active: true,
+    text: `Counter Service: +${formatShopRate(tipsPerMinute)} Tips/min when supplied`,
+    status: "running",
+    tipsPerMinute,
+    orderType,
   };
 }
 
@@ -4203,8 +4289,15 @@ function buyStationUpgrade(upgradeId, gameState) {
   const upgrade = STATION_UPGRADES.find((item) => item.id === upgradeId);
   if (!upgrade) return { ok: false, reason: "Station upgrade unavailable.", gameState: next };
   const station = shopStationById(upgrade.stationId);
-  if (!station || !stationIsUnlocked(station, next)) {
+  const counterServiceUpgrade = upgrade.stationId === "counter_service";
+  if (counterServiceUpgrade && !isCounterServiceUnlocked(next)) {
+    return { ok: false, reason: "Counter Service unlocks after 10 fulfilled orders.", gameState: next };
+  }
+  if (!counterServiceUpgrade && (!station || !stationIsUnlocked(station, next))) {
     return { ok: false, reason: "Station is locked.", gameState: next };
+  }
+  if (!stationUpgradeIsRevealed(upgrade, next)) {
+    return { ok: false, reason: stationUpgradeRevealReason(upgrade, next), gameState: next };
   }
   const current = safeNonNegativeInteger(next.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
   if (current >= upgrade.maxLevel) return { ok: false, reason: "Upgrade is already maxed.", gameState: next };
@@ -4328,10 +4421,19 @@ function buySpiritGenerator(generatorId, gameState) {
   return { ok: true, gameState: next, generator, level: current + 1 };
 }
 
-function useShopSpiritBoost(boostId, gameState) {
+function useShopSpiritBoost(boostId, gameState, options = {}) {
   let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Shop Spirit waits until the run is parked.", gameState: next };
+  }
   const boost = SHOP_SPIRIT_BOOSTS.find((item) => item.id === boostId);
   if (!boost) return { ok: false, reason: "Shop Spirit boost unavailable.", gameState: next };
+  if (boost.type === "route_multiplier" && !hasRouteStoryBeat(next)) {
+    return { ok: false, reason: "Route-focused Spirit actions unlock after route story beats.", gameState: next };
+  }
+  if (boost.durationSeconds && activeTimedEffectFor(next, boost.id)) {
+    return { ok: false, reason: `${boost.name} is already active.`, gameState: next };
+  }
   if (next.shop.shopSpirit < boost.costSpirit) return { ok: false, reason: "Not enough Shop Spirit.", gameState: next };
   next.shop.shopSpirit = safeNonNegativeNumber(next.shop.shopSpirit - boost.costSpirit);
   if (boost.type === "instant_tofu") next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + boost.amount);
@@ -4347,10 +4449,16 @@ function useShopSpiritBoost(boostId, gameState) {
   return { ok: true, gameState: next, boost };
 }
 
-function useFestivalBoost(boostId, gameState) {
+function useFestivalBoost(boostId, gameState, options = {}) {
   let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Festival Boosts wait until the run is parked.", gameState: next };
+  }
   const boost = FESTIVAL_BOOSTS.find((item) => item.id === boostId);
   if (!boost) return { ok: false, reason: "Festival Boost unavailable.", gameState: next };
+  if (boost.type === "route_multiplier" && !hasRouteStoryBeat(next)) {
+    return { ok: false, reason: "Route-focused tokens unlock after route story beats.", gameState: next };
+  }
   if (next.shop.festivalBoosts[boost.id] < 1) return { ok: false, reason: "No Festival Boost token ready.", gameState: next };
   next.shop.festivalBoosts[boost.id] = safeNonNegativeInteger(next.shop.festivalBoosts[boost.id] - 1);
   const multiplier = boost.type === "press_multiplier" || boost.type === "prep_multiplier" ? 1.75 : 1.5;
@@ -6690,7 +6798,11 @@ function affordableShopUpgrade(gameState) {
     const currentLevel = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
     if (currentLevel >= upgrade.maxLevel) return false;
     const station = shopStationById(upgrade.stationId);
-    if (!station || !stationIsUnlocked(station, state)) return false;
+    if (upgrade.stationId === "counter_service") {
+      if (!isCounterServiceUnlocked(state)) return false;
+    } else if (!station || !stationIsUnlocked(station, state)) {
+      return false;
+    }
     const cost = stationUpgradeCostTips(upgrade, currentLevel);
     return state.shop.tips >= cost;
   }) || null;
@@ -6735,6 +6847,13 @@ function nextBestAction(gameState, options = {}) {
     && tidyLevel < tidyPackaging.maxLevel
     && state.shop.tips >= tidyCost
   );
+  const counterIncome = counterServiceIncomeStatus(state);
+  const readyPileup = prep.ready >= 3;
+  const counterUpgrade = visibleRelevantStationUpgrades(state).find((candidate) => (
+    candidate.stationId === "counter_service"
+    && safeNonNegativeInteger(state.shop.stationUpgrades[candidate.id], 0, candidate.maxLevel) < candidate.maxLevel
+    && state.shop.tips >= stationUpgradeCostTips(candidate, state.shop.stationUpgrades[candidate.id])
+  ));
   if (activeDrive) {
     return {
       type: "active_drive",
@@ -6742,6 +6861,54 @@ function nextBestAction(gameState, options = {}) {
       copy: "Keep your eyes on the road. Shop actions unlock after you finish and park.",
       buttonLabel: "Driving",
       disabled: true,
+    };
+  }
+  if (shopUnlocked && counterIncome.status === "waiting_stock") {
+    if (upgrade && upgrade.stationId === "tofu_press") {
+      return {
+        type: "buy_upgrade",
+        title: `Next: Buy ${upgrade.name}`,
+        copy: "Counter Service is ready, but Tofu Stock is the bottleneck. Improve the press or pack tofu so automatic pickups can continue.",
+        buttonLabel: "View Upgrades",
+        disabled: false,
+        upgradeId: upgrade.id,
+      };
+    }
+    if (tofuPressStation) {
+      return {
+        type: "buy_station",
+        title: "Next: Buy Tofu Press",
+        copy: "Counter Service is waiting for Tofu Stock. A Tofu Press helps keep larger orders supplied.",
+        buttonLabel: "View Production",
+        stationId: "tofu_press",
+        disabled: false,
+      };
+    }
+    return {
+      type: "pack_tofu",
+      title: "Next: Pack Tofu",
+      copy: "Counter Service is waiting for Tofu Stock. Pack tofu or invest in the press.",
+      buttonLabel: "Pack Tofu",
+      disabled: false,
+    };
+  }
+  if (shopUnlocked && isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup) {
+    return {
+      type: "start_counter_service",
+      title: "Next: Start Counter Service",
+      copy: "Ready Orders are piling up. Counter Service can handle prepared order pickups while the shop is open.",
+      buttonLabel: "Start Counter Service",
+      disabled: false,
+    };
+  }
+  if (shopUnlocked && state.shop.counterService.running && readyPileup && runway.isHealthy && counterUpgrade) {
+    return {
+      type: "buy_upgrade",
+      title: `Next: Buy ${counterUpgrade.name}`,
+      copy: "Ready Orders are piling up. Upgrade Counter Service so automatic pickups keep pace.",
+      buttonLabel: "View Upgrades",
+      disabled: false,
+      upgradeId: counterUpgrade.id,
     };
   }
   if (shopUnlocked && prep.ready > 0 && bestOrder) {
@@ -7113,12 +7280,70 @@ function renderShopGeneratorCard(generatorId, gameState) {
   `;
 }
 
+function activeTimedEffectFor(state, boostId) {
+  const nowMs = Date.now();
+  return (state.shop.activeFestivalBoosts || []).find((boost) => (
+    boost.id === boostId
+    && Number.isFinite(Date.parse(boost.expiresAt))
+    && Date.parse(boost.expiresAt) > nowMs
+  )) || null;
+}
+
+function spiritGeneratorDisabledReason(generator, state, cost) {
+  const missing = Math.max(0, cost - state.shop.tips);
+  return missing > 0
+    ? `Need ${formatShopCost(missing)} Tips · You have ${formatShopBalance(state.shop.tips)}`
+    : "";
+}
+
+function spiritBoostDisabledReason(boost, state) {
+  const active = activeTimedEffectFor(state, boost.id);
+  if (active && boost.durationSeconds) return `${boost.name} is already active.`;
+  const missing = Math.max(0, boost.costSpirit - state.shop.shopSpirit);
+  return missing > 0
+    ? `Need ${formatShopCost(missing)} Spirit · You have ${formatShopBalance(state.shop.shopSpirit)}`
+    : "";
+}
+
+function festivalBoostDisabledReason(boost, state) {
+  const ready = safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000);
+  return ready < 1 ? `Need 1 ${boost.name} · You have 0` : "";
+}
+
+function spiritBoostActionLabel(boost) {
+  if (boost.type === "instant_tofu" || boost.type === "instant_orders") {
+    return `Spend ${formatShopCost(boost.costSpirit)} Spirit`;
+  }
+  if (boost.durationSeconds) {
+    if (boost.id === "busy_lunch") return "Start Lunch Hour";
+    if (boost.id === "double_batch") return "Start Double Batch";
+    return "Start Effect";
+  }
+  return "Spend Spirit";
+}
+
+function spiritBoostCopy(boost, state) {
+  const active = activeTimedEffectFor(state, boost.id);
+  if (active) {
+    const seconds = Math.max(0, Math.ceil((Date.parse(active.expiresAt) - Date.now()) / 1000));
+    return `${boost.description} Active for about ${formatShopCount(Math.ceil(seconds / 60))} more min. Refreshes are blocked while active.`;
+  }
+  if (boost.durationSeconds) {
+    return `${boost.description} Duration: ${formatShopCount(Math.ceil(boost.durationSeconds / 60))} min. Does not stack; start it when the shop is parked.`;
+  }
+  return `${boost.description} Instant parked-only action.`;
+}
+
 function renderStationUpgradeCard(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
   const cost = stationUpgradeCostTips(upgrade, level);
   const station = shopStationById(upgrade.stationId);
-  const unlocked = Boolean(station && stationIsUnlocked(station, state) && stationUpgradeIsRevealed(upgrade, state));
+  const counterServiceUpgrade = upgrade.stationId === "counter_service";
+  const unlocked = Boolean(
+    (counterServiceUpgrade ? isCounterServiceUnlocked(state) : station && stationIsUnlocked(station, state))
+    && stationUpgradeIsRevealed(upgrade, state),
+  );
   const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, cost, level);
   const canBuy = unlocked && level < upgrade.maxLevel && !disabledReason;
   const status = level >= upgrade.maxLevel ? "Maxed" : `${formatShopCost(cost)} Tips`;
@@ -7391,9 +7616,11 @@ function renderCounterServiceCard(state) {
   if (!isCounterServiceUnlocked(state)) return "";
   const service = state.shop.counterService;
   const progress = counterServiceProgress(state, new Date());
+  const income = counterServiceIncomeStatus(state);
   const status = service.running ? "Running" : "Paused";
   const startDisabled = service.running;
   const pauseDisabled = !service.running;
+  const interval = counterServiceIntervalSeconds(state);
   return renderIdleCard({
     title: "Counter Service",
     status,
@@ -7402,7 +7629,7 @@ function renderCounterServiceCard(state) {
       <div class="nospill-counter-service">
         <div class="nospill-counter-service-row">
           <span>Rate</span>
-          <strong>1 handoff / ${formatShopCount(COUNTER_SERVICE_HANDOFF_SECONDS)} sec</strong>
+          <strong>1 handoff / ${formatShopCount(interval)} sec</strong>
         </div>
         <div class="nospill-counter-service-row">
           <span>Priority</span>
@@ -7419,6 +7646,7 @@ function renderCounterServiceCard(state) {
           <span style="width: ${progress.percent}%"></span>
         </div>
         <small>${escapeHtml(progress.message)}</small>
+        <small>${escapeHtml(income.text)}</small>
         ${service.lastResult ? `<small>${escapeHtml(service.lastResult)}</small>` : ""}
       </div>
     `,
@@ -7853,32 +8081,60 @@ function renderCrewPanel(state) {
 }
 
 function renderSpiritPanel(state) {
+  const spiritRates = getShopGeneratorRates(state);
+  const visibleSpiritBoosts = SHOP_SPIRIT_BOOSTS.filter((boost) => (
+    boost.type !== "route_multiplier" || hasRouteStoryBeat(state)
+  ));
+  const visibleFestivalBoosts = FESTIVAL_BOOSTS.filter((boost) => (
+    boost.type !== "route_multiplier" || hasRouteStoryBeat(state)
+  ));
   return `
     <h4>Shop Spirit</h4>
     <p class="nospill-panel-helper">Shop Spirit is a parked-only boost resource. It never affects real driving score.</p>
+    <div class="nospill-spirit-wallet" aria-label="Shop Spirit wallet">
+      <div><span>Tips</span><strong>${formatShopBalance(state.shop.tips)}</strong></div>
+      <div><span>Shop Spirit</span><strong>${formatShopBalance(state.shop.shopSpirit)} / ${formatShopBalance(getShopSpiritMax(state.shop))}</strong></div>
+      <div><span>Spirit/sec</span><strong>+${formatShopRate(spiritRates.shopSpiritPerSecond)}/sec</strong></div>
+      <div><span>Buy Multiplier</span><strong>${state.shop.purchaseMultiplier === "max" ? "Max" : `x${state.shop.purchaseMultiplier}`}</strong></div>
+    </div>
     <div class="nospill-idle-grid">
       ${SPIRIT_GENERATORS.map((generator) => {
         const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
         const cost = Math.ceil(generator.costTips * Math.pow(1.22, owned));
+        const disabledReason = spiritGeneratorDisabledReason(generator, state, cost);
         return renderIdleCard({
           title: `${generator.name} x${formatShopCount(owned)}`,
-          status: `${formatShopCost(cost)} tips`,
+          status: `${formatShopCost(cost)} Tips`,
           copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
-          actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost)],
+          actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost, "nospill-secondary", disabledReason)],
         });
       }).join("")}
-      ${SHOP_SPIRIT_BOOSTS.map((boost) => renderIdleCard({
-        title: boost.name,
-        status: `${formatShopCost(boost.costSpirit)} Shop Spirit`,
-        copy: boost.description,
-        actions: [actionButton("Use Boost", "data-spirit-boost", boost.id, state.shop.shopSpirit < boost.costSpirit)],
-      })).join("")}
-      ${FESTIVAL_BOOSTS.map((boost) => renderIdleCard({
-        title: boost.name,
-        status: `${formatShopCount(state.shop.festivalBoosts[boost.id] || 0)} ready`,
-        copy: "Consumable parked-only Festival Boost token.",
-        actions: [actionButton("Use Festival Boost", "data-festival-boost", boost.id, !state.shop.festivalBoosts[boost.id])],
-      })).join("")}
+      ${visibleSpiritBoosts.map((boost) => {
+        const active = activeTimedEffectFor(state, boost.id);
+        const disabledReason = spiritBoostDisabledReason(boost, state);
+        const disabled = Boolean(disabledReason);
+        const status = boost.durationSeconds
+          ? active
+            ? "Active"
+            : `${formatShopCost(boost.costSpirit)} Spirit · Timed effect`
+          : `${formatShopCost(boost.costSpirit)} Spirit · Instant action`;
+        return renderIdleCard({
+          title: boost.name,
+          status,
+          copy: spiritBoostCopy(boost, state),
+          actions: [actionButton(spiritBoostActionLabel(boost), "data-spirit-boost", boost.id, disabled, "nospill-secondary", disabledReason)],
+        });
+      }).join("")}
+      ${visibleFestivalBoosts.map((boost) => {
+        const ready = safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000);
+        const disabledReason = festivalBoostDisabledReason(boost, state);
+        return renderIdleCard({
+          title: boost.name,
+          status: `${formatShopCount(ready)} ready`,
+          copy: "Consumable parked-only token. Tokens are inventory items, not timed Spirit purchases.",
+          actions: [actionButton("Use Token", "data-festival-boost", boost.id, ready < 1, "nospill-secondary", disabledReason)],
+        });
+      }).join("")}
     </div>
   `;
 }
@@ -8106,8 +8362,11 @@ function renderTofuShop(gameState = loadGameState()) {
       : "Locked";
   }
   if (elements.shopTipsRate) {
+    const counterIncome = counterServiceIncomeStatus(state);
     elements.shopTipsRate.textContent = reveal.shop
-      ? `+${formatShopRate(generatorRates.customerTipsPerSecond)}/sec`
+      ? counterIncome.status === "locked"
+        ? `+${formatShopRate(generatorRates.customerTipsPerSecond)}/sec passive`
+        : counterIncome.text
       : "Locked";
   }
   if (elements.shopReputationRate) {
@@ -8792,7 +9051,7 @@ function renderSummary(summary) {
   }
   if (elements.returnDashboardButton) {
     elements.returnDashboardButton.textContent = reveal.shop
-      ? "Return to Tofu Shop"
+      ? "Visit Tofu Shop"
       : "Return to Dashboard";
   }
   if (elements.newRunButton) {
