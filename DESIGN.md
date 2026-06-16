@@ -194,11 +194,14 @@ Current design principles:
 - The first hidden shop system should use a Discovery Fanfare. Upgrades are the first system reveal
   when a meaningful bottleneck-solving upgrade appears. System reveals are local-only,
   repeat-suppressed per system id, and should create curiosity without listing the future roadmap.
-- Detailed tabs are earned. Orders can remain as a detailed support panel, Production should focus
-  on station ownership, and Upgrades should appear only when at least one relevant upgrade is
-  visible or close.
-- Tab panels are scoped. Passport, Ledger, Settings, and Orders should not append the Production or
+- Detailed tabs are earned. The Orders tab is removed from the first-loop shop because Overview
+  owns order cards, Prep Counter progress, reward previews, and fulfillment actions. Production
+  should focus on station ownership, and Upgrades should appear only when at least one relevant
+  upgrade is visible or close.
+- Tab panels are scoped. Passport, Ledger, and Settings should not append the Production or
   Upgrades controls; station buying belongs in Production and upgrade buying belongs in Upgrades.
+- Normal parked shop-order fulfillment is inline and non-interrupting. Full result screens are for
+  Cup Test runs and major fanfare moments such as the first Passport stamp.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
   are needed.

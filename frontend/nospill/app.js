@@ -794,6 +794,7 @@ const appState = {
   surface: "cup-test",
   shopTab: "overview",
   purchaseMultiplier: 1,
+  shopInlineResult: "",
   summaryMode: null,
   shopResultCanFulfillAnother: false,
   currentStampFanfare: null,
@@ -6387,7 +6388,6 @@ function isPassportTabUnlocked(gameState) {
 const SHOP_TABS = [
   { id: "overview", label: "Overview", unlock: () => true },
   { id: "production", label: "Production", unlock: () => true },
-  { id: "orders", label: "Orders", unlock: () => true },
   { id: "routes", label: "Routes", unlock: (state) => hasRouteStoryBeat(state) },
   { id: "training", label: "Training", unlock: (state) => hasRouteStoryBeat(state) && state.shop.cupStabilityXP > 0 },
   { id: "garage", label: "Garage", unlock: (state) => hasRouteStoryBeat(state) && Object.values(state.shop.garage).some(Boolean) },
@@ -6449,7 +6449,6 @@ function renderShopTabs(state) {
 
 function renderShopTabPanel(tabId, state) {
   if (tabId === "production") return renderProductionPanel(state);
-  if (tabId === "orders") return renderOrdersPanel(state);
   if (tabId === "routes") return renderRoutesPanel(state);
   if (tabId === "training") return renderTrainingPanel(state);
   if (tabId === "garage") return renderGaragePanel(state);
@@ -6586,8 +6585,8 @@ function renderOverviewPanel(state) {
   return `
     <h4>Overview</h4>
     <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
-    <p class="nospill-panel-helper">Tips come from fulfilled shop orders.</p>
-    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Tips buy upgrades. ${escapeHtml(runway.message)}</p>
+    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.</p>
+    <p class="nospill-panel-helper">Tips buy upgrades. ${escapeHtml(runway.message)}</p>
     <div class="nospill-idle-grid">
       ${renderPreparingOrderCard(state)}
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
@@ -7104,6 +7103,9 @@ function renderTofuShop(gameState = loadGameState()) {
         : `Need 1 prepared order. ${prep.message}`;
   }
   renderShopTabs(state);
+  if (elements.shopInlineResult) {
+    elements.shopInlineResult.textContent = appState.shopInlineResult || "";
+  }
   if (elements.shopOfflineEarnings) {
     const offlineTofu = Number(shop.offlineEarnings && shop.offlineEarnings.tofuStock || 0);
     const offlineOrders = Number(shop.offlineEarnings && shop.offlineEarnings.deliveryOrders || 0);
@@ -7625,6 +7627,37 @@ function renderShopOrderResult(result) {
   }
 }
 
+function shopOrderInlineResultMessage(result) {
+  const orderName = result && result.orderType && result.orderType.name
+    ? result.orderType.name
+    : "Shop Order";
+  const quantity = safeNonNegativeInteger(result && result.quantity, 1, SHOP_MAX_RESOURCE);
+  const quantityText = quantity > 1 ? ` x${formatShopCount(quantity)}` : "";
+  return `${orderName}${quantityText} complete: +${formatShopCount(result.tipsGained || 0)} Tips, +${formatShopCount(result.reputationGained || 0)} Reputation, +${formatShopCount(result.xpGained || 0)} XP`;
+}
+
+function showShopOrderInlineResult(result) {
+  const state = normalizeGameState(result.gameState);
+  appState.summaryMode = null;
+  appState.shopResultCanFulfillAnother = false;
+  appState.lastSummary = null;
+  appState.shopTab = "overview";
+  appState.shopInlineResult = shopOrderInlineResultMessage(result);
+  renderGamePanels(state);
+  setSummaryStatusMessage(appState.shopInlineResult);
+  const stamp = showStampFanfare(result.stampFanfare, state);
+  if (result.discoveryFanfare) {
+    if (stamp.shown) {
+      appState.pendingDiscoveryFanfare = {
+        fanfare: result.discoveryFanfare,
+        gameState: state,
+      };
+    } else {
+      showDiscoveryFanfare(result.discoveryFanfare, state);
+    }
+  }
+}
+
 function escapeHtml(value) {
   return String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -8082,7 +8115,7 @@ function handleFulfillShopOrder(requestedQuantity = 1, orderTypeId = "simple_tof
     return;
   }
   saveGameState(result.gameState);
-  renderShopOrderResult(result);
+  showShopOrderInlineResult(result);
   playCosmeticSound("shop_pack_tofu", result.gameState, {
     activeDrive: false,
   });
@@ -8184,7 +8217,7 @@ function handleTofuShopPanelClick(event) {
       return;
     }
     saveGameState(result.gameState);
-    renderShopOrderResult(result);
+    showShopOrderInlineResult(result);
     playCosmeticSound("shop_pack_tofu", result.gameState, { activeDrive: false });
     return;
   }
@@ -8836,6 +8869,7 @@ function cacheElements() {
     shopBuyMultiplier: document.getElementById("shop-buy-multiplier"),
     shopTabList: document.getElementById("shop-tab-list"),
     shopTabPanel: document.getElementById("shop-tab-panel"),
+    shopInlineResult: document.getElementById("shop-inline-result"),
     packTofuButton: document.getElementById("pack-tofu-button"),
     packTofuHelper: document.getElementById("pack-tofu-helper"),
     fulfillShopOrderButton: document.getElementById("fulfill-shop-order-button"),

@@ -407,7 +407,7 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | fulfill_family_tofu_tray | Fulfill Family Tofu Tray | Orders | First Shop | 5 fulfilled orders or Shop Level 2 | 24 Tofu Stock and 1 ready order | Need Family unlock, ready order, or more Tofu Stock. | 24 Tofu Stock, 1 Delivery Order | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | Makes extra Tofu Stock valuable | Fulfill Family Tofu Tray | Implemented |
 | fulfill_festival_bento | Fulfill Festival Bento | Orders | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 Tofu Stock and 2 ready orders | Need Festival unlock, 2 ready orders, or more Tofu Stock. | 75 Tofu Stock, 2 Delivery Orders | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | First big payout | Fulfill Festival Bento | Implemented |
 | fulfill_catering_crate | Fulfill Catering Crate | Orders | Later | Future mid-game | TBD | Hidden until later. | 50 Tofu Stock, 5 Delivery Orders target | +400 Tips, +20 Reputation, +180 XP target | Later | Mid-game stock sink | Fulfill Catering Crate | Future |
-| fulfill_10_orders | Fulfill 10 Orders | Orders | First Shop | Ready Orders can exceed 10 | Ready Orders >= 10; parked | Need 10 ready Delivery Orders. | 10 Delivery Orders | Grants 10x order rewards | 10 to 20 minutes | Reduces repeated order clicks | Fulfill 10 Orders | Implemented, reveal timing pending |
+| fulfill_10_orders | Fulfill 10 Orders | Overview | First Shop | Ready Orders can exceed 10 | Ready Orders >= 10; parked | Need 10 ready Delivery Orders. | 10 Delivery Orders | Grants 10x order rewards inline | 10 to 20 minutes | Reduces repeated order clicks | Fulfill 10 Orders | Implemented, reveal timing pending |
 | fulfill_max_simple_orders | Fulfill Max Simple Orders | Orders | First Loop / First Shop | Multiple Simple Tofu Boxes can be fulfilled and larger orders are not the best option | Enough Tofu Stock and ready orders for at least 2 Simple Tofu Boxes | Need more Tofu Stock or ready Delivery Orders. | max affordable Simple Tofu Boxes | Converts simple orders into Tips/Reputation/XP | 5 to 10 minutes | Avoids repeated tutorial-order clicks | Fulfill Max Simple Orders | Implemented |
 | fulfill_max_best_order | Fulfill Max Best Order | Orders | First Shop | Larger order type is unlocked and affordable | Enough Tofu Stock and ready orders for at least 1 best order type | Need more Tofu Stock or ready Delivery Orders. | max affordable best order type | Converts stock/order stockpile into strongest available payout | 5 to 20 minutes | Makes extra stock useful | Fulfill Max `<Order Type>` | Implemented |
 | fulfill_max_orders | Fulfill Max `<Order Type>` | Orders | First Shop | More than one selected/best order can be fulfilled | Enough Tofu Stock and ready orders for at least 2 of that type | Need more Tofu Stock or ready Delivery Orders. | max affordable typed orders | Converts all affordable typed orders into rewards | 5 to 10 minutes | Avoids click spam | Fulfill Max `<Order Type>` | Implemented |
@@ -751,10 +751,12 @@ Early UI rule:
 - Overview is the first-loop play surface. It should show Current Bottleneck, Next Best Action,
   Ready Orders, Prep Counter progress, one best available order card, one relevant next
   station/upgrade card, and optional Cup Test as a secondary card.
-- Orders is a detailed support panel, not required for the first loop.
+- The separate Orders tab is removed from player-facing tabs because Overview owns the order UX.
+  Normal shop-order fulfillment should update resources inline with a compact result chip/toast.
 - Production is the station-buying/detail panel and should not simply duplicate Overview.
 - Production owns station controls. Upgrades owns upgrade controls. Passport, Ledger, Settings, and
-  Orders must not append Generators/Stations or Upgrades sections from another panel.
+  any future order-detail surface must not append Generators/Stations or Upgrades sections from
+  another panel.
 - Do not show full locked sublists.
 - Do not show a visible roadmap of every future unlock.
 - Do not make settings/debug/QA prominent.

@@ -1025,6 +1025,7 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert(!context.freshProductionHtml.includes('data-shop-upgrade'));
   assert(context.freshProductionHtml.includes('Need '));
   assert(!context.freshTabsHtml.includes('>Upgrades<'));
+  assert(!context.freshTabsHtml.includes('>Orders<'));
   assert(context.freshLockedUpgradeFallbackHtml.includes('Overview'));
   assert(!context.freshLockedUpgradeFallbackHtml.includes('Station Upgrades'));
   assert.strictEqual(context.freshOfflineText, '');
@@ -1032,6 +1033,7 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
     assert(!context.freshTabsHtml.includes(`>${label}<`), label);
   });
   assert(context.afterOrderTabsHtml.includes('Upgrades'));
+  assert(!context.afterOrderTabsHtml.includes('>Orders<'));
   assert(context.afterOrderUpgradePanelHtml.includes('Station Upgrades'));
   assert(
     context.afterOrderUpgradePanelHtml.includes('Tidy Packaging Lv 0')
@@ -1187,7 +1189,8 @@ renderTofuShop(funnel);
 globalThis.funnelOverviewHtml = elements.shopTabPanel.innerHTML;
 appState.shopTab = "orders";
 renderTofuShop(funnel);
-globalThis.funnelOrdersHtml = elements.shopTabPanel.innerHTML;
+globalThis.funnelOrdersFallbackHtml = elements.shopTabPanel.innerHTML;
+globalThis.funnelOrdersFallbackTab = appState.shopTab;
 appState.shopTab = "production";
 renderTofuShop(funnel);
 globalThis.funnelProductionHtml = elements.shopTabPanel.innerHTML;
@@ -1218,8 +1221,8 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert(context.funnelPackHelper.includes('Tips buy upgrades'));
   assert(context.funnelFulfillHelper.includes('Turn prepared orders into Tips'));
   assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Tips'));
-  assert(context.funnelOverviewHtml.includes('Tips come from fulfilled shop orders.'));
-  assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Tips buy upgrades.'));
+  assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
+  assert(context.funnelOverviewHtml.includes('Tips buy upgrades.'));
   assert(context.funnelOverviewHtml.includes('Preparing Next Order'));
   assert(context.funnelOverviewHtml.includes('role="progressbar"'));
   assert(context.funnelOverviewHtml.includes('Simple Tofu Box'));
@@ -1227,12 +1230,12 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert(context.funnelOverviewHtml.includes('Fulfill Max Simple Tofu Box x83'));
   assert(context.funnelOverviewHtml.includes('Optional Certified Boost'));
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
-  assert(context.funnelOrdersHtml.includes('Fulfill prepared shop orders to earn Tips'));
-  assert(context.funnelOrdersHtml.includes('Uses: Prep Counter + larger orders. Tofu Stock is inventory, not money.'));
-  assert(context.funnelOrdersHtml.includes('Prep Counter uses 2 tofu stock to prepare 1 delivery order.'));
-  assert(context.funnelOrdersHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
-  assert(context.funnelOrdersHtml.includes('Fulfill Simple Tofu Box'));
-  assert(context.funnelOrdersHtml.includes('Fulfill Max Simple Tofu Box x83'));
+  assert.strictEqual(context.funnelOrdersFallbackTab, 'overview');
+  assert(context.funnelOrdersFallbackHtml.includes('Overview'));
+  assert(context.funnelOrdersFallbackHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
+  assert(context.funnelOrdersFallbackHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
+  assert(context.funnelOrdersFallbackHtml.includes('Fulfill Simple Tofu Box'));
+  assert(context.funnelOrdersFallbackHtml.includes('Fulfill Max Simple Tofu Box x83'));
   assert(context.funnelProductionHtml.includes('Fulfill shop orders to earn Tips.'));
   assert.strictEqual(context.funnelFulfilledOk, true);
   assert.strictEqual(context.funnelFulfilledQuantity, 83);
@@ -1419,7 +1422,7 @@ globalThis.highReadyOrdersHtml = elements.shopTabPanel.innerHTML;
   assert(context.waitingOrdersHtml.includes('style="width: 30%"'));
   assert(context.waitingOrdersHtml.includes('Preparing next order'));
   assert(context.waitingOrdersHtml.includes('30% prepared'));
-  assert(context.waitingOrdersHtml.includes('Prep Counter uses 2 tofu stock to prepare 1 delivery order.'));
+  assert(context.waitingOrdersHtml.includes('Prep Counter tofu per prepared order: 2.'));
   assert(context.waitingOrdersHtml.includes('Need 1 prepared order.'));
   assert(!/\d+\.\d{4,}/.test(context.waitingOrdersHtml));
   assert.strictEqual(context.waitingBlockedOk, false);
@@ -1580,7 +1583,7 @@ globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.g
   assert(context.highUpgradePanelHtml.includes('Tidy Packaging Lv 0'));
   assert(context.highUpgradePanelHtml.includes('Prep Counter output x1.5'));
   assert(context.highUpgradePanelHtml.includes('Prep Counter: 1 order / 40 sec -&gt; 1 order / 27 sec.'));
-  assert(context.highOrdersHtml.includes('Tofu Stock becomes Delivery Orders. Delivery Orders become Tips.'));
+  assert(context.highOrdersHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
   assert(context.highOrdersHtml.includes('Enough tofu for 18 more orders.'));
   assert(context.highOrdersHtml.includes('Uses 6 tofu stock and 1 ready order.'));
   assert(context.highOrdersHtml.includes('Prep Counter tofu per prepared order: 2.'));
@@ -1721,10 +1724,9 @@ globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(context.compactStarsText, '100K');
   assert.strictEqual(context.compactStateTips, 1000000000);
   assert.strictEqual(context.compactStateStock, 2400000);
-  assert(context.compactOrdersHtml.includes('Fulfill Max Simple Tofu Box x12.8K'));
-  assert(context.compactOrdersHtml.includes('Reward: +128K Tips'));
-  assert(context.compactOrdersHtml.includes('Reward: +578K Tips'));
-  assert(context.compactOrdersHtml.includes('Uses: 308K tofu stock, 12.8K ready orders'));
+  assert(context.compactOrdersHtml.includes('Fulfill Max Festival Bento x6.42K'));
+  assert(context.compactOrdersHtml.includes('Reward: +835K Tips'));
+  assert(context.compactOrdersHtml.includes('Uses: 482K tofu stock, 12.8K ready orders'));
   assert(context.compactProductionHtml.includes('K Tips'));
   assert(context.compactProductionHtml.includes('Need 1 more Prep Slot'));
   assert(context.compactUpgradeHtml.includes('K Tips'));
@@ -1868,7 +1870,7 @@ globalThis.fanfareRewardsHtml = elements.stampFanfareRewards.innerHTML;
 globalThis.fanfareIsAnimated = elements.stampFanfare.classList.contains('is-animated');
 globalThis.fanfareIsHiddenBeforeContinue = elements.stampFanfare.classList.contains('is-hidden');
 globalThis.fanfareFocused = elements.stampFanfareCard.focused;
-continueFromStampFanfare();
+hideStampFanfare();
 globalThis.fanfareHiddenAfterContinue = elements.stampFanfare.classList.contains('is-hidden');
 appState.running = true;
 const activeDriveShow = showStampFanfare(result.stampFanfare, result.gameState);
@@ -2354,6 +2356,7 @@ const freshRendered = defaultGameState();
 appState.shopTab = "orders";
 renderTofuShop(freshRendered);
 globalThis.freshOrderTypePanelHtml = elements.shopTabPanel.innerHTML;
+globalThis.freshOrderTypeTab = appState.shopTab;
 const rendered = defaultGameState();
 rendered.shop.tofuStock = 96;
 rendered.shop.deliveryOrders = 4;
@@ -2361,16 +2364,18 @@ rendered.shop.lifetimeDeliveryOrders = 5;
 appState.shopTab = "orders";
 renderTofuShop(rendered);
 globalThis.orderTypePanelHtml = elements.shopTabPanel.innerHTML;
+globalThis.orderTypeTab = appState.shopTab;
+globalThis.orderTypeTabsHtml = elements.shopTabList.innerHTML;
 `, context);
+  assert.strictEqual(context.freshOrderTypeTab, 'overview');
+  assert.strictEqual(context.orderTypeTab, 'overview');
+  assert(!context.orderTypeTabsHtml.includes('>Orders<'));
   assert(context.freshOrderTypePanelHtml.includes('Simple Tofu Box'));
   assert(context.freshOrderTypePanelHtml.includes('Fulfill Simple Tofu Box'));
   assert(!context.freshOrderTypePanelHtml.includes('Family Tofu Tray'));
   assert(!context.freshOrderTypePanelHtml.includes('Festival Bento'));
   assert(!context.freshOrderTypePanelHtml.includes('Catering Crate'));
-  assert(context.orderTypePanelHtml.includes('Tofu Stock prepares orders. Bigger orders use more tofu and pay more Tips.'));
-  assert(context.orderTypePanelHtml.includes('Simple Tofu Box'));
-  assert(context.orderTypePanelHtml.includes('Uses 6 tofu stock and 1 ready order.'));
-  assert(context.orderTypePanelHtml.includes('Reward: +10 Tips, +1 Reputation, +8 XP.'));
+  assert(context.orderTypePanelHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
   assert(context.orderTypePanelHtml.includes('Family Tofu Tray'));
   assert(context.orderTypePanelHtml.includes('Uses 24 tofu stock and 1 ready order.'));
   assert(context.orderTypePanelHtml.includes('Reward: +45 Tips, +3 Reputation, +24 XP.'));
@@ -4126,8 +4131,9 @@ function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
   assert(!crewText.includes('Tofu Shop Bell'));
 }
 
-function testShopOrderResultUsesCompactShopLayout() {
+function testShopOrderFulfillmentStaysInlineAndKeepsFanfare() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('id="shop-inline-result"'));
   assert(html.includes('id="share-card-section"'));
   assert(html.includes('onload="this.nextElementSibling.hidden = true;"'));
   assert(html.includes('class="nospill-hero-fallback" hidden>Tofu Driver</span>'));
@@ -4143,6 +4149,7 @@ function makeNode() {
     disabled: null,
     dataset: {},
     classes: new Set(),
+    focused: false,
   };
   node.classList = {
     toggle(name, value) {
@@ -4153,16 +4160,47 @@ function makeNode() {
     remove(name) { node.classes.delete(name); },
     contains(name) { return node.classes.has(name); },
   };
+  node.focus = function focusNode() { node.focused = true; };
   return node;
 }
 const state = defaultGameState();
 state.shop.deliveryOrders = 2;
-state.shop.tofuStock = 20;
+state.shop.tofuStock = 30;
 state.shop.tips = 5;
 state.shop.reputation = 2;
 saveGameState(state);
-const result = fulfillShopOrder(state, { activeDrive: false });
 elements = {
+  surfaceNavButtons: [],
+  surfaceSections: [],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  deliveryWallGrid: makeNode(),
   summaryView: makeNode(),
   summaryStatusLabel: makeNode(),
   summaryTitle: makeNode(),
@@ -4178,57 +4216,75 @@ elements = {
   copyButton: makeNode(),
   downloadButton: makeNode(),
   saveButton: makeNode(),
+  stampFanfare: makeNode(),
+  stampFanfareCard: makeNode(),
+  stampFanfareTitle: makeNode(),
+  stampFanfareName: makeNode(),
+  stampFanfareCopy: makeNode(),
+  stampFanfareRewards: makeNode(),
+  discoveryFanfare: makeNode(),
 };
-renderGamePanels = function renderGamePanelsForShopResult() {};
 showView = function showViewForShopResult(viewName) {
   globalThis.shopResultShownView = viewName;
 };
-renderShopOrderResult(result);
-globalThis.shopResultMode = appState.summaryMode;
-globalThis.shopResultCanFulfillAnother = appState.shopResultCanFulfillAnother;
-globalThis.shopResultViewClasses = Array.from(elements.summaryView.classes);
-globalThis.shopResultTitle = elements.summaryTitle.textContent;
-globalThis.shopResultEyebrow = elements.summaryStatusLabel.textContent;
-globalThis.shopResultCallout = elements.summaryWater.textContent;
-globalThis.shopResultDetails = elements.deliverySummaryGrid.innerHTML;
-globalThis.shopResultFlavor = elements.commuteMasteryCopy.textContent;
-globalThis.shopResultPrimary = elements.returnDashboardButton.textContent;
-globalThis.shopResultSecondary = elements.newRunButton.textContent;
-globalThis.shopShareHidden = elements.shareCardSection.classes.has("is-hidden");
-globalThis.shopShareButtonHidden = elements.shareButton.classes.has("is-hidden");
-globalThis.shopCopyButtonHidden = elements.copyButton.classes.has("is-hidden");
-globalThis.shopDownloadButtonHidden = elements.downloadButton.classes.has("is-hidden");
-globalThis.shopSaveButtonHidden = elements.saveButton.classes.has("is-hidden");
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+renderTofuShop(state);
+globalThis.inlineTabsBefore = elements.shopTabList.innerHTML;
+const firstButton = { dataset: { fulfillOrders: "1", orderType: "simple_tofu_box" } };
+handleTofuShopPanelClick({ target: { closest: () => firstButton } });
+const afterFirst = loadGameState();
+globalThis.inlineTipsAfterFirst = afterFirst.shop.tips;
+globalThis.inlineRepAfterFirst = afterFirst.shop.reputation;
+globalThis.inlineXpAfterFirst = afterFirst.totalXP;
+globalThis.inlineStockAfterFirst = afterFirst.shop.tofuStock;
+globalThis.inlineOrdersAfterFirst = afterFirst.shop.deliveryOrders;
+globalThis.inlineMessageAfterFirst = elements.shopInlineResult.textContent;
+globalThis.inlinePanelAfterFirst = elements.shopTabPanel.innerHTML;
+globalThis.inlineTabAfterFirst = appState.shopTab;
+globalThis.inlineSummaryView = globalThis.shopResultShownView || "";
+globalThis.inlineSummaryMode = appState.summaryMode || "";
+globalThis.inlineStampShown = !elements.stampFanfare.classes.has("is-hidden");
+globalThis.inlineStampTitle = elements.stampFanfareTitle.textContent;
+globalThis.inlineStampName = elements.stampFanfareName.textContent;
+hideStampFanfare();
+const second = loadGameState();
+second.shop.deliveryOrders = 4;
+second.shop.tofuStock = 100;
+second.shop.lifetimeDeliveryOrders = 5;
+saveGameState(second);
+const maxButton = { dataset: { fulfillOrders: "max", orderType: "family_tofu_tray" } };
+handleTofuShopPanelClick({ target: { closest: () => maxButton } });
+const afterMax = loadGameState();
+globalThis.inlineTipsAfterMax = afterMax.shop.tips;
+globalThis.inlineMessageAfterMax = elements.shopInlineResult.textContent;
+globalThis.inlineTabAfterMax = appState.shopTab;
+globalThis.inlineSummaryAfterMax = globalThis.shopResultShownView || "";
+globalThis.inlineStampHiddenAfterMax = elements.stampFanfare.classes.has("is-hidden");
 `, context);
 
-  assert.strictEqual(context.shopResultShownView, 'summary');
-  assert.strictEqual(context.shopResultMode, 'shop-order');
-  assert.strictEqual(context.shopResultCanFulfillAnother, true);
-  assert(context.shopResultViewClasses.includes('is-shop-result'));
-  assert.strictEqual(context.shopResultEyebrow, 'Tofu Shop');
-  assert.strictEqual(context.shopResultTitle, 'Shop Order Complete');
-  assert.strictEqual(context.shopResultCallout, '+10 Tips');
-  assert(context.shopResultDetails.includes('Packed and handed off from the counter.'));
-  assert(context.shopResultDetails.includes('Tips Gained'));
-  assert(context.shopResultDetails.includes('Reputation Gained'));
-  assert(context.shopResultDetails.includes('XP Gained'));
-  assert(context.shopResultDetails.includes('Stamp Discovered'));
-  assert(context.shopResultDetails.includes('First Shop Order'));
-  assert(context.shopResultDetails.includes('Tofu Stock'));
-  assert(context.shopResultDetails.includes('Delivery Orders'));
-  assert(context.shopResultDetails.includes('Shop Level'));
-  assert(context.shopResultDetails.includes('Next Best Action'));
-  assert(context.shopResultFlavor.includes('Packed and handed off from the counter.'));
-  assert(context.shopResultFlavor.includes('First Shop Order stamp discovered'));
-  assert.strictEqual(context.shopResultPrimary, 'Fulfill Another Shop Order');
-  assert.strictEqual(context.shopResultSecondary, 'Return to Tofu Shop');
-  assert(!context.shopResultPrimary.includes('Cup Test'));
-  assert(!context.shopResultSecondary.includes('Cup Test'));
-  assert.strictEqual(context.shopShareHidden, true);
-  assert.strictEqual(context.shopShareButtonHidden, true);
-  assert.strictEqual(context.shopCopyButtonHidden, true);
-  assert.strictEqual(context.shopDownloadButtonHidden, true);
-  assert.strictEqual(context.shopSaveButtonHidden, true);
+  assert(!context.inlineTabsBefore.includes('>Orders<'));
+  assert.strictEqual(context.inlineTipsAfterFirst, 15);
+  assert.strictEqual(context.inlineRepAfterFirst, 3);
+  assert.strictEqual(context.inlineXpAfterFirst, 8);
+  assert.strictEqual(context.inlineStockAfterFirst, 24);
+  assert.strictEqual(context.inlineOrdersAfterFirst, 1);
+  assert.strictEqual(context.inlineTabAfterFirst, 'overview');
+  assert.strictEqual(context.inlineSummaryView, '');
+  assert.strictEqual(context.inlineSummaryMode, '');
+  assert(context.inlinePanelAfterFirst.includes('Overview'));
+  assert(context.inlinePanelAfterFirst.includes('Simple Tofu Box'));
+  assert(context.inlineMessageAfterFirst.includes('Simple Tofu Box complete: +10 Tips, +1 Reputation, +8 XP'));
+  assert.strictEqual(context.inlineStampShown, true);
+  assert.strictEqual(context.inlineStampTitle, 'First Stamp Earned');
+  assert.strictEqual(context.inlineStampName, 'First Shop Order');
+  assert.strictEqual(context.inlineTipsAfterMax, 195);
+  assert.strictEqual(context.inlineTabAfterMax, 'overview');
+  assert.strictEqual(context.inlineSummaryAfterMax, '');
+  assert(context.inlineMessageAfterMax.includes('Family Tofu Tray x4 complete: +180 Tips, +12 Reputation, +96 XP'));
+  assert.strictEqual(context.inlineStampHiddenAfterMax, true);
 }
 
 function testResultScreenShowsGameSummarySections() {
@@ -4680,7 +4736,7 @@ function run() {
   testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels();
   testUnlockShelvesStayOutOfMainShopUi();
   testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
-  testShopOrderResultUsesCompactShopLayout();
+  testShopOrderFulfillmentStaysInlineAndKeepsFanfare();
   testResultScreenShowsGameSummarySections();
   testPostRunNavigationReturnsToUpdatedDashboard();
   testLocationPermissionFlowRemainsOptIn();
