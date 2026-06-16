@@ -49,9 +49,9 @@ Canonical references:
 ## Recommended Next Steps
 
 1. Review the full progression spec in `BALANCE_AND_PROGRESSION.md` before coding more gameplay.
-2. Continue implementing the First Loop Contract:
-   align first stamp reveal, first upgrade timing, stock-runway recommendations, order-size card
-   density, and early button visibility.
+2. Playtest and tune the implemented First Loop Contract:
+   fresh state, Simple Tofu Box, First Shop Order stamp reveal, first upgrade timing, stock-runway
+   recommendations, order-size card density, and early button visibility.
 3. Playtest and tune the implemented Order Types slice:
    Simple Tofu Box, Family Tofu Tray, Festival Bento, typed costs/rewards, Fulfill Max labeling,
    disabled reasons, and larger-order reveal timing.
@@ -59,22 +59,21 @@ Canonical references:
    confirm the first order, first upgrade, first bottleneck, and first stamp are clear.
 5. Hide or down-rank advanced systems during the first 10 minutes unless the balance spec says they
    should be visible.
-6. Add balance tests for the first loop:
-   first order rewards, first upgrade timing, visible `/sec` rate improvement, Tip-source disabled
-   button reasons, stock-runway recommendations, Prep Counter wait state, and no resource-negative
-   states.
+6. Expand balance tests only where playtesting reveals gaps:
+   mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
+   and Passport reveal timing.
 7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
 8. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
 9. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
-Do not build advanced systems next. The next implementation milestone is `Implement First Loop
-Contract`; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
-features stay deferred until the first 10 minutes are playtested.
+Do not build advanced systems next. The First Loop Contract is now implemented enough for
+playtesting; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
+features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
 1. Review Dream Garage design.
-2. Finish First Loop Contract.
+2. Playtest and tune First Loop Contract.
 3. Tune first 10 minutes.
 4. Implement Dream Garage teaser only.
 5. Implement Stage 0 garage restoration.

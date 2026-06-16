@@ -408,10 +408,10 @@ const SHOP_STATIONS = [
 ];
 
 const STATION_UPGRADES = [
-  { id: "tofu_press_faster", stationId: "tofu_press", name: "Steady Pressing", costTips: 60, effect: "Tofu Press rate +25%", maxLevel: 10 },
-  { id: "tofu_press_double", stationId: "tofu_press", name: "Double Mold", costTips: 100, effect: "Tofu Press output +50%", maxLevel: 8 },
-  { id: "prep_counter_faster", stationId: "prep_counter", name: "Tidy Packaging", costTips: 120, effect: "Prep Counter rate +25%", maxLevel: 10 },
-  { id: "prep_counter_double", stationId: "prep_counter", name: "Double Labels", costTips: 180, effect: "Prep Counter output +50%", maxLevel: 8 },
+  { id: "tofu_press_faster", stationId: "tofu_press", name: "Steady Pressing", costTips: 20, effect: "Tofu Press output x1.5", maxLevel: 10 },
+  { id: "tofu_press_double", stationId: "tofu_press", name: "Double Mold", costTips: 40, effect: "Tofu Press output x2", maxLevel: 8 },
+  { id: "prep_counter_faster", stationId: "prep_counter", name: "Tidy Packaging", costTips: 60, effect: "Prep Counter output x1.5", maxLevel: 10 },
+  { id: "prep_counter_double", stationId: "prep_counter", name: "Double Labels", costTips: 120, effect: "Prep Counter output x2", maxLevel: 8 },
   { id: "delivery_shelf_faster", stationId: "delivery_shelf", name: "Neat Handoff", costTips: 220, effect: "Delivery Shelf boost +20%", maxLevel: 8 },
   { id: "delivery_shelf_double", stationId: "delivery_shelf", name: "Double Stack", costTips: 320, effect: "Delivery Shelf capacity +30%", maxLevel: 8 },
   { id: "shop_sign_faster", stationId: "shop_sign", name: "Brighter Sign", costTips: 360, effect: "Reputation from orders +20%", maxLevel: 8 },
@@ -2355,8 +2355,11 @@ function stationOutputMultiplier(shop, stationId) {
   const doubleLevel = stationUpgradeLevel(shop, doubleUpgradeId);
   const network = safeNonNegativeInteger(shop && shop.stations && shop.stations.regional_network, 0, 100000);
   const perk = safeNonNegativeInteger(shop && shop.licensePerks && shop.licensePerks.shop_multiplier, 0, 20);
-  return (1 + faster * 0.25 + specific * 0.2)
-    * (1 + doubleLevel * 0.5)
+  const firstLoopStation = stationId === "tofu_press" || stationId === "prep_counter";
+  const fasterStep = firstLoopStation ? 0.5 : 0.25;
+  const doubleStep = firstLoopStation ? 1 : 0.5;
+  return (1 + faster * fasterStep + specific * 0.2)
+    * (1 + doubleLevel * doubleStep)
     * (1 + network * 0.08)
     * (1 + perk * 0.1);
 }
@@ -2510,7 +2513,8 @@ function shopOrderDisabledReason(orderType, gameState, unlocked = shopOrderTypeU
     return `Need ${orderType.deliveryOrdersRequired} ready Delivery Order${orderType.deliveryOrdersRequired === 1 ? "" : "s"}. ${prep.message}`;
   }
   if (state.shop.tofuStock < orderType.tofuRequired) {
-    return `Need ${orderType.tofuRequired - Math.floor(state.shop.tofuStock)} more tofu stock. Pack tofu or buy a Tofu Press.`;
+    const tofuNeeded = Math.max(1, Math.ceil(orderType.tofuRequired - state.shop.tofuStock));
+    return `Need ${tofuNeeded} more tofu stock. Pack tofu or buy a Tofu Press.`;
   }
   return "";
 }
@@ -2871,7 +2875,7 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
   if (tipsNeeded > 0) return `Need ${tipsNeeded} more Tips. Fulfill shop orders to earn Tips.`;
-  const prepNeeded = Math.max(0, safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots);
+  const prepNeeded = Math.max(0, Math.ceil(safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots));
   if (prepNeeded > 0) return `Need ${prepNeeded} more Prep Slot${prepNeeded === 1 ? "" : "s"}`;
   return "";
 }
@@ -3010,7 +3014,10 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   next.totalXP = Math.max(0, Math.round(Number(next.totalXP || 0) + xpGained));
   next.level = levelForXP(next.totalXP);
   next.shop.shopLevel = getShopLevel(next.shop.reputation);
-  if (!next.stamps.first_shop_order) next.stamps.first_shop_order = { date: new Date().toISOString(), label: STAMP_LABELS.first_shop_order };
+  const firstShopOrderStampUnlocked = !next.stamps.first_shop_order;
+  if (firstShopOrderStampUnlocked) {
+    next.stamps.first_shop_order = { date: new Date().toISOString(), label: STAMP_LABELS.first_shop_order };
+  }
   if (next.shop.lifetimeDeliveryOrders >= 10 && !next.stamps.first_10_orders) {
     next.stamps.first_10_orders = { date: new Date().toISOString(), label: STAMP_LABELS.first_10_orders };
   }
@@ -3019,7 +3026,11 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   }
   syncShopGenerators(next);
   next.shop.lastShopTickAt = new Date().toISOString();
-  next = addLedgerEntry(next, "order", `Fulfilled ${quantity} ${orderType.name}${quantity > 1 ? "s" : ""}.`);
+  next = addLedgerEntry(
+    next,
+    "order",
+    `Fulfilled ${quantity} ${orderType.name}${quantity > 1 ? "s" : ""}.${firstShopOrderStampUnlocked ? " First Shop Order stamp earned." : ""}`,
+  );
   next.recentRewards = [{
     date: next.shop.lastShopTickAt,
     type: "shop_order",
@@ -3039,10 +3050,11 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     tipsGained,
     reputationGained,
     xpGained,
+    firstShopOrderStampUnlocked,
     shopLevelBefore: previousShopLevel,
     shopLevelAfter: next.shop.shopLevel,
     shopLevelChanged: next.shop.shopLevel > previousShopLevel,
-    report: `${orderType.name}${quantity > 1 ? "s" : ""} complete. Packed and handed off from the counter.`,
+    report: `${orderType.name}${quantity > 1 ? "s" : ""} complete. Packed and handed off from the counter.${firstShopOrderStampUnlocked ? " First Shop Order stamp discovered." : ""}`,
   };
 }
 
@@ -5724,12 +5736,13 @@ function nextBestAction(gameState, options = {}) {
     const simpleOrder = bestOrder.id === "simple_tofu_box";
     const maxQuantity = maxFulfillableShopOrderQuantity(state, bestOrder);
     const useMax = simpleOrder && maxQuantity > 1;
+    const singleSimpleLabel = "Fulfill Simple Tofu Box";
     return {
       type: "fulfill_shop_order",
       title: useMax
         ? "Next: Fulfill Max Simple Orders"
         : simpleOrder
-          ? "Next: Fulfill Shop Order"
+          ? `Next: ${singleSimpleLabel}`
           : `Next: Fulfill ${bestOrder.name}`,
       copy: simpleOrder
         ? "You have prepared orders ready. Hand them off to earn Tips for stations and upgrades."
@@ -5737,7 +5750,7 @@ function nextBestAction(gameState, options = {}) {
       buttonLabel: useMax
         ? "Fulfill Max Simple Orders"
         : simpleOrder
-          ? "Fulfill Shop Order"
+          ? singleSimpleLabel
           : `Fulfill ${bestOrder.name}`,
       orderQuantity: useMax ? "max" : "1",
       orderTypeId: bestOrder.id,
@@ -5899,15 +5912,15 @@ function renderGameDashboard(gameState = loadGameState()) {
   if (elements.gamePassportEmpty) {
     elements.gamePassportEmpty.textContent = reveal.passport
       ? `${passport.total}/${passport.totalAvailable} stamps collected.`
-      : "The passport opens after your first stamp-worthy delivery.";
+      : "The passport opens after your first stamp-worthy shop moment.";
   }
   if (elements.gamePassportPreview) {
-    elements.gamePassportPreview.innerHTML = [
-      "first_delivery",
-      "daily_delivery_complete",
-      "nospill_club",
-      "perfect_pour",
-    ].map((id) => `<span>${escapeHtml(stampLockLabel(state, id))}</span>`).join("");
+    const previewIds = reveal.passport
+      ? ["first_shop_order", "first_10_orders", "first_100_tips"]
+      : ["first_shop_order", "first_delivery", "daily_delivery_complete"];
+    elements.gamePassportPreview.innerHTML = previewIds
+      .map((id) => `<span>${escapeHtml(stampLockLabel(state, id))}</span>`)
+      .join("");
   }
   if (elements.gamePackTofuButton) {
     const activeDrive = appState.running || appState.calibrating;
@@ -6441,17 +6454,35 @@ function renderRivalsPanel(state) {
 }
 
 function renderPassportPanel(state) {
-  const stamps = Object.entries(STAMP_LABELS);
+  const unlockedStamps = Object.entries(STAMP_LABELS)
+    .filter(([id]) => state.stamps[id]);
+  const nextStampIds = ["first_10_orders", "first_100_tips", "shop_street_complete"]
+    .filter((id) => !state.stamps[id])
+    .slice(0, 2);
+  const cards = [
+    ...unlockedStamps.map(([id, label]) => renderIdleCard({
+      title: label,
+      status: "Unlocked",
+      copy: "Stamped in your local passport.",
+      locked: false,
+    })),
+    ...nextStampIds.map((id) => renderIdleCard({
+      title: STAMP_LABELS[id] || "Next Stamp",
+      status: "Teaser",
+      copy: "Keep growing the shop to discover this stamp.",
+      locked: true,
+    })),
+  ];
   return `
     <h4>Delivery Passport</h4>
-    <p class="nospill-panel-helper">Stamps are local collectibles for shop, route, certified, style, secret, and license progress.</p>
+    <p class="nospill-panel-helper">Stamps appear as discoveries. The full catalog stays hidden until the shop has earned more of it.</p>
     <div class="nospill-idle-grid">
-      ${stamps.map(([id, label]) => renderIdleCard({
-        title: label,
-        status: state.stamps[id] ? "Unlocked" : "Locked",
-        copy: state.stamps[id] ? "Stamped in your local passport." : "Keep growing the shop or earning certified smooth results.",
-        locked: !state.stamps[id],
-      })).join("")}
+      ${cards.length ? cards.join("") : renderIdleCard({
+        title: "Passport",
+        status: "Quiet",
+        copy: "Fulfill your first shop order to discover the first stamp.",
+        locked: true,
+      })}
     </div>
   `;
 }
@@ -6645,11 +6676,16 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.fulfillShopOrderButton) {
     const activeDrive = appState.running || appState.calibrating;
-    const canFulfill = reveal.shop && prep.ready > 0 && !activeDrive;
+    const bestOrder = bestFulfillableShopOrderType(state);
+    const canFulfill = reveal.shop && prep.ready > 0 && Boolean(bestOrder) && !activeDrive;
     elements.fulfillShopOrderButton.disabled = !canFulfill;
     elements.fulfillShopOrderButton.textContent = activeDrive
       ? "Park First"
-      : "Fulfill Shop Order";
+      : bestOrder && bestOrder.id === "simple_tofu_box"
+        ? "Fulfill Simple Tofu Box"
+        : bestOrder
+          ? `Fulfill ${bestOrder.name}`
+          : "Fulfill Shop Order";
   }
   if (elements.packTofuHelper) {
     elements.packTofuHelper.textContent = appState.running || appState.calibrating
@@ -7088,6 +7124,9 @@ function renderShopOrderResult(result) {
       summaryMetric("Tips Gained", `+${result.tipsGained}`),
       summaryMetric("Reputation Gained", `+${result.reputationGained}`),
       summaryMetric("XP Gained", `+${result.xpGained}`),
+      result.firstShopOrderStampUnlocked
+        ? summaryMetric("Stamp Discovered", STAMP_LABELS.first_shop_order, "nospill-is-good")
+        : "",
       summaryMetric("Tofu Stock", String(shop.tofuStock)),
       summaryMetric("Delivery Orders", String(shop.deliveryOrders)),
       summaryMetric("Shop Level", `Level ${shop.shopLevel}`),
@@ -7563,6 +7602,11 @@ function handleFulfillShopOrder(requestedQuantity = 1, orderTypeId = "simple_tof
   playCosmeticSound("shop_pack_tofu", result.gameState, {
     activeDrive: false,
   });
+}
+
+function handleFulfillBestShopOrder() {
+  const bestOrder = bestFulfillableShopOrderType(currentGameState());
+  handleFulfillShopOrder("1", bestOrder ? bestOrder.id : "simple_tofu_box");
 }
 
 function handleShopUpgradeClick(event) {
@@ -8159,7 +8203,7 @@ function bindEvents() {
     elements.gamePackTofuButton.addEventListener("click", handlePackTofu);
   }
   elements.packTofuButton.addEventListener("click", handlePackTofu);
-  elements.fulfillShopOrderButton.addEventListener("click", handleFulfillShopOrder);
+  elements.fulfillShopOrderButton.addEventListener("click", handleFulfillBestShopOrder);
   if (elements.shopTabPanel) elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick);
   if (elements.shopTabList) elements.shopTabList.addEventListener("click", handleTofuShopPanelClick);
   if (elements.shopGeneratorList) elements.shopGeneratorList.addEventListener("click", handleTofuShopPanelClick);
