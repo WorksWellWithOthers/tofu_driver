@@ -753,6 +753,8 @@ Early UI rule:
   station/upgrade card, and optional Cup Test as a secondary card.
 - Orders is a detailed support panel, not required for the first loop.
 - Production is the station-buying/detail panel and should not simply duplicate Overview.
+- Production owns station controls. Upgrades owns upgrade controls. Passport, Ledger, Settings, and
+  Orders must not append Generators/Stations or Upgrades sections from another panel.
 - Do not show full locked sublists.
 - Do not show a visible roadmap of every future unlock.
 - Do not make settings/debug/QA prominent.

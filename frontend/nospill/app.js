@@ -7103,42 +7103,6 @@ function renderTofuShop(gameState = loadGameState()) {
         ? "Turn prepared orders into Tips, Reputation, and XP."
         : `Need 1 prepared order. ${prep.message}`;
   }
-  if (elements.shopUpgradeList) {
-    const upgrades = visibleRelevantStationUpgrades(state);
-    elements.shopUpgradeList.innerHTML = reveal.shop
-      ? upgrades.length
-        ? upgrades.slice(0, 2).map((upgrade) => renderStationUpgradeCard(upgrade, state)).join("")
-        : ""
-      : `
-        <div class="nospill-upgrade-item is-locked">
-          <header>
-            <strong>Station Upgrades</strong>
-            <small>Locked</small>
-          </header>
-          <small>The press is warming up. Start the shop while parked.</small>
-        </div>
-      `;
-  }
-  if (elements.shopUpgradesPanel && elements.shopUpgradesPanel.classList) {
-    const upgrades = visibleRelevantStationUpgrades(state);
-    elements.shopUpgradesPanel.classList.toggle("is-hidden", reveal.shop && upgrades.length === 0);
-  }
-  if (elements.shopGeneratorList) {
-    elements.shopGeneratorList.innerHTML = reveal.shop
-      ? [
-        renderShopGeneratorCard("tofuPress", state),
-        renderShopGeneratorCard("prepCounter", state),
-      ].join("")
-      : `
-        <div class="nospill-generator-item is-locked">
-          <header>
-            <strong>Tofu Press</strong>
-            <small>Locked</small>
-          </header>
-          <small>The press is warming up. Start the shop while parked.</small>
-        </div>
-      `;
-  }
   renderShopTabs(state);
   if (elements.shopOfflineEarnings) {
     const offlineTofu = Number(shop.offlineEarnings && shop.offlineEarnings.tofuStock || 0);
@@ -8575,12 +8539,12 @@ function focusShopUpgrade(upgradeId = "") {
   appState.shopTab = "upgrades";
   renderGamePanels(currentGameState());
   elements.tofuShopSection.scrollIntoView({ behavior: "smooth", block: "start" });
-  if (!upgradeId || !elements.shopUpgradeList || !elements.shopUpgradeList.querySelector) return;
+  if (!upgradeId || !elements.shopTabPanel || !elements.shopTabPanel.querySelector) return;
   const safeUpgradeId =
     typeof CSS !== "undefined" && CSS.escape
       ? CSS.escape(upgradeId)
       : String(upgradeId).replace(/"/g, "");
-  const button = elements.shopUpgradeList.querySelector(`[data-station-upgrade="${safeUpgradeId}"], [data-shop-upgrade="${safeUpgradeId}"]`);
+  const button = elements.shopTabPanel.querySelector(`[data-station-upgrade="${safeUpgradeId}"], [data-shop-upgrade="${safeUpgradeId}"]`);
   if (button && typeof button.focus === "function") button.focus();
 }
 
@@ -8742,14 +8706,14 @@ function bindEvents() {
   }
   elements.packTofuButton.addEventListener("click", handlePackTofu);
   elements.fulfillShopOrderButton.addEventListener("click", handleFulfillBestShopOrder);
-  if (elements.shopTabPanel) elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick);
+  if (elements.shopTabPanel) {
+    elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick);
+    elements.shopTabPanel.addEventListener("click", handleShopUpgradeClick);
+  }
   if (elements.shopTabList) elements.shopTabList.addEventListener("click", handleTofuShopPanelClick);
-  if (elements.shopGeneratorList) elements.shopGeneratorList.addEventListener("click", handleTofuShopPanelClick);
-  if (elements.shopUpgradeList) elements.shopUpgradeList.addEventListener("click", handleTofuShopPanelClick);
   if (elements.shopBuyMultiplier) {
     elements.shopBuyMultiplier.addEventListener("change", handleShopMultiplierChange);
   }
-  elements.shopUpgradeList.addEventListener("click", handleShopUpgradeClick);
   elements.characterList.addEventListener("click", handleCharacterSelect);
   elements.soundPackList.addEventListener("click", handleSoundPackSelect);
   elements.previewSoundButton.addEventListener("click", handlePreviewSound);
@@ -8876,9 +8840,6 @@ function cacheElements() {
     packTofuHelper: document.getElementById("pack-tofu-helper"),
     fulfillShopOrderButton: document.getElementById("fulfill-shop-order-button"),
     fulfillShopOrderHelper: document.getElementById("fulfill-shop-order-helper"),
-    shopGeneratorList: document.getElementById("shop-generator-list"),
-    shopUpgradesPanel: document.getElementById("shop-upgrades-panel"),
-    shopUpgradeList: document.getElementById("shop-upgrade-list"),
     deliveryWallGrid: document.getElementById("delivery-wall-grid"),
     shopOfflineEarnings: document.getElementById("shop-offline-earnings"),
     selectedCharacterBadge: document.getElementById("selected-character-badge"),

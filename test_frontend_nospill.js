@@ -731,8 +731,8 @@ elements = {
   packTofuHelper: makeNode(),
   fulfillShopOrderButton: makeNode(),
   fulfillShopOrderHelper: makeNode(),
-  shopGeneratorList: makeNode(),
-  shopUpgradeList: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
   deliveryWallGrid: makeNode(),
   shopOfflineEarnings: makeNode(),
   selectedCharacterBadge: makeNode(),
@@ -750,6 +750,7 @@ elements = {
 appState.running = false;
 appState.calibrating = false;
 appState.surface = "shop";
+appState.shopTab = "production";
 const firstRunState = defaultGameState();
 renderGamePanels(firstRunState);
 globalThis.firstReveal = progressiveRevealState(firstRunState);
@@ -761,8 +762,10 @@ globalThis.firstPackText = elements.packTofuButton.textContent;
 globalThis.firstPackHelper = elements.packTofuHelper.textContent;
 globalThis.firstFulfillDisabled = elements.fulfillShopOrderButton.disabled;
 globalThis.firstFulfillHelper = elements.fulfillShopOrderHelper.textContent;
-globalThis.firstGeneratorHtml = elements.shopGeneratorList.innerHTML;
-globalThis.firstUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.firstProductionHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "upgrades";
+renderTofuShop(firstRunState);
+globalThis.firstUpgradeFallbackHtml = elements.shopTabPanel.innerHTML;
 globalThis.firstCharacterHtml = elements.characterList.innerHTML;
 globalThis.firstSoundHtml = elements.soundPackList.innerHTML;
 globalThis.firstPreviewDisabled = elements.previewSoundButton.disabled;
@@ -771,6 +774,7 @@ const simulated = applySimulatedDelivery(
   firstRunState,
   { now: new Date("2026-06-14T12:00:00.000Z") },
 );
+appState.shopTab = "production";
 renderGamePanels(simulated.gameState);
 globalThis.afterReveal = progressiveRevealState(simulated.gameState);
 globalThis.afterDeliveryBoardHidden = elements.deliveryBoardSection.classListValue;
@@ -780,8 +784,10 @@ globalThis.afterDashboardStock = elements.gameShopStock.textContent;
 globalThis.afterDashboardPassport = elements.gamePassportEmpty.textContent;
 globalThis.afterPackDisabled = elements.packTofuButton.disabled;
 globalThis.afterPackText = elements.packTofuButton.textContent;
-globalThis.afterGeneratorHtml = elements.shopGeneratorList.innerHTML;
-globalThis.afterUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.afterProductionHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "upgrades";
+renderTofuShop(simulated.gameState);
+globalThis.afterUpgradePanelHtml = elements.shopTabPanel.innerHTML;
 globalThis.afterCharacterHtml = elements.characterList.innerHTML;
 globalThis.afterSoundHtml = elements.soundPackList.innerHTML;
 globalThis.afterPreviewDisabled = elements.previewSoundButton.disabled;
@@ -792,10 +798,11 @@ globalThis.crewSurfaceCharacterHtml = elements.characterList.innerHTML;
 globalThis.crewSurfaceSoundHtml = elements.soundPackList.innerHTML;
 globalThis.crewSurfacePreviewDisabled = elements.previewSoundButton.disabled;
 appState.running = true;
+appState.shopTab = "production";
 renderTofuShop(simulated.gameState);
 renderCollectionPanel(simulated.gameState);
 globalThis.activePackDisabled = elements.packTofuButton.disabled;
-globalThis.activeGeneratorHtml = elements.shopGeneratorList.innerHTML;
+globalThis.activeProductionHtml = elements.shopTabPanel.innerHTML;
 globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
 `, context);
 
@@ -811,16 +818,16 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert(context.firstPackHelper.includes('Tofu Stock feeds Prep Counter and larger orders'));
   assert.strictEqual(context.firstFulfillDisabled, false);
   assert(context.firstFulfillHelper.includes('Turn prepared orders into Tips'));
-  assert(context.firstGeneratorHtml.includes('Tofu Press'));
-  assert(context.firstGeneratorHtml.includes('+0.05 tofu/sec'));
-  assert(context.firstGeneratorHtml.includes('Buy Tofu Press'));
-  assert(context.firstGeneratorHtml.includes('data-shop-station="tofu_press"'));
-  assert(!context.firstGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
-  assert(!context.firstGeneratorHtml.includes('>Upgrade<'));
-  assert.strictEqual(context.firstUpgradeHtml, '');
-  assert(!context.firstUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
-  assert(!context.firstUpgradeHtml.includes('Better Boxes'));
-  assert(!context.firstUpgradeHtml.includes('Shop Sign'));
+  assert(context.firstProductionHtml.includes('Tofu Press'));
+  assert(context.firstProductionHtml.includes('Buy Tofu Press'));
+  assert(context.firstProductionHtml.includes('data-shop-station="tofu_press"'));
+  assert(!context.firstProductionHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.firstProductionHtml.includes('>Upgrade<'));
+  assert(context.firstUpgradeFallbackHtml.includes('Overview'));
+  assert(!context.firstUpgradeFallbackHtml.includes('Station Upgrades'));
+  assert(!context.firstUpgradeFallbackHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.firstUpgradeFallbackHtml.includes('Better Boxes'));
+  assert(!context.firstUpgradeFallbackHtml.includes('Shop Sign'));
   assert(context.firstCharacterHtml.includes('No one is on shift yet. Your first delivery may attract help.'));
   assert(!context.firstCharacterHtml.includes('data-character-id'));
   assert(context.firstSoundHtml.includes('New sounds unlock as your delivery reputation grows.'));
@@ -838,11 +845,10 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert(context.afterDashboardPassport.includes('stamps collected.'));
   assert.strictEqual(context.afterPackDisabled, false);
   assert.strictEqual(context.afterPackText, 'Pack Tofu (backup)');
-  assert(context.afterGeneratorHtml.includes('Tofu Press'));
-  assert(context.afterGeneratorHtml.includes('+0.05 tofu/sec'));
-  assert(context.afterGeneratorHtml.includes('Prep Counter'));
-  assert(!context.afterGeneratorHtml.includes('data-shop-upgrade="tofu_press"'));
-  assert(!context.afterUpgradeHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(context.afterProductionHtml.includes('Tofu Press'));
+  assert(context.afterProductionHtml.includes('Prep Counter'));
+  assert(!context.afterProductionHtml.includes('data-shop-upgrade="tofu_press"'));
+  assert(!context.afterUpgradePanelHtml.includes('data-shop-upgrade="tofu_press"'));
   assert.strictEqual(context.crewSurfaceCollectionHidden, false);
   assert(context.crewSurfaceCharacterHtml.includes('Angry Tofu Driver'));
   assert(context.crewSurfaceCharacterHtml.includes('data-character-id="angry_tofu_driver"'));
@@ -850,8 +856,8 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert(context.crewSurfaceSoundHtml.includes('data-sound-pack-id="retro_arcade"'));
   assert.strictEqual(context.crewSurfacePreviewDisabled, false);
   assert.strictEqual(context.activePackDisabled, true);
-  assert(context.activeGeneratorHtml.includes('data-shop-station="tofu_press"'));
-  assert(context.activeGeneratorHtml.includes('disabled'));
+  assert(context.activeProductionHtml.includes('data-shop-station="tofu_press"'));
+  assert(context.activeProductionHtml.includes('disabled'));
   assert.strictEqual(context.activePreviewDisabled, true);
 }
 
@@ -905,9 +911,6 @@ elements = {
   fulfillShopOrderButton: makeNode(),
   packTofuHelper: makeNode(),
   fulfillShopOrderHelper: makeNode(),
-  shopUpgradesPanel: makeNode(),
-  shopUpgradeList: makeNode(),
-  shopGeneratorList: makeNode(),
   shopTabList: makeNode(),
   shopTabPanel: makeNode(),
   shopOfflineEarnings: makeNode(),
@@ -935,18 +938,24 @@ appState.surface = "shop";
 appState.shopTab = "overview";
 const fresh = defaultGameState();
 renderTofuShop(fresh);
-globalThis.freshGeneratorHtml = elements.shopGeneratorList.innerHTML;
-globalThis.freshUpgradeHtml = elements.shopUpgradeList.innerHTML;
-globalThis.freshUpgradePanelHidden = elements.shopUpgradesPanel.classListValue;
+globalThis.freshOverviewHtml = elements.shopTabPanel.innerHTML;
 globalThis.freshTabsHtml = elements.shopTabList.innerHTML;
 globalThis.freshOfflineText = elements.shopOfflineEarnings.textContent;
+appState.shopTab = "production";
+renderTofuShop(fresh);
+globalThis.freshProductionHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "upgrades";
+renderTofuShop(fresh);
+globalThis.freshLockedUpgradeFallbackHtml = elements.shopTabPanel.innerHTML;
 const firstOrderSource = defaultGameState();
 firstOrderSource.shop.deliveryOrders = 1;
 const firstOrder = fulfillShopOrders(firstOrderSource, 1, { activeDrive: false }).gameState;
+appState.shopTab = "overview";
 renderTofuShop(firstOrder);
-globalThis.afterOrderUpgradeHtml = elements.shopUpgradeList.innerHTML;
-globalThis.afterOrderUpgradePanelHidden = elements.shopUpgradesPanel.classListValue;
 globalThis.afterOrderTabsHtml = elements.shopTabList.innerHTML;
+appState.shopTab = "upgrades";
+renderTofuShop(firstOrder);
+globalThis.afterOrderUpgradePanelHtml = elements.shopTabPanel.innerHTML;
 appState.shopTab = "passport";
 renderTofuShop(firstOrder);
 globalThis.afterFirstStampPassportHtml = elements.shopTabPanel.innerHTML;
@@ -961,12 +970,18 @@ leveled.shop.stations.tofu_press = 2;
 leveled.shop.stations.prep_counter = 2;
 leveled.shop.stationUpgrades.tofu_press_faster = 1;
 leveled.shop.stationUpgrades.prep_counter_faster = 1;
+appState.shopTab = "production";
 renderTofuShop(leveled);
-globalThis.leveledGeneratorHtml = elements.shopGeneratorList.innerHTML;
-globalThis.leveledUpgradeHtml = elements.shopUpgradeList.innerHTML;
+globalThis.leveledProductionHtml = elements.shopTabPanel.innerHTML;
 appState.shopTab = "upgrades";
 renderTofuShop(leveled);
 globalThis.leveledUpgradePanelHtml = elements.shopTabPanel.innerHTML;
+const passportFull = JSON.parse(JSON.stringify(leveled));
+passportFull.shop.lifetimeDeliveryOrders = 10;
+passportFull.stamps.first_10_orders = { date: "2026-06-15T00:05:00.000Z", label: "First 10 Orders" };
+appState.shopTab = "passport";
+renderTofuShop(passportFull);
+globalThis.passportFullPanelHtml = elements.shopTabPanel.innerHTML;
 const offline = defaultGameState();
 offline.shop.offlineEarnings.tofuStock = 4.8;
 offline.shop.offlineEarnings.deliveryOrders = 1.2;
@@ -978,6 +993,12 @@ fractionalPrep.shop.prepSlots = 0.35;
 appState.shopTab = "production";
 renderTofuShop(fractionalPrep);
 globalThis.fractionalPrepHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "settings";
+renderTofuShop(leveled);
+globalThis.settingsPanelHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "ledger";
+renderTofuShop(leveled);
+globalThis.ledgerPanelHtml = elements.shopTabPanel.innerHTML;
 const rawAccumulated = defaultGameState();
 rawAccumulated.shop.tips = 10000;
 rawAccumulated.shop.reputation = 1000;
@@ -993,33 +1014,35 @@ globalThis.rawAccumulatedActiveTab = appState.shopTab;
 globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
 `, context);
 
-  assert(context.freshGeneratorHtml.includes('Buy Tofu Press'));
-  assert(context.freshGeneratorHtml.includes('Buy Max Tofu Press'));
-  assert(context.freshGeneratorHtml.includes('Tips'));
-  assert(!context.freshGeneratorHtml.includes('>Upgrade<'));
-  assert(!context.freshGeneratorHtml.includes('data-shop-upgrade'));
-  assert(context.freshGeneratorHtml.includes('Need '));
-  assert.strictEqual(context.freshUpgradeHtml, '');
-  assert.strictEqual(context.freshUpgradePanelHidden, true);
-  assert(!context.freshUpgradeHtml.includes('Tofu Press Lv'));
-  assert(!context.freshUpgradeHtml.includes('Prep Counter Lv'));
-  assert(!context.freshUpgradeHtml.includes('Better Boxes'));
-  assert(!context.freshUpgradeHtml.includes('Shop Sign'));
+  assert(context.freshOverviewHtml.includes('Overview'));
+  assert(context.freshOverviewHtml.includes('Preparing Next Order'));
+  assert(context.freshOverviewHtml.includes('Simple Tofu Box'));
+  assert(context.freshProductionHtml.includes('Production'));
+  assert(context.freshProductionHtml.includes('Buy Tofu Press'));
+  assert(context.freshProductionHtml.includes('Buy Max Tofu Press'));
+  assert(context.freshProductionHtml.includes('Tips'));
+  assert(!context.freshProductionHtml.includes('>Upgrade<'));
+  assert(!context.freshProductionHtml.includes('data-shop-upgrade'));
+  assert(context.freshProductionHtml.includes('Need '));
+  assert(!context.freshTabsHtml.includes('>Upgrades<'));
+  assert(context.freshLockedUpgradeFallbackHtml.includes('Overview'));
+  assert(!context.freshLockedUpgradeFallbackHtml.includes('Station Upgrades'));
   assert.strictEqual(context.freshOfflineText, '');
   ['Routes', 'Crew', 'Garage', 'Shop Spirit', 'Rivals', 'License'].forEach((label) => {
     assert(!context.freshTabsHtml.includes(`>${label}<`), label);
   });
-  assert.strictEqual(context.afterOrderUpgradePanelHidden, false);
-  assert(context.afterOrderUpgradeHtml.includes('Steady Pressing Lv 0'));
-  assert(context.afterOrderUpgradeHtml.includes('data-station-upgrade="tofu_press_faster"'));
-  assert(context.afterOrderUpgradeHtml.includes('Tofu Press output x1.5'));
-  assert(context.afterOrderUpgradeHtml.includes('Tofu Press:'));
-  assert(context.afterOrderUpgradeHtml.includes('Helps when Tofu Stock is running low.'));
-  assert(context.afterOrderUpgradeHtml.includes('Need '));
-  assert(!context.afterOrderUpgradeHtml.includes('Buy Upgrade'));
-  assert(!context.afterOrderUpgradeHtml.includes('Better Boxes'));
-  assert(!context.afterOrderUpgradeHtml.includes('Shop Sign'));
   assert(context.afterOrderTabsHtml.includes('Upgrades'));
+  assert(context.afterOrderUpgradePanelHtml.includes('Station Upgrades'));
+  assert(
+    context.afterOrderUpgradePanelHtml.includes('Tidy Packaging Lv 0')
+      || context.afterOrderUpgradePanelHtml.includes('Steady Pressing Lv 0'),
+  );
+  assert(context.afterOrderUpgradePanelHtml.includes('data-station-upgrade='));
+  assert(context.afterOrderUpgradePanelHtml.includes('output x1.5'));
+  assert(context.afterOrderUpgradePanelHtml.includes('Need '));
+  assert(!context.afterOrderUpgradePanelHtml.includes('Buy Upgrade'));
+  assert(!context.afterOrderUpgradePanelHtml.includes('Better Boxes'));
+  assert(!context.afterOrderUpgradePanelHtml.includes('Shop Sign'));
   assert(!context.afterOrderTabsHtml.includes('Passport'));
   assert(context.afterFirstStampPassportHtml.includes('First Shop Order'));
   assert(context.afterFirstStampPassportHtml.includes('Teaser'));
@@ -1027,13 +1050,23 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert(context.afterFirstStampPassportHtml.includes('More stamps stay tucked away until the shop grows.'));
   assert(!context.afterFirstStampPassportHtml.includes('Perfect Pour'));
   assert(!context.afterFirstStampPassportHtml.includes('No-Spill Club'));
-  assert(context.leveledGeneratorHtml.includes('Tofu Press'));
-  assert(context.leveledGeneratorHtml.includes('Owned: 2'));
-  assert(context.leveledGeneratorHtml.includes('Prep Counter'));
-  assert(context.leveledUpgradeHtml.includes('Steady Pressing Lv 1'));
+  assert(context.passportFullPanelHtml.includes('Delivery Passport'));
+  assert(context.passportFullPanelHtml.includes('First Shop Order'));
+  assert(!context.passportFullPanelHtml.includes('Production'));
+  assert(!context.passportFullPanelHtml.includes('Station Upgrades'));
+  assert(!context.passportFullPanelHtml.includes('Buy Tofu Press'));
+  assert(context.leveledProductionHtml.includes('Tofu Press'));
+  assert(context.leveledProductionHtml.includes('Owned: 2'));
+  assert(context.leveledProductionHtml.includes('Prep Counter'));
+  assert(!context.leveledProductionHtml.includes('Station Upgrades'));
   assert(context.leveledUpgradePanelHtml.includes('Tidy Packaging Lv 1'));
-  assert(!context.leveledUpgradeHtml.includes('Tofu Press Lv 1'));
+  assert(!context.leveledUpgradePanelHtml.includes('Tofu Press</strong>'));
+  assert(!context.leveledUpgradePanelHtml.includes('Buy Tofu Press'));
   assert(!context.leveledUpgradePanelHtml.includes('Prep Counter Lv 1'));
+  assert(!context.settingsPanelHtml.includes('Tofu Press'));
+  assert(!context.settingsPanelHtml.includes('Station Upgrades'));
+  assert(!context.ledgerPanelHtml.includes('Tofu Press'));
+  assert(!context.ledgerPanelHtml.includes('Station Upgrades'));
   assert(context.positiveOfflineText.includes('While you were away: +'));
   assert(context.positiveOfflineText.includes('tofu stock'));
   assert(context.positiveOfflineText.includes('delivery orders'));
@@ -1045,6 +1078,10 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(context.rawAccumulatedActiveTab, 'overview');
   assert(context.rawAccumulatedRouteFallbackHtml.includes('Overview'));
   assert(!context.rawAccumulatedRouteFallbackHtml.includes('Start Route Card'));
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(!html.includes('id="shop-generator-list"'));
+  assert(!html.includes('id="shop-upgrade-list"'));
+  assert(!html.includes('id="shop-upgrades-panel"'));
 }
 
 function testEarlyShopResourceFunnelMakesTipsObvious() {
@@ -1097,8 +1134,6 @@ elements = {
   fulfillShopOrderButton: makeNode(),
   packTofuHelper: makeNode(),
   fulfillShopOrderHelper: makeNode(),
-  shopUpgradeList: makeNode(),
-  shopGeneratorList: makeNode(),
   shopTabList: makeNode(),
   shopTabPanel: makeNode(),
   shopOfflineEarnings: makeNode(),
@@ -1147,7 +1182,6 @@ renderTofuShop(funnel);
 globalThis.funnelPackText = elements.packTofuButton.textContent;
 globalThis.funnelPackHelper = elements.packTofuHelper.textContent;
 globalThis.funnelFulfillHelper = elements.fulfillShopOrderHelper.textContent;
-globalThis.funnelUpgradeHtml = elements.shopUpgradeList.innerHTML;
 appState.shopTab = "overview";
 renderTofuShop(funnel);
 globalThis.funnelOverviewHtml = elements.shopTabPanel.innerHTML;
@@ -1200,7 +1234,6 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert(context.funnelOrdersHtml.includes('Fulfill Simple Tofu Box'));
   assert(context.funnelOrdersHtml.includes('Fulfill Max Simple Tofu Box x83'));
   assert(context.funnelProductionHtml.includes('Fulfill shop orders to earn Tips.'));
-  assert.strictEqual(context.funnelUpgradeHtml, '');
   assert.strictEqual(context.funnelFulfilledOk, true);
   assert.strictEqual(context.funnelFulfilledQuantity, 83);
   assert.strictEqual(context.funnelTipsAfterMax, 830);
@@ -1505,8 +1538,6 @@ renderGameDashboard(highStock);
 globalThis.highTopTitle = elements.gameNextActionTitle.textContent;
 globalThis.highTopCopy = elements.gameNextActionCopy.textContent;
 globalThis.highTopStation = elements.gameCtaButton.dataset.nextStation;
-renderTofuShop(highStock);
-globalThis.highGeneratorHtml = elements.shopGeneratorList.innerHTML;
 appState.shopTab = "orders";
 renderTofuShop(highStock);
 globalThis.highOrdersHtml = elements.shopTabPanel.innerHTML;
@@ -1544,8 +1575,6 @@ globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.g
   assert(context.highBottleneck.action.includes('Buy Tidy Packaging'));
   assert(!context.highTopTitle.includes('Tofu Press'));
   assert(!context.highTopCopy.includes('Certified boost'));
-  assert(context.highGeneratorHtml.includes('Not urgent: you have enough tofu for now.'));
-  assert(context.highGeneratorHtml.includes('Prep Counter is the bottleneck.'));
   assert(context.highProductionHtml.includes('Not urgent: you have enough tofu for now.'));
   assert(context.highProductionHtml.includes('Prep Counter is the bottleneck.'));
   assert(context.highUpgradePanelHtml.includes('Tidy Packaging Lv 0'));
@@ -2347,6 +2376,9 @@ globalThis.orderTypePanelHtml = elements.shopTabPanel.innerHTML;
   assert(context.orderTypePanelHtml.includes('Reward: +45 Tips, +3 Reputation, +24 XP.'));
   assert(context.orderTypePanelHtml.includes('Fulfill Max Family Tofu Tray x4'));
   assert(!context.orderTypePanelHtml.includes('Catering Crate'));
+  assert(!context.orderTypePanelHtml.includes('Production'));
+  assert(!context.orderTypePanelHtml.includes('Station Upgrades'));
+  assert(!context.orderTypePanelHtml.includes('Buy Tofu Press'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -3539,8 +3571,8 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
   renderedAttrs.forEach((attr) => {
     assert(delegatedAttrs.includes(attr), `visible action lacks click delegation: ${attr}`);
   });
-  assert(source.includes('elements.shopGeneratorList.addEventListener("click", handleTofuShopPanelClick)'));
-  assert(source.includes('elements.shopUpgradeList.addEventListener("click", handleTofuShopPanelClick)'));
+  assert(source.includes('elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick)'));
+  assert(source.includes('elements.shopTabPanel.addEventListener("click", handleShopUpgradeClick)'));
   assert(!/\bfetch\s*\(/.test(source));
   assert(!source.includes('XMLHttpRequest'));
   assert(!source.includes('sendBeacon'));

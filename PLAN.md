@@ -25,6 +25,9 @@
 - Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
   progress, the best available order card, and the relevant next station/upgrade so the first loop
   is playable without opening Orders.
+- Tofu Shop tab panels are scoped: Production owns station buying, Upgrades owns upgrade buying,
+  Orders remains order-focused, and Passport/Ledger/Settings no longer inherit Generators or
+  Upgrades sections.
 - The first Passport stamp now triggers a local Stamp Fanfare on the shop-order result path, with
   repeat suppression, accessible dialog semantics, reduced-motion handling, and muted-audio respect.
 - The first hidden shop system reveal now uses a local Discovery Fanfare: Upgrades are revealed

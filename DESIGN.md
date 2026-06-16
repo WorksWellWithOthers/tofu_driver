@@ -197,6 +197,8 @@ Current design principles:
 - Detailed tabs are earned. Orders can remain as a detailed support panel, Production should focus
   on station ownership, and Upgrades should appear only when at least one relevant upgrade is
   visible or close.
+- Tab panels are scoped. Passport, Ledger, Settings, and Orders should not append the Production or
+  Upgrades controls; station buying belongs in Production and upgrade buying belongs in Upgrades.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
   are needed.
