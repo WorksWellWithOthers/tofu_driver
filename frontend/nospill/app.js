@@ -722,6 +722,8 @@ const STAMP_LABELS = {
   first_prep_counter: "First Prep Counter",
   first_10_orders: "First 10 Orders",
   first_100_tips: "First 100 Tips",
+  first_upgrade_purchased: "First Upgrade Purchased",
+  first_family_tofu_tray: "First Family Tofu Tray",
   shop_street_complete: "Shop Street Complete",
   old_hill_story: "Old Hill Road Story",
   lantern_bridge_delivery: "Lantern Bridge Delivery",
@@ -1439,6 +1441,14 @@ function markStampFanfareSeen(gameState, stampId) {
     next.seenStampFanfareIds = [...next.seenStampFanfareIds, stampId].slice(0, 200);
   }
   return next;
+}
+
+function awardShopStamp(gameState, stampId) {
+  let next = normalizeGameState(gameState);
+  if (!stampId || next.stamps[stampId]) return { gameState: next, unlocked: false };
+  next.stamps[stampId] = { date: new Date().toISOString(), label: STAMP_LABELS[stampId] || stampId };
+  next = addLedgerEntry(next, "stamp", `${STAMP_LABELS[stampId] || "Passport"} stamp earned.`);
+  return { gameState: next, unlocked: true };
 }
 
 function queueStampFanfare(gameState, stampId, rewards = {}) {
@@ -2990,9 +3000,19 @@ function stationIsUnlocked(station, gameState) {
   if (!station) return false;
   if (station.id === "tofu_press") return true;
   if (station.id === "prep_counter") return shop.shopLevel >= 2 || shop.tofuStock >= 10 || shop.stations.prep_counter > 0;
-  if (station.id === "delivery_shelf") return shop.shopLevel >= 2;
-  if (station.id === "shop_sign") return shop.reputation >= 10 || shop.shopLevel >= 2;
-  if (station.id === "regular_customer") return shop.stations.shop_sign > 0;
+  if (station.id === "delivery_shelf") {
+    return fulfilledShopOrderCount(state) >= 10
+      || Boolean(state.stamps.first_family_tofu_tray)
+      || (hasShopStationUpgrade(state) && shop.shopLevel >= 2)
+      || shop.stations.delivery_shelf > 0;
+  }
+  if (station.id === "shop_sign") {
+    return shop.reputation >= 10
+      || shop.lifetimeTips >= 100
+      || shop.stations.delivery_shelf > 0
+      || shop.stations.shop_sign > 0;
+  }
+  if (station.id === "regular_customer") return shop.stations.shop_sign > 0 && fulfilledShopOrderCount(state) >= 25;
   if (station.id === "delivery_route") return shop.shopReach >= 2 || shop.routeKnowledge >= 6;
   if (station.id === "dispatcher_desk") return shop.reputation >= 40 || shop.stations.delivery_route > 0;
   if (station.id === "regional_network") return shop.shopLevel >= 5;
@@ -3219,7 +3239,10 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   if (quantity < 1 || maxQuantity < quantity || readyOrders < deliveryOrdersUsed || next.shop.tofuStock < tofuUsed) {
     return { ok: false, reason: shopOrderDisabledReason(orderType, next, unlocked), gameState: next, orderType };
   }
-  const signBonus = 1 + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
+  const signOwned = safeNonNegativeInteger(next.shop.stations.shop_sign, 0, 100000);
+  const signBonus = 1
+    + signOwned * 0.1
+    + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
   const garageBonus = safeNonNegativeInteger(next.shop.garage.delivery_mat, 0, 100) >= 3 ? 1 : 0;
   const tipsGained = Math.round(orderType.tips * quantity);
   const reputationGained = Math.round((orderType.reputation * quantity + garageBonus) * signBonus);
@@ -3237,13 +3260,17 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   next.shop.shopLevel = getShopLevel(next.shop.reputation);
   const firstShopOrderStampUnlocked = !next.stamps.first_shop_order;
   if (firstShopOrderStampUnlocked) {
-    next.stamps.first_shop_order = { date: new Date().toISOString(), label: STAMP_LABELS.first_shop_order };
+    next = awardShopStamp(next, "first_shop_order").gameState;
+  }
+  const firstFamilyTrayStampUnlocked = orderType.id === "family_tofu_tray" && !next.stamps.first_family_tofu_tray;
+  if (firstFamilyTrayStampUnlocked) {
+    next = awardShopStamp(next, "first_family_tofu_tray").gameState;
   }
   if (next.shop.lifetimeDeliveryOrders >= 10 && !next.stamps.first_10_orders) {
-    next.stamps.first_10_orders = { date: new Date().toISOString(), label: STAMP_LABELS.first_10_orders };
+    next = awardShopStamp(next, "first_10_orders").gameState;
   }
   if (next.shop.lifetimeTips >= 100 && !next.stamps.first_100_tips) {
-    next.stamps.first_100_tips = { date: new Date().toISOString(), label: STAMP_LABELS.first_100_tips };
+    next = awardShopStamp(next, "first_100_tips").gameState;
   }
   let stampFanfare = null;
   if (firstShopOrderStampUnlocked) {
@@ -3288,6 +3315,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     reputationGained,
     xpGained,
     firstShopOrderStampUnlocked,
+    firstFamilyTrayStampUnlocked,
     stampFanfare,
     discoveryFanfare,
     shopLevelBefore: previousShopLevel,
@@ -3479,6 +3507,9 @@ function buyStationUpgrade(upgradeId, gameState) {
   if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.stationUpgrades[upgrade.id] = current + 1;
+  if (!next.stamps.first_upgrade_purchased) {
+    next = awardShopStamp(next, "first_upgrade_purchased").gameState;
+  }
   next = addLedgerEntry(next, "upgrade", `${upgrade.name} upgraded.`);
   return { ok: true, gameState: next, upgrade, level: current + 1, costTips };
 }
@@ -5971,6 +6002,8 @@ function nextBestAction(gameState, options = {}) {
   const bestOrder = bestFulfillableShopOrderType(state);
   const prepCounterStation = affordableShopStation(state, "prep_counter");
   const tofuPressStation = affordableShopStation(state, "tofu_press");
+  const deliveryShelfStation = affordableShopStation(state, "delivery_shelf");
+  const shopSignStation = affordableShopStation(state, "shop_sign");
   const tidyPackaging = shopUpgradeById("prep_counter_faster");
   const tidyLevel = safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_faster, 0, tidyPackaging ? tidyPackaging.maxLevel : 0);
   const tidyCost = tidyPackaging ? stationUpgradeCostTips(tidyPackaging, tidyLevel) : 0;
@@ -6034,6 +6067,16 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  if (shopUnlocked && prep.ready < 1 && deliveryShelfStation && runway.isHealthy) {
+    return {
+      type: "buy_station",
+      title: "Next: Buy Delivery Shelf",
+      copy: "The counter is growing. Delivery Shelf boosts Prep Counter throughput.",
+      buttonLabel: "View Production",
+      stationId: "delivery_shelf",
+      disabled: false,
+    };
+  }
   if (shopUnlocked && runway.isLow && tofuPressStation) {
     return {
       type: "buy_station",
@@ -6052,6 +6095,16 @@ function nextBestAction(gameState, options = {}) {
       buttonLabel: "View Upgrades",
       disabled: false,
       upgradeId: upgrade.id,
+    };
+  }
+  if (shopUnlocked && shopSignStation) {
+    return {
+      type: "buy_station",
+      title: "Next: Buy Shop Sign",
+      copy: "The shop is becoming known. Shop Sign boosts Reputation from orders.",
+      buttonLabel: "View Production",
+      stationId: "shop_sign",
+      disabled: false,
     };
   }
   if (shopUnlocked && prep.ready < 1 && prep.running && Number(state.shop.tofuStock || 0) >= PREP_COUNTER_CONSUME_PER_ORDER) {
@@ -6189,7 +6242,7 @@ function renderGameDashboard(gameState = loadGameState()) {
   }
   if (elements.gamePassportPreview) {
     const previewIds = reveal.passport
-      ? ["first_shop_order", "first_10_orders", "first_100_tips"]
+      ? ["first_shop_order", "first_upgrade_purchased", "first_family_tofu_tray", "first_10_orders", "first_100_tips"]
       : ["first_shop_order", "first_delivery", "daily_delivery_complete"];
     elements.gamePassportPreview.innerHTML = previewIds
       .map((id) => `<span>${escapeHtml(stampLockLabel(state, id))}</span>`)
@@ -6271,6 +6324,15 @@ function stationPurposeCopy(stationId, gameState) {
       return "Prep Counter is the bottleneck. More counters prepare orders faster.";
     }
     return "Turns Tofu Stock into Delivery Orders.";
+  }
+  if (stationId === "delivery_shelf") {
+    return "Supports the counter. Each shelf boosts Prep Counter order prep by 8%.";
+  }
+  if (stationId === "shop_sign") {
+    return "Makes the shop known. Each sign boosts Reputation from fulfilled orders by 10%.";
+  }
+  if (stationId === "regular_customer") {
+    return "Deferred automation: regulars arrive after the manual loop is tuned.";
   }
   const station = shopStationById(stationId);
   return station ? station.description : "";
@@ -6605,8 +6667,9 @@ function renderOverviewPanel(state) {
 function renderProductionPanel(state) {
   const visibleStations = SHOP_STATIONS.filter((station) => {
     if (station.id === "tofu_press" || station.id === "prep_counter") return true;
-    if (station.id === "delivery_shelf") return fulfilledShopOrderCount(state) >= 10 || stationIsUnlocked(station, state) && state.shop.tips >= 50;
-    if (station.id === "shop_sign") return state.shop.reputation >= 8 || state.shop.shopLevel >= 2 || state.shop.stations.shop_sign > 0;
+    if (station.id === "delivery_shelf") return stationIsUnlocked(station, state);
+    if (station.id === "shop_sign") return stationIsUnlocked(station, state);
+    if (station.id === "regular_customer") return false;
     return stationIsUnlocked(station, state) && state.shop.stations[station.id] > 0;
   });
   return `
@@ -6849,7 +6912,7 @@ function renderRivalsPanel(state) {
 function renderPassportPanel(state) {
   const unlockedStamps = Object.entries(STAMP_LABELS)
     .filter(([id]) => state.stamps[id]);
-  const nextStampIds = ["first_10_orders", "first_100_tips", "shop_street_complete"]
+  const nextStampIds = ["first_upgrade_purchased", "first_family_tofu_tray", "first_10_orders", "first_100_tips"]
     .filter((id) => !state.stamps[id])
     .slice(0, 2);
   const cards = [

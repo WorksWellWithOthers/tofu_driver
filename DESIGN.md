@@ -170,6 +170,11 @@ Current design principles:
   appears early and larger order types become the main stock sink.
   Catering Crate and larger network orders are future/hidden until the core loop and first-shop
   pacing are proven.
+- Core Game Spine V1 adds the first short milestone ladder after the first stamp: First Upgrade
+  Purchased, First Family Tofu Tray, First 10 Orders, and First 100 Tips. Delivery Shelf is the
+  first throughput support station, and Shop Sign is the first Reputation support station.
+- Regular Customers, Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige remain
+  deferred until the V1 spine has been playtested and tuned.
 - Fulfill Shop Order requires at least one ready Delivery Order.
 - Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
 - Tips buy more production, stations, and upgrades.

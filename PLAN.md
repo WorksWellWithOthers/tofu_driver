@@ -36,9 +36,13 @@
 - Tofu Shop tabs are progressively revealed by meaningful milestones and story beats rather than
   raw idle accumulation. Routes, Training, Garage, Crew, Shop Spirit, Rivals, License, full
   Passport, and full Ledger stay hidden during the first loop unless earned.
-- The Orders panel has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
+- Overview has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume meaningful typed Tofu Stock/Delivery Order costs and pay typed
   Tips/Reputation/XP rewards.
+- `CORE_GAME_SPINE_AUDIT.md` now records what is truly implemented versus scaffolding. Core Game
+  Spine V1 adds tested First Upgrade Purchased, First Family Tofu Tray, First 10 Orders, and First
+  100 Tips stamp milestones; Delivery Shelf is the first tested throughput support station; Shop
+  Sign is the first tested Reputation support station.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
   Reputation, and XP.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
@@ -50,6 +54,8 @@
   boost rather than the normal shop bottleneck during order prep or Tip shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
+- Regular Customers remain deferred as the next possible light automation slice after the manual
+  order loop has been playtested. Dream Garage remains documented future direction only.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -78,9 +84,10 @@ Canonical references:
    Simple Tofu Box, Family Tofu Tray, Festival Bento, typed costs/rewards, Fulfill Max labeling,
    disabled reasons, and larger-order reveal timing.
 4. Playtest and tune the first 10 minutes:
-   confirm the first order, first upgrade, first bottleneck, and first stamp are clear.
-5. Continue visual QA on first-loop reveal: verify Overview stays focused, Orders/Production remain
-   support panels, and advanced systems stay hidden until earned.
+   confirm the first order, first upgrade, first bottleneck, first Family Tofu Tray, Delivery Shelf,
+   and Shop Sign are clear.
+5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
+   station support panel, and advanced systems stay hidden until earned.
 6. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.

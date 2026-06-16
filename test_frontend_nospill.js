@@ -2386,6 +2386,152 @@ globalThis.orderTypeTabsHtml = elements.shopTabList.innerHTML;
   assert(!context.orderTypePanelHtml.includes('Buy Tofu Press'));
 }
 
+function testCoreGameSpineV1MilestonesAndSupportStations() {
+  assert(fs.existsSync(path.join(ROOT, 'CORE_GAME_SPINE_AUDIT.md')));
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  const fresh = context.defaultGameState();
+  assert.strictEqual(fresh.shop.tofuStock, 10);
+  assert.strictEqual(fresh.shop.deliveryOrders, 1);
+  const first = context.fulfillShopOrders(fresh, 1, {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+  });
+  assert.strictEqual(first.ok, true);
+  assert.strictEqual(Boolean(first.gameState.stamps.first_shop_order), true);
+
+  const upgradeSource = JSON.parse(JSON.stringify(first.gameState));
+  upgradeSource.shop.tips = 20;
+  const basePrepRate = context.getShopGeneratorRates(upgradeSource).prepOrdersPerSecond;
+  const tidy = context.buyStationUpgrade('prep_counter_faster', upgradeSource);
+  assert.strictEqual(tidy.ok, true);
+  assert.strictEqual(Boolean(tidy.gameState.stamps.first_upgrade_purchased), true);
+  assert(tidy.gameState.shop.ledger.some((entry) => entry.text.includes('First Upgrade Purchased stamp earned')));
+  assert(context.getShopGeneratorRates(tidy.gameState).prepOrdersPerSecond > basePrepRate);
+
+  const lowStock = JSON.parse(JSON.stringify(tidy.gameState));
+  lowStock.shop.tofuStock = 1;
+  lowStock.shop.deliveryOrders = 0;
+  lowStock.shop.tips = 100;
+  const lowStockAction = context.nextBestAction(lowStock, { date: new Date('2026-06-15T12:00:00.000Z') });
+  assert(['buy_station', 'buy_upgrade', 'pack_tofu'].includes(lowStockAction.type));
+  assert.notStrictEqual(lowStockAction.upgradeId, 'prep_counter_faster');
+
+  const healthyStock = JSON.parse(JSON.stringify(tidy.gameState));
+  healthyStock.shop.tofuStock = 120;
+  healthyStock.shop.deliveryOrders = 0;
+  healthyStock.shop.generatorCarry.deliveryOrders = 0.3;
+  healthyStock.shop.tips = 100;
+  const healthyAction = context.nextBestAction(healthyStock, { date: new Date('2026-06-15T12:00:00.000Z') });
+  assert.notStrictEqual(healthyAction.upgradeId, 'tofu_press_faster');
+
+  const secondStage = JSON.parse(JSON.stringify(tidy.gameState));
+  secondStage.shop.tips = 500;
+  secondStage.shop.stations.tofu_press = 3;
+  secondStage.shop.stations.prep_counter = 2;
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(secondStage)});
+globalThis.spineUpgradeHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.spineUpgradeHtml.includes('Double Mold') || context.spineUpgradeHtml.includes('Double Labels'));
+  assert(context.spineUpgradeHtml.includes('-&gt;'));
+
+  const tenOrders = context.defaultGameState();
+  tenOrders.shop.tofuStock = 500;
+  tenOrders.shop.deliveryOrders = 10;
+  const tenSimple = context.fulfillShopOrders(tenOrders, 'max', {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+  });
+  assert.strictEqual(tenSimple.ok, true);
+  assert.strictEqual(Boolean(tenSimple.gameState.stamps.first_10_orders), true);
+  assert.strictEqual(Boolean(tenSimple.gameState.stamps.first_100_tips), true);
+
+  const familySource = JSON.parse(JSON.stringify(tenSimple.gameState));
+  familySource.shop.tofuStock = 100;
+  familySource.shop.deliveryOrders = 1;
+  const family = context.fulfillShopOrders(familySource, 1, {
+    activeDrive: false,
+    orderTypeId: 'family_tofu_tray',
+  });
+  assert.strictEqual(family.ok, true);
+  assert.strictEqual(Boolean(family.gameState.stamps.first_family_tofu_tray), true);
+  assert(family.gameState.shop.ledger.some((entry) => entry.text.includes('First Family Tofu Tray stamp earned')));
+
+  const earlyShelf = context.buyShopStation('delivery_shelf', first.gameState, 1);
+  assert.strictEqual(earlyShelf.ok, false);
+  const shelfSource = JSON.parse(JSON.stringify(tenSimple.gameState));
+  shelfSource.shop.tips = 200;
+  shelfSource.shop.prepSlots = 10;
+  const shelfBaseRate = context.getShopGeneratorRates(shelfSource).prepOrdersPerSecond;
+  const shelf = context.buyShopStation('delivery_shelf', shelfSource, 1);
+  assert.strictEqual(shelf.ok, true);
+  assert.strictEqual(shelf.gameState.shop.stations.delivery_shelf, 1);
+  assert(context.getShopGeneratorRates(shelf.gameState).prepOrdersPerSecond > shelfBaseRate);
+
+  const signEarly = context.buyShopStation('shop_sign', first.gameState, 1);
+  assert.strictEqual(signEarly.ok, false);
+  const signSource = JSON.parse(JSON.stringify(shelf.gameState));
+  signSource.shop.tips = 300;
+  signSource.shop.reputation = 10;
+  signSource.shop.prepSlots = 10;
+  const sign = context.buyShopStation('shop_sign', signSource, 1);
+  assert.strictEqual(sign.ok, true);
+  const noSignOrder = JSON.parse(JSON.stringify(signSource));
+  noSignOrder.shop.deliveryOrders = 2;
+  noSignOrder.shop.tofuStock = 200;
+  noSignOrder.shop.reputation = 50;
+  const withSignOrder = JSON.parse(JSON.stringify(sign.gameState));
+  withSignOrder.shop.deliveryOrders = 2;
+  withSignOrder.shop.tofuStock = 200;
+  withSignOrder.shop.reputation = 50;
+  const festivalNoSign = context.fulfillShopOrders(noSignOrder, 1, {
+    activeDrive: false,
+    orderTypeId: 'festival_bento',
+  });
+  const festivalWithSign = context.fulfillShopOrders(withSignOrder, 1, {
+    activeDrive: false,
+    orderTypeId: 'festival_bento',
+  });
+  assert.strictEqual(festivalNoSign.ok, true);
+  assert.strictEqual(festivalWithSign.ok, true);
+  assert(festivalWithSign.reputationGained > festivalNoSign.reputationGained);
+
+  vm.runInContext(`
+appState.shopTab = "production";
+renderTofuShop(${JSON.stringify(sign.gameState)});
+globalThis.spineProductionHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "passport";
+renderTofuShop(${JSON.stringify(family.gameState)});
+globalThis.spinePassportHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.spineProductionHtml.includes('Delivery Shelf'));
+  assert(context.spineProductionHtml.includes('Shop Sign'));
+  assert(!context.spineProductionHtml.includes('Regular Customer'));
+  assert(context.spinePassportHtml.includes('First Upgrade Purchased'));
+  assert(context.spinePassportHtml.includes('First Family Tofu Tray'));
+  assert(!context.spinePassportHtml.includes('Perfect Pour'));
+  assert(!context.spinePassportHtml.includes('License Exam'));
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -4706,6 +4852,7 @@ function run() {
   testDiscoveryFanfareRevealsUpgradesOnce();
   testDiscoveryFanfareReducedMotionUsesStaticState();
   testShopOrderTypeProgressionAndRewards();
+  testCoreGameSpineV1MilestonesAndSupportStations();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
