@@ -221,11 +221,18 @@ Status values: `Implemented`, `Partial`, `Placeholder`, `Decorative only`, `Docu
 | Dream Garage | Fictional closed-course events | Documented only | `BALANCE_AND_PROGRESSION.md` event table | None | Add async parked event loop later | Future | No real driving, speed, GPS, maps, streets, route traces, or high-G data |
 | Dream Garage | Project car completion/sale prestige | Documented only | `BALANCE_AND_PROGRESSION.md` Builder Stars design | None | Validate after garage loop is fun | Future | Separate from License Stars; no driving advantage |
 | Dream Garage | Dream Jar / Garage Fund | Documented only | `BALANCE_AND_PROGRESSION.md` open design decision | None | Decide Tips-direct versus saved-fund UX | Future | Tips remain local shop currency; no payments |
+| Endgame | Ultimate Net Worth Endgame | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` Ultimate Net Worth sections | None | Treat `$1 trillion net worth` as fictional long-arc direction only until shop/garage loops are proven | Future | Fictional economy abstraction, not financial advice; no driving score effect |
+| Economy | Asset valuation | Documented only | `BALANCE_AND_PROGRESSION.md` asset valuation table | None | Design formulas only after Dream Garage and business loops exist | Future | Must not use real financial advice or real-world driving data |
+| Economy | Business/franchise scaling | Documented only | `BALANCE_AND_PROGRESSION.md` business scaling arc | None | Add only after Tofu Shop automation/franchise loops are designed | Future | Parked/business game layer only |
+| Economy | Car manufacturing company | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` endgame direction | None | Late-game layer after project-car build/sale loop is fun | Future | Fictional manufacturing only; no real mechanical advice or driving score effect |
+| Economy | Rocket/aerospace company | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` endgame direction | None | Absurd late-game/future patch concept | Future | Fictional business layer only; no real-world safety claims |
 | Narrative | Story chapters | Documented only | `DESIGN.md` future direction | None | Implement only after core loop polish | Future | Parked-only story |
 | Narrative | Customers | Partial | `regular_customer` station implemented | `testExpandedIdleShopLayerMechanics` | Add named customers and reports | Future | No unsafe driving prompts |
 | Narrative | Contracts | Documented only | `DESIGN.md` future direction | None | Design safe contracts | Future | No timed/speed contracts |
 | Crew | Staff/crew expansion | Partial | cosmetic Delivery Crew implemented; expansion in `DESIGN.md` | collection tests | Add staff roles later | Future | Cosmetic/local only |
 | Social | Public profiles | Documented only | `DESIGN.md` monetization/status section | None | Requires privacy/account design | Future | No raw route/speed/location |
+| Social | Scout / Ambassador system | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` future social-status sections | None | Requires opt-in backend/account/privacy/moderation design before any implementation | Future | No GPS, routes, speed, street, maps, raw motion, harassment, doxxing, or real-world targeting |
+| Social | Player showcase / social status | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` social status assets | None | Design only after account/privacy model exists | Future | Cosmetic/status only; no Cup Test scoring or qualification effect |
 | Social | Delivery Chronicle | Documented only | `DESIGN.md` monetization/status section | None | Requires moderation/privacy model | Future | Asynchronous, privacy-safe only |
 | Social | Garage/crew pages | Documented only | `DESIGN.md` future social status | None | Design profile/showcase | Future | Cosmetic/status only |
 | Merch | Backend unlock tokens | Documented only | `DESIGN.md`, `DEPLOYMENT.md` merch note | None | Build only after real merch demand | P3 | Must reject simulator/local-only fraud |
@@ -233,6 +240,7 @@ Status values: `Implemented`, `Partial`, `Placeholder`, `Decorative only`, `Docu
 | Sync | Database sync | Documented only | future backend/account direction | None | Backend design | Future | No raw GPS/motion sync |
 | Merch | Shopify gated merch | Documented only | `DEPLOYMENT.md`, `MERCH_LINKS` notes | None | Product URLs + backend tokens | P3 | Earned unlocks only |
 | Monetization | Supporter/cosmetic purchases | Documented only | `DESIGN.md` monetization section | None | Payment/product strategy | Future | No pay-to-progress |
+| Monetization | Premium cosmetic skins | Documented only | `DESIGN.md`, `BALANCE_AND_PROGRESSION.md` social status assets | None | Future monetization only, after product/privacy/payment design | Future | Cosmetics must not improve Cup Test scoring, qualification, speed, or safety-sensitive behavior |
 
 ## Non-Goals
 

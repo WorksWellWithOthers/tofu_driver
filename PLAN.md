@@ -62,6 +62,10 @@
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
+- Ultimate Net Worth is documented as future endgame direction: Tofu Shop becomes the first
+  business engine, Dream Garage becomes an asset/status layer, later business/franchise/car-company
+  layers may lead toward a fictional `$1 trillion net worth` target, and aerospace/space layers are
+  absurd late-game direction only.
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
@@ -126,12 +130,25 @@ Future Dream Garage milestone sequence:
 7. Implement the first fictional closed-course event.
 8. Design project car completion/sale prestige after the garage loop is fun.
 
+Future endgame/business sequence:
+
+1. Keep the $1T Net Worth target as design direction only.
+2. Stabilize and tune the First Loop Contract.
+3. Add Next Milestone bar, station milestones, and Counter Service only if playtesting supports
+   them.
+4. Add Dream Garage teaser and Stage 0 before any valuation system.
+5. Add business valuation only after Dream Garage, project-car sale, and franchise loops are fun.
+6. Add social showcase/scout concepts only after a privacy/account/backend design exists.
+7. Add car manufacturing, rocket company, and space league layers only as late-game/future patch
+   content.
+
 Deferred until after the First Loop Contract is playtested:
 
 - Routes
 - Crew
 - Garage
 - Dream Garage / Project Car progression
+- Ultimate Net Worth / business valuation / franchise scaling / car manufacturing / aerospace
 - Tofu Demand Board / Supplier Market / Garage Parts Market
 - Next Milestone bar / station milestone boosts / Counter Service automation / Shop Trials
 - Shop Spirit

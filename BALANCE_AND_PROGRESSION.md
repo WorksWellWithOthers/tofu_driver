@@ -1286,6 +1286,177 @@ Future implementation should add tests for:
 - shop progression remains playable without garage
 - Cup Test remains optional for ordinary shop and garage progression
 
+## Ultimate Net Worth Endgame
+
+Ultimate Net Worth is future design direction only. It is not implemented and should not affect the
+current First Loop Contract.
+
+Long-arc framing:
+
+```text
+Tofu Shop is the first job.
+Dream Garage is the first dream.
+The car company is the first empire.
+The rocket company is the absurd endgame.
+The goal is $1 trillion net worth.
+```
+
+`Dollars` are a placeholder ultimate game abstraction. Future UI may call the value `Net Worth`,
+`Enterprise Value`, `Total Value`, or `Company Value`. This is fictional game economy language, not
+real financial advice.
+
+Conceptual formula:
+
+```text
+Net Worth =
+  cash / Tips equivalent
+  + business valuations
+  + garage assets
+  + collector car values
+  + manufacturing company value
+  + future aerospace value
+  - liabilities / loans / obligations
+```
+
+The player may start with very low or negative net worth if future startup costs, shop bills, loans,
+or project-car expenses are added. Some assets appreciate, some depreciate, some ventures become
+cashflow engines, and some ventures are liabilities until upgraded or turned around.
+
+### Asset Valuation Layers
+
+| Asset Layer | Unlock Era | Value Source | Possible Liabilities | Role In Progression |
+| --- | --- | --- | --- | --- |
+| Tofu Shop | Shop Worker / Shop Owner | stations, order throughput, reputation, stamps | startup costs, shop bills, idle inefficiency | first active labor engine |
+| Tofu Shop Franchise | Franchise Era | multiple shops, managers, brand value | manager costs, uneven locations, upkeep | turns shop labor into scalable business |
+| Delivery Network | Manager / Franchise Era | order volume, fictional districts, dispatch efficiency | staff costs, route-card upkeep | connects shop resources to broader business value |
+| Dream Garage | Dream Garage Era | tools, workspace, build history, showcase value | parts storage, unfinished projects | converts Tips into emotional assets |
+| Project Car | Dream Garage / Builder Era | parts, Reliability, Style, Event Readiness, story status | expensive mistakes, unfinished builds, depreciation | first asset that can be kept, showcased, or sold |
+| Collector Car | Builder Era | rarity, completed build quality, event reports, cosmetic identity | upkeep, storage, volatile value | long-term status asset and possible prestige object |
+| Car Manufacturing Company | Manufacturer Era | production lines, brand reputation, prototype success | factory costs, failed models, recalls as fictional flavor | turns individual builds into scalable production |
+| Sponsorship / Showcase Brand | Builder / Manufacturer Era | style, Passport proof, event reports, sponsor badges | reputation risk, event costs | social/status multiplier and prize support |
+| Rocket Company | Aerospace Era | launch contracts, aerospace research, space delivery capacity | expensive failures, research burn, launch costs | absurd late-game paradigm shift |
+| Space Delivery / Space Race League | Space League Era | league rights, space cargo contracts, showcase events | huge operating costs, fictional rivalry pressure | patchable post-$1T expansion |
+
+Design notes:
+
+- Tofu Shop starts as active labor.
+- Franchise and manager automation eventually make shop income passive.
+- Dream Garage turns Tips into appreciating or depreciating assets.
+- Project cars can be kept, showcased, entered in fictional closed-course events, or sold.
+- Car manufacturing turns individual builds into scalable production.
+- Rocket/aerospace is the late-game paradigm shift.
+- The $1T target is the first major endgame goal; future patches may add more layers beyond it.
+
+### Dream Garage Continuation Into Net Worth
+
+Project cars should create identity, not just numbers.
+
+Future rules:
+
+- some project cars become valuable collector builds
+- some builds become expensive mistakes and lose value
+- selling a completed build can fund the next venture and act like prestige
+- keeping a build can improve social status, showcase value, and collector portfolio value
+- fictional closed-course event reports can raise Project Car Value
+- car parts, garage assets, and prestige perks must not improve real-world Cup Test scoring,
+  qualification, speed, route validation, or safety-sensitive behavior
+
+### Business Scaling Arc
+
+| Era | Player Fantasy | Main Systems | Exit Toward Next Era |
+| --- | --- | --- | --- |
+| Shop Worker Era | Work the counter by hand | Simple orders, Tofu Press, Prep Counter | first upgrades and stamps |
+| Shop Owner Era | Improve the shop | stations, upgrades, Delivery Shelf, Shop Sign | stable first-shop income |
+| Manager Era | Hire systems that remove chores | Counter Service, Regular Customers, managers | shop runs while player plans |
+| Franchise Era | Scale Tofu Shop beyond one counter | franchises, delivery network, brand value | strong passive business valuation |
+| Dream Garage Era | Fund the first dream car | project car, parts, garage tools | completed first build |
+| Builder Era | Turn builds into value and status | collector cars, closed-course events, showcase brand | major build sale or portfolio value |
+| Manufacturer Era | Build the first car company | prototypes, production, sponsorship, brand | company valuation milestone |
+| Aerospace Era | Enter the absurd endgame | rocket company, aerospace research, space delivery | approach $1T net worth |
+| Space League Era | Patchable late-game spectacle | space delivery / space league / showcase rights | post-$1T expansion |
+
+### Future Social Status / Scout Concept
+
+This is future-only and requires backend/accounts if ever implemented. It is not current MVP
+behavior.
+
+Future opt-in social concepts:
+
+- send a Scout or Ambassador to discover other fictional establishments
+- offer trades or sponsor pitches
+- propose partnerships
+- request sponsorship/tribute only in friendly fictional business language
+- compete through asynchronous corporate rivalry
+- show off cards, skins, bases, garages, cars, businesses, stamps, and badges
+
+Safe framing:
+
+- Scout
+- Ambassador
+- Rival Company
+- Sponsor Pitch
+- Trade Offer
+- Showcase Visit
+- Corporate Challenge
+- Friendly Rivalry
+- Market Competition
+- Brand Duel
+- Exhibition Match
+
+Avoid:
+
+- `attack force`
+- real violence
+- crime
+- real sabotage
+- harassment
+- shaming
+- doxxing
+- real-world targeting
+
+Social guardrails:
+
+- opt-in only
+- privacy-safe by design
+- asynchronous and non-destructive unless both players consent
+- no real location, GPS, route, speed, street, coordinate, map, or driving data
+- no active-drive shop/social actions
+- no public road competition or route leaderboards
+- no raw GPS or raw motion upload
+
+### Social Status Assets
+
+Future showcase objects:
+
+- player cards
+- shop skins
+- garage skins
+- project car cards
+- collector car cards
+- company headquarters
+- rocket hangar
+- sponsor badges
+- Passport stamps
+- No-Spill Club proof
+- Perfect Pour proof
+- premium cosmetic skins
+
+Cosmetics can express identity and social status. They must not improve Cup Test scoring,
+qualification, speed, safety-sensitive behavior, shop progression fairness, or real-world driving
+outcomes. Premium skins are future monetization only, not current MVP.
+
+### Patchable Endgame
+
+The $1T goal is the first major endgame target. The game can continue through patches:
+
+- new business layers
+- new car build eras
+- new collector markets
+- new fictional events
+- new space/aerospace layers
+- new social showcases
+- new prestige tiers
+
 ## 15. Balance Sheet Schema
 
 Use this schema for future spreadsheet and simulation work.

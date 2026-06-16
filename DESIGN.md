@@ -335,6 +335,61 @@ Safe language:
 Avoid copy that implies public-road competition, speed optimization, aggressive road behavior, or
 real-world vehicle modification advice.
 
+## Ultimate Net Worth Endgame
+
+Ultimate net worth is future direction only. It is not current MVP behavior.
+
+Long-arc framing:
+
+```text
+Tofu Shop is the first job.
+Dream Garage is the first dream.
+The car company is the first empire.
+The rocket company is the absurd endgame.
+The goal is $1 trillion net worth.
+```
+
+`Net Worth` is a fictional game abstraction, not financial advice. The exact label can later become
+Company Value, Enterprise Value, Total Value, or another clearer game term.
+
+The player may begin small, possibly even with negative net worth if future design adds startup
+costs, shop bills, project-car expenses, loans, or obligations. Over time, the player builds assets:
+
+- Tofu Shop
+- Tofu Shop franchise
+- Delivery Network
+- Dream Garage
+- project cars
+- collector cars
+- car manufacturing company
+- sponsorship/showcase brand
+- rocket or aerospace company
+- future space delivery company or space league
+
+The arc should evolve from labor to ownership:
+
+1. Shop Worker Era: manually fulfill tofu orders.
+2. Shop Owner Era: buy stations and upgrades.
+3. Manager Era: Counter Service and Regular Customers automate order fulfillment.
+4. Franchise Era: Tofu Shop becomes scalable business infrastructure.
+5. Dream Garage Era: Tips fund project cars and parts.
+6. Builder Era: completed cars gain value, win fictional closed-course prizes, or sell.
+7. Manufacturer Era: the player builds a car company.
+8. Aerospace Era: the player invests in rockets or space delivery.
+9. Space League Era: absurd late-game expansion, possibly future patch content.
+
+Social status and multiplayer-like systems are also future-only. If ever designed, they must be
+opt-in, privacy-safe, asynchronous, and fictional. Prefer Scout, Ambassador, Rival Company, Sponsor
+Pitch, Trade Offer, Showcase Visit, Corporate Challenge, Friendly Rivalry, Market Competition, Brand
+Duel, or Exhibition Match. Avoid real violence, crime, sabotage, harassment, shaming, doxxing,
+real-world targeting, and user-facing terms such as `attack force`.
+
+Future showcase/status objects may include player cards, shop skins, garage skins, project car
+cards, collector car cards, company headquarters, rocket hangars, sponsor badges, Passport stamps,
+No-Spill Club proof, Perfect Pour proof, and premium cosmetic skins. Cosmetics may express identity
+and status, but must not improve Cup Test scoring, qualification, speed, safety-sensitive behavior,
+or real-world driving outcomes.
+
 ## Don't Spill The Cup Integration
 
 Don't Spill the Cup is always available. It must not require:
