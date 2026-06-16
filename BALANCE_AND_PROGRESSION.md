@@ -325,6 +325,13 @@ Transcript-derived tuning notes:
 - Avoid expanding social/status, premium cosmetics, and endgame valuation before the local shop loop
   has repeatable motivation.
 
+Near-term candidate:
+
+Station Milestone Boosts V1 should be the smallest possible version if implemented next. Prefer
+inline milestones for existing stations over a new tab: 5 Tofu Presses, 10 Tofu Presses, 5 Prep
+Counters, and 10 Prep Counters. Each should show one clear before/after production bump, use inline
+feedback rather than a major fanfare, and remain shop-only with no Cup Test scoring effect.
+
 ### Order Size Ladder
 
 Raw Tofu Stock must not directly multiply Tips. Instead, stock matters because larger order types

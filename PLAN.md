@@ -137,6 +137,14 @@ Canonical references:
 12. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
 13. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
+Transcript-derived priority ladder:
+
+1. `Now`: playtest the first 5-10 minutes and tune the current implemented shop spine.
+2. `Soon`: Station Milestone Boosts V1 and Counter Service rate/stock-pressure tuning.
+3. `Later`: Regular Customers V1, Shop Spirit tuning, Dream Garage Stage 0, and License preview.
+4. `Avoid for now`: social systems, premium cosmetics, Net Worth valuation, broad route expansion,
+   and any new tab/currency that does not solve a felt bottleneck.
+
 Do not build advanced systems next. The First Loop Contract is now implemented enough for
 playtesting; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile
 features stay deferred until the first 10 minutes are playtested and tuned.

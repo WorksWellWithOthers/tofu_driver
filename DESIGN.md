@@ -196,6 +196,9 @@ Current design principles:
 - The incremental design transcript audit reinforces four durable rules: make the first five
   minutes obvious, balance active play with idle progress, delegate repeated chores only after
   mastery, and add novelty through earned shop layers rather than early UI clutter.
+- Raw external transcripts and reference notes are source material, not product canon. Keep durable
+  design takeaways in audit files and translate every idea into Tofu Driver language before it
+  reaches player-facing copy.
 - each new mechanic should solve a visible bottleneck or create a clear story beat
 - Tofu Press produces Tofu Stock over elapsed time.
 - Prep Counter consumes Tofu Stock and produces Delivery Orders.
