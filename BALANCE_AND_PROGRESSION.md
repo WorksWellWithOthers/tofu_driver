@@ -779,6 +779,12 @@ Early UI rule:
   moment. Upgrades are the preferred first reveal when Tidy Packaging, Steady Pressing, or another
   bottleneck-solving upgrade becomes visible. Future systems should use the same pattern only after
   milestone-based discovery, not raw idle currency accumulation.
+- Newly revealed tabs should show an explicit `New` badge or equivalent text. Do not rely on an
+  unexplained outline or glow. The badge should clear once the player views the tab, including when
+  the Discovery Fanfare action opens it.
+- A covered-car teaser may appear once after an early meaningful milestone such as First Upgrade
+  Purchased. It should say only that an old car waits behind the shop and should not create a Dream
+  Garage tab, part catalog, event loop, Builder Stars, Dream Jar, or Project Car Value.
 
 ### Reveal Rules By System
 
@@ -792,7 +798,7 @@ Early UI rule:
 | Routes | first 10 minutes | after Reputation/Shop Sign begins to matter | after a route story beat or route-ready station milestone |
 | Crew | first hour | after first route progress or repeated chores | after the first automation slice |
 | Garage | first hour | after route cards need fictional stability/flavor | after route loop exists |
-| Dream Garage | first shop loop | after First 100 Tips or Shop Level 2 as covered-car teaser | after 10 fulfilled orders or first Family Tofu Tray |
+| Dream Garage | first shop loop | after First Upgrade Purchased, First 100 Tips, or Shop Level 2 as covered-car story teaser | future only, after first-loop and first-shop pacing are tuned |
 | Shop Spirit | first hour and first route phase | after stable production or event/festival hook | after boost economy has a real sink/source |
 | Rivals | early and mid first-loop play | after route network/festival systems exist | later, as friendly parked challenges |
 | License | first hour | when requirements become plausible | at plateau near 4 to 6 hours |

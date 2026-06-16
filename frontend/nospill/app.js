@@ -797,6 +797,7 @@ const appState = {
   shopTab: "overview",
   purchaseMultiplier: 1,
   shopInlineResult: "",
+  shopStoryTeaser: null,
   summaryMode: null,
   shopResultCanFulfillAnother: false,
   currentStampFanfare: null,
@@ -1723,6 +1724,8 @@ function defaultGameState() {
     recentSessions: [],
     seenStampFanfareIds: [],
     seenSystemRevealIds: [],
+    seenStoryBeatIds: [],
+    newlyRevealedTabIds: [],
     xpByDate: {},
     routeMastery: {},
     shop: defaultShopState(),
@@ -1898,7 +1901,7 @@ function systemRevealDefinition(systemId) {
       systemId: "upgrades",
       title: "New Shop System Revealed",
       systemLabel: "Upgrades",
-      copy: "The shop has another layer. Upgrades help solve bottlenecks as the counter grows.",
+      copy: "The shop has another layer. A new Upgrades tab has appeared.",
       secondaryCopy: "More shop systems are hidden for now. Keep fulfilling orders and hitting milestones to discover them.",
       primaryAction: "View Upgrades",
       tabId: "upgrades",
@@ -1918,7 +1921,42 @@ function markSystemRevealSeen(gameState, systemId) {
   if (!next.seenSystemRevealIds.includes(systemId)) {
     next.seenSystemRevealIds = [...next.seenSystemRevealIds, systemId].slice(0, 200);
   }
+  const fanfare = buildDiscoveryFanfare(systemId);
+  if (fanfare && fanfare.tabId && !next.newlyRevealedTabIds.includes(fanfare.tabId)) {
+    next.newlyRevealedTabIds = [...next.newlyRevealedTabIds, fanfare.tabId].slice(0, 20);
+  }
   return next;
+}
+
+function clearNewlyRevealedTab(gameState, tabId) {
+  const next = normalizeGameState(gameState);
+  if (typeof tabId !== "string" || !tabId) return next;
+  if (next.newlyRevealedTabIds.includes(tabId)) {
+    next.newlyRevealedTabIds = next.newlyRevealedTabIds.filter((id) => id !== tabId);
+  }
+  return next;
+}
+
+function storyBeatDefinition(storyBeatId) {
+  const definitions = {
+    covered_car_teaser: {
+      id: "covered_car_teaser",
+      title: "Behind the shop",
+      status: "Story Teaser",
+      copy: "Behind the shop, an old car waits under a cover. Keep the shop running. One day, you'll build it.",
+    },
+  };
+  return definitions[storyBeatId] || null;
+}
+
+function queueStoryBeatTeaser(gameState, storyBeatId) {
+  const state = normalizeGameState(gameState);
+  const storyBeat = storyBeatDefinition(storyBeatId);
+  if (!storyBeat || state.seenStoryBeatIds.includes(storyBeatId)) {
+    return { gameState: state, storyTeaser: null };
+  }
+  state.seenStoryBeatIds = [...state.seenStoryBeatIds, storyBeatId].slice(0, 100);
+  return { gameState: state, storyTeaser: storyBeat };
 }
 
 function queueDiscoveryFanfare(gameState, systemId) {
@@ -2262,6 +2300,8 @@ function normalizeGameState(stored) {
     recentSessions: Array.isArray(source.recentSessions) ? source.recentSessions.slice(0, 20) : [],
     seenStampFanfareIds: normalizeIdList(source.seenStampFanfareIds),
     seenSystemRevealIds: normalizeIdList(source.seenSystemRevealIds),
+    seenStoryBeatIds: normalizeIdList(source.seenStoryBeatIds),
+    newlyRevealedTabIds: normalizeIdList(source.newlyRevealedTabIds),
     xpByDate:
       source.xpByDate && typeof source.xpByDate === "object"
         ? { ...source.xpByDate }
@@ -3936,11 +3976,19 @@ function buyStationUpgrade(upgradeId, gameState) {
   if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.stationUpgrades[upgrade.id] = current + 1;
+  let firstUpgradePurchased = false;
   if (!next.stamps.first_upgrade_purchased) {
     next = awardShopStamp(next, "first_upgrade_purchased").gameState;
+    firstUpgradePurchased = true;
+  }
+  let storyTeaser = null;
+  if (firstUpgradePurchased) {
+    const queued = queueStoryBeatTeaser(next, "covered_car_teaser");
+    next = queued.gameState;
+    storyTeaser = queued.storyTeaser;
   }
   next = addLedgerEntry(next, "upgrade", `${upgrade.name} upgraded.`);
-  return { ok: true, gameState: next, upgrade, level: current + 1, costTips };
+  return { ok: true, gameState: next, upgrade, level: current + 1, costTips, storyTeaser };
 }
 
 function routeIsUnlocked(route, gameState) {
@@ -6929,9 +6977,10 @@ function renderShopTabs(state) {
   const visibleTabs = SHOP_TABS.filter((tab) => tab.unlock(state));
   elements.shopTabList.innerHTML = visibleTabs.map((tab) => {
     const unlocked = tab.unlock(state);
+    const newlyRevealed = state.newlyRevealedTabIds.includes(tab.id);
     const classes = [
       tab.id === activeTab ? "is-active" : "",
-      tab.id === appState.highlightedShopTab ? "is-revealed" : "",
+      newlyRevealed ? "is-newly-revealed" : "",
     ].filter(Boolean).join(" ");
     return `
       <button
@@ -6940,7 +6989,7 @@ function renderShopTabs(state) {
         class="${escapeHtml(classes)}"
         ${unlocked ? "" : "disabled"}
       >
-        ${escapeHtml(tab.label)}
+        <span>${escapeHtml(tab.label)}</span>${newlyRevealed ? `<span class="nospill-tab-badge">New</span>` : ""}
       </button>
     `;
   }).join("");
@@ -7078,6 +7127,16 @@ function renderPassportTeaserCard(state) {
   });
 }
 
+function renderStoryTeaserCard() {
+  if (appState.running || appState.calibrating) return "";
+  if (!appState.shopStoryTeaser) return "";
+  return renderIdleCard({
+    title: appState.shopStoryTeaser.title || "Behind the shop",
+    status: appState.shopStoryTeaser.status || "Story Teaser",
+    copy: appState.shopStoryTeaser.copy || "Behind the shop, an old car waits under a cover.",
+  });
+}
+
 function renderOverviewPanel(state) {
   const bottleneck = currentBottleneck(state);
   const runway = tofuStockRunway(state);
@@ -7092,6 +7151,7 @@ function renderOverviewPanel(state) {
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
       ${renderOverviewImprovementCard(state)}
       ${renderPassportTeaserCard(state)}
+      ${renderStoryTeaserCard()}
       ${renderIdleCard({
         title: "Optional Certified Boost",
         status: "Don't Spill the Cup",
@@ -8073,10 +8133,13 @@ function continueFromDiscoveryFanfare() {
 function viewSystemFromDiscoveryFanfare() {
   const fanfare = appState.currentDiscoveryFanfare;
   hideDiscoveryFanfare();
-  const state = currentGameState();
+  let state = currentGameState();
   setAppSurface("shop", { updateHash: true, scroll: true });
   appState.shopTab = fanfare && fanfare.tabId ? fanfare.tabId : "overview";
-  appState.highlightedShopTab = appState.shopTab;
+  appState.highlightedShopTab = "";
+  state = clearNewlyRevealedTab(state, appState.shopTab);
+  state.shop.currentShopTab = appState.shopTab;
+  saveGameState(state);
   renderGamePanels(state);
   setSummaryStatusMessage(`${fanfare && fanfare.systemLabel ? fanfare.systemLabel : "New system"} revealed.`);
 }
@@ -8692,6 +8755,7 @@ function saveShopActionResult(result, successMessage) {
     return false;
   }
   saveGameState(result.gameState);
+  if (result.storyTeaser) appState.shopStoryTeaser = result.storyTeaser;
   renderGamePanels(result.gameState);
   setSummaryStatusMessage(successMessage);
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
@@ -8712,7 +8776,8 @@ function handleTofuShopPanelClick(event) {
   if (!target) return;
   if (target.dataset.shopTab) {
     appState.shopTab = target.dataset.shopTab;
-    const state = currentGameState();
+    let state = currentGameState();
+    state = clearNewlyRevealedTab(state, appState.shopTab);
     state.shop.currentShopTab = appState.shopTab;
     saveGameState(state);
     renderTofuShop(state);

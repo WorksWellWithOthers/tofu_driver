@@ -93,6 +93,8 @@ globalThis.showDiscoveryFanfare = showDiscoveryFanfare;
 globalThis.hideDiscoveryFanfare = hideDiscoveryFanfare;
 globalThis.continueFromDiscoveryFanfare = continueFromDiscoveryFanfare;
 globalThis.viewSystemFromDiscoveryFanfare = viewSystemFromDiscoveryFanfare;
+globalThis.clearNewlyRevealedTab = clearNewlyRevealedTab;
+globalThis.queueStoryBeatTeaser = queueStoryBeatTeaser;
 globalThis.buyShopStation = buyShopStation;
 globalThis.buyStationUpgrade = buyStationUpgrade;
 globalThis.completeFictionalRoute = completeFictionalRoute;
@@ -2113,6 +2115,8 @@ globalThis.discoveryButton = elements.discoveryFanfareView.textContent;
 globalThis.discoveryAnimated = elements.discoveryFanfare.classList.contains('is-animated');
 globalThis.discoveryHiddenBeforeContinue = elements.discoveryFanfare.classList.contains('is-hidden');
 globalThis.discoveryFocused = elements.discoveryFanfareCard.focused;
+renderTofuShop(result.gameState);
+globalThis.discoveryTabHtmlBeforeView = elements.shopTabList.innerHTML;
 continueFromDiscoveryFanfare();
 globalThis.discoveryHiddenAfterContinue = elements.discoveryFanfare.classList.contains('is-hidden');
 showDiscoveryFanfare(result.discoveryFanfare, result.gameState);
@@ -2120,6 +2124,7 @@ viewSystemFromDiscoveryFanfare();
 globalThis.discoveryViewTab = appState.shopTab;
 globalThis.discoveryHighlightedTab = appState.highlightedShopTab;
 globalThis.discoveryTabHtml = elements.shopTabList.innerHTML;
+globalThis.discoveryStateAfterView = loadGameState().newlyRevealedTabIds.slice();
 const raw = defaultGameState();
 raw.shop.tips = 10000;
 raw.shop.reputation = 1000;
@@ -2136,7 +2141,7 @@ globalThis.activeDiscoveryReason = activeShow.sound.reason;
   assert.strictEqual(context.discoveryOk, true);
   assert.strictEqual(context.discoveryPayload.title, 'New Shop System Revealed');
   assert.strictEqual(context.discoveryPayload.systemLabel, 'Upgrades');
-  assert(context.discoveryPayload.copy.includes('The shop has another layer'));
+  assert(context.discoveryPayload.copy.includes('A new Upgrades tab has appeared'));
   assert(context.discoveryPayload.secondaryCopy.includes('More shop systems are hidden for now'));
   assert.strictEqual(context.discoverySeenIds.join(','), 'upgrades');
   assert.strictEqual(context.discoveryReloadedSeenIds.join(','), 'upgrades');
@@ -2145,7 +2150,7 @@ globalThis.activeDiscoveryReason = activeShow.sound.reason;
   assert.strictEqual(context.discoverySoundReason, 'muted');
   assert.strictEqual(context.discoveryTitle, 'New Shop System Revealed');
   assert.strictEqual(context.discoverySystem, 'Upgrades');
-  assert(context.discoveryCopy.includes('Upgrades help solve bottlenecks'));
+  assert(context.discoveryCopy.includes('A new Upgrades tab has appeared'));
   assert(context.discoverySecondary.includes('Keep fulfilling orders and hitting milestones'));
   assert.strictEqual(context.discoveryButton, 'View Upgrades');
   assert.strictEqual(context.discoveryAnimated, true);
@@ -2153,9 +2158,15 @@ globalThis.activeDiscoveryReason = activeShow.sound.reason;
   assert.strictEqual(context.discoveryFocused, true);
   assert.strictEqual(context.discoveryHiddenAfterContinue, true);
   assert.strictEqual(context.discoveryViewTab, 'upgrades');
-  assert.strictEqual(context.discoveryHighlightedTab, 'upgrades');
+  assert.strictEqual(context.discoveryHighlightedTab, '');
+  assert(context.discoveryTabHtmlBeforeView.includes('data-shop-tab="upgrades"'));
+  assert(context.discoveryTabHtmlBeforeView.includes('nospill-tab-badge'));
+  assert(context.discoveryTabHtmlBeforeView.includes('New'));
+  assert(context.discoveryTabHtmlBeforeView.includes('is-newly-revealed'));
   assert(context.discoveryTabHtml.includes('data-shop-tab="upgrades"'));
-  assert(context.discoveryTabHtml.includes('is-revealed'));
+  assert(!context.discoveryTabHtml.includes('nospill-tab-badge'));
+  assert(!context.discoveryTabHtml.includes('is-newly-revealed'));
+  assert.strictEqual(context.discoveryStateAfterView.length, 0);
   assert.strictEqual(context.rawSystemRevealIds.length, 0);
   assert.strictEqual(context.rawDiscoveryHidden, true);
   assert.strictEqual(context.activeDiscoveryShown, false);
@@ -2212,6 +2223,90 @@ globalThis.discoveryAnimatedClass = elements.discoveryFanfare.classList.contains
   assert.strictEqual(context.reducedDiscoveryMotion, true);
   assert.strictEqual(context.discoveryStaticClass, true);
   assert.strictEqual(context.discoveryAnimatedClass, false);
+}
+
+function testCoveredCarTeaserIsOneTimeStoryBeatOnly() {
+  const context = loadNoSpillContext({
+    window: {
+      localStorage: makeLocalStorage(),
+    },
+  });
+
+  vm.runInContext(`
+function makeNode() {
+  const classes = new Set();
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    classList: {
+      add(className) { classes.add(className); },
+      remove(className) { classes.delete(className); },
+      toggle(className, force) {
+        const active = force === undefined ? !classes.has(className) : Boolean(force);
+        if (active) classes.add(className);
+        else classes.delete(className);
+      },
+      contains(className) { return classes.has(className); },
+    },
+    scrollIntoView() {},
+  };
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+let state = defaultGameState();
+state = fulfillShopOrders(state, 1, {
+  activeDrive: false,
+  orderTypeId: "simple_tofu_box",
+}).gameState;
+state.shop.tips = 25;
+const upgrade = buyStationUpgrade("prep_counter_faster", state);
+globalThis.storyUpgradeOk = upgrade.ok;
+globalThis.storyTeaserTitle = upgrade.storyTeaser && upgrade.storyTeaser.title;
+globalThis.storyTeaserCopy = upgrade.storyTeaser && upgrade.storyTeaser.copy;
+globalThis.storySeenIds = upgrade.gameState.seenStoryBeatIds.slice();
+appState.shopStoryTeaser = upgrade.storyTeaser;
+appState.shopTab = "overview";
+renderTofuShop(upgrade.gameState);
+globalThis.storyOverviewHtml = elements.shopTabPanel.innerHTML;
+globalThis.storyTabsHtml = elements.shopTabList.innerHTML;
+saveGameState(upgrade.gameState);
+let reloaded = loadGameState();
+reloaded.shop.tips = 25;
+const secondUpgrade = buyStationUpgrade("tofu_press_faster", reloaded);
+globalThis.secondStoryTeaser = secondUpgrade.storyTeaser;
+appState.shopStoryTeaser = null;
+renderTofuShop(loadGameState());
+globalThis.reloadedOverviewHtml = elements.shopTabPanel.innerHTML;
+appState.running = true;
+appState.shopStoryTeaser = upgrade.storyTeaser;
+appState.shopTab = "overview";
+renderTofuShop(upgrade.gameState);
+globalThis.activeStoryOverviewHtml = elements.shopTabPanel.innerHTML;
+`, context);
+
+  assert.strictEqual(context.storyUpgradeOk, true);
+  assert.strictEqual(context.storyTeaserTitle, 'Behind the shop');
+  assert(context.storyTeaserCopy.includes('old car waits under a cover'));
+  assert(context.storyTeaserCopy.includes("One day, you'll build it"));
+  assert.strictEqual(context.storySeenIds.join(','), 'covered_car_teaser');
+  assert(context.storyOverviewHtml.includes('Behind the shop'));
+  assert(context.storyOverviewHtml.includes('old car waits under a cover'));
+  assert(!context.storyTabsHtml.includes('Dream Garage'));
+  assert.strictEqual(context.secondStoryTeaser, null);
+  assert(!context.reloadedOverviewHtml.includes('old car waits under a cover'));
+  assert(!context.activeStoryOverviewHtml.includes('old car waits under a cover'));
+
+  const css = fs.readFileSync(path.join(NOSPILL_DIR, 'app.css'), 'utf8');
+  assert(css.includes('.nospill-shop-tab-list button:focus-visible'));
+  assert(css.includes('.nospill-shop-tab-list button.is-newly-revealed'));
+  assert(css.includes('.nospill-tab-badge'));
+  assert(!css.includes('.nospill-shop-tabs button.is-revealed'));
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -5046,6 +5141,7 @@ function run() {
   testStampFanfareReducedMotionUsesStaticState();
   testDiscoveryFanfareRevealsUpgradesOnce();
   testDiscoveryFanfareReducedMotionUsesStaticState();
+  testCoveredCarTeaserIsOneTimeStoryBeatOnly();
   testShopOrderTypeProgressionAndRewards();
   testCoreGameSpineV1MilestonesAndSupportStations();
   testNextBestActionHierarchyStaysSinglePrimary();

@@ -152,6 +152,10 @@ Each major system should have three visibility states:
 - newly discovered
 - active dashboard card or panel
 
+Newly discovered tabs should use explicit labels such as `New`, not unexplained outlines. Soft glow
+can support the moment, but focus styling must remain distinct and the new-tab label should clear
+after the player views the system.
+
 Progressive reveal should reduce decision confusion, not merely hide content. The user should
 always have one obvious next step.
 
@@ -229,6 +233,9 @@ Current design principles:
 - The first hidden shop system should use a Discovery Fanfare. Upgrades are the first system reveal
   when a meaningful bottleneck-solving upgrade appears. System reveals are local-only,
   repeat-suppressed per system id, and should create curiosity without listing the future roadmap.
+- After an early meaningful milestone, the shop may show one restrained covered-car story teaser:
+  `Behind the shop, an old car waits under a cover.` This is a purpose hint only, not Dream Garage
+  implementation.
 - Detailed tabs are earned. The Orders tab is removed from the first-loop shop because Overview
   owns order cards, Prep Counter progress, reward previews, and fulfillment actions. Production
   should focus on station ownership, and Upgrades should appear only when at least one relevant

@@ -660,6 +660,9 @@
 }
 
 .nospill-shop-tab-list button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   min-height: 36px;
   border: 1px solid rgba(244, 247, 239, 0.13);
   border-radius: 999px;
@@ -674,6 +677,32 @@
   border-color: rgba(85, 217, 138, 0.54);
   color: #06100b;
   background: #55d98a;
+}
+
+.nospill-shop-tab-list button:focus-visible {
+  outline: 2px solid #f7d66b;
+  outline-offset: 3px;
+}
+
+.nospill-shop-tab-list button.is-newly-revealed:not(.is-active) {
+  border-color: rgba(158, 233, 191, 0.48);
+  box-shadow: 0 0 0 1px rgba(158, 233, 191, 0.10);
+}
+
+.nospill-tab-badge {
+  border-radius: 999px;
+  padding: 1px 6px;
+  color: #06100b;
+  background: #f7d66b;
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nospill-shop-tab-list button.is-active .nospill-tab-badge {
+  background: #06100b;
+  color: #f7d66b;
 }
 
 .nospill-idle-panel h4,
@@ -932,12 +961,6 @@
 
 .nospill-discovery-actions {
   margin-top: 4px;
-}
-
-.nospill-shop-tabs button.is-revealed {
-  border-color: rgba(158, 233, 191, 0.72);
-  color: #f4f7ef;
-  box-shadow: 0 0 0 2px rgba(158, 233, 191, 0.14);
 }
 
 @keyframes stamp-pop {

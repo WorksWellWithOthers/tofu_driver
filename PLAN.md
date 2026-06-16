@@ -32,7 +32,8 @@
 - The first Passport stamp now triggers a local Stamp Fanfare on the inline shop-order path, with
   repeat suppression, accessible dialog semantics, reduced-motion handling, and muted-audio respect.
 - The first hidden shop system reveal now uses a local Discovery Fanfare: Upgrades are revealed
-  when a meaningful upgrade appears, and the reveal is suppressed after it has been seen once.
+  when a meaningful upgrade appears, the Upgrades tab gets an explicit `New` badge, and the badge
+  clears after the player views Upgrades.
 - Tofu Shop tabs are progressively revealed by meaningful milestones and story beats rather than
   raw idle accumulation. Routes, Training, Garage, Crew, Shop Spirit, Rivals, License, full
   Passport, and full Ledger stay hidden during the first loop unless earned.
@@ -56,6 +57,8 @@
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
 - Regular Customers remain deferred as the next possible light automation slice after the manual
   order loop has been playtested. Dream Garage remains documented future direction only.
+- The covered-car teaser is implemented only as a one-time story beat after the first upgrade
+  milestone; it does not add a Dream Garage tab, garage inventory, parts, events, or car stats.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
