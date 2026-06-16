@@ -69,6 +69,9 @@ globalThis.getShopLevel = getShopLevel;
 globalThis.getShopUpgradeCatalog = getShopUpgradeCatalog;
 globalThis.getShopProductionRate = getShopProductionRate;
 globalThis.getShopGeneratorRates = getShopGeneratorRates;
+globalThis.stationMilestoneMultiplier = stationMilestoneMultiplier;
+globalThis.stationMilestoneText = stationMilestoneText;
+globalThis.nextVisibleStationMilestone = nextVisibleStationMilestone;
 globalThis.calculateShopGeneratorEarnings = calculateShopGeneratorEarnings;
 globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
 globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
@@ -2815,6 +2818,153 @@ appState.running = false;
   assert(!source.includes('sendBeacon'));
   assert(!source.includes('netWorth'));
   assert(!source.includes('enterpriseValue'));
+}
+
+function testTofuShopStationMilestoneBoostsV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const base = context.defaultGameState();
+  base.shop.tips = 100000;
+  base.shop.prepSlots = 100;
+  base.shop.reputation = 100;
+  base.shop.shopLevel = context.getShopLevel(base.shop.reputation);
+  base.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+  base.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
+  base.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+  base.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray', date: '2026-06-15T12:00:00.000Z' };
+  base.stamps.first_100_tips = { label: 'First 100 Tips', date: '2026-06-15T12:00:00.000Z' };
+
+  assert.strictEqual(context.stationMilestoneMultiplier('tofu_press', 4), 1);
+  assert.strictEqual(context.stationMilestoneMultiplier('tofu_press', 5), 1.5);
+  assert.strictEqual(context.stationMilestoneMultiplier('tofu_press', 10), 2);
+  assert.strictEqual(context.stationMilestoneMultiplier('prep_counter', 5), 1.5);
+  assert.strictEqual(context.stationMilestoneMultiplier('prep_counter', 10), 2);
+  assert.strictEqual(context.stationMilestoneMultiplier('delivery_shelf', 5), 1.25);
+  assert.strictEqual(context.stationMilestoneMultiplier('delivery_shelf', 10), 1.5);
+  assert.strictEqual(context.stationMilestoneMultiplier('shop_sign', 5), 1.25);
+  assert.strictEqual(context.stationMilestoneMultiplier('shop_sign', 10), 1.5);
+  assert.strictEqual(context.stationMilestoneMultiplier('tofu_press', 10), 2, '10 owned should be x2 total, not x3 compounded');
+
+  const onePressRate = context.getShopGeneratorRates(base).tofuPressPerSecond;
+  const fivePress = JSON.parse(JSON.stringify(base));
+  fivePress.shop.stations.tofu_press = 5;
+  const tenPress = JSON.parse(JSON.stringify(base));
+  tenPress.shop.stations.tofu_press = 10;
+  assertAlmostEqual(context.getShopGeneratorRates(fivePress).tofuPressPerSecond, onePressRate * 5 * 1.5);
+  assertAlmostEqual(context.getShopGeneratorRates(tenPress).tofuPressPerSecond, onePressRate * 10 * 2);
+
+  const oneCounterRate = context.getShopGeneratorRates(base).prepOrdersPerSecond;
+  const fiveCounters = JSON.parse(JSON.stringify(base));
+  fiveCounters.shop.stations.prep_counter = 5;
+  const tenCounters = JSON.parse(JSON.stringify(base));
+  tenCounters.shop.stations.prep_counter = 10;
+  assertAlmostEqual(context.getShopGeneratorRates(fiveCounters).prepOrdersPerSecond, oneCounterRate * 5 * 1.5);
+  assertAlmostEqual(context.getShopGeneratorRates(tenCounters).prepOrdersPerSecond, oneCounterRate * 10 * 2);
+
+  const fiveShelves = JSON.parse(JSON.stringify(base));
+  fiveShelves.shop.stations.delivery_shelf = 5;
+  const tenShelves = JSON.parse(JSON.stringify(base));
+  tenShelves.shop.stations.delivery_shelf = 10;
+  assertAlmostEqual(context.getShopGeneratorRates(fiveShelves).prepOrdersPerSecond, oneCounterRate * (1 + 5 * 0.08) * 1.25);
+  assertAlmostEqual(context.getShopGeneratorRates(tenShelves).prepOrdersPerSecond, oneCounterRate * (1 + 10 * 0.08) * 1.5);
+
+  const fourSigns = JSON.parse(JSON.stringify(base));
+  fourSigns.shop.stations.shop_sign = 4;
+  fourSigns.shop.tofuStock = 1000;
+  fourSigns.shop.deliveryOrders = 2;
+  const fiveSigns = JSON.parse(JSON.stringify(fourSigns));
+  fiveSigns.shop.stations.shop_sign = 5;
+  const tenSigns = JSON.parse(JSON.stringify(fourSigns));
+  tenSigns.shop.stations.shop_sign = 10;
+  const repFour = context.fulfillShopOrders(fourSigns, 1, { activeDrive: false, orderTypeId: 'festival_bento' });
+  const repFive = context.fulfillShopOrders(fiveSigns, 1, { activeDrive: false, orderTypeId: 'festival_bento' });
+  const repTen = context.fulfillShopOrders(tenSigns, 1, { activeDrive: false, orderTypeId: 'festival_bento' });
+  assert(repFive.reputationGained > repFour.reputationGained);
+  assert(repTen.reputationGained > repFive.reputationGained);
+
+  const milestoneBuySource = JSON.parse(JSON.stringify(base));
+  milestoneBuySource.shop.stations.tofu_press = 4;
+  const milestoneBuy = context.buyShopStation('tofu_press', milestoneBuySource, 1);
+  assert.strictEqual(milestoneBuy.ok, true);
+  assert(milestoneBuy.milestoneFeedback.includes('Station milestone reached: 5 Tofu Press owned'));
+  assert(milestoneBuy.milestoneFeedback.includes('Tofu Press output x1.5'));
+  assert(milestoneBuy.gameState.seenStationMilestoneIds.includes('tofu_press_5'));
+
+  const seenSource = JSON.parse(JSON.stringify(base));
+  seenSource.seenStationMilestoneIds = ['tofu_press_5'];
+  seenSource.shop.stations.tofu_press = 4;
+  const seenBuy = context.buyShopStation('tofu_press', seenSource, 1);
+  assert.strictEqual(seenBuy.ok, true);
+  assert.strictEqual(seenBuy.milestoneFeedback, '');
+
+  const oldSave = context.defaultGameState();
+  oldSave.shop.stations.tofu_press = 10;
+  oldSave.shop.stations.prep_counter = 10;
+  assert.strictEqual(context.stationMilestoneMultiplier('tofu_press', oldSave.shop.stations.tofu_press), 2);
+  assert.strictEqual(context.stationMilestoneMultiplier('prep_counter', oldSave.shop.stations.prep_counter), 2);
+
+  assert(context.stationMilestoneText('tofu_press', 4).includes('Next station milestone: 4 / 5 Tofu Press owned'));
+  assert(context.stationMilestoneText('tofu_press', 5).includes('Station milestone reached: 5 Tofu Press owned'));
+  assert(context.stationMilestoneText('tofu_press', 10).includes('Station milestones complete for now'));
+
+  const nearPress = JSON.parse(JSON.stringify(base));
+  nearPress.shop.stations.tofu_press = 4;
+  nearPress.shop.tofuStock = 1;
+  nearPress.shop.deliveryOrders = 0;
+  nearPress.shop.prepSlots = 100;
+  nearPress.shop.counterService.running = true;
+  const nearPressAction = context.nextBestAction(nearPress, { date: new Date('2026-06-15T12:00:00.000Z') });
+  assert.strictEqual(nearPressAction.type, 'buy_station');
+  assert.strictEqual(nearPressAction.stationId, 'tofu_press');
+  assert(nearPressAction.copy.includes('close to 5 Tofu Presses'));
+
+  const milestoneFallback = JSON.parse(JSON.stringify(base));
+  milestoneFallback.shop.stations.tofu_press = 4;
+  milestoneFallback.shop.stations.delivery_shelf = 1;
+  milestoneFallback.shop.stations.shop_sign = 1;
+  milestoneFallback.shop.counterService.running = true;
+  milestoneFallback.shop.counterService.lifetimeHandoffs = 1;
+  const milestone = context.nextMilestoneForShop(milestoneFallback);
+  assert.strictEqual(milestone.id, 'station_tofu_press_5');
+  assert.strictEqual(milestone.reward, 'Tofu Press output x1.5');
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle() {} };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "production";
+renderTofuShop(${JSON.stringify(milestoneFallback)});
+globalThis.stationMilestoneProductionHtml = elements.shopTabPanel.innerHTML;
+renderTofuShop(${JSON.stringify(context.defaultGameState())});
+globalThis.freshStationMilestoneProductionHtml = elements.shopTabPanel.innerHTML;
+appState.running = true;
+globalThis.activeDriveMilestoneHtml = renderNextMilestoneCard(${JSON.stringify(milestoneFallback)});
+`, context);
+  assert(context.stationMilestoneProductionHtml.includes('Next station milestone'));
+  assert(context.stationMilestoneProductionHtml.includes('Tofu Press output x1.5'));
+  assert(!context.freshStationMilestoneProductionHtml.includes('Delivery Shelf support x1.25'));
+  assert(!context.stationMilestoneProductionHtml.includes('undefined'));
+  assert(!context.stationMilestoneProductionHtml.includes('NaN'));
+  assert(!context.stationMilestoneProductionHtml.includes('Infinity'));
+  assert.strictEqual(context.activeDriveMilestoneHtml, '');
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
 }
 
 function testCounterServiceV1AutomatesEarnedShopHandoffs() {
@@ -5634,6 +5784,7 @@ function run() {
   testShopOrderTypeProgressionAndRewards();
   testCoreGameSpineV1MilestonesAndSupportStations();
   testTofuShopNextMilestoneBarGuidesImplementedSpine();
+  testTofuShopStationMilestoneBoostsV1();
   testCounterServiceV1AutomatesEarnedShopHandoffs();
   testCounterServicePolishStatsUpgradesAndSpiritPanel();
   testNextBestActionHierarchyStaysSinglePrimary();

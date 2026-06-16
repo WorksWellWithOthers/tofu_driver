@@ -142,9 +142,10 @@ Canonical references:
 Transcript-derived priority ladder:
 
 1. `Now`: playtest the first 5-10 minutes and tune the current implemented shop spine.
-2. `Soon`: Station Milestone Boosts V1 and Counter Service rate/stock-pressure tuning.
-3. `Later`: Regular Customers V1, Shop Spirit tuning, Dream Garage Stage 0, and License preview.
-4. `Avoid for now`: social systems, premium cosmetics, Net Worth valuation, broad route expansion,
+2. `Now`: playtest Station Milestone Boosts V1 and Counter Service rate/stock-pressure tuning.
+3. `Soon`: first 10-minute tuning, support-station pacing, and possible 25+ station milestone design.
+4. `Later`: Regular Customers V1, Shop Spirit tuning, Dream Garage Stage 0, and License preview.
+5. `Avoid for now`: social systems, premium cosmetics, Net Worth valuation, broad route expansion,
    and any new tab/currency that does not solve a felt bottleneck.
 
 Do not build advanced systems next. The First Loop Contract is now implemented enough for
@@ -166,8 +167,8 @@ Future endgame/business sequence:
 
 1. Keep the $1T Net Worth target as design direction only.
 2. Stabilize and tune the First Loop Contract.
-3. Tune Next Milestone Bar V1 and Counter Service V1, then add station milestones only if
-   playtesting supports them.
+3. Tune Next Milestone Bar V1, Counter Service V1, and Station Milestone Boosts V1 before adding
+   more station thresholds.
 4. Add Dream Garage teaser and Stage 0 before any valuation system.
 5. Add business valuation only after Dream Garage, project-car sale, and franchise loops are fun.
 6. Add social showcase/scout concepts only after a privacy/account/backend design exists.

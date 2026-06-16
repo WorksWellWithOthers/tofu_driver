@@ -227,6 +227,10 @@ Current design principles:
 - Core Game Spine V1 adds the first short milestone ladder after the first stamp: First Upgrade
   Purchased, First Family Tofu Tray, First 10 Orders, and First 100 Tips. Delivery Shelf is the
   first throughput support station, and Shop Sign is the first Reputation support station.
+- Station Milestone Boosts V1 rewards owned station counts without adding a new tab or currency:
+  5/10 Tofu Presses and Prep Counters accelerate stock/order production, 5/10 Delivery Shelves
+  improve Prep Counter support, and 5/10 Shop Signs improve Reputation support. These are
+  total multipliers, not stacked threshold multipliers.
 - Counter Service V1 is the first earned automation layer: after First 10 Orders, regular customers
   can pick up prepared orders automatically while the page is open and the player is parked.
 - Counter Service should display its useful rate or blocked state honestly. If it is supplied and

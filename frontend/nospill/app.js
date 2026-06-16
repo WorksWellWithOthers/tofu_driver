@@ -408,6 +408,25 @@ const SHOP_STATIONS = [
   },
 ];
 
+const STATION_MILESTONE_BOOSTS = {
+  tofu_press: [
+    { threshold: 5, multiplier: 1.5, reward: "Tofu Press output x1.5" },
+    { threshold: 10, multiplier: 2, reward: "Tofu Press output x2" },
+  ],
+  prep_counter: [
+    { threshold: 5, multiplier: 1.5, reward: "Prep Counter output x1.5" },
+    { threshold: 10, multiplier: 2, reward: "Prep Counter output x2" },
+  ],
+  delivery_shelf: [
+    { threshold: 5, multiplier: 1.25, reward: "Delivery Shelf support x1.25" },
+    { threshold: 10, multiplier: 1.5, reward: "Delivery Shelf support x1.5" },
+  ],
+  shop_sign: [
+    { threshold: 5, multiplier: 1.25, reward: "Reputation gain x1.25" },
+    { threshold: 10, multiplier: 1.5, reward: "Reputation gain x1.5" },
+  ],
+};
+
 const STATION_UPGRADES = [
   { id: "tofu_press_faster", stationId: "tofu_press", name: "Steady Pressing", costTips: 20, effect: "Tofu Press output x1.5", maxLevel: 10 },
   { id: "tofu_press_double", stationId: "tofu_press", name: "Double Mold", costTips: 40, effect: "Tofu Press output x2", maxLevel: 8 },
@@ -1729,6 +1748,7 @@ function defaultGameState() {
     seenStampFanfareIds: [],
     seenSystemRevealIds: [],
     seenStoryBeatIds: [],
+    seenStationMilestoneIds: [],
     newlyRevealedTabIds: [],
     xpByDate: {},
     routeMastery: {},
@@ -2325,6 +2345,7 @@ function normalizeGameState(stored) {
     seenStampFanfareIds: normalizeIdList(source.seenStampFanfareIds),
     seenSystemRevealIds: normalizeIdList(source.seenSystemRevealIds),
     seenStoryBeatIds: normalizeIdList(source.seenStoryBeatIds),
+    seenStationMilestoneIds: normalizeIdList(source.seenStationMilestoneIds),
     newlyRevealedTabIds: normalizeIdList(source.newlyRevealedTabIds),
     xpByDate:
       source.xpByDate && typeof source.xpByDate === "object"
@@ -2933,14 +2954,70 @@ function getShopSpiritMax(shop) {
   return SHOP_SPIRIT_BASE_MAX + safeNonNegativeInteger(source.shopLevel, 1, 1000) * 5;
 }
 
-function stationMilestoneMultiplier(owned) {
+function formatStationMultiplier(multiplier) {
+  const value = Number(multiplier || 1);
+  if (!Number.isFinite(value) || value <= 0) return "x1";
+  return `x${String(roundTo(value, 2)).replace(/\.0+$/, "")}`;
+}
+
+function stationMilestonePlan(stationId) {
+  return STATION_MILESTONE_BOOSTS[stationId] || [];
+}
+
+function stationMilestoneId(stationId, threshold) {
+  return `${stationId}_${threshold}`;
+}
+
+function stationMilestoneMultiplier(stationId, owned) {
   const count = safeNonNegativeInteger(owned, 0, 100000);
-  let multiplier = 1;
-  if (count >= 10) multiplier *= 2;
-  if (count >= 25) multiplier *= 2;
-  if (count >= 50) multiplier *= 3;
-  if (count >= 100) multiplier *= 4;
-  return multiplier;
+  return stationMilestonePlan(stationId).reduce((multiplier, milestone) => (
+    count >= milestone.threshold ? milestone.multiplier : multiplier
+  ), 1);
+}
+
+function currentStationMilestone(stationId, owned) {
+  const count = safeNonNegativeInteger(owned, 0, 100000);
+  return stationMilestonePlan(stationId)
+    .filter((milestone) => count >= milestone.threshold)
+    .slice(-1)[0] || null;
+}
+
+function nextStationMilestone(stationId, owned) {
+  const count = safeNonNegativeInteger(owned, 0, 100000);
+  return stationMilestonePlan(stationId).find((milestone) => count < milestone.threshold) || null;
+}
+
+function stationMilestoneText(stationId, owned) {
+  const station = shopStationById(stationId);
+  const count = safeNonNegativeInteger(owned, 0, 100000);
+  const current = currentStationMilestone(stationId, count);
+  const next = nextStationMilestone(stationId, count);
+  if (!station || stationMilestonePlan(stationId).length < 1) return "";
+  if (next) {
+    const progress = `${formatShopCount(count)} / ${formatShopCount(next.threshold)} ${station.name} owned`;
+    return current
+      ? `Station milestone reached: ${formatShopCount(current.threshold)} ${station.name} owned · ${current.reward}. Next: ${progress} · Reward: ${next.reward}.`
+      : `Next station milestone: ${progress}. Reward: ${next.reward}.`;
+  }
+  return current
+    ? `Station milestones complete for now. Current boost: ${formatStationMultiplier(current.multiplier)}.`
+    : "";
+}
+
+function crossedStationMilestone(stationId, beforeOwned, afterOwned, seenIds = []) {
+  const before = safeNonNegativeInteger(beforeOwned, 0, 100000);
+  const after = safeNonNegativeInteger(afterOwned, 0, 100000);
+  const seen = new Set(Array.isArray(seenIds) ? seenIds : []);
+  return stationMilestonePlan(stationId)
+    .filter((milestone) => before < milestone.threshold && after >= milestone.threshold)
+    .filter((milestone) => !seen.has(stationMilestoneId(stationId, milestone.threshold)))
+    .slice(-1)[0] || null;
+}
+
+function stationMilestoneFeedback(stationId, milestone) {
+  const station = shopStationById(stationId);
+  if (!station || !milestone) return "";
+  return `Station milestone reached: ${formatShopCount(milestone.threshold)} ${station.name} owned · ${milestone.reward}`;
 }
 
 function stationUpgradeLevel(shop, upgradeId) {
@@ -2994,27 +3071,28 @@ function getShopGeneratorRates(gameState, now = new Date()) {
   const shelfOwned = safeNonNegativeInteger(state.shop.stations.delivery_shelf, 0, 100000);
   const customerOwned = safeNonNegativeInteger(state.shop.stations.regular_customer, 0, 100000);
   const signOwned = safeNonNegativeInteger(state.shop.stations.shop_sign, 0, 100000);
-  const shelfBoost = 1 + shelfOwned * 0.08 + stationUpgradeLevel(state.shop, "delivery_shelf_faster") * 0.2;
+  const shelfBoost = (1 + shelfOwned * 0.08 + stationUpgradeLevel(state.shop, "delivery_shelf_faster") * 0.2)
+    * stationMilestoneMultiplier("delivery_shelf", shelfOwned);
   const tofuPressPerSecond = generators.tofuPress.unlocked
     ? tofuPressOwned
       * TOFU_PRESS_BASE_PER_SECOND
       * boostMultiplier
       * festivalMultiplier
       * stationOutputMultiplier(state.shop, "tofu_press")
-      * stationMilestoneMultiplier(tofuPressOwned)
+      * stationMilestoneMultiplier("tofu_press", tofuPressOwned)
     : 0;
   const prepOrdersPerSecond = generators.prepCounter.unlocked && prepOwned > 0
     ? prepOwned
       * PREP_COUNTER_BASE_ORDERS_PER_SECOND
       * shelfBoost
       * stationOutputMultiplier(state.shop, "prep_counter")
-      * stationMilestoneMultiplier(prepOwned)
+      * stationMilestoneMultiplier("prep_counter", prepOwned)
     : 0;
   const prepTofuPerSecond = prepOrdersPerSecond * PREP_COUNTER_CONSUME_PER_ORDER;
   const customerTipsPerSecond = customerOwned
     * 0.02
     * stationOutputMultiplier(state.shop, "regular_customer")
-    * stationMilestoneMultiplier(customerOwned);
+    * stationMilestoneMultiplier("regular_customer", customerOwned);
   const shopSpiritPerSecond = SPIRIT_GENERATORS.reduce((total, generator) => (
     total
     + safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 100000)
@@ -3022,7 +3100,11 @@ function getShopGeneratorRates(gameState, now = new Date()) {
   ), 0);
   const prepSlotPerSecond = PREP_SLOT_REGEN_PER_SECOND
     * (1 + safeNonNegativeInteger(state.shop.licensePerks.prep_slot_regen, 0, 20) * 0.3);
-  const passiveReputationPerSecond = signOwned * 0.002 * (1 + stationUpgradeLevel(state.shop, "shop_sign_faster") * 0.2);
+  const shopSignMilestoneMultiplier = stationMilestoneMultiplier("shop_sign", signOwned);
+  const passiveReputationPerSecond = signOwned
+    * 0.002
+    * (1 + stationUpgradeLevel(state.shop, "shop_sign_faster") * 0.2)
+    * shopSignMilestoneMultiplier;
   const prepStatus = !generators.prepCounter.unlocked
     ? "Locked"
     : state.shop.tofuStock >= PREP_COUNTER_CONSUME_PER_ORDER
@@ -3734,9 +3816,25 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.prepSlots = safeNonNegativeNumber(next.shop.prepSlots - prepCost);
   next.shop.stations[station.id] = owned + quantity;
+  const milestone = crossedStationMilestone(
+    station.id,
+    owned,
+    next.shop.stations[station.id],
+    next.seenStationMilestoneIds,
+  );
+  let milestoneFeedback = "";
+  if (milestone) {
+    const milestoneId = stationMilestoneId(station.id, milestone.threshold);
+    next.seenStationMilestoneIds = [...next.seenStationMilestoneIds, milestoneId].slice(0, 200);
+    milestoneFeedback = stationMilestoneFeedback(station.id, milestone);
+  }
   syncShopGenerators(next);
-  next = addLedgerEntry(next, "purchase", `Bought ${quantity} ${station.name}${quantity > 1 ? "s" : ""}.`);
-  return { ok: true, reason: "", gameState: next, station, quantity, costTips };
+  next = addLedgerEntry(
+    next,
+    "purchase",
+    `Bought ${quantity} ${station.name}${quantity > 1 ? "s" : ""}.${milestoneFeedback ? ` ${milestoneFeedback}.` : ""}`,
+  );
+  return { ok: true, reason: "", gameState: next, station, quantity, costTips, milestone, milestoneFeedback };
 }
 
 function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
@@ -3768,9 +3866,8 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     return { ok: false, reason: shopOrderDisabledReason(orderType, next, unlocked), gameState: next, orderType };
   }
   const signOwned = safeNonNegativeInteger(next.shop.stations.shop_sign, 0, 100000);
-  const signBonus = 1
-    + signOwned * 0.1
-    + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
+  const signSupport = signOwned * 0.1 + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
+  const signBonus = 1 + signSupport * stationMilestoneMultiplier("shop_sign", signOwned);
   const garageBonus = safeNonNegativeInteger(next.shop.garage.delivery_mat, 0, 100) >= 3 ? 1 : 0;
   const tipsGained = Math.round(orderType.tips * quantity);
   const reputationGained = Math.round((orderType.reputation * quantity + garageBonus) * signBonus);
@@ -6854,6 +6951,9 @@ function nextBestAction(gameState, options = {}) {
     && safeNonNegativeInteger(state.shop.stationUpgrades[candidate.id], 0, candidate.maxLevel) < candidate.maxLevel
     && state.shop.tips >= stationUpgradeCostTips(candidate, state.shop.stationUpgrades[candidate.id])
   ));
+  const stockMilestone = nextVisibleStationMilestone(state, { stationIds: ["tofu_press"] });
+  const prepMilestone = nextVisibleStationMilestone(state, { stationIds: ["prep_counter", "delivery_shelf"] });
+  const reputationMilestone = nextVisibleStationMilestone(state, { stationIds: ["shop_sign"] });
   if (activeDrive) {
     return {
       type: "active_drive",
@@ -6878,7 +6978,9 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "buy_station",
         title: "Next: Buy Tofu Press",
-        copy: "Counter Service is waiting for Tofu Stock. A Tofu Press helps keep larger orders supplied.",
+        copy: stockMilestone && stockMilestone.close
+          ? `Counter Service is waiting for Tofu Stock. You are close to ${formatShopCount(stockMilestone.milestone.threshold)} Tofu Presses for ${stockMilestone.milestone.reward}.`
+          : "Counter Service is waiting for Tofu Stock. A Tofu Press helps keep larger orders supplied.",
         buttonLabel: "View Production",
         stationId: "tofu_press",
         disabled: false,
@@ -6959,7 +7061,9 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "buy_station",
       title: "Next: Buy Prep Counter",
-      copy: "Tofu Stock is healthy. More Prep Counters prepare Delivery Orders faster.",
+      copy: prepMilestone && prepMilestone.stationId === "prep_counter" && prepMilestone.close
+        ? `Tofu Stock is healthy. You are close to ${formatShopCount(prepMilestone.milestone.threshold)} Prep Counters for ${prepMilestone.milestone.reward}.`
+        : "Tofu Stock is healthy. More Prep Counters prepare Delivery Orders faster.",
       buttonLabel: "View Production",
       stationId: "prep_counter",
       disabled: false,
@@ -6969,7 +7073,9 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "buy_station",
       title: "Next: Buy Delivery Shelf",
-      copy: "The counter is growing. Delivery Shelf boosts Prep Counter throughput.",
+      copy: prepMilestone && prepMilestone.stationId === "delivery_shelf" && prepMilestone.close
+        ? `The counter is growing. You are close to ${formatShopCount(prepMilestone.milestone.threshold)} Delivery Shelves for ${prepMilestone.milestone.reward}.`
+        : "The counter is growing. Delivery Shelf boosts Prep Counter throughput.",
       buttonLabel: "View Production",
       stationId: "delivery_shelf",
       disabled: false,
@@ -6979,7 +7085,9 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "buy_station",
       title: "Next: Buy Tofu Press",
-      copy: "Tofu Stock is low. A Tofu Press helps keep Prep Counter supplied.",
+      copy: stockMilestone && stockMilestone.close
+        ? `Tofu Stock is low. You are close to ${formatShopCount(stockMilestone.milestone.threshold)} Tofu Presses for ${stockMilestone.milestone.reward}.`
+        : "Tofu Stock is low. A Tofu Press helps keep Prep Counter supplied.",
       buttonLabel: "View Production",
       stationId: "tofu_press",
       disabled: false,
@@ -6999,7 +7107,9 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "buy_station",
       title: "Next: Buy Shop Sign",
-      copy: "The shop is becoming known. Shop Sign boosts Reputation from orders.",
+      copy: reputationMilestone && reputationMilestone.close
+        ? `The shop is becoming known. You are close to ${formatShopCount(reputationMilestone.milestone.threshold)} Shop Signs for ${reputationMilestone.milestone.reward}.`
+        : "The shop is becoming known. Shop Sign boosts Reputation from orders.",
       buttonLabel: "View Production",
       stationId: "shop_sign",
       disabled: false,
@@ -7262,6 +7372,7 @@ function renderShopGeneratorCard(generatorId, gameState) {
       ? "Unlocks with Tofu Stock 10 or Shop Level 2."
       : "The press is warming up. Start the shop while parked."
     : stationPurposeCopy(stationId, state);
+  const milestoneCopy = unlocked && station ? stationMilestoneText(stationId, owned) : "";
   return `
     <div class="nospill-generator-item ${unlocked ? "" : "is-locked"}">
       <header>
@@ -7271,6 +7382,7 @@ function renderShopGeneratorCard(generatorId, gameState) {
       <small>Owned: ${formatShopCount(owned)}</small>
       <small>${escapeHtml(rate)}</small>
       <small>${escapeHtml(helper)}</small>
+      ${milestoneCopy ? `<small>${escapeHtml(milestoneCopy)}</small>` : ""}
       ${station ? `<small>Next: ${formatShopCost(cost)} Tips${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Slot` : ""}</small>` : ""}
       <div class="nospill-idle-actions">
         ${actionButton(`Buy ${label} · ${formatShopCost(cost)} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
@@ -7712,6 +7824,37 @@ function stationUnlockProgressFor(stationId, gameState) {
   return { current: 0, required: 1, percent: 0, text: "Keep growing the shop" };
 }
 
+function nextVisibleStationMilestone(gameState, options = {}) {
+  const state = normalizeGameState(gameState);
+  const preferredStationIds = options.stationIds || ["tofu_press", "prep_counter", "delivery_shelf", "shop_sign"];
+  const candidates = preferredStationIds
+    .map((stationId) => {
+      const station = shopStationById(stationId);
+      const owned = safeNonNegativeInteger(state.shop.stations[stationId], 0, 100000);
+      const milestone = nextStationMilestone(stationId, owned);
+      if (!station || !milestone || !stationIsUnlocked(station, state)) return null;
+      const progress = nextMilestoneProgress(owned, milestone.threshold);
+      const cost = stationCost(station, owned);
+      return {
+        station,
+        stationId,
+        owned,
+        milestone,
+        cost,
+        progress,
+        close: milestone.threshold - owned <= 2,
+        affordable: state.shop.tips >= cost && state.shop.prepSlots >= station.prepSlotCost,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      if (a.affordable !== b.affordable) return a.affordable ? -1 : 1;
+      if (a.close !== b.close) return a.close ? -1 : 1;
+      return (b.progress.percent - a.progress.percent) || (a.cost - b.cost);
+    });
+  return candidates[0] || null;
+}
+
 function nextMilestoneForShop(gameState) {
   const state = normalizeGameState(gameState);
   const fulfilled = fulfilledShopOrderCount(state);
@@ -7833,6 +7976,18 @@ function nextMilestoneForShop(gameState) {
     };
   }
 
+  const stationMilestone = nextVisibleStationMilestone(state);
+  if (stationMilestone) {
+    return {
+      id: `station_${stationMilestone.stationId}_${stationMilestone.milestone.threshold}`,
+      name: `${formatShopCount(stationMilestone.milestone.threshold)} ${stationMilestone.station.name}`,
+      progressText: `${formatShopCount(stationMilestone.progress.current)} / ${formatShopCount(stationMilestone.progress.required)} owned`,
+      percent: stationMilestone.progress.percent,
+      reward: stationMilestone.milestone.reward,
+      guidance: `Buy ${stationMilestone.station.name} when it matches the current bottleneck.`,
+    };
+  }
+
   return {
     id: "counter_service_tuning",
     name: "Counter Service Tuning",
@@ -7929,7 +8084,7 @@ function renderProductionPanel(state) {
           title: station.name,
           status: unlocked ? `${formatShopCost(cost)} tips · ${formatShopCount(station.prepSlotCost)} Prep Slot` : "Locked",
           copy: unlocked
-            ? `Owned: ${formatShopCount(owned)}. ${stationPurposeCopy(station.id, state)} Milestone x${stationMilestoneMultiplier(owned)}.`
+            ? `Owned: ${formatShopCount(owned)}. ${stationPurposeCopy(station.id, state)} ${stationMilestoneText(station.id, owned)}`
             : station.unlock,
           locked: !unlocked,
           actions: [
@@ -9555,6 +9710,7 @@ function saveShopActionResult(result, successMessage) {
   }
   saveGameState(result.gameState);
   if (result.storyTeaser) appState.shopStoryTeaser = result.storyTeaser;
+  if (successMessage) appState.shopInlineResult = successMessage;
   renderGamePanels(result.gameState);
   setSummaryStatusMessage(successMessage);
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
@@ -9603,12 +9759,22 @@ function handleTofuShopPanelClick(event) {
     const state = currentGameState();
     const quantity = state.shop.purchaseMultiplier || appState.purchaseMultiplier || 1;
     const result = buyShopStation(target.dataset.shopStation, state, quantity);
-    saveShopActionResult(result, result.ok ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.` : "");
+    saveShopActionResult(
+      result,
+      result.ok
+        ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.${result.milestoneFeedback ? ` ${result.milestoneFeedback}.` : ""}`
+        : "",
+    );
     return;
   }
   if (target.dataset.shopStationMax) {
     const result = buyShopStation(target.dataset.shopStationMax, currentGameState(), "max");
-    saveShopActionResult(result, result.ok ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.` : "");
+    saveShopActionResult(
+      result,
+      result.ok
+        ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.${result.milestoneFeedback ? ` ${result.milestoneFeedback}.` : ""}`
+        : "",
+    );
     return;
   }
   if (target.dataset.fulfillOrders) {

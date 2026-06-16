@@ -328,8 +328,9 @@ Transcript-derived tuning notes:
   upgrade, First 10 Orders, and first automation handoff over later systems.
 - The game should alternate between `I can handle this now` and `I need a new support layer`.
   Larger orders, Delivery Shelf, Shop Sign, and Counter Service should each create that push-pull.
-- Station milestone boosts are a strong `Soon` candidate because they keep old stations relevant
-  without adding a new currency or tab.
+- Station Milestone Boosts V1 is implemented for the first support counts: 5/10 Tofu Presses,
+  5/10 Prep Counters, 5/10 Delivery Shelves, and 5/10 Shop Signs. These boosts keep old stations
+  relevant without adding a new currency or tab.
 - New resource sinks should create choices. Dream Garage, project cars, and Net Worth remain useful
   future sinks only after Tips and shop automation are fun locally.
 - Prestige should remain a visible later goal, not an early tab. License Exam belongs after a real
@@ -826,17 +827,21 @@ Soft-cap principles:
 ## Milestone Boosts
 
 Milestones make repeated station purchases feel meaningful without requiring constant new systems.
-They should be visible only after the player owns or is near the relevant count.
+Station Milestone Boosts V1 is implemented in Production/station cards and as a fallback Next
+Milestone target after the core story/support milestones. Boosts are total multipliers, not
+cumulative threshold stacking.
 
 | Milestone | Example Flavor | Effect Target | Visibility |
 | --- | --- | --- | --- |
-| 5 Tofu Presses | The press rhythm settles in. | Tofu Press output x1.5 | show when player owns 3+ presses |
-| 10 Tofu Presses | The molds line up neatly. | Tofu Press output x2 | show when player owns 7+ presses |
-| 25 Tofu Presses | The tofu stack becomes dependable. | Tofu Press output x2 additional | show after 10 milestone |
-| 50 Tofu Presses | The morning batch runs itself. | Tofu Press output x3 additional | later |
-| 100 Tofu Presses | The shop has a full pressing rhythm. | Tofu Press output x4 additional | late |
-| 5 Prep Counters | Labels and boxes are staged. | Prep Counter output x1.5 | show when player owns 3+ counters |
-| 10 Prep Counters | The counter line moves smoothly. | Prep Counter output x2 | show when player owns 7+ counters |
+| 5 Tofu Presses | The press rhythm settles in. | Tofu Press output x1.5 total | Production card, inline feedback once |
+| 10 Tofu Presses | The molds line up neatly. | Tofu Press output x2 total | Production card, inline feedback once |
+| 5 Prep Counters | Labels and boxes are staged. | Prep Counter output x1.5 total | Production card, inline feedback once |
+| 10 Prep Counters | The counter line moves smoothly. | Prep Counter output x2 total | Production card, inline feedback once |
+| 5 Delivery Shelves | The shelf routine settles. | Delivery Shelf support x1.25 total | only after Delivery Shelf is visible/owned |
+| 10 Delivery Shelves | The handoff line is smooth. | Delivery Shelf support x1.5 total | only after Delivery Shelf is visible/owned |
+| 5 Shop Signs | Regulars start noticing. | Reputation gain x1.25 total | only after Shop Sign is visible/owned |
+| 10 Shop Signs | The storefront is known. | Reputation gain x1.5 total | only after Shop Sign is visible/owned |
+| 25+ station counts | TBD future threshold | documented only | later |
 | 25 fulfilled orders | The lunch crowd notices. | Festival Bento teaser or Better Boxes unlock | first-shop phase |
 | 50 fulfilled orders | Regulars know the counter. | Regular Customers / License requirement progress | first automation phase |
 | 5 Passport Stamps | The shop has a story. | Local Delivery License requirement | License preview |
@@ -846,7 +851,9 @@ Milestone rules:
 - milestones are shop-only and must not affect Cup Test score or qualification
 - milestone copy should be cozy and concrete
 - early milestones should be few and legible
-- milestone boosts should be multiplicative only where simulation shows stable pacing
+- milestone boosts reward ownership thresholds and idle-first planning, not clicking speed
+- V1 milestone boosts are total multipliers; 10 Tofu Presses means x2 total, not x1.5 * x2
+- future higher thresholds remain documented only until pacing supports them
 
 ## 10. Bottleneck Rules
 
@@ -1645,6 +1652,7 @@ progression contract.
 | Ready order/progress display | Implemented | ready order UI/tests | hides raw fractional order count | refine ETA copy |
 | First Shop Order stamp | Implemented | order result, ledger, Passport teaser tests | first fulfilled Simple Tofu Box unlocks and reports the stamp without showing the full catalog | visual polish |
 | Tofu Press / Prep Counter station cards | Implemented | station rendering/tests | station count and upgrade levels are separate | visual polish |
+| Station Milestone Boosts V1 | Implemented | `STATION_MILESTONE_BOOSTS`, station card milestone copy, count-derived rate multipliers, one-time inline feedback, tests | 5/10 Tofu Press and Prep Counter output boosts, 5/10 Delivery Shelf support boosts, and 5/10 Shop Sign Reputation support boosts are total multipliers | tune thresholds and decide whether 25+ station milestones are needed |
 | Steady Pressing / Double Mold | Implemented | station upgrade catalog/tests | named Tofu Press modifiers; Steady Pressing aligns to 20 Tips and x1.5 output target and is recommended only when stock runway is low/relevant | playtest timing |
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs 20 Tips, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
