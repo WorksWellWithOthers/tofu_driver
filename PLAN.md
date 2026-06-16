@@ -19,9 +19,9 @@
   currency, and the UI can show when stock is enough for now.
 - Player-facing Tofu Shop values, costs, and rewards use compact incremental formatting as they
   grow; internal values remain exact.
-- `FIRST_LOOP_AUDIT.md` documents the current first-loop playtest gaps: the first felt bottleneck is
-  Prep Counter throughput, the first visible named upgrade may not solve that bottleneck, and the
-  Upgrades panel can feel empty or irrelevant before a meaningful choice exists.
+- The P0/P1 `FIRST_LOOP_AUDIT.md` findings have been implemented: Tidy Packaging is the first
+  relevant Prep Counter upgrade when order prep is the bottleneck, Steady Pressing is stock-specific,
+  empty upgrade panels are hidden, and early upgrade cards show before/after impact.
 - The Orders panel has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume typed Tofu Stock/Delivery Order costs and pay typed Tips/Reputation/XP rewards.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
@@ -29,8 +29,8 @@
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
   players back to fulfilling shop orders.
 - Next Best Action follows the current bottleneck: ready orders point to fulfillment, low stock
-  points to Pack Tofu/Tofu Press, and healthy stock with slow orders points to Prep Counter/order
-  prep rather than Tofu Press.
+  points to Pack Tofu/Tofu Press, and healthy stock with slow orders points to Tidy Packaging,
+  Prep Counter, or order prep rather than Tofu Press.
 - Pack Tofu is a backup/manual Tofu Stock action, and Don't Spill the Cup is an optional certified
   boost rather than the normal shop bottleneck during order prep or Tip shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
@@ -54,27 +54,22 @@ Canonical references:
 ## Recommended Next Steps
 
 1. Review the full progression spec in `BALANCE_AND_PROGRESSION.md` before coding more gameplay.
-2. Use `FIRST_LOOP_AUDIT.md` as the next implementation brief for first-loop tuning.
-3. Implement the first meaningful upgrade slice:
-   fix the shop-order `Recent Reward` fallback, make Prep Counter/Tidy Packaging the relevant
-   early bottleneck solution, hide or defer empty upgrade panels, and add upgrade before/after rate
-   previews.
-4. Playtest and tune the implemented First Loop Contract:
+2. Playtest and tune the implemented First Loop Contract:
    fresh state, Simple Tofu Box, First Shop Order stamp reveal, first upgrade timing, stock-runway
    recommendations, order-size card density, and early button visibility.
-5. Playtest and tune the implemented Order Types slice:
+3. Playtest and tune the implemented Order Types slice:
    Simple Tofu Box, Family Tofu Tray, Festival Bento, typed costs/rewards, Fulfill Max labeling,
    disabled reasons, and larger-order reveal timing.
-6. Playtest and tune the first 10 minutes:
+4. Playtest and tune the first 10 minutes:
    confirm the first order, first upgrade, first bottleneck, and first stamp are clear.
-7. Hide or down-rank advanced systems during the first 10 minutes unless the balance spec says they
+5. Hide or down-rank advanced systems during the first 10 minutes unless the balance spec says they
    should be visible.
-8. Expand balance tests only where playtesting reveals gaps:
+6. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-9. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-10. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-11. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+7. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+8. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+9. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Do not build advanced systems next. The First Loop Contract is now implemented enough for
 playtesting; Routes, Crew, Garage, Shop Spirit, Rivals, License, and monetization/social/profile

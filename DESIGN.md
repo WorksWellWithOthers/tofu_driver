@@ -177,6 +177,11 @@ Current design principles:
   promote Prep Counter, order prep, or Tidy Packaging when stock is plentiful and orders are slow.
 - Early upgrades must solve a bottleneck the player has already felt. Do not make the Upgrades
   panel prominent when it only contains locked, irrelevant, or non-actionable cards.
+- Tidy Packaging is the preferred first named upgrade when Prep Counter throughput is the felt
+  bottleneck. Steady Pressing is a stock-runway upgrade and should not be recommended while stock is
+  already healthy.
+- Early upgrade cards should show before/after impact, such as a better order-prep cadence or
+  higher stock/sec, before asking the player to spend Tips.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
   are needed.
