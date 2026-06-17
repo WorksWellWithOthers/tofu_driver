@@ -75,7 +75,10 @@
 - Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It now renders one
   cohesive full-scene image at a time, selected from milestone-based scene variants, while gameplay
   controls remain separate UI. Four real WebP scene assets are integrated; the established-shop
-  state temporarily aliases to the upgraded-shop image until dedicated art exists.
+  state temporarily aliases to the upgraded-shop image until dedicated art exists. The normal scene
+  card is polished rather than debug-style: real-art states do not show `art pending` copy, raw
+  scene IDs, or implementation labels, and the covered-car scene uses only a restrained purpose
+  hint.
 - Delivery Crew is a clickable parked surface with future/deferred copy and CTAs back toward Tofu
   Garage and Don't Spill the Cup; it is no longer a dead visible nav item.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
@@ -183,18 +186,20 @@ Canonical references:
    distance, route difficulty, racing technique, or public-road competition.
 12. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
    midgame needs a clearer visual step beyond the upgraded-shop scene.
-13. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
+13. Keep testing the polished single-image Living Scene on phone and desktop: watch for image
+   flicker, oversized empty panels, debug/pending copy, or controls being pushed too far down.
+14. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
    reduced-motion fallback.
-14. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
+15. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
    reveal scene without activating Dream Garage mechanics.
-15. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
+16. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
    such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
-16. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, including first load,
+17. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, including first load,
    `#/cup-test` reload, permission-needed, permission-denied, and no-motion-data cases.
-17. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+18. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-18. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-19. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+19. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+20. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 
