@@ -707,13 +707,13 @@ const TOFU_SHOP_SCENE_ASSETS = {
   },
   scene_busy_shop_established: {
     src: "/static/nospill/images/scene_tiny_shop_upgraded.webp",
-    label: "Established Shop",
+    label: "Busy Shop",
     placeholder: "Established shop scene pending",
     kind: "full_scene",
   },
   scene_busy_shop_with_covered_car: {
     src: "/static/nospill/images/scene_busy_shop_with_covered_car.webp",
-    label: "Covered Car Teaser",
+    label: "Old Car Out Back",
     placeholder: "Covered car scene pending",
     kind: "full_scene",
   },
@@ -5991,9 +5991,9 @@ function renderSceneLayer(layer, options = {}) {
         src="${escapeHtml(asset.src)}"
         alt=""
         aria-hidden="true"
-        loading="lazy"
-        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
-      /><div class="nospill-shop-scene-placeholder" role="img" aria-label="${escapeHtml(`${asset.label}: ${asset.placeholder}`)}" hidden>${escapeHtml(asset.placeholder)}</div>`
+        loading="eager"
+        decoding="async"
+      />`
     : `<div class="nospill-shop-scene-placeholder" role="img" aria-label="${escapeHtml(`${asset.label}: ${asset.placeholder}`)}">${escapeHtml(asset.placeholder)}</div>`;
   return `
     <div
@@ -6017,24 +6017,19 @@ function renderTofuShopLivingScene(gameState = loadGameState()) {
     gameState: state,
     reducedMotion: sceneState.reducedMotion,
   });
-  const activity = sceneState.stockShortage
-    ? "Waiting for Tofu Stock"
-    : sceneState.counterServiceRunning
-      ? "Counter Service is handling pickups"
-      : sceneState.readyOrders > 0
-        ? `${formatShopCount(sceneState.readyOrders)} ready order${sceneState.readyOrders === 1 ? "" : "s"}`
-        : "Prep Counter is warming up";
+  const flavor = sceneState.coveredCarVisible
+    ? "Behind the shop, an old car waits under a cover."
+    : "";
   return `
     <section class="nospill-shop-scene ${sceneState.reducedMotion ? "is-reduced-motion" : "is-motion-ok"}" aria-label="Tofu Shop living scene">
       <div class="nospill-shop-scene-head">
-        <span>Tofu Shop Scene</span>
+        <span>Tofu Shop</span>
         <strong>${escapeHtml(sceneAsset.label)}</strong>
       </div>
       <div class="nospill-shop-scene-stage" aria-label="Parked visual shop scene. Decorative only; use the controls below to play.">
         ${sceneHtml}
       </div>
-      <p>${escapeHtml(activity)}</p>
-      <p>Decorative parked scene. Shop controls stay below.</p>
+      ${flavor ? `<p class="nospill-shop-scene-flavor">${escapeHtml(flavor)}</p>` : ""}
     </section>
   `;
 }

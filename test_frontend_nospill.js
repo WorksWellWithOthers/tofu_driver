@@ -3138,7 +3138,8 @@ globalThis.activeStoryOverviewHtml = elements.shopTabPanel.innerHTML;
   assert(context.storyOverviewHtml.includes('old car waits under a cover'));
   assert(!context.storyTabsHtml.includes('Dream Garage'));
   assert.strictEqual(context.secondStoryTeaser, null);
-  assert(!context.reloadedOverviewHtml.includes('old car waits under a cover'));
+  assert(context.reloadedOverviewHtml.includes('old car waits under a cover'));
+  assert(!context.reloadedOverviewHtml.includes("One day, you&#39;ll build it"));
   assert(!context.activeStoryOverviewHtml.includes('old car waits under a cover'));
 
   const css = fs.readFileSync(path.join(NOSPILL_DIR, 'app.css'), 'utf8');
@@ -6441,24 +6442,44 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert(sceneHtml.includes('aria-label="Tofu Shop living scene"'));
   assert(sceneHtml.includes('data-scene-id="scene_busy_shop_with_covered_car"'));
   assert(sceneHtml.includes('/static/nospill/images/scene_busy_shop_with_covered_car.webp'));
+  assert(sceneHtml.includes('loading="eager"'));
   assert(!sceneHtml.includes('data-scene-layer='));
   assert(!sceneHtml.includes('Tofu Press art pending'));
   assert(!sceneHtml.includes('Delivery Shelf art pending'));
+  assert(!sceneHtml.includes('Covered Car Teaser'));
+  assert(!sceneHtml.includes('Covered car scene pending'));
+  assert(!sceneHtml.includes('Decorative parked scene. Shop controls stay below.'));
+  assert(!sceneHtml.includes('Counter Service is handling pickups'));
+  assert(!sceneHtml.includes('onerror='));
+  assert(!sceneHtml.includes('nospill-shop-scene-placeholder'));
   assert(!sceneHtml.includes('/static/nospill/images/shop_assistant_main_portrait.webp'));
-  assert(sceneHtml.includes('Decorative parked scene'));
+  assert(sceneHtml.includes('Old Car Out Back'));
+  assert(sceneHtml.includes('Behind the shop, an old car waits under a cover.'));
 
   const fallbackLayer = context.renderSceneLayer({ id: 'scene_busy_shop_established', visible: true }, {
     gameState: advanced,
     reducedMotion: false,
   });
   assert(fallbackLayer.includes('/static/nospill/images/scene_tiny_shop_upgraded.webp'));
-  assert(fallbackLayer.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
+  assert(!fallbackLayer.includes('onerror='));
+  assert(!fallbackLayer.includes('nospill-shop-scene-placeholder'));
   assert(!fallbackLayer.includes('/static/nospill/images/scene_busy_shop_established.webp'));
   const establishedHtml = context.renderTofuShopLivingScene(advanced);
   assert(establishedHtml.includes('data-scene-id="scene_busy_shop_established"'));
   assert(establishedHtml.includes('/static/nospill/images/scene_tiny_shop_upgraded.webp'));
   assert(!establishedHtml.includes('/static/nospill/images/scene_busy_shop_established.webp'));
-  assert(establishedHtml.includes('hidden>Established shop scene pending</div>'));
+  assert(!establishedHtml.includes('Established shop scene pending'));
+  assert(!establishedHtml.includes('art pending'));
+
+  const stableHtmlAgain = context.renderTofuShopLivingScene(advanced);
+  assert.strictEqual(stableHtmlAgain, establishedHtml);
+
+  const missingLayer = context.renderSceneLayer({ id: 'missing_future_layer', visible: true }, {
+    gameState: advanced,
+    reducedMotion: false,
+  });
+  assert(missingLayer.includes('nospill-shop-scene-placeholder'));
+  assert(missingLayer.includes('Scene art pending'));
 
   const reducedContext = loadNoSpillContext({
     window: {
@@ -6476,7 +6497,7 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert(!reducedHtml.includes('is-animated'));
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   assert(css.includes('@media (prefers-reduced-motion: reduce)'));
-  assert(css.includes('.nospill-shop-scene-image.is-animated'));
+  assert(!css.includes('animation: shop-scene-pulse'));
 
   context.activeSceneState = advanced;
   vm.runInContext(`

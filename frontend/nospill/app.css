@@ -752,10 +752,10 @@
 
 .nospill-shop-scene {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   border: 1px solid rgba(158, 233, 191, 0.2);
   border-radius: 8px;
-  padding: 12px;
+  padding: 10px;
   background:
     linear-gradient(180deg, rgba(158, 233, 191, 0.09), transparent 42%),
     #070a0a;
@@ -783,7 +783,9 @@
 .nospill-shop-scene-stage {
   position: relative;
   display: grid;
-  min-height: clamp(190px, 34vw, 360px);
+  aspect-ratio: 16 / 9;
+  min-height: 0;
+  max-height: clamp(180px, 34vw, 340px);
   overflow: hidden;
   border: 1px solid rgba(244, 247, 239, 0.12);
   border-radius: 8px;
@@ -795,7 +797,7 @@
 .nospill-shop-scene-image {
   min-width: 0;
   display: grid;
-  min-height: inherit;
+  min-height: 0;
   background:
     radial-gradient(circle at 24% 20%, rgba(158, 233, 191, 0.16), transparent 34%),
     linear-gradient(140deg, rgba(240, 185, 90, 0.08), transparent 42%),
@@ -805,15 +807,12 @@
 .nospill-shop-scene-image img,
 .nospill-shop-scene-placeholder {
   width: 100%;
-  min-height: inherit;
+  height: 100%;
+  min-height: 0;
   display: grid;
   place-items: center;
   border-radius: 0;
-  border: 1px dashed rgba(158, 233, 191, 0.28);
   color: #9ee9bf;
-  background:
-    linear-gradient(135deg, rgba(158, 233, 191, 0.08), transparent 58%),
-    rgba(5, 6, 6, 0.82);
   font-size: clamp(0.84rem, 1.8vw, 1.05rem);
   font-weight: 800;
   line-height: 1.25;
@@ -821,21 +820,25 @@
 }
 
 .nospill-shop-scene-image img {
-  height: 100%;
+  display: block;
+  border: 0;
+  background: transparent;
   object-fit: cover;
 }
 
-.nospill-shop-scene p {
+.nospill-shop-scene-placeholder {
+  min-height: 120px;
+  border: 1px dashed rgba(158, 233, 191, 0.28);
+  background:
+    linear-gradient(135deg, rgba(158, 233, 191, 0.08), transparent 58%),
+    rgba(5, 6, 6, 0.82);
+}
+
+.nospill-shop-scene-flavor {
   margin: 0;
   color: #bbc7c0;
   font-size: 0.82rem;
   line-height: 1.35;
-}
-
-.nospill-shop-scene-image.is-animated[data-scene-activity="ready"],
-.nospill-shop-scene-image.is-animated[data-scene-activity="fulfilled"],
-.nospill-shop-scene-image.is-animated[data-scene-activity="running"] {
-  animation: shop-scene-pulse 2.8s ease-in-out infinite;
 }
 
 .nospill-shop-safety {
@@ -1425,22 +1428,9 @@
   }
 }
 
-@keyframes shop-scene-pulse {
-  0%,
-  100% {
-    transform: translateY(0);
-    border-color: rgba(244, 247, 239, 0.12);
-  }
-  50% {
-    transform: translateY(-2px);
-    border-color: rgba(158, 233, 191, 0.36);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   .nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card,
-  .nospill-discovery-fanfare.is-animated .nospill-discovery-fanfare-card,
-  .nospill-shop-scene-image.is-animated {
+  .nospill-discovery-fanfare.is-animated .nospill-discovery-fanfare-card {
     animation: none;
   }
 }
