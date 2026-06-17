@@ -5,7 +5,7 @@ const vm = require('vm');
 
 const ROOT = __dirname;
 const NOSPILL_DIR = path.join(ROOT, 'frontend', 'nospill');
-const NOSPILL_ASSETS_DIR = path.join(NOSPILL_DIR, 'assets');
+const NOSPILL_IMAGES_DIR = path.join(NOSPILL_DIR, 'images');
 const NOSPILL_JS = path.join(NOSPILL_DIR, 'app.js');
 const NOSPILL_CSS = path.join(NOSPILL_DIR, 'app.css');
 const NOSPILL_HTML = path.join(NOSPILL_DIR, 'index.html');
@@ -4332,15 +4332,15 @@ globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
 
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
-  const logoPath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-logo.png');
-  const shirtPath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-shirt-1.png');
-  const appImagePath = path.join(NOSPILL_ASSETS_DIR, 'tofu-driver-app-image.png');
+  const logoPath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-logo.png');
+  const shirtPath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-shirt-1.png');
+  const appImagePath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-app-image.png');
 
   assert(fs.existsSync(logoPath), 'Tofu Driver logo asset should exist');
   assert(fs.existsSync(shirtPath), 'No-Spill Club shirt preview asset should exist');
   assert(fs.existsSync(appImagePath), 'Tofu Driver cargo mascot app image should exist');
-  assert(html.includes('/static/nospill/assets/tofu-driver-logo.png'));
-  assert(html.includes('/static/nospill/assets/tofu-driver-shirt-1.png'));
+  assert(html.includes('/static/nospill/images/tofu-driver-logo.png'));
+  assert(html.includes('/static/nospill/images/tofu-driver-shirt-1.png'));
   assert(!html.includes('Tofu Driver mascot logo'));
   assert(html.includes('class="nospill-hero-fallback" hidden>Tofu Driver</span>'));
   const css = fs.readFileSync(path.join(NOSPILL_DIR, 'app.css'), 'utf8');
@@ -5827,14 +5827,14 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert(inventory.includes('Mika MVP Pack'));
   assert(inventory.includes('6-image MVP'));
   [
-    '/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp',
-    '/static/nospill/assets/characters/mika/result_screen_cameo.webp',
-    '/static/nospill/assets/characters/mika/coach_neutral.webp',
-    '/static/nospill/assets/characters/mika/coach_pleased.webp',
-    '/static/nospill/assets/characters/mika/crew_profile_card.webp',
-    '/static/nospill/assets/characters/mika/reward_unlock_splash.webp',
+    '/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp',
+    '/static/nospill/images/characters/mika/result_screen_cameo.webp',
+    '/static/nospill/images/characters/mika/coach_neutral.webp',
+    '/static/nospill/images/characters/mika/coach_pleased.webp',
+    '/static/nospill/images/characters/mika/crew_profile_card.webp',
+    '/static/nospill/images/characters/mika/reward_unlock_splash.webp',
   ].forEach((expectedFile) => assert(inventory.includes(expectedFile), `${expectedFile} should be inventoried`));
-  assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'characters', 'mika', 'README.md')));
+  assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'characters', 'mika', 'README.md')));
   [
     'shop_assistant_main_portrait.webp',
     'result_screen_cameo.webp',
@@ -5844,7 +5844,7 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
     'reward_unlock_splash.webp',
   ].forEach((filename) => {
     assert.strictEqual(
-      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'characters', 'mika', filename)),
+      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'characters', 'mika', filename)),
       false,
       `${filename} should be supplied later by art generation, not committed as a fake final asset`,
     );
@@ -5868,12 +5868,12 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert.strictEqual(mikaCatalog.name, 'Mika');
   assert.strictEqual(mikaCatalog.role, 'Night Shift Manager');
   const mikaExpectedPaths = {
-    shop_assistant_main_portrait: '/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp',
-    result_screen_cameo: '/static/nospill/assets/characters/mika/result_screen_cameo.webp',
-    coach_recap_expression_neutral: '/static/nospill/assets/characters/mika/coach_neutral.webp',
-    coach_recap_expression_pleased: '/static/nospill/assets/characters/mika/coach_pleased.webp',
-    crew_profile_card: '/static/nospill/assets/characters/mika/crew_profile_card.webp',
-    reward_unlock_card_art: '/static/nospill/assets/characters/mika/reward_unlock_splash.webp',
+    shop_assistant_main_portrait: '/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp',
+    result_screen_cameo: '/static/nospill/images/characters/mika/result_screen_cameo.webp',
+    coach_recap_expression_neutral: '/static/nospill/images/characters/mika/coach_neutral.webp',
+    coach_recap_expression_pleased: '/static/nospill/images/characters/mika/coach_pleased.webp',
+    crew_profile_card: '/static/nospill/images/characters/mika/crew_profile_card.webp',
+    reward_unlock_card_art: '/static/nospill/images/characters/mika/reward_unlock_splash.webp',
   };
   Object.entries(mikaExpectedPaths).forEach(([slotId, expectedPath]) => {
     const asset = context.getCharacterAsset('mika', slotId);
@@ -5902,12 +5902,12 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   mikaState.collection.selectedCharacterId = 'mika';
   const mikaCameo = context.renderCharacterCameo('shop_assistant_main_portrait', mikaState);
   assert(mikaCameo.includes('data-character-id="mika"'));
-  assert(mikaCameo.includes('/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp'));
+  assert(mikaCameo.includes('/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp'));
   assert(mikaCameo.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
   assert(mikaCameo.includes('Character art coming soon'));
   assert(mikaCameo.includes('hidden>M</div>'));
   const mikaPleased = context.renderCharacterCameo('coach_recap_expression_pleased', mikaState);
-  assert(mikaPleased.includes('/static/nospill/assets/characters/mika/coach_pleased.webp'));
+  assert(mikaPleased.includes('/static/nospill/images/characters/mika/coach_pleased.webp'));
 
   context.artSlotState = mikaState;
   vm.runInContext(`
@@ -5982,7 +5982,7 @@ globalThis.activeCrewArtHtml = elements.characterList.innerHTML;
   assert(context.parkedOverviewArtHtml.includes('data-scene-id='));
   assert(!context.parkedOverviewArtHtml.includes('data-character-slot="shop_assistant_main_portrait"'));
   assert(context.parkedCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
-  assert(context.parkedCrewArtHtml.includes('/static/nospill/assets/characters/mika/crew_profile_card.webp'));
+  assert(context.parkedCrewArtHtml.includes('/static/nospill/images/characters/mika/crew_profile_card.webp'));
   assert(context.parkedCrewArtHtml.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
   assert.strictEqual(context.activeCameoHtml, '');
   assert(!context.activeCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
@@ -6035,15 +6035,15 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert(spec.includes('MVP Art Pack'));
   assert(spec.includes('full-scene variants'));
   [
-    'frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_working.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_upgraded.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp',
+    'frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp',
+    'frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_working.webp',
+    'frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_upgraded.webp',
+    'frontend/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp',
+    'frontend/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp',
   ].forEach((expectedPath) => assert(spec.includes(expectedPath), `${expectedPath} should be specified`));
   assert(spec.includes('Reduced-Motion Behavior'));
   assert(spec.includes('Needed from art generation'));
-  assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'scenes', 'tofu-shop', 'README.md')));
+  assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'scenes', 'tofu-shop', 'README.md')));
 
   [
     'scene_tiny_shop_empty.webp',
@@ -6053,7 +6053,7 @@ function testTofuShopLivingSceneV1Groundwork() {
     'scene_busy_shop_with_covered_car.webp',
   ].forEach((filename) => {
     assert.strictEqual(
-      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'scenes', 'tofu-shop', filename)),
+      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'scenes', 'tofu-shop', filename)),
       false,
       `${filename} should be supplied later by art generation, not committed as a fake final asset`,
     );
@@ -6062,7 +6062,7 @@ function testTofuShopLivingSceneV1Groundwork() {
   const context = loadNoSpillContext();
   assert.strictEqual(
     context.TOFU_SHOP_SCENE_ASSETS.scene_tiny_shop_empty.src,
-    '/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp',
+    '/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp',
   );
   assert.strictEqual(
     context.getSceneAsset('missing_future_layer').placeholder,
@@ -6102,18 +6102,18 @@ function testTofuShopLivingSceneV1Groundwork() {
   const sceneHtml = context.renderTofuShopLivingScene(coveredCar);
   assert(sceneHtml.includes('aria-label="Tofu Shop living scene"'));
   assert(sceneHtml.includes('data-scene-id="scene_busy_shop_with_covered_car"'));
-  assert(sceneHtml.includes('/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp'));
+  assert(sceneHtml.includes('/static/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp'));
   assert(!sceneHtml.includes('data-scene-layer='));
   assert(!sceneHtml.includes('Tofu Press art pending'));
   assert(!sceneHtml.includes('Delivery Shelf art pending'));
-  assert(!sceneHtml.includes('/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp'));
+  assert(!sceneHtml.includes('/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp'));
   assert(sceneHtml.includes('Decorative parked scene'));
 
   const fallbackLayer = context.renderSceneLayer({ id: 'scene_busy_shop_established', visible: true }, {
     gameState: advanced,
     reducedMotion: false,
   });
-  assert(fallbackLayer.includes('/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp'));
+  assert(fallbackLayer.includes('/static/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp'));
   assert(fallbackLayer.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
   assert(fallbackLayer.includes('Established shop scene pending'));
 
@@ -6912,7 +6912,7 @@ function testTofuCargoVisualizationReplacesGenericGDot() {
   assert(html.includes('Animated tofu cargo smoothness visualization'));
   assert(html.includes('Tofu cargo moves with your driving smoothness.'));
   assert(source.includes('function updateTofuCargoVisualState'));
-  assert(source.includes('/static/nospill/assets/tofu-driver-app-image.png'));
+  assert(source.includes('/static/nospill/images/tofu-driver-app-image.png'));
   assert(source.includes('getTofuCargoMascotImage'));
   assert(source.includes('drawImage('));
   assert(source.includes('drawFallbackTofuCargoMascot'));

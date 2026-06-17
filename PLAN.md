@@ -65,7 +65,7 @@
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
   expectations, and smallest recommended first asset pack.
 - Mika, Night Shift Manager, is wired as the first real character asset pack target. The manifest
-  expects six stable `.webp` paths under `frontend/nospill/assets/characters/mika/`, while missing
+  expects six stable `.webp` paths under `frontend/nospill/images/characters/mika/`, while missing
   files still fall back to placeholders until final art is generated.
 - Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It now renders one
   cohesive full-scene image/placeholder at a time, selected from milestone-based scene variants,
@@ -181,7 +181,7 @@ Canonical references:
    reveal scene without activating Dream Garage mechanics.
 14. Generate and review the six-file Mika MVP art pack against
    `CHARACTER_ART_ASSET_INVENTORY.md`, then drop the final `.webp` files into
-   `frontend/nospill/assets/characters/mika/`.
+   `frontend/nospill/images/characters/mika/`.
 15. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
 16. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.

@@ -17,7 +17,7 @@ const CLUB_NAME = "No-Spill Club";
 const TOP_BADGE = "Perfect Pour";
 const TAGLINE_CUP = "Don't spill the cup.";
 const TAGLINE_SMOOTHER = "Not faster. Smoother.";
-const TOFU_CARGO_MASCOT_SRC = "/static/nospill/assets/tofu-driver-app-image.png";
+const TOFU_CARGO_MASCOT_SRC = "/static/nospill/images/tofu-driver-app-image.png";
 
 const CARGO_TYPES = {
   firm_tofu: {
@@ -654,27 +654,27 @@ const CHARACTER_ART_MANIFEST = {
   perfect_pour_courier: {},
   mika: {
     shop_assistant_main_portrait: {
-      src: "/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp",
+      src: "/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp",
       alt: "Mika, the Night Shift Manager, holding a clipboard in the Tofu Shop.",
     },
     result_screen_cameo: {
-      src: "/static/nospill/assets/characters/mika/result_screen_cameo.webp",
+      src: "/static/nospill/images/characters/mika/result_screen_cameo.webp",
       alt: "Mika calmly reviewing a completed smooth delivery.",
     },
     coach_recap_expression_neutral: {
-      src: "/static/nospill/assets/characters/mika/coach_neutral.webp",
+      src: "/static/nospill/images/characters/mika/coach_neutral.webp",
       alt: "Mika with a calm coaching expression.",
     },
     coach_recap_expression_pleased: {
-      src: "/static/nospill/assets/characters/mika/coach_pleased.webp",
+      src: "/static/nospill/images/characters/mika/coach_pleased.webp",
       alt: "Mika looking quietly pleased with the smooth delivery.",
     },
     crew_profile_card: {
-      src: "/static/nospill/assets/characters/mika/crew_profile_card.webp",
+      src: "/static/nospill/images/characters/mika/crew_profile_card.webp",
       alt: "Mika crew profile portrait.",
     },
     reward_unlock_card_art: {
-      src: "/static/nospill/assets/characters/mika/reward_unlock_splash.webp",
+      src: "/static/nospill/images/characters/mika/reward_unlock_splash.webp",
       alt: "Mika in a restrained reward splash for parked unlock moments.",
     },
   },
@@ -682,31 +682,31 @@ const CHARACTER_ART_MANIFEST = {
 
 const TOFU_SHOP_SCENE_ASSETS = {
   scene_tiny_shop_empty: {
-    src: "/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp",
+    src: "/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp",
     label: "Tiny Shop",
     placeholder: "Tiny shop scene pending",
     kind: "full_scene",
   },
   scene_tiny_shop_working: {
-    src: "/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_working.webp",
+    src: "/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_working.webp",
     label: "Working Shop",
     placeholder: "Working shop scene pending",
     kind: "full_scene",
   },
   scene_tiny_shop_upgraded: {
-    src: "/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_upgraded.webp",
+    src: "/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_upgraded.webp",
     label: "Growing Shop",
     placeholder: "Growing shop scene pending",
     kind: "full_scene",
   },
   scene_busy_shop_established: {
-    src: "/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp",
+    src: "/static/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp",
     label: "Established Shop",
     placeholder: "Established shop scene pending",
     kind: "full_scene",
   },
   scene_busy_shop_with_covered_car: {
-    src: "/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp",
+    src: "/static/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp",
     label: "Covered Car Teaser",
     placeholder: "Covered car scene pending",
     kind: "full_scene",

@@ -55,22 +55,22 @@ Mika is the first real character asset target.
 Expected folder:
 
 ```text
-frontend/nospill/assets/characters/mika/
+frontend/nospill/images/characters/mika/
 ```
 
 | Asset Slot | Expected Filename | Runtime Path | Target Size | Aspect Ratio | Safe Area / Cropping Notes | Status |
 | --- | --- | --- | --- | --- | --- | --- |
-| `shop_assistant_main_portrait` | `shop_assistant_main_portrait.webp` | `/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp` | 1024x1280 | 4:5 | Bust/upper body; face and clipboard readable; safe crop to square on narrow cards | Needed from art generation |
-| `result_screen_cameo` | `result_screen_cameo.webp` | `/static/nospill/assets/characters/mika/result_screen_cameo.webp` | 1024x1280 or 800x1000 | 4:5 | Keep subject center-left with clear margin for result metrics | Needed from art generation |
-| `coach_recap_expression_neutral` | `coach_neutral.webp` | `/static/nospill/assets/characters/mika/coach_neutral.webp` | 1024x1280 | 4:5 | Neutral coaching expression; eyes in upper third; no racing/performance cues | Needed from art generation |
-| `coach_recap_expression_pleased` | `coach_pleased.webp` | `/static/nospill/assets/characters/mika/coach_pleased.webp` | 1024x1280 | 4:5 | Same pose/framing as neutral, quietly impressed expression | Needed from art generation |
-| `crew_profile_card` | `crew_profile_card.webp` | `/static/nospill/assets/characters/mika/crew_profile_card.webp` | 800x1000 | 4:5 | Clean portrait read at card size; safe crop to square if needed | Needed from art generation |
-| `reward_unlock_card_art` | `reward_unlock_splash.webp` | `/static/nospill/assets/characters/mika/reward_unlock_splash.webp` | 1280x720 | 16:9 | Leave text-safe space on one side; celebratory but restrained | Needed from art generation |
+| `shop_assistant_main_portrait` | `shop_assistant_main_portrait.webp` | `/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp` | 1024x1280 | 4:5 | Bust/upper body; face and clipboard readable; safe crop to square on narrow cards | Needed from art generation |
+| `result_screen_cameo` | `result_screen_cameo.webp` | `/static/nospill/images/characters/mika/result_screen_cameo.webp` | 1024x1280 or 800x1000 | 4:5 | Keep subject center-left with clear margin for result metrics | Needed from art generation |
+| `coach_recap_expression_neutral` | `coach_neutral.webp` | `/static/nospill/images/characters/mika/coach_neutral.webp` | 1024x1280 | 4:5 | Neutral coaching expression; eyes in upper third; no racing/performance cues | Needed from art generation |
+| `coach_recap_expression_pleased` | `coach_pleased.webp` | `/static/nospill/images/characters/mika/coach_pleased.webp` | 1024x1280 | 4:5 | Same pose/framing as neutral, quietly impressed expression | Needed from art generation |
+| `crew_profile_card` | `crew_profile_card.webp` | `/static/nospill/images/characters/mika/crew_profile_card.webp` | 800x1000 | 4:5 | Clean portrait read at card size; safe crop to square if needed | Needed from art generation |
+| `reward_unlock_card_art` | `reward_unlock_splash.webp` | `/static/nospill/images/characters/mika/reward_unlock_splash.webp` | 1280x720 | 16:9 | Leave text-safe space on one side; celebratory but restrained | Needed from art generation |
 
 Replacement checklist:
 
 1. Export final images as WebP at the exact filenames above.
-2. Put only final runtime images in `frontend/nospill/assets/characters/mika/`.
+2. Put only final runtime images in `frontend/nospill/images/characters/mika/`.
 3. Keep the six filenames stable so the manifest paths do not change.
 4. Check portrait crops on phone-width and desktop browser layouts.
 5. Verify missing-image fallback still works by temporarily renaming one file locally.

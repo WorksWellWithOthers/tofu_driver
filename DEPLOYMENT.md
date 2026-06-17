@@ -97,7 +97,7 @@ After deploy:
 ```bash
 curl -I https://tofu-driver-186602940908.us-central1.run.app
 curl -I https://tofu-driver-186602940908.us-central1.run.app/static/nospill/app.js
-curl -I https://tofu-driver-186602940908.us-central1.run.app/static/nospill/assets/tofu-driver-shirt-1.png
+curl -I https://tofu-driver-186602940908.us-central1.run.app/static/nospill/images/tofu-driver-shirt-1.png
 ```
 
 ## Custom Domain
@@ -135,10 +135,10 @@ gcloud beta run domain-mappings describe \
 The current merch preview image is:
 
 ```text
-frontend/nospill/assets/tofu-driver-shirt-1.png
+frontend/nospill/images/tofu-driver-shirt-1.png
 ```
 
-Update the file in `frontend/nospill/assets/`, confirm `frontend/nospill/index.html` references that
+Update the file in `frontend/nospill/images/`, confirm `frontend/nospill/index.html` references that
 served path, then redeploy the Cloud Run service.
 
 The landing page also links to Super Cute Collectibles as the physical merch fulfillment partner.
