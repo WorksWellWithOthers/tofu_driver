@@ -51,6 +51,11 @@
 - Counter Service batch size is a maximum: if a full batch cannot run the highest-value order, it
   can partially fulfill that tier and fall back to smaller affordable orders without making
   resources negative.
+- Tofu Garage high-scale performance guardrails are implemented for current shop scale: live shop
+  ticks coalesce visible rendering, top counters avoid unchanged DOM writes, Delivery Orders are a
+  capped scalar queue, offline progress uses aggregate delta-time math, and ledger/inline feedback
+  remain bounded. `TOFU_GARAGE_PERFORMANCE_AUDIT.md` documents why BigNumber/mantissa-exponent is
+  deferred until a later absurd endgame actually needs it.
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
   language and local wallet context: generators use Buy, instant actions spend Spirit, timed effects
   show duration/active state, and tokens use Use Token.
@@ -161,32 +166,35 @@ Canonical references:
    right unlock, the 10/8/6/4 second interval ladder and 2/5/10 batch ladder feel helpful without
    deleting choices, Supplier Contracts relieve high-midgame stock traps without becoming infinite,
    and active-page-only automation does not skip pacing.
-7. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
+7. Profile/playtest high-midgame Tofu Garage after the performance guardrails: verify the order
+   queue cap feels like a useful Counter Service bottleneck, offline summaries stay compact, and
+   live counters remain responsive on mobile/desktop.
+8. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
    behavior before adding higher station thresholds.
-8. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
+9. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
    Worth systems until the local shop loop keeps a player engaged.
-9. Expand balance tests only where playtesting reveals gaps:
+10. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-10. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
+11. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
    Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
    distance, route difficulty, racing technique, or public-road competition.
-11. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
+12. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
    midgame needs a clearer visual step beyond the upgraded-shop scene.
-12. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
+13. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
    reduced-motion fallback.
-13. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
+14. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
    reveal scene without activating Dream Garage mechanics.
-14. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
+15. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
    such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
-15. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, including first load,
+16. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, including first load,
    `#/cup-test` reload, permission-needed, permission-denied, and no-motion-data cases.
-16. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+17. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-17. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-18. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+18. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+19. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 

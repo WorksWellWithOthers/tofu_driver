@@ -234,6 +234,10 @@ Current design principles:
 - Delivery Orders mean prepared/waiting shop work, not Driver XP or real-world deliveries. Counter
   Service may consume these orders while the page is open, but offline progress does not auto-fulfill
   them yet.
+- Tofu Garage high-scale performance should be solved first with compact formatting, bounded
+  queues/history, aggregate offline math, and throttled visible rendering. Current `$1T`-scale
+  planning does not require a BigNumber rewrite; mantissa/exponent amounts remain a future endgame
+  adapter only if values intentionally exceed normal JavaScript number comfort.
 - Raw external transcripts and reference notes are source material, not product canon. Keep durable
   design takeaways in audit files and translate every idea into Tofu Driver language before it
   reaches player-facing copy.

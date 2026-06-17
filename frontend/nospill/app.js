@@ -235,9 +235,11 @@ const DRIVER_LICENSES = [
 ];
 
 const SHOP_MAX_RESOURCE = 1000000000;
+const SHOP_DELIVERY_ORDER_QUEUE_CAP = 1000000;
 const SHOP_OFFLINE_CAP_HOURS = 8;
 const SHOP_GENERATOR_TICK_MS = 1000;
 const SHOP_GENERATOR_SAVE_MS = 5000;
+const SHOP_RENDER_THROTTLE_MS = 500;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -997,6 +999,8 @@ const appState = {
   highlightedShopTab: "",
   simulatorViewedTracked: false,
   offlineProgressAnalyticsKey: "",
+  lastShopRenderAt: 0,
+  lastShopRenderSignature: "",
 };
 
 let elements = {};
@@ -2429,6 +2433,21 @@ function safeNonNegativeInteger(value, fallback = 0, maxValue = SHOP_MAX_RESOURC
   return Math.round(safeNonNegativeNumber(value, fallback, maxValue));
 }
 
+function deliveryOrderQueueCapacity() {
+  return SHOP_DELIVERY_ORDER_QUEUE_CAP;
+}
+
+function clampDeliveryOrderQueue(value) {
+  return safeNonNegativeInteger(value, 0, deliveryOrderQueueCapacity());
+}
+
+function deliveryOrderQueueSpace(shop) {
+  return Math.max(
+    0,
+    deliveryOrderQueueCapacity() - clampDeliveryOrderQueue(shop && shop.deliveryOrders),
+  );
+}
+
 function normalizeCatalogCounts(value, catalog, maxValue = 100000) {
   const source = value && typeof value === "object" ? value : {};
   return Object.fromEntries(
@@ -2691,6 +2710,7 @@ function defaultShopState() {
       tips: 0,
       shopSpirit: 0,
       cappedHours: 0,
+      queueFull: false,
     },
   };
 }
@@ -2794,7 +2814,7 @@ function normalizeShopState(shop) {
   return {
     ...defaults,
     tofuStock: safeNonNegativeInteger(source.tofuStock, defaults.tofuStock),
-    deliveryOrders: safeNonNegativeInteger(source.deliveryOrders, defaults.deliveryOrders),
+    deliveryOrders: clampDeliveryOrderQueue(source.deliveryOrders ?? defaults.deliveryOrders),
     tips,
     reputation,
     prepSlots: safeNonNegativeNumber(source.prepSlots, defaults.prepSlots, getPrepSlotMax({ ...defaults, ...source })),
@@ -2887,6 +2907,7 @@ function normalizeShopState(shop) {
         0,
         SHOP_OFFLINE_CAP_HOURS,
       ),
+      queueFull: Boolean(source.offlineEarnings && source.offlineEarnings.queueFull),
     },
   };
 }
@@ -3835,8 +3856,16 @@ function formatShopBalance(value, carry = 0) {
   return formatCompactNumber(total);
 }
 
+function setTextIfChanged(node, text) {
+  if (!node) return false;
+  const nextText = String(text ?? "");
+  if (node.textContent === nextText) return false;
+  node.textContent = nextText;
+  return true;
+}
+
 function readyDeliveryOrders(shop) {
-  return Math.floor(safeNonNegativeNumber(shop && shop.deliveryOrders, 0, 1000000));
+  return Math.floor(clampDeliveryOrderQueue(shop && shop.deliveryOrders));
 }
 
 function shopOrderTypeById(orderTypeId) {
@@ -3946,7 +3975,9 @@ function orderPrepProgress(gameState) {
     ? Math.ceil((1 - progress) / rates.prepOrdersPerSecond)
     : null;
   let message = `Next order is ${Math.floor(progress * 100)}% prepared.`;
-  if (ready > 0) {
+  if (ready >= deliveryOrderQueueCapacity()) {
+    message = "Order queue full. Use Counter Service or bulk handoff upgrades before preparing more.";
+  } else if (ready > 0) {
     message = `Next order is ${Math.floor(progress * 100)}% prepared. Ready orders can be fulfilled now.`;
   } else if (running && etaSeconds !== null) {
     message = `Next order is ${Math.floor(progress * 100)}% prepared. About ${etaSeconds} seconds remaining.`;
@@ -4040,6 +4071,7 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
         reputation: safeNonNegativeNumber(existingCarry.reputation, 0, 1000),
       },
       prepStatus: rates.prepStatus,
+      queueFull: readyDeliveryOrders(shop) >= deliveryOrderQueueCapacity(),
     };
   }
   const maxSeconds = Number.isFinite(Number(options.maxSeconds))
@@ -4057,18 +4089,20 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
   const orderTotal = (prepCanProgress ? rates.prepOrdersPerSecond * elapsedSeconds : 0)
     + (useCarry ? Number(carry.deliveryOrders || 0) : 0);
   const possibleOrders = Math.floor(orderTotal);
-  const deliveryOrders = Math.min(
-    possibleOrders,
-    Math.floor(availableTofu / PREP_COUNTER_CONSUME_PER_ORDER),
-  );
+  const queueSpace = deliveryOrderQueueSpace(shop);
+  const possibleByTofu = Math.floor(availableTofu / PREP_COUNTER_CONSUME_PER_ORDER);
+  const deliveryOrders = Math.min(possibleOrders, possibleByTofu, queueSpace);
   const tofuConsumed = deliveryOrders * PREP_COUNTER_CONSUME_PER_ORDER;
   const tofuStock = tofuProduced - tofuConsumed;
   const tips = Math.floor(tipsTotal);
   const reputation = Math.floor(reputationTotal);
   const prepSlots = rates.prepSlotPerSecond * elapsedSeconds;
   const shopSpirit = rates.shopSpiritPerSecond * elapsedSeconds;
+  const queueFull = queueSpace <= 0;
   const prepStatus = !shop.generators.prepCounter.unlocked
     ? "Locked"
+    : queueFull
+      ? "Order queue full"
     : deliveryOrders > 0
       ? "Running"
       : availableTofu >= PREP_COUNTER_CONSUME_PER_ORDER
@@ -4085,7 +4119,9 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
     tofuConsumed,
     carry: {
       tofuStock: Math.max(0, tofuTotal - tofuProduced),
-      deliveryOrders: Math.max(0, orderTotal - possibleOrders),
+      deliveryOrders: queueFull || deliveryOrders < Math.min(possibleOrders, possibleByTofu)
+        ? 0
+        : Math.max(0, orderTotal - possibleOrders),
       tips: Math.max(0, tipsTotal - tips),
       reputation: Math.max(0, reputationTotal - reputation),
     },
@@ -4093,6 +4129,8 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
     elapsedHours: roundTo((nowMs - lastMs) / 3600000, 2),
     elapsedSeconds: roundTo(elapsedSeconds, 2),
     prepStatus,
+    queueFull,
+    queueCapacity: deliveryOrderQueueCapacity(),
   };
 }
 
@@ -4126,7 +4164,7 @@ function applyShopGeneratorTick(gameState, now = new Date(), options = {}) {
     || JSON.stringify(earnings.carry || {}) !== JSON.stringify(next.shop.generatorCarry || {});
   if (changed) {
     next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + earnings.tofuStock);
-    next.shop.deliveryOrders = safeNonNegativeInteger(
+    next.shop.deliveryOrders = clampDeliveryOrderQueue(
       next.shop.deliveryOrders + earnings.deliveryOrders,
     );
     next.shop.tips = safeNonNegativeInteger(next.shop.tips + earnings.tips);
@@ -5065,6 +5103,7 @@ function applyOfflineShopEarnings(gameState, now = new Date()) {
     tofuConsumed: earnings.tofuConsumed,
     counterServicePaused: Boolean(isCounterServiceUnlocked(next) && next.shop.counterService.running),
     cappedHours: earnings.cappedHours,
+    queueFull: Boolean(earnings.queueFull),
   };
   next.shop.lastShopTickAt = nowIso;
   next.shop.lastGeneratorTickAt = next.shop.lastGeneratorTickAt || nowIso;
@@ -5084,6 +5123,46 @@ function loadGameStateWithOfflineShopEarnings(now = new Date()) {
   return result.gameState;
 }
 
+function shopRenderSignature(gameState) {
+  const state = normalizeGameState(gameState);
+  const shop = state.shop;
+  const rates = getShopGeneratorRates(state);
+  const counter = counterServiceIncomeStatus(state);
+  return [
+    appState.surface,
+    appState.shopTab,
+    formatShopBalance(shop.tofuStock, shop.generatorCarry && shop.generatorCarry.tofuStock),
+    formatShopCount(readyDeliveryOrders(shop)),
+    formatShopBalance(shop.tips, shop.generatorCarry && shop.generatorCarry.tips),
+    formatShopBalance(shop.reputation, shop.generatorCarry && shop.generatorCarry.reputation),
+    formatShopRate(rates.tofuPressPerSecond),
+    formatShopRate(rates.prepOrdersPerSecond),
+    counter.status,
+    counter.text,
+    appState.shopInlineResult || "",
+  ].join("|");
+}
+
+function renderLiveShopUpdate(gameState, now = new Date(), options = {}) {
+  const state = normalizeGameState(gameState);
+  appState.liveGameState = state;
+  if (appState.surface !== "shop") return false;
+  const nowMs = now instanceof Date ? now.getTime() : Date.parse(now) || Date.now();
+  const signature = shopRenderSignature(state);
+  const due = !appState.lastShopRenderAt
+    || nowMs - appState.lastShopRenderAt >= SHOP_RENDER_THROTTLE_MS;
+  if (!options.force && !due) {
+    return false;
+  }
+  if (!options.force && signature === appState.lastShopRenderSignature) {
+    return false;
+  }
+  renderTofuShop(state);
+  appState.lastShopRenderAt = nowMs;
+  appState.lastShopRenderSignature = signature;
+  return true;
+}
+
 function tickOpenShopGenerators(now = new Date()) {
   if (appState.running || appState.calibrating) return null;
   const state = currentGameState();
@@ -5101,7 +5180,7 @@ function tickOpenShopGenerators(now = new Date()) {
     if (serviceResult.completed > 0 && serviceResult.message) {
       appState.shopInlineResult = serviceResult.message;
     }
-    renderGamePanels(nextState);
+    renderLiveShopUpdate(nextState, now);
     const nowMs = now instanceof Date ? now.getTime() : Date.parse(now) || Date.now();
     if (!appState.lastShopGeneratorSaveAt || nowMs - appState.lastShopGeneratorSaveAt >= SHOP_GENERATOR_SAVE_MS) {
       saveGameState(nextState);
@@ -8228,6 +8307,15 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  if (shopUnlocked && readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity()) {
+    return {
+      type: "queue_full",
+      title: "Next: Clear the Order Queue",
+      copy: "The order queue is full. Upgrade or start Counter Service so prepared orders become Tips before the shop makes more.",
+      buttonLabel: isCounterServiceUnlocked(state) ? "View Counter Service" : "View Upgrades",
+      disabled: false,
+    };
+  }
   if (shopUnlocked && isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup) {
     return {
       type: "start_counter_service",
@@ -9878,80 +9966,80 @@ function renderTofuShop(gameState = loadGameState()) {
   const generatorRates = getShopGeneratorRates(state);
   const prep = orderPrepProgress(state);
   if (elements.shopLevelBadge) {
-    elements.shopLevelBadge.textContent = reveal.shop ? `Shop Level ${shop.shopLevel}` : "Locked";
+    setTextIfChanged(elements.shopLevelBadge, reveal.shop ? `Shop Level ${shop.shopLevel}` : "Locked");
   }
   if (elements.shopTofuStock) {
-    elements.shopTofuStock.textContent = reveal.shop
+    setTextIfChanged(elements.shopTofuStock, reveal.shop
       ? formatShopBalance(shop.tofuStock, shop.generatorCarry && shop.generatorCarry.tofuStock)
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopDeliveryOrders) {
-    elements.shopDeliveryOrders.textContent = reveal.shop
+    setTextIfChanged(elements.shopDeliveryOrders, reveal.shop
       ? `${formatShopCount(prep.ready)} ready`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopTips) {
-    elements.shopTips.textContent = reveal.shop
+    setTextIfChanged(elements.shopTips, reveal.shop
       ? formatShopBalance(shop.tips, shop.generatorCarry && shop.generatorCarry.tips)
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopReputation) {
-    elements.shopReputation.textContent = reveal.shop
+    setTextIfChanged(elements.shopReputation, reveal.shop
       ? formatShopBalance(shop.reputation, shop.generatorCarry && shop.generatorCarry.reputation)
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopLevelProgress) {
-    elements.shopLevelProgress.textContent =
+    setTextIfChanged(elements.shopLevelProgress,
       reveal.shop
         ? `Level ${progress.level} · ${formatShopCount(progress.currentReputation)}/${formatShopCount(progress.nextReputation)}`
-        : "Start the shop";
+        : "Start the shop");
   }
   if (elements.shopIdleRate) {
-    elements.shopIdleRate.textContent = reveal.shop
+    setTextIfChanged(elements.shopIdleRate, reveal.shop
       ? `+${formatShopRate(generatorRates.tofuPressPerSecond)}/sec`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopOrderRate) {
-    elements.shopOrderRate.textContent = reveal.shop && shop.generators.prepCounter.unlocked
+    setTextIfChanged(elements.shopOrderRate, reveal.shop && shop.generators.prepCounter.unlocked
       ? `+${formatShopRate(generatorRates.prepOrdersPerSecond)}/sec`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopTipsRate) {
     const counterIncome = counterServiceIncomeStatus(state);
-    elements.shopTipsRate.textContent = reveal.shop
+    setTextIfChanged(elements.shopTipsRate, reveal.shop
       ? counterIncome.status === "locked"
         ? `+${formatShopRate(generatorRates.customerTipsPerSecond)}/sec passive`
         : counterIncome.text
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopReputationRate) {
-    elements.shopReputationRate.textContent = reveal.shop
+    setTextIfChanged(elements.shopReputationRate, reveal.shop
       ? `+${formatShopRate(generatorRates.passiveReputationPerSecond)}/sec`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopSpiritRate) {
-    elements.shopSpiritRate.textContent = reveal.shop
+    setTextIfChanged(elements.shopSpiritRate, reveal.shop
       ? `+${formatShopRate(generatorRates.shopSpiritPerSecond)}/sec`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopPrepStatus) {
-    elements.shopPrepStatus.textContent = reveal.shop ? prep.message : "Locked";
+    setTextIfChanged(elements.shopPrepStatus, reveal.shop ? prep.message : "Locked");
   }
   if (elements.shopPrepSlots) {
-    elements.shopPrepSlots.textContent = reveal.shop
+    setTextIfChanged(elements.shopPrepSlots, reveal.shop
       ? `${formatShopCount(shop.prepSlots)} available · ${formatShopCount(getPrepSlotMax(shop))} max`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopReach) {
-    elements.shopReach.textContent = reveal.shop ? formatShopCount(shop.shopReach) : "Locked";
+    setTextIfChanged(elements.shopReach, reveal.shop ? formatShopCount(shop.shopReach) : "Locked");
   }
   if (elements.shopSpirit) {
-    elements.shopSpirit.textContent = reveal.shop
+    setTextIfChanged(elements.shopSpirit, reveal.shop
       ? `${formatShopCount(shop.shopSpirit)}/${formatShopCount(getShopSpiritMax(shop))}`
-      : "Locked";
+      : "Locked");
   }
   if (elements.shopLicenseStars) {
-    elements.shopLicenseStars.textContent = reveal.shop ? formatShopCount(shop.licenseStars) : "Locked";
+    setTextIfChanged(elements.shopLicenseStars, reveal.shop ? formatShopCount(shop.licenseStars) : "Locked");
   }
   if (elements.shopBuyMultiplier) {
     elements.shopBuyMultiplier.value = String(shop.purchaseMultiplier || appState.purchaseMultiplier || 1);
@@ -9996,7 +10084,7 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   renderShopTabs(state);
   if (elements.shopInlineResult) {
-    elements.shopInlineResult.textContent = appState.shopInlineResult || "";
+    setTextIfChanged(elements.shopInlineResult, appState.shopInlineResult || "");
   }
   if (elements.shopOfflineEarnings) {
     const offlineTofu = Number(shop.offlineEarnings && shop.offlineEarnings.tofuStock || 0);
@@ -10031,9 +10119,15 @@ function renderTofuShop(gameState = loadGameState()) {
     if (offlineCounterPaused && offlineOrders > 0.005) {
       offlineNotes.push("Counter Service does not fulfill offline yet");
     }
-    elements.shopOfflineEarnings.textContent = hasOfflineEarnings
-      ? `While you were away: ${offlineParts.join(", ")}.${offlineNotes.length ? ` ${offlineNotes.join(". ")}.` : ""}`
-      : "";
+    if (shop.offlineEarnings && shop.offlineEarnings.queueFull) {
+      offlineNotes.push("order queue reached capacity");
+    }
+    setTextIfChanged(
+      elements.shopOfflineEarnings,
+      hasOfflineEarnings
+        ? `While you were away: ${offlineParts.join(", ")}.${offlineNotes.length ? ` ${offlineNotes.join(". ")}.` : ""}`
+        : "",
+    );
   }
   renderDeliveryWall(state);
 }

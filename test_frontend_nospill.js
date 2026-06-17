@@ -96,6 +96,10 @@ globalThis.calculateShopGeneratorEarnings = calculateShopGeneratorEarnings;
 globalThis.applyShopGeneratorTick = applyShopGeneratorTick;
 globalThis.tickOpenShopGenerators = tickOpenShopGenerators;
 globalThis.startShopGeneratorTimer = startShopGeneratorTimer;
+globalThis.renderLiveShopUpdate = renderLiveShopUpdate;
+globalThis.shopRenderSignature = shopRenderSignature;
+globalThis.setTextIfChanged = setTextIfChanged;
+globalThis.deliveryOrderQueueCapacity = deliveryOrderQueueCapacity;
 globalThis.orderPrepProgress = orderPrepProgress;
 globalThis.tofuStockRunway = tofuStockRunway;
 globalThis.clampPercent = clampPercent;
@@ -108,6 +112,7 @@ globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.formatCompactNumber = formatCompactNumber;
 globalThis.formatShopBalance = formatShopBalance;
+globalThis.addLedgerEntry = addLedgerEntry;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.fulfillShopOrders = fulfillShopOrders;
@@ -4395,6 +4400,135 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('/static/nospill/app.css?v=20260617a'));
 }
 
+function testTofuGarageHighScalePerformanceGuardrails() {
+  const intervalCalls = [];
+  const context = loadNoSpillContext({
+    window: {
+      localStorage: makeLocalStorage(),
+      setInterval(callback, ms) {
+        intervalCalls.push({ callback, ms });
+        return intervalCalls.length;
+      },
+    },
+  });
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(source.includes('SHOP_RENDER_THROTTLE_MS'));
+  assert(source.includes('renderLiveShopUpdate(nextState, now)'));
+  assert(!source.includes('deliveryOrders.map'));
+  assert(!source.includes('deliveryOrders.forEach'));
+  assert(!source.includes('new Array(deliveryOrders'));
+
+  const state = context.defaultGameState();
+  state.shop.tofuStock = 1000000;
+  state.shop.deliveryOrders = context.deliveryOrderQueueCapacity();
+  state.shop.reputation = 500000;
+  state.shop.shopLevel = 100;
+  state.shop.stations.tofu_press = 100;
+  state.shop.stations.prep_counter = 100;
+  state.shop.stations.delivery_shelf = 10;
+  state.shop.stationUpgrades.tofu_press_faster = 10;
+  state.shop.stationUpgrades.tofu_press_double = 8;
+  state.shop.stationUpgrades.soy_supplier_contract = 1;
+  state.shop.stationUpgrades.morning_soy_delivery = 1;
+  state.shop.stationUpgrades.bulk_soy_delivery = 1;
+  state.shop.lastGeneratorTickAt = '2026-06-15T12:00:00.000Z';
+
+  const normalized = context.defaultGameState();
+  assert.strictEqual(typeof normalized.shop.deliveryOrders, 'number');
+  assert.strictEqual(Array.isArray(normalized.shop.deliveryOrders), false);
+  assert.strictEqual(context.formatCompactNumber(1000000), '1M');
+  assert(!context.formatCompactNumber(123456789).includes('.000'));
+
+  const ticked = context.applyShopGeneratorTick(state, new Date('2026-06-15T13:00:00.000Z'), {
+    maxSeconds: 3600,
+  });
+  assert(ticked.gameState.shop.deliveryOrders <= context.deliveryOrderQueueCapacity());
+  assert.strictEqual(ticked.earnings.queueFull, true);
+  assert.strictEqual(ticked.earnings.queueCapacity, context.deliveryOrderQueueCapacity());
+
+  const cappedSource = context.defaultGameState();
+  cappedSource.shop.tofuStock = 1000000;
+  cappedSource.shop.deliveryOrders = context.deliveryOrderQueueCapacity() - 2;
+  cappedSource.shop.reputation = 500000;
+  cappedSource.shop.shopLevel = 100;
+  cappedSource.shop.stations.prep_counter = 100;
+  cappedSource.shop.stationUpgrades.bulk_soy_delivery = 1;
+  cappedSource.shop.lastGeneratorTickAt = '2026-06-15T00:00:00.000Z';
+  const offline = context.calculateOfflineShopEarnings(cappedSource, new Date('2026-06-16T00:00:00.000Z'));
+  assert(offline.deliveryOrders <= 2);
+  assert.strictEqual(offline.cappedHours, 8);
+  assert.strictEqual(offline.queueFull, false);
+
+  let ledgerState = context.defaultGameState();
+  for (let index = 0; index < 150; index += 1) {
+    ledgerState = context.addLedgerEntry(ledgerState, 'perf', `Entry ${index}`);
+  }
+  assert(ledgerState.shop.ledger.length <= 80);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, value: "", updates: 0 };
+  node.classList = { toggle() {} };
+  node.querySelector = () => null;
+  return node;
+}
+const node = makeNode();
+globalThis.firstSetChanged = setTextIfChanged(node, "1M");
+globalThis.secondSetChanged = setTextIfChanged(node, "1M");
+elements = {
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+const renderState = ${JSON.stringify(state)};
+appState.surface = "cup-test";
+globalThis.hiddenRender = renderLiveShopUpdate(renderState, new Date("2026-06-15T12:00:01.000Z"));
+appState.surface = "shop";
+appState.shopTab = "overview";
+globalThis.visibleRender = renderLiveShopUpdate(renderState, new Date("2026-06-15T12:00:01.000Z"));
+globalThis.visibleRenderRepeat = renderLiveShopUpdate(renderState, new Date("2026-06-15T12:00:01.100Z"));
+globalThis.renderedOrderText = elements.shopDeliveryOrders.textContent;
+`, context);
+  assert.strictEqual(context.firstSetChanged, true);
+  assert.strictEqual(context.secondSetChanged, false);
+  assert.strictEqual(context.hiddenRender, false);
+  assert.strictEqual(context.visibleRender, true);
+  assert.strictEqual(context.visibleRenderRepeat, false);
+  assert(!context.renderedOrderText.includes('undefined'));
+  assert(!/NaN|Infinity/.test(context.renderedOrderText));
+
+  const fullQueue = context.defaultGameState();
+  fullQueue.shop.deliveryOrders = context.deliveryOrderQueueCapacity();
+  fullQueue.shop.tofuStock = 10000;
+  fullQueue.shop.lifetimeDeliveryOrders = 20;
+  fullQueue.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+  const action = context.nextBestAction(fullQueue);
+  assert.strictEqual(action.type, 'queue_full');
+  assert(action.copy.includes('order queue is full'));
+}
+
 function testNextBestActionHierarchyStaysSinglePrimary() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
@@ -7336,6 +7470,7 @@ async function run() {
   testCounterServiceV1AutomatesEarnedShopHandoffs();
   testCounterServicePolishStatsUpgradesAndSpiritPanel();
   testTofuGarageHighMidgameSupplyBottleneckBalance();
+  testTofuGarageHighScalePerformanceGuardrails();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

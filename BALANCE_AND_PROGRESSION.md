@@ -194,7 +194,7 @@ License Exam reset rule.
 | Resource | Purpose | Main Sources | Main Sinks | Appears | Scarcity Target | Bottleneck Created | License Exam Reset |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Stock | Ingredient, runway, and order-size input | Tofu Press, Pack Tofu, Supplier Contracts, offline production, shop boosts | Prep Counter, larger shop orders, future fictional routes | Immediately | Low only when Prep Counter or larger orders outrun press output | Not enough stock to prepare or fulfill the best order | Resets |
-| Delivery Orders | Prepared/waiting shop work that can become money | Prep Counter, boosts, later automation | Fulfill Shop Order, Counter Service, later routes/rivals | Immediately | First visible throughput bottleneck | No ready orders to fulfill | Resets |
+| Delivery Orders | Prepared/waiting shop work that can become money | Prep Counter, boosts, later automation | Fulfill Shop Order, Counter Service, later routes/rivals | Immediately | First visible throughput bottleneck, capped as a queue | No ready orders to fulfill, or queue full until handoffs catch up | Resets |
 | Tips | Main purchase currency | Fulfilled orders, Regular Customers, routes, certified boosts | Stations, upgrades, garage, crew, route cards | Immediately after first order | Scarce early, abundant later | Cannot buy next improvement | Resets |
 | Reputation | Unlock currency, social proof, and midgame supply leverage | Orders, routes, certified smooth results, stamps | Gates, Supplier Contracts, rare status spends | After first order | Scarce and meaningful | Next system or managed supply remains locked | Resets, lifetime persists |
 | Shop XP | Local shop progress feedback | Shop orders, shop automation | None by default | After first order | Steady visible shop progress | Shop milestones not met | Lifetime should persist unless prestige design says otherwise |
@@ -279,6 +279,27 @@ Formatting is display-only. Internal resource values, costs, rewards, and progre
 exact. Discrete missing requirements such as Prep Capacity, ready orders, station counts, stamps, and
 License Stars round up in disabled reasons. Small live balances may show short decimals when that is
 needed to make ticking visible, but long raw decimals should never be exposed.
+
+### High-Scale Performance Guardrails
+
+Current Tofu Garage resources remain scalar JavaScript numbers. At current high-midgame values and
+the documented `$1T` future target, native `Number` is sufficient; the immediate performance risks
+are repeated formatting, unnecessary DOM rewrites, hidden-surface rendering, offline catch-up shape,
+and unbounded backlog/history growth.
+
+Implemented guardrails:
+
+- live shop ticks use a coalesced visible-render path instead of rebuilding every app surface
+- unchanged top-counter text is not rewritten
+- offline progress uses aggregate elapsed-time math and respects the offline cap
+- Delivery Orders have a queue cap so waiting orders cannot grow forever into meaningless UI noise
+- a full order queue pauses further order prep and points Next Best Action toward Counter Service
+  or bulk handoff work
+- ledger/history and inline feedback stay capped and compact
+
+Future absurd endgame values may require a `GameAmount` adapter with mantissa/exponent operations or
+a deliberate decimal-library migration. That is deferred until the economy actually needs values
+beyond normal JavaScript number readability/precision.
 
 ### Prep Capacity
 

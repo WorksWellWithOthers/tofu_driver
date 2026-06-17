@@ -90,6 +90,9 @@ The static app uses hash routing:
   and integrated Mika MVP asset-pack paths
 - `TOFU_SHOP_LIVING_SCENE_ASSET_SPEC.md`: parked-only full-scene Tofu Shop artwork variants,
   placeholder behavior, and MVP scene-art recommendation
+- `TOFU_GARAGE_PERFORMANCE_AUDIT.md`: high-scale idle-game performance audit covering scalar
+  resources, compact formatting, coalesced rendering, aggregate offline progress, queue/history
+  caps, and the deferred BigNumber/mantissa-exponent strategy
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /
