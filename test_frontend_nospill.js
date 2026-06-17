@@ -49,6 +49,26 @@ globalThis.mapAccelerationToVehicle = mapAccelerationToVehicle;
 globalThis.computeMappedMotion = computeMappedMotion;
 globalThis.updateTofuCargoVisualState = updateTofuCargoVisualState;
 globalThis.defaultTofuVisualState = defaultTofuVisualState;
+globalThis.normalizeCargoTypeId = normalizeCargoTypeId;
+globalThis.cargoTypeProfile = cargoTypeProfile;
+globalThis.formatTripDuration = formatTripDuration;
+globalThis.summarizeDriveShape = summarizeDriveShape;
+globalThis.appendCupTrailPoint = appendCupTrailPoint;
+globalThis.cupTrailPath = cupTrailPath;
+globalThis.renderCupTrail = renderCupTrail;
+globalThis.dailyDeliveryCredit = dailyDeliveryCredit;
+globalThis.createCoachAccumulator = createCoachAccumulator;
+globalThis.updateCoachAccumulator = updateCoachAccumulator;
+globalThis.summarizeCoachRecap = summarizeCoachRecap;
+globalThis.classifyBrakeFeather = classifyBrakeFeather;
+globalThis.classifyDecelControl = classifyDecelControl;
+globalThis.classifyTransitionSmoothness = classifyTransitionSmoothness;
+globalThis.classifyPassengerComfort = classifyPassengerComfort;
+globalThis.classifySmoothHands = classifySmoothHands;
+globalThis.classifyCargoBalance = classifyCargoBalance;
+globalThis.classifyConsistency = classifyConsistency;
+globalThis.renderCoachRecap = renderCoachRecap;
+globalThis.applyDailyDeliveryCredit = applyDailyDeliveryCredit;
 globalThis.analyzeRoute = analyzeRoute;
 globalThis.qualificationForRoute = qualificationForRoute;
 globalThis.getDailyDelivery = getDailyDelivery;
@@ -326,7 +346,12 @@ function sampleShareSummary(overrides = {}) {
     qualificationLabel: 'Qualified',
     routeDifficultyLabel: 'Technical Route',
     routeType: 'Technical Route',
+    cargoType: 'soft_tofu',
+    cargoLabel: 'Soft Tofu',
+    driveShape: 'Winding Pour',
+    cupTrail: [-0.2, 0.1, -0.1, 0.2],
     cargoCondition: 97.4,
+    durationSeconds: 1694,
     distanceMiles: 4.2,
     unlockedBadges: ['technical_pour'],
     deliveryStamps: ['technical_pour'],
@@ -463,6 +488,441 @@ function testTofuDriverBrandHierarchy() {
   assert.strictEqual(context.MERCH_LABELS.nospill_club, 'No-Spill Club Tee');
   assert.strictEqual(context.MERCH_LABELS.perfect_pour, 'Perfect Pour Decal');
   assert.strictEqual(context.MERCH_LABELS.smooth_driver, 'Tofu Driver Delivery Crew');
+}
+
+function testCargoTypeDriveShapeAndCupTrailResultSlice() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('Cargo Type'));
+  assert(html.includes('Firm Tofu'));
+  assert(html.includes('Soft Tofu'));
+  assert(html.includes('Silken Tofu'));
+  assert(html.includes('Forgiving delivery for everyday drives.'));
+  assert(html.includes('The classic cup test.'));
+  assert(html.includes('Delicate delivery for smooth-control purists.'));
+  assert(!html.includes('Cup difficulty'));
+  assert(!html.includes('id="difficulty-title"'));
+
+  const context = loadNoSpillContext();
+  assert.strictEqual(context.normalizeCargoTypeId('beginner'), 'firm_tofu');
+  assert.strictEqual(context.normalizeCargoTypeId('standard'), 'soft_tofu');
+  assert.strictEqual(context.normalizeCargoTypeId('comfort'), 'silken_tofu');
+  assert(context.cargoTypeProfile('firm_tofu').thresholdG > context.cargoTypeProfile('soft_tofu').thresholdG);
+  assert(context.cargoTypeProfile('soft_tofu').thresholdG > context.cargoTypeProfile('silken_tofu').thresholdG);
+
+  const sameInput = { totalG: 0.32, jerk: 0, deltaSeconds: 1 };
+  const firmLoss = context.computeWaterLoss({
+    ...sameInput,
+    thresholdG: context.cargoTypeProfile('firm_tofu').thresholdG,
+  });
+  const softLoss = context.computeWaterLoss({
+    ...sameInput,
+    thresholdG: context.cargoTypeProfile('soft_tofu').thresholdG,
+  });
+  const silkenLoss = context.computeWaterLoss({
+    ...sameInput,
+    thresholdG: context.cargoTypeProfile('silken_tofu').thresholdG,
+  });
+  assert.strictEqual(firmLoss, 0);
+  assert(softLoss > firmLoss);
+  assert(silkenLoss > softLoss);
+
+  assert.strictEqual(context.formatTripDuration(28 * 60 + 14), '28:14');
+  assert.strictEqual(context.formatTripDuration((2 * 3600) + (4 * 60) + 7), '2:04:07');
+  assert.strictEqual(context.summarizeDriveShape({
+    samples: 100,
+    durationSeconds: 540,
+    lateralAbsSum: 1,
+    cargoCondition: 95,
+  }), 'Calm Pour');
+  assert.strictEqual(context.summarizeDriveShape({
+    samples: 100,
+    durationSeconds: 500,
+    lateralAbsSum: 8,
+    lateralSignChanges: 3,
+    cargoCondition: 95,
+  }), 'Rolling Pour');
+  assert.strictEqual(context.summarizeDriveShape({
+    samples: 100,
+    durationSeconds: 900,
+    lateralAbsSum: 12,
+    lateralSignChanges: 8,
+    cargoCondition: 95,
+  }), 'Winding Pour');
+  assert.strictEqual(context.summarizeDriveShape({
+    samples: 100,
+    durationSeconds: 900,
+    longitudinalAbsSum: 12,
+    longitudinalSignChanges: 10,
+    roughCount: 4,
+    cargoCondition: 90,
+  }), 'Stop-and-Go Pour');
+  assert.strictEqual(context.summarizeDriveShape({
+    samples: 100,
+    durationSeconds: 3000,
+    lateralAbsSum: 2,
+    cargoCondition: 92,
+  }), 'Long Pour');
+
+  let trail = [];
+  for (let index = 0; index < 80; index += 1) {
+    trail = context.appendCupTrailPoint(trail, index % 2 ? 3 : -3, 36);
+  }
+  assert(trail.length <= 36);
+  assert(trail.every((point) => point >= -1 && point <= 1));
+  const pathData = context.cupTrailPath(trail);
+  assert(pathData.startsWith('M '));
+  assert(!/NaN|Infinity/.test(pathData));
+  const trailHtml = context.renderCupTrail({ driveShape: 'Winding Pour', cupTrail: trail });
+  assert(trailHtml.includes('Cup Trail'));
+  assert(trailHtml.includes('Decorative Cup Trail'));
+  assert(trailHtml.includes('Decorative only; it is not a real-world path.'));
+  assert(trailHtml.includes('<svg'));
+
+  context.cargoResultSample = sampleShareSummary({
+    driveShape: 'Rolling Pour',
+    dailyDeliveryCredit: 'Daily Delivery Credit: Smooth commute logged.',
+    deliveryRewards: {},
+  });
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+    add() {},
+    remove() {},
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  routeContext: makeNode(),
+  routeGrid: makeNode(),
+  summaryGrid: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  cupTrailCard: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+  shareCanvas: null,
+  summaryDiscordCta: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderSummary({
+  ...cargoResultSample,
+});
+globalThis.cargoResultSummaryHtml =
+  elements.summaryGrid.innerHTML
+  + elements.deliverySummaryGrid.innerHTML
+  + elements.cupTrailCard.innerHTML;
+`, context);
+  assert(context.cargoResultSummaryHtml.includes('Cargo'));
+  assert(context.cargoResultSummaryHtml.includes('Soft Tofu'));
+  assert(context.cargoResultSummaryHtml.includes('Trip Time'));
+  assert(context.cargoResultSummaryHtml.includes('28:14'));
+  assert(context.cargoResultSummaryHtml.includes('Drive Shape'));
+  assert(context.cargoResultSummaryHtml.includes('Rolling Pour'));
+  assert(context.cargoResultSummaryHtml.includes('Cup Trail'));
+  assert(context.cargoResultSummaryHtml.includes('Smooth commute logged.'));
+
+  const shareText = context.buildShareText(sampleShareSummary({
+    driveShape: 'Rolling Pour',
+    averageSpeed: 40,
+    topSpeed: 55,
+    coordinates: '47,-122',
+    gps: true,
+  }), { includeDistanceInShare: true });
+  assert(shareText.includes('Cargo: Soft Tofu'));
+  assert(shareText.includes('Trip Time: 28:14'));
+  assert(shareText.includes('Drive Shape: Rolling Pour'));
+  assert(!/speed|top speed|average speed|gps|coordinates|map|street|route trace|exact distance/i.test(shareText));
+  assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(shareText));
+}
+
+function testCoachRecapV1UsesSafeOutcomeBasedSummary() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const appSource = fs.readFileSync(NOSPILL_JS, 'utf8');
+  const runViewHtml = html.slice(
+    html.indexOf('id="run-view"'),
+    html.indexOf('id="unsupported-view"'),
+  );
+  assert(html.includes('id="coach-recap-card"'));
+  assert(!runViewHtml.includes('Coach Recap'));
+  assert(!/left-foot braking|right-foot braking|engine braking|trail braking|racing line|late braking|brake later/i.test(appSource));
+
+  const context = loadNoSpillContext();
+  let smooth = context.createCoachAccumulator();
+  for (let index = 0; index < 90; index += 1) {
+    smooth = context.updateCoachAccumulator(smooth, {
+      longitudinalG: index % 12 < 6 ? -0.09 : -0.05,
+      totalG: 0.12,
+      jerk: 0.14,
+      elapsedMs: 250,
+    });
+  }
+  let abrupt = context.createCoachAccumulator();
+  for (let index = 0; index < 90; index += 1) {
+    abrupt = context.updateCoachAccumulator(abrupt, {
+      longitudinalG: index % 2 ? -0.58 : 0.1,
+      totalG: 0.55,
+      jerk: 1.8,
+      elapsedMs: 250,
+    });
+  }
+  const smoothRecap = context.summarizeCoachRecap(smooth, { cargoCondition: 97 });
+  const abruptRecap = context.summarizeCoachRecap(abrupt, { cargoCondition: 67 });
+  assert.strictEqual(smoothRecap.insufficient, false);
+  assert.strictEqual(abruptRecap.insufficient, false);
+
+  const brakeOrder = ['Feathered', 'Smooth', 'Uneven', 'Abrupt'];
+  const decelOrder = ['Gentle', 'Controlled', 'Choppy', 'Harsh'];
+  const transitionOrder = ['Clean', 'Mostly Clean', 'Bumpy', 'Jerky'];
+  const comfortOrder = ['High', 'Good', 'Mixed', 'Rough'];
+  assert(brakeOrder.indexOf(smoothRecap.brakeFeather) < brakeOrder.indexOf(abruptRecap.brakeFeather));
+  assert(decelOrder.indexOf(smoothRecap.decelControl) < decelOrder.indexOf(abruptRecap.decelControl));
+  assert(transitionOrder.indexOf(smoothRecap.transitionSmoothness) < transitionOrder.indexOf(abruptRecap.transitionSmoothness));
+  assert(comfortOrder.indexOf(smoothRecap.passengerComfort) < comfortOrder.indexOf(abruptRecap.passengerComfort));
+
+  const insufficient = context.summarizeCoachRecap({
+    sampleCount: 3,
+    elapsedMs: 1200,
+  }, { cargoCondition: 100 });
+  assert.strictEqual(insufficient.insufficient, true);
+  assert.strictEqual(insufficient.message, 'Not enough motion data for a useful coaching recap.');
+
+  const recapHtml = context.renderCoachRecap({ coachRecap: smoothRecap });
+  assert(recapHtml.includes('Coach Recap'));
+  assert(recapHtml.includes('Brake Feather'));
+  assert(recapHtml.includes('Decel Control'));
+  assert(recapHtml.includes('Transition Smoothness'));
+  assert(recapHtml.includes('Passenger Comfort'));
+  assert(!/left-foot braking|right-foot braking|engine braking|trail braking|racing|attack|fast entry|late braking/i.test(recapHtml));
+
+  const insufficientHtml = context.renderCoachRecap({ coachRecap: insufficient });
+  assert(insufficientHtml.includes('Not enough motion data for a useful coaching recap.'));
+
+  context.coachResultSample = sampleShareSummary({
+    coachRecap: smoothRecap,
+    deliveryRewards: {},
+  });
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    classListValue: null,
+    value: "",
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+    add() {},
+    remove() {},
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  routeContext: makeNode(),
+  routeGrid: makeNode(),
+  summaryGrid: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  coachRecapCard: makeNode(),
+  cupTrailCard: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+  shareCanvas: null,
+  summaryDiscordCta: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderSummary({ ...coachResultSample });
+globalThis.coachResultHtml =
+  elements.summaryGrid.innerHTML
+  + elements.deliverySummaryGrid.innerHTML
+  + elements.coachRecapCard.innerHTML;
+`, context);
+  assert(context.coachResultHtml.includes('Coach Recap'));
+  assert(context.coachResultHtml.includes('Brake Feather'));
+  assert(context.coachResultHtml.includes('Passenger Comfort'));
+  assert(!/left-foot|right-foot|engine braking|trail braking|speed|top speed|average speed|exact distance|gps|coordinates|map|street name|route trace/i.test(context.coachResultHtml));
+
+  assertNoSensitiveStorageData(smoothRecap);
+  assert(!JSON.stringify(smoothRecap).includes('raw'));
+  assert(!JSON.stringify(smoothRecap).includes('DeviceMotion'));
+  const shareText = context.buildShareText({
+    ...sampleShareSummary(),
+    coachRecap: abruptRecap,
+    speed: 70,
+    exactDistance: 12,
+    gps: 'raw',
+    coordinates: '47,-122',
+  });
+  assert(!/speed|top speed|average speed|exact distance|gps|coordinates|map|street name|route trace/i.test(shareText));
+}
+
+function testSmoothControlRecapDriveShapeTrailAndDailyCreditFollowup() {
+  const context = loadNoSpillContext();
+  let smoothLateral = context.createCoachAccumulator();
+  let abruptLateral = context.createCoachAccumulator();
+  for (let index = 0; index < 100; index += 1) {
+    smoothLateral = context.updateCoachAccumulator(smoothLateral, {
+      lateralG: index % 20 < 10 ? 0.06 : -0.06,
+      longitudinalG: -0.04,
+      totalG: 0.1,
+      jerk: 0.16,
+      lateralJerk: 0.04,
+      elapsedMs: 220,
+    });
+    abruptLateral = context.updateCoachAccumulator(abruptLateral, {
+      lateralG: index % 2 ? 0.54 : -0.52,
+      longitudinalG: index % 3 ? -0.14 : 0.12,
+      totalG: 0.62,
+      jerk: 1.65,
+      lateralJerk: 0.72,
+      elapsedMs: 220,
+    });
+  }
+  const smoothRecap = context.summarizeCoachRecap(smoothLateral, { cargoCondition: 98 });
+  const abruptRecap = context.summarizeCoachRecap(abruptLateral, { cargoCondition: 58 });
+  const smoothHandsOrder = ['Clean', 'Smooth', 'Uneven', 'Abrupt'];
+  const balanceOrder = ['Settled', 'Light Lean', 'Noticeable Lean', 'Sloshed'];
+  const consistencyOrder = ['High', 'Good', 'Mixed', 'Rough'];
+  assert(smoothHandsOrder.indexOf(smoothRecap.smoothHands) < smoothHandsOrder.indexOf(abruptRecap.smoothHands));
+  assert(balanceOrder.indexOf(smoothRecap.cargoBalance) < balanceOrder.indexOf(abruptRecap.cargoBalance));
+  assert(consistencyOrder.indexOf(smoothRecap.consistency) < consistencyOrder.indexOf(abruptRecap.consistency));
+
+  const recapHtml = context.renderCoachRecap({ coachRecap: smoothRecap });
+  assert(recapHtml.includes('Smooth Hands'));
+  assert(recapHtml.includes('Brake Feather'));
+  assert(recapHtml.includes('Decel Control'));
+  assert(recapHtml.includes('Transition Smoothness'));
+  assert(recapHtml.includes('Cargo Balance'));
+  assert(recapHtml.includes('Passenger Comfort'));
+  assert(recapHtml.includes('Consistency'));
+  assert(!/racing line|trail braking|left-foot braking|right-foot braking|engine braking|brake later|drive faster|find a twisty road|toge|touge/i.test(recapHtml));
+
+  const shapeFixtures = [
+    ['Calm Pour', { samples: 100, durationSeconds: 240, lateralAbsSum: 1, cargoCondition: 96 }],
+    ['Rolling Pour', { samples: 100, durationSeconds: 420, lateralAbsSum: 7, lateralSignChanges: 3, cargoCondition: 94 }],
+    ['Winding Pour', { samples: 100, durationSeconds: 700, lateralAbsSum: 12, lateralSignChanges: 8, cargoCondition: 94 }],
+    ['Stop-and-Go Pour', { samples: 100, durationSeconds: 700, longitudinalAbsSum: 12, longitudinalSignChanges: 10, roughCount: 5, cargoCondition: 88 }],
+    ['Daily Pour', { samples: 100, durationSeconds: 1500, lateralAbsSum: 2, roughCount: 1, cargoCondition: 92 }],
+    ['Long Pour', { samples: 100, durationSeconds: 3300, lateralAbsSum: 2, roughCount: 1, cargoCondition: 92 }],
+  ];
+  shapeFixtures.forEach(([expected, fixture]) => {
+    assert.strictEqual(context.summarizeDriveShape({
+      ...fixture,
+      gps: 'ignored',
+      speed: 80,
+      distanceMiles: 400,
+      route: 'ignored',
+      street: 'ignored',
+      map: 'ignored',
+      coordinates: 'ignored',
+      location: 'ignored',
+    }), expected);
+  });
+
+  let trail = [];
+  for (let index = 0; index < 96; index += 1) {
+    trail = context.appendCupTrailPoint(trail, Math.sin(index) * 4, 36);
+  }
+  assert(trail.length <= 36);
+  assert(trail.every((point) => point >= -1 && point <= 1));
+  const trailPayload = { cupTrail: trail, driveShape: 'Winding Pour' };
+  assertNoSensitiveStorageData(trailPayload);
+  assert(!/gps|route|map|street|distance|speed|raw/i.test(JSON.stringify(trailPayload)));
+
+  const dailyCredit = context.applyDailyDeliveryCredit({
+    durationSeconds: 30 * 60,
+    cargoCondition: 94,
+    driveShape: 'Daily Pour',
+  });
+  const longCredit = context.applyDailyDeliveryCredit({
+    durationSeconds: 3 * 60 * 60,
+    cargoCondition: 99,
+    driveShape: 'Long Pour',
+    speed: 200,
+    gps: 'ignored',
+    distanceMiles: 1000,
+    route: 'ignored',
+    location: 'ignored',
+  });
+  assert.strictEqual(dailyCredit.eligible, true);
+  assert.strictEqual(dailyCredit.message, 'Smooth commute logged.');
+  assert.strictEqual(dailyCredit.capped, true);
+  assert.strictEqual(longCredit.cappedMinutes, 45);
+  assert.strictEqual(longCredit.eligible, true);
+  assert.strictEqual(longCredit.message, 'Smooth commute logged.');
+  assertNoSensitiveStorageData(dailyCredit);
+  assert(!/speed|gps|distance|route|location/i.test(JSON.stringify(dailyCredit)));
+
+  const activeRunHtml = fs.readFileSync(NOSPILL_HTML, 'utf8').slice(
+    fs.readFileSync(NOSPILL_HTML, 'utf8').indexOf('id="run-view"'),
+    fs.readFileSync(NOSPILL_HTML, 'utf8').indexOf('id="unsupported-view"'),
+  );
+  assert(!activeRunHtml.includes('Coach Recap'));
+  assert(!activeRunHtml.includes('Cup Trail'));
+  assert(!activeRunHtml.includes('Daily Delivery Credit'));
+
+  const shareText = context.buildShareText({
+    ...sampleShareSummary(),
+    coachRecap: smoothRecap,
+    driveShape: 'Daily Pour',
+    speed: 70,
+    topSpeed: 90,
+    averageSpeed: 45,
+    exactDistance: 18,
+    gps: true,
+    coordinates: '47,-122',
+    map: true,
+    streetName: 'Example Street',
+    routeTrace: [1, 2, 3],
+  });
+  assert(!/speed|top speed|average speed|exact distance|gps|coordinates|map|street name|route trace|racing line|trail braking|left-foot braking|right-foot braking|engine braking|brake later|drive faster|find a twisty road|toge|touge/i.test(shareText));
+
+  const safeHistoryFields = {
+    coachRecap: smoothRecap,
+    cupTrail: trail,
+    dailyDeliveryCredit: dailyCredit,
+    driveShape: 'Daily Pour',
+  };
+  assertNoSensitiveStorageData(safeHistoryFields);
+  assert(!/raw|DeviceMotion|accelerometer|gps|routeTrace|speed|distance|location|street/i.test(JSON.stringify(safeHistoryFields)));
 }
 
 function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
@@ -3725,8 +4185,10 @@ function testShareConfigAndCardData() {
   const summary = sampleShareSummary();
   const defaultText = context.buildShareText(summary);
   assert(defaultText.includes('Tofu Driver: Delivery Complete.'));
+  assert(defaultText.includes('Cargo: Soft Tofu'));
   assert(defaultText.includes('Cargo Condition: 97.4%'));
-  assert(defaultText.includes('Route Type: Technical Route'));
+  assert(defaultText.includes('Trip Time: 28:14'));
+  assert(defaultText.includes('Drive Shape: Winding Pour'));
   assert(defaultText.includes('Stamp: Technical Pour'));
   assert(defaultText.includes('Rank: No-Spill Club'));
   assert(defaultText.includes('Not faster. Smoother.'));
@@ -3774,7 +4236,9 @@ function testShareConfigAndCardData() {
   assert.strictEqual(cardData.waterSpilled, '2.6%');
   assert.strictEqual(cardData.rank, 'No-Spill Club');
   assert.strictEqual(cardData.qualificationStatus, 'Qualified');
-  assert.strictEqual(cardData.routeLabel, 'Technical Route');
+  assert.strictEqual(cardData.cargoLabel, 'Soft Tofu');
+  assert.strictEqual(cardData.tripTime, '28:14');
+  assert.strictEqual(cardData.driveShape, 'Winding Pour');
   assert.strictEqual(cardData.distanceLabel, '');
   assert.strictEqual(cardData.milestone, 'Technical Pour');
   assert.strictEqual(cardData.dailyStatus, 'Daily Delivery Complete');
@@ -3794,13 +4258,14 @@ function testShareConfigAndCardData() {
   const distanceText = context.buildShareText(summary, {
     includeDistanceInShare: true,
   });
-  assert(distanceText.includes('Distance: 4.2 mi.'));
+  assert(!distanceText.includes('Distance:'));
+  assert(!distanceText.includes('4.2'));
   assert(!/speed|mph|gps|map|street|trace|location|lat|lon/i.test(distanceText));
 
   const distanceCardData = context.buildShareCardData(summary, {
     includeDistanceInShare: true,
   });
-  assert.strictEqual(distanceCardData.distanceLabel, '4.2 mi');
+  assert.strictEqual(distanceCardData.distanceLabel, '');
 }
 
 function testLockedMerchLinksAreNotShownBeforeUnlock() {
@@ -5182,7 +5647,7 @@ function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
   assert(text.includes('Delivery Complete'));
   assert(text.includes('Cargo Condition: 97.4%'));
   assert(text.includes('Rank: No-Spill Club'));
-  assert(text.includes('Route Type: City Delivery'));
+  assert(text.includes('Drive Shape: Winding Pour'));
   assert(text.includes('Stamp: Passenger Approved'));
   assert(!/speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g/i.test(text));
   assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(text));
@@ -5767,6 +6232,9 @@ function run() {
   testNoSitemapOrRobotsRevealNoSpill();
   testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
   testTofuDriverBrandHierarchy();
+  testCargoTypeDriveShapeAndCupTrailResultSlice();
+  testCoachRecapV1UsesSafeOutcomeBasedSummary();
+  testSmoothControlRecapDriveShapeTrailAndDailyCreditFollowup();
   testFirstTimeGameDashboardIsVisibleBeforeSetup();
   testTwoSurfaceRoutingSeparatesShopAndCupTest();
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();

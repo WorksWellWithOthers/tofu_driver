@@ -9,6 +9,10 @@ The Cup Test can provide optional certified smooth-delivery boosts for the shop,
 Shop progression is playable at home without sensors or location.
 
 Cup-first visitors can reach Tofu Shop from the landing page and from parked Cup Test results.
+Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
+decorative Cup Trail, Daily Delivery Credit, and Coach Recap labels. These are derived from
+summarized motion only and must not expose speed, distance, GPS, maps, street names, route traces,
+or racing/performance-driving technique.
 
 Tofu Shop starts with a focused first loop and reveals depth over time. The first Passport stamp
 uses a local Stamp Fanfare, and the first meaningful hidden shop system uses a local Discovery

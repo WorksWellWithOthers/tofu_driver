@@ -19,11 +19,31 @@ const TAGLINE_CUP = "Don't spill the cup.";
 const TAGLINE_SMOOTHER = "Not faster. Smoother.";
 const TOFU_CARGO_MASCOT_SRC = "/static/nospill/assets/tofu-driver-app-image.png";
 
-const DIFFICULTIES = {
-  comfort: { label: "Comfort Cup", thresholdG: 0.2 },
-  standard: { label: "Standard Cup", thresholdG: 0.3 },
-  beginner: { label: "Beginner Cup", thresholdG: 0.4 },
+const CARGO_TYPES = {
+  firm_tofu: {
+    label: "Firm Tofu",
+    thresholdG: 0.4,
+    copy: "Forgiving delivery for everyday drives.",
+  },
+  soft_tofu: {
+    label: "Soft Tofu",
+    thresholdG: 0.3,
+    copy: "The classic cup test.",
+  },
+  silken_tofu: {
+    label: "Silken Tofu",
+    thresholdG: 0.2,
+    copy: "Delicate delivery for smooth-control purists.",
+  },
 };
+
+const LEGACY_CARGO_TYPE_IDS = {
+  beginner: "firm_tofu",
+  standard: "soft_tofu",
+  comfort: "silken_tofu",
+};
+
+const DIFFICULTIES = CARGO_TYPES;
 
 const DEVICE_AXES = ["x", "y", "z"];
 
@@ -784,7 +804,7 @@ const TOFU_VISUAL = {
 
 const appState = {
   mode: "basic",
-  difficulty: "standard",
+  difficulty: "soft_tofu",
   mountConfig: { ...DEFAULT_MOUNT_CONFIG },
   audioLevel: DEFAULT_AUDIO_LEVEL,
   audioEnabled: true,
@@ -1512,7 +1532,7 @@ function updateTofuCargoVisualState(
   visualState,
   currentG,
   {
-    thresholdG = DIFFICULTIES.standard.thresholdG,
+    thresholdG = CARGO_TYPES.soft_tofu.thresholdG,
     maxOffset = 1,
     reducedMotion = false,
     frame = 0,
@@ -1667,6 +1687,456 @@ function routeDifficultyLabel(score) {
   return "Easy Route";
 }
 
+function normalizeCargoTypeId(value) {
+  const raw = typeof value === "string" ? value : "";
+  const mapped = LEGACY_CARGO_TYPE_IDS[raw] || raw;
+  return CARGO_TYPES[mapped] ? mapped : "soft_tofu";
+}
+
+function cargoTypeProfile(value) {
+  const id = normalizeCargoTypeId(value);
+  return { id, ...CARGO_TYPES[id] };
+}
+
+function formatTripDuration(seconds) {
+  const total = Math.max(0, Math.round(Number(seconds || 0)));
+  const hours = Math.floor(total / 3600);
+  const minutes = Math.floor((total % 3600) / 60);
+  const remainingSeconds = total % 60;
+  if (hours > 0) {
+    return `${hours}:${String(minutes).padStart(2, "0")}:${String(remainingSeconds).padStart(2, "0")}`;
+  }
+  return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+}
+
+function tripTimeBucket(seconds) {
+  const duration = Math.max(0, Number(seconds || 0));
+  if (duration >= 45 * 60) return "Long Pour";
+  if (duration >= 10 * 60) return "Daily Pour";
+  return "Short Pour";
+}
+
+function motionSign(value, threshold = 0.035) {
+  const numeric = Number(value || 0);
+  if (numeric > threshold) return 1;
+  if (numeric < -threshold) return -1;
+  return 0;
+}
+
+function boundedCupTrailPoint(value) {
+  return roundTo(clamp(Number(value || 0), -1, 1), 2);
+}
+
+function appendCupTrailPoint(points, value, maxPoints = 36) {
+  const source = Array.isArray(points) ? points : [];
+  const next = [...source, boundedCupTrailPoint(value)];
+  if (next.length <= maxPoints) return next;
+  const merged = [];
+  for (let index = 0; index < next.length; index += 2) {
+    if (index + 1 < next.length) {
+      merged.push(boundedCupTrailPoint((next[index] + next[index + 1]) / 2));
+    } else {
+      merged.push(next[index]);
+    }
+  }
+  return merged.slice(-maxPoints);
+}
+
+function summarizeDriveShape(input = {}) {
+  const samples = Math.max(0, safeNonNegativeInteger(
+    input.samples ?? input.sampleCount ?? input.motionSamples,
+    0,
+    1000000,
+  ));
+  const durationSeconds = Math.max(0, Number(input.durationSeconds || 0));
+  const cargoCondition = safeNonNegativeNumber(input.cargoCondition, 0, 100);
+  const roughCount = safeNonNegativeInteger(input.roughCount, 0, 1000000)
+    + safeNonNegativeInteger(input.harshInputCount, 0, 1000000);
+  const lateralSignChanges = safeNonNegativeInteger(input.lateralSignChanges, 0, 1000000);
+  const longitudinalSignChanges = safeNonNegativeInteger(input.longitudinalSignChanges, 0, 1000000);
+  const lateralAverage = samples > 0
+    ? safeNonNegativeNumber(input.lateralAbsSum, 0, 1000000) / samples
+    : safeNonNegativeNumber(input.lateralAverage, 0, 10);
+  const longitudinalAverage = samples > 0
+    ? safeNonNegativeNumber(input.longitudinalAbsSum, 0, 1000000) / samples
+    : safeNonNegativeNumber(input.longitudinalAverage, 0, 10);
+  const roughRate = samples > 0 ? roughCount / samples : roughCount;
+
+  if (longitudinalSignChanges >= 8 && (longitudinalAverage > 0.08 || roughCount >= 4)) return "Stop-and-Go Pour";
+  if (lateralSignChanges >= 6 && lateralAverage >= 0.08 && roughRate < 0.12) return "Winding Pour";
+  if (durationSeconds >= 45 * 60 && cargoCondition >= 80 && roughRate < 0.08) return "Long Pour";
+  if (durationSeconds >= 10 * 60 && cargoCondition >= 85 && roughRate < 0.06) return "Daily Pour";
+  if (lateralAverage >= 0.035 || lateralSignChanges >= 2 || longitudinalAverage >= 0.035) return "Rolling Pour";
+  return "Calm Pour";
+}
+
+function cupTrailPath(points, width = 320, height = 96) {
+  const safePoints = Array.isArray(points) && points.length
+    ? points.map(boundedCupTrailPoint).slice(0, 48)
+    : [0, 0.08, -0.06, 0.04, 0];
+  if (safePoints.length < 2) safePoints.push(0);
+  return safePoints.map((point, index) => {
+    const x = safePoints.length === 1 ? width / 2 : (index / (safePoints.length - 1)) * width;
+    const y = height / 2 + point * (height * 0.36);
+    return `${index === 0 ? "M" : "L"} ${roundTo(x, 1)} ${roundTo(y, 1)}`;
+  }).join(" ");
+}
+
+function renderCupTrail(summary = {}) {
+  const points = Array.isArray(summary.cupTrail) ? summary.cupTrail : [];
+  const label = "Decorative Cup Trail showing the run's smooth left and right motion pattern.";
+  const path = cupTrailPath(points);
+  return `
+    <section class="nospill-cup-trail" aria-label="Cup Trail">
+      <div class="nospill-cup-trail-head">
+        <span>Cup Trail</span>
+        <strong>${escapeHtml(summary.driveShape || "Rolling Pour")}</strong>
+      </div>
+      <svg viewBox="0 0 320 96" role="img" aria-label="${escapeHtml(label)}" focusable="false">
+        <path class="nospill-cup-trail-guide" d="M 0 48 L 320 48"></path>
+        <path class="nospill-cup-trail-line" d="${escapeHtml(path)}"></path>
+      </svg>
+      <small>${escapeHtml(label)} Decorative only; it is not a real-world path.</small>
+    </section>
+  `;
+}
+
+function applyDailyDeliveryCredit(summary = {}) {
+  const duration = Number(summary.durationSeconds || 0);
+  const cargoCondition = safeNonNegativeNumber(summary.cargoCondition ?? summary.waterLeft, 0, 100);
+  const driveShape = summary.driveShape || summarizeDriveShape(summary);
+  const eligible = cargoCondition >= 80 && duration >= 10 * 60;
+  const bucket = duration >= 45 * 60 ? "Long Pour" : duration >= 10 * 60 ? "Daily Pour" : "Short Pour";
+  const cappedMinutes = Math.min(45, Math.max(0, Math.floor(duration / 60)));
+  if (!eligible) {
+    return {
+      eligible: false,
+      capped: true,
+      bucket,
+      cappedMinutes,
+      label: "",
+      message: "",
+    };
+  }
+  return {
+    eligible: true,
+    capped: true,
+    bucket,
+    cappedMinutes,
+    label: duration >= 10 * 60 ? "Daily Delivery Credit" : "Steady Pour Minutes",
+    message: driveShape === "Long Pour"
+      ? "Smooth commute logged."
+      : "Smooth commute logged.",
+  };
+}
+
+function dailyDeliveryCredit(summary = {}) {
+  const credit = applyDailyDeliveryCredit(summary);
+  if (credit.eligible && credit.label) return `${credit.label}: ${credit.message}`;
+  const duration = Number(summary.durationSeconds || 0);
+  const cargoCondition = safeNonNegativeNumber(summary.cargoCondition ?? summary.waterLeft, 0, 100);
+  if (duration >= 10 * 60 && cargoCondition >= 80) {
+    return "Daily Delivery Credit: Smooth commute logged.";
+  }
+  if (duration >= 3 * 60 && cargoCondition >= 90) {
+    return "Steady Pour Minutes recorded.";
+  }
+  return "";
+}
+
+function createCoachAccumulator() {
+  return {
+    sampleCount: 0,
+    elapsedMs: 0,
+    longitudinalPeak: 0,
+    longitudinalAverageAbs: 0,
+    longitudinalJerkPeak: 0,
+    longitudinalJerkAverage: 0,
+    decelSpikeCount: 0,
+    harshOnsetCount: 0,
+    harshReleaseCount: 0,
+    smoothDecelWindowCount: 0,
+    roughTransitionCount: 0,
+    comfortJoltCount: 0,
+    lateralJerkPeak: 0,
+    lateralJerkAverage: 0,
+    lateralSpikeCount: 0,
+    smoothLateralWindowCount: 0,
+    roughLateralWindowCount: 0,
+    leftRightTransitionCount: 0,
+    smoothWindowCount: 0,
+    roughWindowCount: 0,
+    lastLongitudinalG: 0,
+    lastLateralSign: 0,
+  };
+}
+
+function updateCoachAccumulator(accumulator, safeMotionSample = {}) {
+  const source = accumulator && typeof accumulator === "object"
+    ? accumulator
+    : createCoachAccumulator();
+  const longitudinalG = clamp(Number(safeMotionSample.longitudinalG || 0), -2, 2);
+  const lateralG = clamp(Number(safeMotionSample.lateralG || 0), -2, 2);
+  const totalG = clamp(Math.abs(Number(safeMotionSample.totalG || 0)), 0, 4);
+  const jerk = clamp(Math.abs(Number(safeMotionSample.jerk || 0)), 0, 12);
+  const elapsedMs = Math.max(0, Number(safeMotionSample.elapsedMs || safeMotionSample.deltaMs || 0));
+  const previousLongitudinal = Number(source.lastLongitudinalG || 0);
+  const deltaLongitudinal = longitudinalG - previousLongitudinal;
+  const lateralJerk = Math.abs(Number(
+    safeMotionSample.lateralJerk ?? safeMotionSample.lateralDelta ?? 0,
+  ));
+  const lateralSign = motionSign(lateralG);
+  const nextCount = safeNonNegativeInteger(source.sampleCount, 0, 1000000) + 1;
+  const previousCount = Math.max(0, nextCount - 1);
+
+  source.sampleCount = nextCount;
+  source.elapsedMs = safeNonNegativeNumber(source.elapsedMs, 0, 86400000) + elapsedMs;
+  source.longitudinalPeak = Math.max(
+    safeNonNegativeNumber(source.longitudinalPeak, 0, 4),
+    Math.abs(longitudinalG),
+  );
+  source.longitudinalAverageAbs = (
+    (safeNonNegativeNumber(source.longitudinalAverageAbs, 0, 4) * previousCount)
+    + Math.abs(longitudinalG)
+  ) / nextCount;
+  source.longitudinalJerkPeak = Math.max(
+    safeNonNegativeNumber(source.longitudinalJerkPeak, 0, 12),
+    jerk,
+  );
+  source.longitudinalJerkAverage = (
+    (safeNonNegativeNumber(source.longitudinalJerkAverage, 0, 12) * previousCount)
+    + jerk
+  ) / nextCount;
+  if (longitudinalG < -0.35) source.decelSpikeCount += 1;
+  if (longitudinalG < -0.16 && deltaLongitudinal < -0.14) source.harshOnsetCount += 1;
+  if (previousLongitudinal < -0.16 && longitudinalG > -0.04 && deltaLongitudinal > 0.14) {
+    source.harshReleaseCount += 1;
+  }
+  if (longitudinalG < -0.06 && longitudinalG > -0.28 && Math.abs(deltaLongitudinal) < 0.08 && jerk < 0.8) {
+    source.smoothDecelWindowCount += 1;
+  }
+  if (Math.abs(deltaLongitudinal) > 0.18 || jerk > 1.1) source.roughTransitionCount += 1;
+  if (totalG > 0.38 || jerk > 1.35) source.comfortJoltCount += 1;
+  source.lateralJerkPeak = Math.max(
+    safeNonNegativeNumber(source.lateralJerkPeak, 0, 12),
+    lateralJerk,
+  );
+  source.lateralJerkAverage = (
+    (safeNonNegativeNumber(source.lateralJerkAverage, 0, 12) * previousCount)
+    + lateralJerk
+  ) / nextCount;
+  if (Math.abs(lateralG) > 0.32 || lateralJerk > 0.3) source.lateralSpikeCount += 1;
+  if (Math.abs(lateralG) < 0.22 && lateralJerk < 0.14 && jerk < 0.9) {
+    source.smoothLateralWindowCount += 1;
+  }
+  if (Math.abs(lateralG) > 0.3 || lateralJerk > 0.28 || jerk > 1.2) {
+    source.roughLateralWindowCount += 1;
+  }
+  if (
+    lateralSign
+    && source.lastLateralSign
+    && lateralSign !== source.lastLateralSign
+  ) {
+    source.leftRightTransitionCount += 1;
+  }
+  if (lateralSign) source.lastLateralSign = lateralSign;
+  if (totalG < 0.25 && jerk < 0.9 && lateralJerk < 0.18) source.smoothWindowCount += 1;
+  if (totalG > 0.38 || jerk > 1.2 || lateralJerk > 0.3) source.roughWindowCount += 1;
+  source.lastLongitudinalG = longitudinalG;
+  return source;
+}
+
+function coachRate(count, sampleCount) {
+  return sampleCount > 0 ? safeNonNegativeNumber(count, 0, 1000000) / sampleCount : 0;
+}
+
+function classifyBrakeFeather(summary = {}) {
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const onsetRate = coachRate(summary.harshOnsetCount, samples);
+  const releaseRate = coachRate(summary.harshReleaseCount, samples);
+  const combined = onsetRate + releaseRate;
+  if (combined <= 0.01 && safeNonNegativeNumber(summary.longitudinalJerkAverage, 0, 12) < 0.28) return "Feathered";
+  if (combined <= 0.035) return "Smooth";
+  if (combined <= 0.085) return "Uneven";
+  return "Abrupt";
+}
+
+function classifyDecelControl(summary = {}) {
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const spikeRate = coachRate(summary.decelSpikeCount, samples);
+  const average = safeNonNegativeNumber(summary.longitudinalAverageAbs, 0, 4);
+  const peak = safeNonNegativeNumber(summary.longitudinalPeak, 0, 4);
+  if (spikeRate <= 0.01 && average < 0.055 && peak < 0.28) return "Gentle";
+  if (spikeRate <= 0.04 && peak < 0.42) return "Controlled";
+  if (spikeRate <= 0.1 && peak < 0.62) return "Choppy";
+  return "Harsh";
+}
+
+function classifyTransitionSmoothness(summary = {}) {
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const roughRate = coachRate(summary.roughTransitionCount, samples);
+  if (roughRate <= 0.015) return "Clean";
+  if (roughRate <= 0.045) return "Mostly Clean";
+  if (roughRate <= 0.1) return "Bumpy";
+  return "Jerky";
+}
+
+function classifyPassengerComfort(summary = {}) {
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const joltRate = coachRate(summary.comfortJoltCount, samples);
+  const jerkAverage = safeNonNegativeNumber(summary.longitudinalJerkAverage, 0, 12);
+  if (joltRate <= 0.015 && jerkAverage < 0.32) return "High";
+  if (joltRate <= 0.045) return "Good";
+  if (joltRate <= 0.1) return "Mixed";
+  return "Rough";
+}
+
+function classifySmoothHands(summary = {}) {
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const lateralSpikeRate = coachRate(summary.lateralSpikeCount, samples);
+  const roughRate = coachRate(summary.roughLateralWindowCount, samples);
+  const lateralJerkAverage = safeNonNegativeNumber(summary.lateralJerkAverage, 0, 12);
+  if (lateralSpikeRate <= 0.01 && roughRate <= 0.025 && lateralJerkAverage < 0.08) return "Clean";
+  if (lateralSpikeRate <= 0.035 && roughRate <= 0.06) return "Smooth";
+  if (lateralSpikeRate <= 0.09 && roughRate <= 0.13) return "Uneven";
+  return "Abrupt";
+}
+
+function classifyCargoBalance(summary = {}) {
+  const cargoCondition = safeNonNegativeNumber(summary.cargoCondition ?? summary.waterLeft, 0, 100);
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const roughRate = coachRate(
+    safeNonNegativeInteger(summary.roughWindowCount, 0, 1000000)
+      + safeNonNegativeInteger(summary.comfortJoltCount, 0, 1000000),
+    samples,
+  );
+  if (cargoCondition >= 95 && roughRate <= 0.035) return "Settled";
+  if (cargoCondition >= 80 && roughRate <= 0.08) return "Light Lean";
+  if (cargoCondition >= 55 && roughRate <= 0.16) return "Noticeable Lean";
+  return "Sloshed";
+}
+
+function classifyCargoStability(summary = {}) {
+  return classifyCargoBalance(summary);
+}
+
+function classifyConsistency(summary = {}) {
+  const samples = safeNonNegativeInteger(summary.sampleCount, 0, 1000000);
+  const smoothRate = coachRate(summary.smoothWindowCount, samples);
+  const roughRate = coachRate(summary.roughWindowCount, samples);
+  const cargoCondition = safeNonNegativeNumber(summary.cargoCondition ?? summary.waterLeft, 0, 100);
+  if (cargoCondition >= 92 && smoothRate >= 0.78 && roughRate <= 0.035) return "High";
+  if (cargoCondition >= 80 && smoothRate >= 0.6 && roughRate <= 0.08) return "Good";
+  if (cargoCondition >= 55 && roughRate <= 0.16) return "Mixed";
+  return "Rough";
+}
+
+function coachRecapMessage(recap = {}) {
+  if (recap.insufficient) return "Not enough motion data for a useful coaching recap.";
+  if (recap.smoothHands === "Clean" && recap.cargoBalance === "Settled") {
+    return "The tofu stayed settled through most steering changes.";
+  }
+  if (recap.passengerComfort === "High" && recap.decelControl === "Gentle") {
+    return "The tofu leaned forward less than usual.";
+  }
+  if (recap.smoothHands === "Uneven" || recap.smoothHands === "Abrupt") {
+    return "A few sharp side-to-side inputs moved the cargo.";
+  }
+  if (recap.transitionSmoothness === "Clean" || recap.transitionSmoothness === "Mostly Clean") {
+    return "The delivery felt calm from the cup's point of view.";
+  }
+  if (recap.brakeFeather === "Abrupt" || recap.decelControl === "Harsh") {
+    return "Brake pressure changes felt abrupt to the cargo.";
+  }
+  if (recap.passengerComfort === "Mixed" || recap.passengerComfort === "Rough") {
+    return "A few forward jolts showed up near stop transitions.";
+  }
+  return "The tofu stayed settled during most deceleration.";
+}
+
+function summarizeCoachRecap(accumulator = {}, runSummary = {}) {
+  const sampleCount = safeNonNegativeInteger(
+    accumulator.sampleCount ?? accumulator.samples ?? runSummary.sampleCount,
+    0,
+    1000000,
+  );
+  const elapsedMs = safeNonNegativeNumber(
+    accumulator.elapsedMs ?? (Number(runSummary.durationSeconds || 0) * 1000),
+    0,
+    86400000,
+  );
+  const base = {
+    sampleCount,
+    elapsedMs: Math.round(elapsedMs),
+    longitudinalPeak: roundTo(safeNonNegativeNumber(accumulator.longitudinalPeak, 0, 4), 3),
+    longitudinalAverageAbs: roundTo(safeNonNegativeNumber(accumulator.longitudinalAverageAbs, 0, 4), 3),
+    longitudinalJerkPeak: roundTo(safeNonNegativeNumber(accumulator.longitudinalJerkPeak, 0, 12), 3),
+    longitudinalJerkAverage: roundTo(safeNonNegativeNumber(accumulator.longitudinalJerkAverage, 0, 12), 3),
+    decelSpikeCount: safeNonNegativeInteger(accumulator.decelSpikeCount, 0, 1000000),
+    harshOnsetCount: safeNonNegativeInteger(accumulator.harshOnsetCount, 0, 1000000),
+    harshReleaseCount: safeNonNegativeInteger(accumulator.harshReleaseCount, 0, 1000000),
+    smoothDecelWindowCount: safeNonNegativeInteger(accumulator.smoothDecelWindowCount, 0, 1000000),
+    roughTransitionCount: safeNonNegativeInteger(accumulator.roughTransitionCount, 0, 1000000),
+    comfortJoltCount: safeNonNegativeInteger(accumulator.comfortJoltCount, 0, 1000000),
+    lateralJerkPeak: roundTo(safeNonNegativeNumber(accumulator.lateralJerkPeak, 0, 12), 3),
+    lateralJerkAverage: roundTo(safeNonNegativeNumber(accumulator.lateralJerkAverage, 0, 12), 3),
+    lateralSpikeCount: safeNonNegativeInteger(accumulator.lateralSpikeCount, 0, 1000000),
+    smoothLateralWindowCount: safeNonNegativeInteger(accumulator.smoothLateralWindowCount, 0, 1000000),
+    roughLateralWindowCount: safeNonNegativeInteger(accumulator.roughLateralWindowCount, 0, 1000000),
+    leftRightTransitionCount: safeNonNegativeInteger(accumulator.leftRightTransitionCount, 0, 1000000),
+    smoothWindowCount: safeNonNegativeInteger(accumulator.smoothWindowCount, 0, 1000000),
+    roughWindowCount: safeNonNegativeInteger(accumulator.roughWindowCount, 0, 1000000),
+  };
+  if (sampleCount < 20 || elapsedMs < 8000) {
+    return {
+      insufficient: true,
+      ...base,
+      message: "Not enough motion data for a useful coaching recap.",
+    };
+  }
+  const recap = {
+    insufficient: false,
+    ...base,
+    smoothHands: classifySmoothHands(base),
+    brakeFeather: classifyBrakeFeather(base),
+    decelControl: classifyDecelControl(base),
+    transitionSmoothness: classifyTransitionSmoothness(base),
+    passengerComfort: classifyPassengerComfort(base),
+    cargoBalance: classifyCargoBalance({ ...base, ...runSummary }),
+    cargoStability: classifyCargoStability({ ...base, ...runSummary }),
+    consistency: classifyConsistency({ ...base, ...runSummary }),
+  };
+  recap.message = coachRecapMessage(recap);
+  return recap;
+}
+
+function renderCoachRecap(result = {}) {
+  const recap = result.coachRecap || summarizeCoachRecap(result.coachSignals || {}, result);
+  if (recap.insufficient) {
+    return `
+      <section class="nospill-coach-recap" aria-label="Coach Recap">
+        <h4>Coach Recap</h4>
+        <p>${escapeHtml(recap.message || "Not enough motion data for a useful coaching recap.")}</p>
+      </section>
+    `;
+  }
+  return `
+    <section class="nospill-coach-recap" aria-label="Coach Recap">
+      <h4>Coach Recap</h4>
+      <dl>
+        <div><dt>Smooth Hands</dt><dd>${escapeHtml(recap.smoothHands)}</dd></div>
+        <div><dt>Brake Feather</dt><dd>${escapeHtml(recap.brakeFeather)}</dd></div>
+        <div><dt>Decel Control</dt><dd>${escapeHtml(recap.decelControl)}</dd></div>
+        <div><dt>Transition Smoothness</dt><dd>${escapeHtml(recap.transitionSmoothness)}</dd></div>
+        <div><dt>Cargo Balance</dt><dd>${escapeHtml(recap.cargoBalance)}</dd></div>
+        <div><dt>Passenger Comfort</dt><dd>${escapeHtml(recap.passengerComfort)}</dd></div>
+        <div><dt>Consistency</dt><dd>${escapeHtml(recap.consistency)}</dd></div>
+      </dl>
+      <p>${escapeHtml(recap.message)}</p>
+    </section>
+  `;
+}
+
 function computeWaterLoss({ totalG, thresholdG, jerk, deltaSeconds }) {
   if (totalG <= thresholdG || deltaSeconds <= 0) return 0;
   const severityRatio = (totalG - thresholdG) / Math.max(thresholdG, 0.05);
@@ -1698,6 +2168,15 @@ function resetSessionState() {
     harshLateral: 0,
     abruptTransitions: 0,
     lateralJerk: 0,
+    lateralAbsSum: 0,
+    longitudinalAbsSum: 0,
+    lateralSignChanges: 0,
+    longitudinalSignChanges: 0,
+    lastLateralSign: 0,
+    lastLongitudinalSign: 0,
+    cupTrail: [],
+    coach: createCoachAccumulator(),
+    previousCoachLateralG: 0,
     impossibleSpikes: 0,
     orientationSamples: 0,
     orientationUnstableSamples: 0,
@@ -2646,7 +3125,12 @@ function unlockMilestones(summary) {
     Number(summary.waterLeft || 0),
   );
 
-  if (summary.mode === "basic" && validPractice && summary.motionSamples > 0) unlock("first_pour");
+  const summarizedSampleCount = safeNonNegativeInteger(
+    summary.sampleCount ?? summary.motionSamples,
+    0,
+    1000000,
+  );
+  if (summary.mode === "basic" && validPractice && summarizedSampleCount > 0) unlock("first_pour");
   if (qualified && summary.waterLeft >= 50) unlock("half_cup_hero");
   if (qualified && summary.waterLeft >= 75) unlock("smooth_driver");
   if (
@@ -4814,9 +5298,11 @@ function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}
     createdAt,
     date: createdAt,
     mode: "simulated",
-    difficulty: "standard",
-    difficultyLabel: DIFFICULTIES.standard.label,
-    thresholdG: DIFFICULTIES.standard.thresholdG,
+    difficulty: "soft_tofu",
+    difficultyLabel: CARGO_TYPES.soft_tofu.label,
+    cargoType: "soft_tofu",
+    cargoLabel: CARGO_TYPES.soft_tofu.label,
+    thresholdG: CARGO_TYPES.soft_tofu.thresholdG,
     waterLeft,
     waterSpilled: roundTo(100 - waterLeft, 1),
     cargoCondition: waterLeft,
@@ -4835,6 +5321,14 @@ function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}
     harshLateral: scenario.harshLateral,
     lateralJerk: scenario.lateralJerk,
     abruptTransitions: scenario.abruptTransitions,
+    lateralSignChanges: Math.round(Number(scenario.turnDensityScore || 0) * 10),
+    longitudinalSignChanges: harshInputCount,
+    lateralAbsSum: roundTo(Number(scenario.curvatureScore || 0) * 20, 3),
+    longitudinalAbsSum: roundTo(Number(scenario.abruptTransitions || 0) * 0.2, 3),
+    sampleCount: 60,
+    cupTrail: [-0.1, 0.08, -0.16, 0.12, -0.08, 0.06].map((point) => (
+      boundedCupTrailPoint(point * (1 + Number(scenario.curvatureScore || 0)))
+    )),
     turnDensityScore: scenario.turnDensityScore,
     curvatureScore: scenario.curvatureScore,
     routeDifficultyScore: scenario.routeDifficultyScore,
@@ -4847,6 +5341,33 @@ function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}
     unlockedBadges: [],
     stamps: [],
   };
+  summary.driveShape = summarizeDriveShape({
+    ...summary,
+    roughCount: summary.harshInputCount,
+  });
+  summary.dailyDeliveryCredit = dailyDeliveryCredit(summary);
+  summary.coachRecap = summarizeCoachRecap({
+    sampleCount: 60,
+    elapsedMs: summary.durationSeconds * 1000,
+    longitudinalPeak: 0.18 + harshInputCount * 0.04,
+    longitudinalAverageAbs: 0.04 + harshInputCount * 0.01,
+    longitudinalJerkPeak: 0.42 + harshInputCount * 0.15,
+    longitudinalJerkAverage: 0.18 + harshInputCount * 0.04,
+    decelSpikeCount: scenario.harshBraking,
+    harshOnsetCount: scenario.harshBraking,
+    harshReleaseCount: Math.max(0, scenario.abruptTransitions),
+    smoothDecelWindowCount: Math.max(8, 22 - harshInputCount),
+    roughTransitionCount: scenario.abruptTransitions,
+    comfortJoltCount: harshInputCount,
+    lateralJerkPeak: 0.12 + scenario.harshLateral * 0.18,
+    lateralJerkAverage: 0.04 + scenario.harshLateral * 0.04,
+    lateralSpikeCount: scenario.harshLateral,
+    smoothLateralWindowCount: Math.max(10, 24 - scenario.harshLateral),
+    roughLateralWindowCount: scenario.harshLateral + scenario.lateralJerk,
+    leftRightTransitionCount: Math.round(Number(scenario.turnDensityScore || 0) * 10),
+    smoothWindowCount: Math.max(12, 38 - harshInputCount),
+    roughWindowCount: harshInputCount,
+  }, summary);
   summary.rank = displayRankForSession(summary);
   return summary;
 }
@@ -5530,10 +6051,47 @@ function countHarshInput(kind, nowMs, cooldownMs = 1200) {
   if (kind === "lateralJerk") appState.motion.lateralJerk += 1;
 }
 
-function recordMotionStats({ lateralG, longitudinalG, totalG, jerk, nowMs }) {
+function recordMotionStats({ lateralG, longitudinalG, totalG, jerk, nowMs, deltaSeconds = 0 }) {
   appState.motion.samples += 1;
   appState.motion.peakG = Math.max(appState.motion.peakG, totalG);
   appState.motion.peakJerk = Math.max(appState.motion.peakJerk, jerk);
+  appState.motion.lateralAbsSum += Math.abs(lateralG);
+  appState.motion.longitudinalAbsSum += Math.abs(longitudinalG);
+
+  const lateralSign = motionSign(lateralG);
+  if (
+    lateralSign
+    && appState.motion.lastLateralSign
+    && lateralSign !== appState.motion.lastLateralSign
+  ) {
+    appState.motion.lateralSignChanges += 1;
+  }
+  if (lateralSign) appState.motion.lastLateralSign = lateralSign;
+
+  const longitudinalSign = motionSign(longitudinalG);
+  if (
+    longitudinalSign
+    && appState.motion.lastLongitudinalSign
+    && longitudinalSign !== appState.motion.lastLongitudinalSign
+  ) {
+    appState.motion.longitudinalSignChanges += 1;
+  }
+  if (longitudinalSign) appState.motion.lastLongitudinalSign = longitudinalSign;
+  if (appState.motion.samples % 6 === 0) {
+    appState.motion.cupTrail = appendCupTrailPoint(
+      appState.motion.cupTrail,
+      lateralG / Math.max(cargoTypeProfile(appState.difficulty).thresholdG, 0.05),
+    );
+  }
+  appState.motion.coach = updateCoachAccumulator(appState.motion.coach, {
+    lateralG,
+    longitudinalG,
+    totalG,
+    jerk,
+    lateralJerk: Math.abs(lateralG - Number(appState.motion.previousCoachLateralG || 0)),
+    elapsedMs: Math.max(0, Number(deltaSeconds || 0) * 1000),
+  });
+  appState.motion.previousCoachLateralG = lateralG;
 
   if (longitudinalG < -0.35) countHarshInput("brake", nowMs);
   if (longitudinalG > 0.35) countHarshInput("accel", nowMs);
@@ -5599,10 +6157,10 @@ function handleMotionEvent(event) {
   const { lateralG, longitudinalG, totalG, jerk } = mappedMotion;
 
   appState.currentG = { lateralG, longitudinalG, totalG, jerk };
-  recordMotionStats({ lateralG, longitudinalG, totalG, jerk, nowMs });
+  recordMotionStats({ lateralG, longitudinalG, totalG, jerk, nowMs, deltaSeconds });
   recordOrientationStability(event);
 
-  const thresholdG = DIFFICULTIES[appState.difficulty].thresholdG;
+  const thresholdG = cargoTypeProfile(appState.difficulty).thresholdG;
   const loss = computeWaterLoss({ totalG, thresholdG, jerk, deltaSeconds });
   appState.waterLeft = clamp(appState.waterLeft - loss, 0, 100);
   updateAudioCoach();
@@ -5730,7 +6288,7 @@ async function ensureAudioCoach() {
 function updateAudioCoach() {
   const audio = appState.audio;
   if (!audio || !appState.running) return;
-  const thresholdG = DIFFICULTIES[appState.difficulty].thresholdG;
+  const thresholdG = cargoTypeProfile(appState.difficulty).thresholdG;
   const frequency = computeAudioTargetFrequency({
     totalG: appState.currentG.totalG,
     thresholdG,
@@ -6016,12 +6574,15 @@ function buildSummary() {
   const waterLeft = roundTo(appState.waterLeft, 1);
   const waterSpilled = roundTo(100 - waterLeft, 1);
   const routeData = route || {};
+  const cargo = cargoTypeProfile(appState.difficulty);
   const summary = {
     date: endedAt.toISOString(),
     mode: appState.mode,
-    difficulty: appState.difficulty,
-    difficultyLabel: DIFFICULTIES[appState.difficulty].label,
-    thresholdG: DIFFICULTIES[appState.difficulty].thresholdG,
+    difficulty: cargo.id,
+    difficultyLabel: cargo.label,
+    cargoType: cargo.id,
+    cargoLabel: cargo.label,
+    thresholdG: cargo.thresholdG,
     waterLeft,
     waterSpilled,
     rank: rankForWater(waterLeft),
@@ -6040,7 +6601,14 @@ function buildSummary() {
     harshLateral: appState.motion.harshLateral,
     lateralJerk: appState.motion.lateralJerk,
     abruptTransitions: appState.motion.abruptTransitions,
-    motionSamples: appState.motion.samples,
+    lateralSignChanges: appState.motion.lateralSignChanges,
+    longitudinalSignChanges: appState.motion.longitudinalSignChanges,
+    lateralAbsSum: roundTo(appState.motion.lateralAbsSum, 3),
+    longitudinalAbsSum: roundTo(appState.motion.longitudinalAbsSum, 3),
+    cupTrail: Array.isArray(appState.motion.cupTrail)
+      ? appState.motion.cupTrail.map(boundedCupTrailPoint).slice(0, 36)
+      : [],
+    sampleCount: appState.motion.samples,
     distanceMiles: roundTo(routeData.totalDistanceMiles || 0, 2),
     movingDurationSeconds: Math.round(routeData.movingDurationSeconds || 0),
     averageMovingSpeedMph: roundTo(routeData.averageMovingSpeedMph || 0, 1),
@@ -6059,6 +6627,12 @@ function buildSummary() {
   };
   summary.routeType = classifyRouteType(summary);
   summary.cargoCondition = calculateCargoCondition(summary);
+  summary.driveShape = summarizeDriveShape({
+    ...summary,
+    roughCount: summary.harshInputCount,
+  });
+  summary.dailyDeliveryCredit = dailyDeliveryCredit(summary);
+  summary.coachRecap = summarizeCoachRecap(appState.motion.coach, summary);
   summary.rank = displayRankForSession(summary);
   return summary;
 }
@@ -6615,7 +7189,7 @@ function drawCupCanvas(canvas, currentG, waterLeft) {
   const trayRadius = 44;
   const dangerInset = traySize * 0.12;
   const maxOffset = traySize * 0.32;
-  const thresholdG = DIFFICULTIES[appState.difficulty].thresholdG;
+  const thresholdG = cargoTypeProfile(appState.difficulty).thresholdG;
   const reducedMotion = prefersReducedMotion();
   const visualFrame = Math.floor(
     (typeof performance !== "undefined" ? performance.now() : Date.now()) / 16,
@@ -8894,8 +9468,10 @@ function renderDeliverySummary(summary) {
     summary.simulated
       ? summaryMetric("Test Mode", qualified ? "Simulated Delivery" : "Simulated Practice Delivery")
       : "",
+    summaryMetric("Cargo", summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label),
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
-    summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
+    summaryMetric("Trip Time", formatTripDuration(summary.durationSeconds)),
+    summaryMetric("Drive Shape", summary.driveShape || summarizeDriveShape(summary)),
     summaryMetric("Rank", displayRankForSession(summary)),
     summaryMetric("Qualification", summary.qualificationLabel || (qualified ? "Qualified" : "Practice Only")),
     summaryMetric("Driver License", `Level ${level} · ${getDriverLicense(level)}`),
@@ -8916,6 +9492,7 @@ function renderDeliverySummary(summary) {
     summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
     summaryMetric("Shop Rewards", shopRewardLine),
+    summary.dailyDeliveryCredit ? summaryMetric("Daily Delivery Credit", summary.dailyDeliveryCredit.replace(/^Daily Delivery Credit: /, "")) : "",
     summaryMetric("Certified Boost", certifiedBoostLine),
     summaryMetric("Shop Level", `Level ${shopState.shopLevel}`),
     summaryMetric("Delivery Passport", `${passport.total}/${passport.totalAvailable} stamps`),
@@ -8927,6 +9504,12 @@ function renderDeliverySummary(summary) {
     summaryMetric("Delivery Crew Merch", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
     summaryMetric("Next Delivery Goal", nextGoal),
   ].filter(Boolean).join("");
+  if (elements.cupTrailCard) {
+    elements.cupTrailCard.innerHTML = renderCupTrail(summary);
+  }
+  if (elements.coachRecapCard) {
+    elements.coachRecapCard.innerHTML = renderCoachRecap(summary);
+  }
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || coach.message || "";
   }
@@ -9122,6 +9705,8 @@ function renderShopOrderResult(result) {
       summaryMetric("Next Best Action", nextBestAction(state).title.replace(/^Next: /, "")),
     ].join("");
   }
+  if (elements.cupTrailCard) elements.cupTrailCard.innerHTML = "";
+  if (elements.coachRecapCard) elements.coachRecapCard.innerHTML = "";
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = result.report || "Shop order complete.";
   }
@@ -9219,9 +9804,11 @@ function renderSummary(summary) {
   if (elements.summaryGrid) {
     elements.summaryGrid.innerHTML = [
       summary.simulated ? summaryMetric("Test Mode", "Simulated Delivery") : "",
+      summaryMetric("Cargo", summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label),
       summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
       summaryMetric("Water Spilled", formatPercent(summary.waterSpilled)),
-      summaryMetric("Route Type", summary.routeType || classifyRouteType(summary)),
+      summaryMetric("Trip Time", formatTripDuration(summary.durationSeconds)),
+      summaryMetric("Drive Shape", summary.driveShape || summarizeDriveShape(summary)),
       summaryMetric("Rank", displayRankForSession(summary)),
       summaryMetric("Harsh Inputs", String(summary.harshInputCount)),
       summaryMetric("Qualification", summary.qualificationLabel),
@@ -9315,7 +9902,6 @@ function shareDistanceLabel(summary) {
 }
 
 function buildShareCardData(summary, config = SHARE_CONFIG) {
-  const shareConfig = normalizedShareConfig(config);
   const delivery = buildDeliverySharePayload(
     summary,
     summary.deliveryRewards || null,
@@ -9331,8 +9917,10 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     shopLevel: delivery.shopLevel,
     deliveryCrew: delivery.deliveryCrew,
     qualificationStatus: qualificationShareLabel(summary),
-    routeLabel: delivery.routeType,
-    distanceLabel: shareConfig.includeDistanceInShare ? shareDistanceLabel(summary) : "",
+    driveShape: summary.driveShape || summarizeDriveShape(summary),
+    cargoLabel: summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label,
+    tripTime: formatTripDuration(summary.durationSeconds),
+    distanceLabel: "",
     milestone: delivery.stamp || bestUnlockedMilestone(summary),
     dailyStatus: delivery.dailyStatus,
     tagline: TAGLINE_SMOOTHER,
@@ -9356,7 +9944,7 @@ function buildShareText(summary, config = SHARE_CONFIG) {
     ? ` Stamp: ${data.milestone}.`
     : "";
   const lines = [
-    `${APP_BRAND}: ${data.challengeName}. Cargo Condition: ${data.waterDelivered}. Rank: ${data.rank}. Route Type: ${data.routeLabel}.${milestoneText} ${data.tagline}`,
+    `${APP_BRAND}: ${data.challengeName}. Cargo: ${data.cargoLabel}. Cargo Condition: ${data.waterDelivered}. Trip Time: ${data.tripTime}. Drive Shape: ${data.driveShape}. Rank: ${data.rank}.${milestoneText} ${data.tagline}`,
   ];
   if (data.driverLicense) lines.push(`Driver License: ${data.driverLicense}.`);
   if (data.shopLevel) lines.push(data.shopLevel);
@@ -9411,8 +9999,8 @@ function renderShareCanvas(summary) {
   context.fillText(data.shopLevel || "Shop Level 1", 118, 684);
   context.fillText(`Status: ${data.qualificationStatus}`, 118, 746);
   let detailY = 808;
-  if (data.routeLabel) {
-    context.fillText(`Route: ${data.routeLabel}`, 118, detailY);
+  if (data.driveShape) {
+    context.fillText(`Drive Shape: ${data.driveShape}`, 118, detailY);
     detailY += 62;
   }
   if (data.distanceLabel) {
@@ -9966,9 +10554,9 @@ function setMode(mode) {
 }
 
 function setDifficulty(difficulty) {
-  appState.difficulty = DIFFICULTIES[difficulty] ? difficulty : "standard";
+  appState.difficulty = normalizeCargoTypeId(difficulty);
   document.querySelectorAll("[data-difficulty]").forEach((button) => {
-    const active = button.dataset.difficulty === appState.difficulty;
+    const active = normalizeCargoTypeId(button.dataset.difficulty) === appState.difficulty;
     button.classList.toggle("is-active", active);
     button.setAttribute("aria-checked", String(active));
   });
@@ -10489,6 +11077,8 @@ function cacheElements() {
     merchProgressGrid: document.getElementById("merch-progress-grid"),
     merchGrid: document.getElementById("merch-grid"),
     deliverySummaryGrid: document.getElementById("delivery-summary-grid"),
+    coachRecapCard: document.getElementById("coach-recap-card"),
+    cupTrailCard: document.getElementById("cup-trail-card"),
     commuteMasteryCopy: document.getElementById("commute-mastery-copy"),
     shareCardSection: document.getElementById("share-card-section"),
     shareCanvas: document.getElementById("share-canvas"),

@@ -452,6 +452,23 @@ No-Spill Club merch progress, or trusted certified progress.
 
 Simulator/dev results are local QA only and are not trusted certified proof.
 
+Cup Test result cards may include safe summarized flavor and coaching:
+
+- Cargo Type, Cargo Condition, Rank, and Trip Time.
+- Drive Shape labels such as Calm Pour, Rolling Pour, Winding Pour, Stop-and-Go Pour, Daily Pour,
+  or Long Pour, derived from summarized local motion only.
+- Cup Trail, a bounded decorative left/right motion signature. It is not a real-world path, map,
+  route identity, street shape, distance plot, or speed chart.
+- Coach Recap labels such as Smooth Hands, Brake Feather, Decel Control, Transition Smoothness,
+  Cargo Balance, Passenger Comfort, and Consistency.
+- Daily Delivery Credit / Steady Pour Minutes copy for safe completed commute-style runs.
+
+Coach Recap must classify the outcome of the run from the cup/cargo point of view, not the driver's
+technique. Use calm wording about cargo stability, forward jolts, steering changes, passenger
+comfort, and consistency. Do not infer or teach left-foot braking, right-foot braking, engine
+braking, trail braking, racing lines, corner entry speed, late braking, or performance driving
+style.
+
 ## Delivery Crew And Collection
 
 Delivery Crew is a parked collection/customization surface.
@@ -498,8 +515,12 @@ Default share output may include:
 
 - Tofu Driver
 - Delivery Complete / Practice Complete / Simulated Delivery labels
+- Cargo Type
 - Cargo Condition
 - Rank
+- Trip Time
+- Drive Shape
+- safe Coach Recap labels
 - Driver License
 - Shop Level
 - selected crew flavor when safe

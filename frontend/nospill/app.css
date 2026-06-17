@@ -554,6 +554,125 @@
   gap: 10px;
 }
 
+.nospill-cup-trail-card:empty {
+  display: none;
+}
+
+.nospill-coach-recap-card:empty {
+  display: none;
+}
+
+.nospill-coach-recap {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(240, 185, 90, 0.28);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgba(240, 185, 90, 0.08), transparent 56%),
+    #0b0f10;
+}
+
+.nospill-coach-recap h4 {
+  margin: 0;
+  color: #f4f7ef;
+  font-size: 1rem;
+}
+
+.nospill-coach-recap dl {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.nospill-coach-recap dl div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  border-bottom: 1px solid rgba(244, 247, 239, 0.09);
+  padding-bottom: 7px;
+}
+
+.nospill-coach-recap dt {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-coach-recap dd {
+  margin: 0;
+  color: #f4f7ef;
+  font-weight: 800;
+  text-align: right;
+}
+
+.nospill-coach-recap p {
+  margin: 0;
+  color: #bbc7c0;
+  line-height: 1.45;
+}
+
+.nospill-cup-trail {
+  display: grid;
+  gap: 10px;
+  margin-top: 2px;
+  border: 1px solid rgba(110, 198, 255, 0.22);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgba(110, 198, 255, 0.07), transparent 56%),
+    #0b0f10;
+}
+
+.nospill-cup-trail-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nospill-cup-trail-head span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-cup-trail-head strong {
+  display: block;
+  margin-top: 3px;
+  color: #f4f7ef;
+  font-size: 1rem;
+}
+
+.nospill-cup-trail svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.nospill-cup-trail-guide {
+  fill: none;
+  stroke: rgba(244, 247, 239, 0.16);
+  stroke-width: 2;
+  stroke-dasharray: 6 8;
+}
+
+.nospill-cup-trail-line {
+  fill: none;
+  stroke: #9ee9bf;
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.nospill-cup-trail small {
+  color: #bbc7c0;
+  line-height: 1.45;
+}
+
 .nospill-shop-safety {
   padding: 10px 12px;
   border: 1px solid rgba(240, 185, 90, 0.34);

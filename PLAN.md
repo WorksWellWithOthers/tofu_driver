@@ -39,6 +39,10 @@
   show duration/active state, and tokens use Use Token.
 - Cup-first visitors now get clearer parked paths into Tofu Shop from the landing copy and Cup Test
   result action without making the shop a driving-time prompt.
+- Don't Spill the Cup result cards now include safe summarized result flavor: Cargo Type, Trip Time,
+  Drive Shape, a decorative Cup Trail, Daily Delivery Credit copy, and a Coach Recap focused on
+  smooth hands, brake feather, decel control, transition smoothness, cargo balance, passenger
+  comfort, and consistency.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
   stays inline with compact reward feedback so repeated order handoffs do not block the loop.
 - Tofu Shop tab panels are scoped: Production owns station buying, Upgrades owns upgrade buying,
@@ -133,11 +137,14 @@ Canonical references:
 9. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-10. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-11. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+10. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
+   Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
+   distance, route difficulty, racing technique, or public-road competition.
+11. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+12. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-12. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-13. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+13. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+14. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 
