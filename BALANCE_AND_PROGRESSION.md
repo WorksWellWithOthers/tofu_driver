@@ -193,10 +193,10 @@ License Exam reset rule.
 
 | Resource | Purpose | Main Sources | Main Sinks | Appears | Scarcity Target | Bottleneck Created | License Exam Reset |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Tofu Stock | Ingredient, runway, and order-size input | Tofu Press, Pack Tofu, offline production, shop boosts | Prep Counter, larger shop orders, future fictional routes | Immediately | Low only when Prep Counter or larger orders outrun press output | Not enough stock to prepare or fulfill the best order | Resets |
-| Delivery Orders | Ready work that can become money | Prep Counter, boosts, later automation | Fulfill Shop Order, later routes/rivals | Immediately | First visible throughput bottleneck | No ready orders to fulfill | Resets |
+| Tofu Stock | Ingredient, runway, and order-size input | Tofu Press, Pack Tofu, Supplier Contracts, offline production, shop boosts | Prep Counter, larger shop orders, future fictional routes | Immediately | Low only when Prep Counter or larger orders outrun press output | Not enough stock to prepare or fulfill the best order | Resets |
+| Delivery Orders | Prepared/waiting shop work that can become money | Prep Counter, boosts, later automation | Fulfill Shop Order, Counter Service, later routes/rivals | Immediately | First visible throughput bottleneck | No ready orders to fulfill | Resets |
 | Tips | Main purchase currency | Fulfilled orders, Regular Customers, routes, certified boosts | Stations, upgrades, garage, crew, route cards | Immediately after first order | Scarce early, abundant later | Cannot buy next improvement | Resets |
-| Reputation | Unlock currency and social proof | Orders, routes, certified smooth results, stamps | Mostly gates, rarely spent | After first order | Scarce and meaningful | Next system remains locked | Resets, lifetime persists |
+| Reputation | Unlock currency, social proof, and midgame supply leverage | Orders, routes, certified smooth results, stamps | Gates, Supplier Contracts, rare status spends | After first order | Scarce and meaningful | Next system or managed supply remains locked | Resets, lifetime persists |
 | Shop XP | Local shop progress feedback | Shop orders, shop automation | None by default | After first order | Steady visible shop progress | Shop milestones not met | Lifetime should persist unless prestige design says otherwise |
 | Driver XP | Delivery Driver progress feedback | Completed Cup Test runs and driver milestones | None by default | Cup Test result | Steady visible driver progress | Driver Level requirements not met | Persists |
 | Prep Capacity | Staffing/capacity gate | Timed recovery, perks | Station, crew, and route expansion purchases | When multi-buy/staffing matters | Mild friction, not a first-loop blocker | Cannot add more capacity yet | Resets, perks persist |
@@ -210,10 +210,10 @@ License Exam reset rule.
 
 | Resource | Player-Facing Meaning | Source | Sink | When It Appears | Why It Matters | Upgrade Hooks | Future Systems |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| Tofu Stock | tofu on hand for orders | Tofu Press, Pack Tofu, offline progress, shop boosts | Prep Counter, larger order types, future route cards | immediately | creates order-size capacity and prevents Prep Counter starvation | Steady Pressing, Double Mold, Tofu Press milestones, License Perks | Catering Crate, Neighborhood Bundle, route cards, Regional Tofu Order |
-| Delivery Orders | prepared work ready to hand off | Prep Counter, boosts, later automation | order fulfillment, Regular Customers, route cards | immediately | turns production into spendable Tips | Tidy Packaging, Double Labels, Delivery Shelf, Prep Counter milestones | Regular Customers, Apprentice Driver, route queues |
+| Tofu Stock | tofu on hand for orders | Tofu Press, Pack Tofu, Supplier Contracts, offline progress, shop boosts | Prep Counter, larger order types, future route cards | immediately | creates order-size capacity and prevents Prep Counter starvation | Steady Pressing, Double Mold, Tofu Press milestones, Soy Supplier Contract, Morning Soy Delivery, Bulk Soy Delivery, License Perks | Catering Crate, Neighborhood Bundle, route cards, Regional Tofu Order |
+| Delivery Orders | prepared/waiting shop work ready to hand off | Prep Counter, boosts, later automation | order fulfillment, Counter Service, Regular Customers, route cards | immediately | turns production into spendable Tips | Tidy Packaging, Double Labels, Delivery Shelf, Prep Counter milestones | Regular Customers, Apprentice Driver, route queues |
 | Tips | spendable shop money | order types, Regular Customers, routes, certified boosts | stations, upgrades, crew, garage, route cards | after first order | drives almost every early purchase | Better Boxes, Regular Smile, License Perks | bigger stations, automation, route systems |
-| Reputation | proof the shop is known | orders, Shop Sign, route cards, stamps, certified boosts | unlock gates more than spending | after first order | opens systems without draining the main currency | Shop Sign, Word of Mouth, route mastery bonuses | routes, Crew preview, License requirements |
+| Reputation | proof the shop is known | orders, Shop Sign, route cards, stamps, certified boosts | unlock gates and Supplier Contracts | after first order | opens systems without draining Tips and solves managed-shop supply traps | Shop Sign, Word of Mouth, Supplier Contracts, route mastery bonuses | routes, Crew preview, License requirements |
 | Shop XP | local shop progress meter | shop orders and shop automation | shop-level feedback only | after first order | gives visible growth and shop-loop pacing | Better Boxes and shop reports | shop progress labels |
 | Driver XP | delivery driver progress meter | Cup Test summaries and driver milestones | driver level gates only | Cup Test result | gives visible growth for smooth-driving status | certified result bonuses | Driver License labels |
 | Prep Capacity | available staff attention/capacity | timed recovery, License Perks | station/crew/route expansion | after basic purchases matter | prevents unlimited instant expansion without creating click spam | Extra Hands, Dispatcher Desk, staffing upgrades | crew hiring, route assignments, network stations |
@@ -401,8 +401,9 @@ Implemented scope:
 Design rules:
 
 - bulk handoffs solve repeated fulfillment pressure without adding a new tab
-- Tofu Stock remains a meaningful bottleneck; stock-blocked automation should point to Pack Tofu,
-  Tofu Press, or Steady Pressing
+- Tofu Stock remains a meaningful bottleneck; early stock pressure can point to Pack Tofu or Tofu
+  Press, but managed-shop stock blocks should point to Supplier Contracts or other scalable supply
+  upgrades before manual packing
 - maxed upgrades show `Maxed`, current effect, and no buy button/cost/no-op before-after preview
 - route-related upgrades remain hidden or locked until route systems are meaningful
 
@@ -929,7 +930,8 @@ visible as an optional certified boost, but it should not override the normal sh
 | Ready Orders >= 2 | Convert work to Tips | Fulfill Max Orders | View Orders | Manual single-order spam |
 | No ready orders, order prep in progress | Preparing Delivery Order | Wait for Prep Counter | Pack Tofu only if stock is low | Certified boost as bottleneck |
 | High Tofu Stock, slow order prep | Prep Counter throughput | Buy Prep Counter or Buy Tidy Packaging if affordable; otherwise wait for Prep Counter | Tofu Press available with `not urgent` copy | Buy Tofu Press as dominant action |
-| Low Tofu Stock runway | Low Tofu Stock | Pack Tofu or Buy Tofu Press | Wait for Prep Counter if already running | Buy Prep Counter if it will starve immediately |
+| Low Tofu Stock runway, early shop | Low Tofu Stock | Pack Tofu or Buy Tofu Press | Wait for Prep Counter if already running | Buy Prep Counter if it will starve immediately |
+| Counter Service stock-blocked, managed shop | Tofu supply scale | Buy Supplier Contract with Reputation | Rush Stock, Tofu Press, or stock upgrade | Manual Pack Tofu as primary action |
 | Upgrade affordable and current bottleneck matches it | Upgrade available | Buy the bottleneck-solving upgrade | Fulfill orders if ready | Generic upgrade if it solves the wrong bottleneck |
 | Next unlock close | Unlock pressure | Show the requirement and direct action | Continue orders/routes | Reveal full future system list |
 | Offline return with many orders | Convert offline progress | Fulfill Max Orders | Review Ledger | Cup Test as primary |
@@ -1666,6 +1668,9 @@ Starter first-loop balance sheet:
 | delivery_shelf | Delivery Shelf | First Shop | 10 to 20 minutes or 25 orders fulfilled | Tips/Prep Capacity available | Tips | station growth | 800 | 1.17 | Prep Counter support/capacity | 10 to 20 minutes | TBD | Scaling order flow | Buy Delivery Shelf | none | Shop only | Partial |
 | shop_sign | Shop Sign | First Shop | 10 Reputation or reputation gate | Tips available | Tips | station growth | 300 | 1.18 | +50% Reputation/order target or route unlock support | 20 to 40 minutes | TBD | Reputation unlock pressure | Buy Shop Sign | none | Shop only | Partial |
 | counter_service | Counter Service | First Automation / Managed Shop | First 10 Orders | manually started and page open | ready orders + Tofu Stock | interval and batch upgrades | 0 | 1.0 | 1 automatic best-available handoff / 10 seconds, upgradeable to 8/6/4 seconds and 2/5/10 order batches | after 10 orders | immediate after unlock | Repeated manual handoff chore, then oversized Ready Order piles | Start Counter Service / Buy bulk upgrade | repeated Fulfill clicks | Parked-only, active-page-only, no offline auto-fulfillment | Implemented V1 |
+| soy_supplier_contract | Soy Supplier Contract | Managed Shop | Catering Crate scale, Shop Level 25, or 10K Reputation | 25K Reputation | Reputation | flat | 25000 | 1.0 | +250 Tofu Stock/sec support | high-midgame | when Reputation is high but Tips are stock-blocked | Counter Service waiting for Tofu Stock | Buy Soy Supplier Contract | manual Pack Tofu as main solution | Shop only, no new currency | Implemented V1 |
+| morning_soy_delivery | Morning Soy Delivery | Managed Shop | Soy Supplier Contract and Shop Level 50 | 75K Reputation | Reputation | flat | 75000 | 1.0 | +750 Tofu Stock/sec support | high-midgame | after first supplier contract | Larger order stock pressure | Buy Morning Soy Delivery | repeated stock clicking | Shop only, no new currency | Implemented V1 |
+| bulk_soy_delivery | Bulk Soy Delivery | Managed Shop | Morning Soy Delivery and Shop Level 100 | 200K Reputation | Reputation | flat | 200000 | 1.0 | +2000 Tofu Stock/sec support | high-midgame plateau | after managed-shop scale | Catering Crate/Counter Crew stock demand | Buy Bulk Soy Delivery | unsolvable stock trap | Shop only, no new currency | Implemented V1 |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
 
 ## Implementation Slices
@@ -1720,7 +1725,8 @@ progression contract.
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs 20 Tips, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
-| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew | tune rates and future stock-reserve/priority upgrades after playtesting |
+| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
+| Supplier Contracts | Implemented | Reputation-cost station upgrades, rates, Next Best Action, tests | Soy Supplier Contract, Morning Soy Delivery, and Bulk Soy Delivery add Tofu Stock/sec as a high-midgame Reputation sink so Counter Service stock blocks are solved through management, not manual Pack Tofu | tune Reputation costs and stock/sec support after playtesting |
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
@@ -1783,7 +1789,8 @@ Purchases:
 Bottlenecks:
 
 - high stock recommends Prep Counter/order throughput
-- low stock recommends Pack Tofu or Tofu Press
+- early low stock recommends Pack Tofu or Tofu Press
+- high-midgame stock-blocked Counter Service recommends Supplier Contracts or scalable supply
 - ready orders recommend Fulfill Shop Order or Fulfill Max Orders
 - Cup Test remains optional and does not override normal shop bottlenecks
 
@@ -1808,6 +1815,8 @@ Offline:
 - offline production respects the configured cap
 - offline progress applies once on return
 - zero-value offline summaries are hidden
+- offline summaries should say `waiting orders` and explain when tofu supply was consumed preparing
+  orders; Counter Service remains active-page-only and does not fulfill offline in V1
 - ledger summarizes meaningful offline gains
 
 Prestige:

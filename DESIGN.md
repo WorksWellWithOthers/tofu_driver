@@ -228,6 +228,12 @@ Current design principles:
   prestige reset. Bad repeated labor includes clicking hundreds of times to make tofu, manually
   fulfilling every order forever, clicking faster to progress faster, or clicking during active
   driving.
+- Midgame bottlenecks should be solved through management decisions, not click volume. Pack Tofu is
+  a tutorial/backup action; once Counter Service and larger orders scale, Reputation-funded
+  Supplier Contracts are the intended Tofu Stock supply answer.
+- Delivery Orders mean prepared/waiting shop work, not Driver XP or real-world deliveries. Counter
+  Service may consume these orders while the page is open, but offline progress does not auto-fulfill
+  them yet.
 - Raw external transcripts and reference notes are source material, not product canon. Keep durable
   design takeaways in audit files and translate every idea into Tofu Driver language before it
   reaches player-facing copy.

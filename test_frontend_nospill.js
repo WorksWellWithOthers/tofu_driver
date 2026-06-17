@@ -113,6 +113,7 @@ globalThis.fulfillShopOrder = fulfillShopOrder;
 globalThis.fulfillShopOrders = fulfillShopOrders;
 globalThis.isCounterServiceUnlocked = isCounterServiceUnlocked;
 globalThis.counterServiceOrderType = counterServiceOrderType;
+globalThis.counterServiceBatchPreview = counterServiceBatchPreview;
 globalThis.counterServiceIntervalSeconds = counterServiceIntervalSeconds;
 globalThis.counterServiceBatchSize = counterServiceBatchSize;
 globalThis.counterServiceIncomeStatus = counterServiceIncomeStatus;
@@ -133,6 +134,9 @@ globalThis.clearNewlyRevealedTab = clearNewlyRevealedTab;
 globalThis.queueStoryBeatTeaser = queueStoryBeatTeaser;
 globalThis.buyShopStation = buyShopStation;
 globalThis.buyStationUpgrade = buyStationUpgrade;
+globalThis.stationUpgradeCostReputation = stationUpgradeCostReputation;
+globalThis.supplierStockPerSecond = supplierStockPerSecond;
+globalThis.nextSupplierUpgrade = nextSupplierUpgrade;
 globalThis.completeFictionalRoute = completeFictionalRoute;
 globalThis.runTrainingDrill = runTrainingDrill;
 globalThis.buyGarageUpgrade = buyGarageUpgrade;
@@ -1654,7 +1658,7 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert(!context.ledgerPanelHtml.includes('Station Upgrades'));
   assert(context.positiveOfflineText.includes('While you were away: +'));
   assert(context.positiveOfflineText.includes('tofu stock'));
-  assert(context.positiveOfflineText.includes('delivery orders'));
+  assert(context.positiveOfflineText.includes('waiting orders'));
   assert(context.fractionalPrepHtml.includes('Need 1 more Prep Capacity'));
   assert(!context.fractionalPrepHtml.includes('0.65'));
   ['Routes', 'Training', 'Crew', 'Garage', 'Shop Spirit', 'Rivals', 'License', 'Passport'].forEach((label) => {
@@ -4045,6 +4049,172 @@ globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
   const hiddenRouteToken = context.useFestivalBoost('calm_focus_token', spirit);
   assert.strictEqual(hiddenRouteToken.ok, false);
   assert(hiddenRouteToken.reason.includes('Route-focused'));
+}
+
+function testTofuGarageHighMidgameSupplyBottleneckBalance() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  function highMidgameState() {
+    const state = context.defaultGameState();
+    state.shop.tofuStock = 4;
+    state.shop.deliveryOrders = 1000000;
+    state.shop.tips = 15;
+    state.shop.reputation = 300000;
+    state.shop.shopLevel = 100;
+    state.shop.lifetimeDeliveryOrders = 1000;
+    state.shop.lifetimeTips = 150000;
+    state.shop.lifetimeReputation = 300000;
+    state.shop.prepSlots = 300;
+    state.shop.counterService.running = true;
+    state.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+    state.shop.stations.tofu_press = 10;
+    state.shop.stations.prep_counter = 10;
+    state.shop.stations.delivery_shelf = 10;
+    state.shop.stations.shop_sign = 10;
+    state.shop.stationUpgrades.tofu_press_faster = 10;
+    state.shop.stationUpgrades.tofu_press_double = 8;
+    state.shop.stationUpgrades.counter_service_bell = 1;
+    state.shop.stationUpgrades.counter_service_wide = 1;
+    state.shop.stationUpgrades.counter_service_routine = 1;
+    state.shop.stationUpgrades.counter_service_register = 1;
+    state.shop.stationUpgrades.counter_service_window = 1;
+    state.shop.stationUpgrades.counter_service_crew = 1;
+    state.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+    state.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+    state.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
+    state.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray', date: '2026-06-15T12:00:00.000Z' };
+    state.stamps.first_100_tips = { label: 'First 100 Tips', date: '2026-06-15T12:00:00.000Z' };
+    return state;
+  }
+
+  const blocked = highMidgameState();
+  const action = context.nextBestAction(blocked);
+  assert.notStrictEqual(action.type, 'pack_tofu');
+  assert.strictEqual(action.type, 'buy_upgrade');
+  assert.strictEqual(action.upgradeId, 'soy_supplier_contract');
+  assert(action.title.includes('Soy Supplier Contract'));
+  assert(action.copy.includes('Reputation'));
+
+  const supplier = context.nextSupplierUpgrade(blocked, true);
+  assert.strictEqual(supplier.id, 'soy_supplier_contract');
+  const beforeRate = context.getShopGeneratorRates(blocked).tofuPressPerSecond;
+  const bought = context.buyStationUpgrade('soy_supplier_contract', blocked);
+  assert.strictEqual(bought.ok, true);
+  assert.strictEqual(bought.costReputation, 25000);
+  assert.strictEqual(bought.gameState.shop.reputation, 275000);
+  assert(context.supplierStockPerSecond(bought.gameState) >= 250);
+  assert(context.getShopGeneratorRates(bought.gameState).tofuPressPerSecond >= beforeRate + 250);
+
+  const poorRep = highMidgameState();
+  poorRep.shop.reputation = 10000;
+  poorRep.shop.shopLevel = context.getShopLevel(poorRep.shop.reputation);
+  const failed = context.buyStationUpgrade('soy_supplier_contract', poorRep);
+  assert.strictEqual(failed.ok, false);
+  assert.strictEqual(failed.reason, 'Not enough reputation.');
+
+  const partial = highMidgameState();
+  partial.shop.tofuStock = 800;
+  partial.shop.deliveryOrders = 1000000;
+  partial.shop.tips = 0;
+  const preview = context.counterServiceBatchPreview(partial);
+  assert.strictEqual(preview.quantity, 4);
+  assert.strictEqual(preview.orderCounts.catering_crate, 3);
+  assert.strictEqual(preview.orderCounts.festival_bento, 1);
+  assert(context.counterServiceIncomeStatus(partial).text.includes('batch 4'));
+  const tick = context.applyCounterServiceTick(partial, new Date('2026-06-15T12:00:04.000Z'));
+  assert.strictEqual(tick.completed, 4);
+  assert.strictEqual(tick.gameState.shop.tips, 1690);
+  assert.strictEqual(tick.gameState.shop.tofuStock, 5);
+  assert(tick.gameState.shop.deliveryOrders >= 0);
+
+  const fallback = highMidgameState();
+  fallback.shop.tofuStock = 75;
+  fallback.shop.deliveryOrders = 1000;
+  fallback.shop.tips = 0;
+  const fallbackTick = context.applyCounterServiceTick(fallback, new Date('2026-06-15T12:00:04.000Z'));
+  assert.strictEqual(fallbackTick.completed, 1);
+  assert.strictEqual(fallbackTick.gameState.shop.tips, 130);
+  assert.strictEqual(fallbackTick.gameState.shop.tofuStock, 0);
+
+  const stillBlocked = highMidgameState();
+  stillBlocked.shop.tofuStock = 5;
+  stillBlocked.shop.deliveryOrders = 1000;
+  assert.strictEqual(context.counterServiceIncomeStatus(stillBlocked).text, 'Counter Service waiting for Tofu Stock');
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(blocked)});
+globalThis.supplierUpgradeHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "overview";
+const offlineState = ${JSON.stringify(blocked)};
+offlineState.shop.offlineEarnings = {
+  tofuStock: 0,
+  deliveryOrders: 554000,
+  tips: 0,
+  tofuConsumed: 1108000,
+  counterServicePaused: true,
+  cappedHours: 8,
+};
+renderTofuShop(offlineState);
+globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
+`, context);
+  assert(context.supplierUpgradeHtml.includes('Soy Supplier Contract'));
+  assert(context.supplierUpgradeHtml.includes('25K Reputation'));
+  assert(context.supplierUpgradeHtml.includes('Tofu supply'));
+  assert(context.supplierUpgradeHtml.includes('Uses Reputation to keep Counter Service supplied'));
+  assert(!context.supplierUpgradeHtml.includes('Route Familiarity'));
+  assert(!context.supplierUpgradeHtml.includes('Careful Notes'));
+  assert(!context.supplierUpgradeHtml.includes('Buy Counter Crew'));
+  assert(context.offlineSummaryText.includes('+554K waiting orders'));
+  assert(!context.offlineSummaryText.includes('+0 tofu stock'));
+  assert(context.offlineSummaryText.includes('tofu supply was consumed preparing orders'));
+  assert(context.offlineSummaryText.includes('Counter Service does not fulfill offline yet'));
+
+  assert.strictEqual(context.surfaceFromHash('#/shop'), 'shop');
+  assert.strictEqual(context.surfaceFromHash('#/garage'), 'shop');
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('Tofu Garage'));
+  assert(html.includes('Prep Capacity'));
+  assert(!html.includes('Prep Slots'));
+  assert(html.includes('/static/nospill/app.js?v=20260616a'));
+  assert(html.includes('/static/nospill/app.css?v=20260616a'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -6965,6 +7135,7 @@ function run() {
   testTofuShopStationMilestoneBoostsV1();
   testCounterServiceV1AutomatesEarnedShopHandoffs();
   testCounterServicePolishStatsUpgradesAndSpiritPanel();
+  testTofuGarageHighMidgameSupplyBottleneckBalance();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();
