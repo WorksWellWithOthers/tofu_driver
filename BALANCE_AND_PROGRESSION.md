@@ -243,7 +243,9 @@ Player-facing copy:
 Recommendation rule:
 
 - If Tofu Stock runway is healthy and orders are slow, do not recommend Tofu Press.
-- If Tofu Stock runway is low, recommend Pack Tofu or Buy Tofu Press.
+- If Tofu Stock runway is low early, recommend Pack Tofu or Buy Tofu Press.
+- If Counter Service is stock-blocked at managed-shop scale, recommend Supplier Contracts or other
+  scalable supply upgrades before manual Pack Tofu.
 
 ### Delivery Order Display
 
@@ -439,8 +441,10 @@ Order design rules:
 - larger order cards should appear only when they are close enough to matter
 - the first larger order should make a stocked pantry feel useful, not punish the player for having
   stock
-- if a larger order is unlocked but stock is low, the Next Best Action can point to Tofu Press or
-  Pack Tofu because the player now understands why stock matters
+- if a larger order is unlocked but stock is low early, the Next Best Action can point to Tofu Press
+  or Pack Tofu because the player now understands why stock matters
+- if larger orders and Counter Service are already scaled, the Next Best Action should prefer
+  Supplier Contracts or other supply upgrades over manual stock clicking
 
 ## Tofu Production Cascade
 
