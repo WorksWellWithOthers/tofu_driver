@@ -312,9 +312,11 @@ Current design principles:
   present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
   milestones, while buttons and gameplay decisions remain separate UI. Do not show separate
   per-layer art placeholder tiles in the Overview. Integrated real-art scene states should render as
-  polished images without asset/debug copy, raw scene IDs, or `art pending` labels. The covered-car
-  state may use only restrained flavor such as `Behind the shop, an old car waits under a cover`;
-  it remains a purpose hint, not Dream Garage implementation.
+  polished images without asset/debug copy, raw scene IDs, or `art pending` labels. Scene swaps
+  should advance slower than station/card progression: one Tofu Press, Prep Counter, Delivery
+  Shelf, Shop Sign, or brief resource threshold should not change the full-scene image by itself.
+  The covered-car state may use only restrained flavor such as `Behind the shop, an old car waits
+  under a cover`; it remains a purpose hint, not Dream Garage implementation.
 - Mika, Night Shift Manager, is the first implemented Delivery Crew character art pack. Her current
   six-image MVP set lives under `/static/nospill/images/` and can appear only on parked/result
   surfaces such as Delivery Crew, post-run results, Coach Recap, and local fanfare moments.
