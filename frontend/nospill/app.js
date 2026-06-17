@@ -5917,7 +5917,10 @@ function selectedCharacter(gameState) {
 }
 
 function defaultCharacterForArt(gameState) {
-  return selectedCharacter(gameState) || {
+  const selected = selectedCharacter(gameState);
+  if (selected) return selected;
+  const mika = CHARACTER_CATALOG.find((character) => character.id === "mika");
+  return mika ? { ...mika } : {
     id: "shop_assistant_placeholder",
     name: "Delivery Crew",
     role: "Crew",
@@ -5961,14 +5964,17 @@ function renderCharacterCameo(slotId, gameState = loadGameState(), options = {})
   const asset = getCharacterAsset(character.id, slotId);
   const label = options.label || slot.label;
   const copy = options.copy || character.flavor || slot.purpose;
+  const fallbackLabel = asset.src
+    ? `${label}: ${character.name} portrait`
+    : `${label}: ${asset.placeholder}`;
   const art = asset.src
     ? `<img
         src="${escapeHtml(asset.src)}"
         alt="${escapeHtml(asset.alt || `${character.name} ${label}`)}"
         loading="lazy"
         onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
-      /><div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(`${label}: ${asset.placeholder}`)}" hidden>${escapeHtml(character.name.slice(0, 1))}</div>`
-    : `<div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(`${label}: ${asset.placeholder}`)}">${escapeHtml(character.name.slice(0, 1))}</div>`;
+      /><div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(fallbackLabel)}" hidden>${escapeHtml(character.name.slice(0, 1))}</div>`
+    : `<div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(fallbackLabel)}">${escapeHtml(character.name.slice(0, 1))}</div>`;
   return `
     <div class="nospill-character-cameo ${asset.src ? "" : "is-placeholder"}" data-character-slot="${escapeHtml(slotId)}" data-character-id="${escapeHtml(character.id)}">
       ${art}
@@ -5979,6 +5985,15 @@ function renderCharacterCameo(slotId, gameState = loadGameState(), options = {})
       </div>
     </div>
   `;
+}
+
+function coachRecapCharacterSlot(summary) {
+  const cargoCondition = Number(summary && (summary.cargoCondition ?? summary.waterLeft));
+  const hasUsefulData = summary && summary.coachRecap && summary.coachRecap.insufficientData !== true;
+  if (hasUsefulData && Number.isFinite(cargoCondition) && cargoCondition >= 0.95) {
+    return "coach_recap_expression_pleased";
+  }
+  return "coach_recap_expression_neutral";
 }
 
 function getSceneAsset(layerId) {
@@ -10614,7 +10629,7 @@ function renderDeliverySummary(summary) {
   }
   if (elements.coachRecapCard) {
     elements.coachRecapCard.innerHTML = [
-      renderCharacterCameo("coach_recap_expression_neutral", collectionState, {
+      renderCharacterCameo(coachRecapCharacterSlot(summary), collectionState, {
         label: "Coach Recap",
         copy: "Outcome-based smooth-control feedback belongs after the run.",
       }),

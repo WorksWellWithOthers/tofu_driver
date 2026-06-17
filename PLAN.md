@@ -78,8 +78,9 @@
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
   expectations, and smallest recommended first asset pack.
 - Mika, Night Shift Manager, has a six-file MVP art pack integrated from root-level
-  `frontend/nospill/images/*.webp` files. Current Mika slots use real parked-only art; future
-  optional slots still fall back to placeholders until they need dedicated images.
+  `frontend/nospill/images/*.webp` files. Current Mika slots use real parked-only art, and Mika is
+  the default parked/result art source when no selected character has assigned art; future optional
+  slots still fall back to placeholders until they need dedicated images.
 - Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It now renders one
   cohesive full-scene image at a time, selected from milestone-based scene variants, while gameplay
   controls remain separate UI. Four real WebP scene assets are integrated; the established-shop

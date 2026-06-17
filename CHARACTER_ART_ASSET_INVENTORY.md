@@ -66,8 +66,11 @@ frontend/nospill/images/
 | `crew_profile_card` | `crew_profile_card.webp` | `/static/nospill/images/crew_profile_card.webp` | 800x1000 | 4:5 | Clean portrait read at card size; safe crop to square if needed | Integrated |
 | `reward_unlock_card_art` | `reward_unlock_splash.webp` | `/static/nospill/images/reward_unlock_splash.webp` | 1280x720 | 16:9 | Leave text-safe space on one side; celebratory but restrained | Integrated |
 
-All current Mika MVP image slots are implemented. Future optional slots such as share-card,
-Passport-detail, Ledger, and offline-progress art remain documented only.
+All current Mika MVP image slots are implemented. Mika is the safe default character-art source for
+parked/result surfaces when no player-selected character has assigned art, so Coach Recap, Delivery
+Crew, result cameos, Tofu Shop assistant, and reward splash surfaces use real Mika art instead of
+missing-art copy. Future optional slots such as share-card, Passport-detail, Ledger, and
+offline-progress art remain documented only.
 
 Replacement checklist:
 
@@ -118,3 +121,5 @@ Placeholder copy should be calm and production-oriented:
 - “Coach portrait not yet assigned”
 
 Do not use placeholders as unlock pressure, monetization pressure, or driving prompts.
+For assigned real art, fallback labels should identify the character portrait rather than saying the
+slot is “not yet assigned”; “not yet assigned” copy is reserved for genuinely missing future slots.

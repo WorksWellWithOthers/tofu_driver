@@ -170,6 +170,7 @@ globalThis.CHARACTER_ART_SLOTS = CHARACTER_ART_SLOTS;
 globalThis.CHARACTER_ART_MANIFEST = CHARACTER_ART_MANIFEST;
 globalThis.getCharacterAsset = getCharacterAsset;
 globalThis.renderCharacterCameo = renderCharacterCameo;
+globalThis.coachRecapCharacterSlot = coachRecapCharacterSlot;
 globalThis.TOFU_SHOP_SCENE_ASSETS = TOFU_SHOP_SCENE_ASSETS;
 globalThis.getSceneAsset = getSceneAsset;
 globalThis.getTofuShopSceneState = getTofuShopSceneState;
@@ -6430,10 +6431,11 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert(missingSlot.includes('Character art coming soon'));
   assert(missingSlot.includes('Asset slot not yet defined.'));
 
-  const freshPlaceholder = context.renderCharacterCameo('shop_assistant_main_portrait', context.defaultGameState());
-  assert(freshPlaceholder.includes('data-character-slot="shop_assistant_main_portrait"'));
-  assert(freshPlaceholder.includes('Character art coming soon'));
-  assert(freshPlaceholder.includes('is-placeholder'));
+  const freshMikaArt = context.renderCharacterCameo('shop_assistant_main_portrait', context.defaultGameState());
+  assert(freshMikaArt.includes('data-character-slot="shop_assistant_main_portrait"'));
+  assert(freshMikaArt.includes('data-character-id="mika"'));
+  assert(freshMikaArt.includes('/static/nospill/images/shop_assistant_main_portrait.webp'));
+  assert(!freshMikaArt.includes('is-placeholder'));
 
   const unlocked = context.defaultGameState();
   unlocked.collection.unlockedCharacterIds.push('angry_tofu_driver', 'sleepy_dispatcher');
@@ -6450,10 +6452,27 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert(mikaCameo.includes('data-character-id="mika"'));
   assert(mikaCameo.includes('/static/nospill/images/shop_assistant_main_portrait.webp'));
   assert(mikaCameo.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
-  assert(mikaCameo.includes('Character art coming soon'));
   assert(mikaCameo.includes('hidden>M</div>'));
+  const mikaNeutral = context.renderCharacterCameo('coach_recap_expression_neutral', mikaState);
+  assert(mikaNeutral.includes('/static/nospill/images/coach_neutral.webp'));
+  assert(!mikaNeutral.includes('Coach portrait not yet assigned'));
   const mikaPleased = context.renderCharacterCameo('coach_recap_expression_pleased', mikaState);
   assert(mikaPleased.includes('/static/nospill/images/coach_pleased.webp'));
+  assert(!mikaPleased.includes('Coach portrait not yet assigned'));
+  assert.strictEqual(
+    context.coachRecapCharacterSlot({
+      cargoCondition: 0.98,
+      coachRecap: { insufficientData: false },
+    }),
+    'coach_recap_expression_pleased',
+  );
+  assert.strictEqual(
+    context.coachRecapCharacterSlot({
+      cargoCondition: 0.8,
+      coachRecap: { insufficientData: false },
+    }),
+    'coach_recap_expression_neutral',
+  );
   const mikaRewardSplash = context.renderCharacterCameo('reward_unlock_card_art', mikaState);
   assert(mikaRewardSplash.includes('/static/nospill/images/reward_unlock_splash.webp'));
   const mikaStampSplash = context.renderCharacterCameo('stamp_fanfare_cameo', mikaState);

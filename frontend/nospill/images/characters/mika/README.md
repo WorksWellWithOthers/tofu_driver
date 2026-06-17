@@ -13,7 +13,10 @@ Integrated runtime files:
 - `frontend/nospill/images/reward_unlock_splash.webp` - 1280x720, 16:9
 
 Active runtime paths use `/static/nospill/images/<filename>.webp`. No current Mika MVP slot is
-pending. Future optional slots may still use placeholders until separate art exists.
+pending. Mika is also the default parked/result character-art source when no player-selected
+character has assigned art, so Coach Recap, Delivery Crew, result cameo, Tofu Shop assistant, and
+reward splash surfaces should render real Mika images instead of “not yet assigned” placeholder
+copy. Future optional slots may still use placeholders until separate art exists.
 
 Do not place raw prompt notes, source PSDs, or unsafe driving imagery here. Final assets should be
 static-browser friendly, cosmetic only, tasteful, non-explicit, and parked-screen appropriate.
