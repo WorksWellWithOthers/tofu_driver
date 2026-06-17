@@ -14,11 +14,16 @@ Cup Test, motion permission, calibration, or active driving states.
 
 | Asset ID | File Path | Surface | Unlock Condition | Required | Recommended Aspect Ratio | Recommended Pixel Size | Scene Notes | Safe-Area Notes | Animation Notes | Reduced-Motion Behavior | Placeholder Behavior | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `scene_tiny_shop_empty` | `frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp` | Tofu Shop Overview scene | Initial parked shop state before meaningful shop action | Yes | 16:9 | 1600x900 or 1920x1080 | Tiny starter shop, quiet counter, simple tofu presence | Keep important objects centered for mobile crop | Static | Static | `Tiny shop scene pending` | Needed from art generation | Minimal shop presence; no Dream Garage implication |
-| `scene_tiny_shop_working` | `frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_working.webp` | Tofu Shop Overview scene | First production loop has started | Yes | 16:9 | 1600x900 or 1920x1080 | Same tiny shop, visibly active prep/stock/order work | Avoid tiny readable text | Static or very subtle future overlay | Static | `Working shop scene pending` | Needed from art generation | Should show the shop beginning to operate |
-| `scene_tiny_shop_upgraded` | `frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_upgraded.webp` | Tofu Shop Overview scene | First upgrade or early station growth | Yes | 16:9 | 1600x900 or 1920x1080 | Better counter setup, packaging, or slightly improved station props | Leave room for action cards below, not inside art | Static | Static | `Growing shop scene pending` | Needed from art generation | Represents early momentum without showing every station separately |
-| `scene_busy_shop_established` | `frontend/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp` | Tofu Shop Overview scene | Support infrastructure such as Delivery Shelf, Shop Sign, Counter Service, or 25+ orders | Yes | 16:9 | 1600x900 or 1920x1080 | Busier cohesive shop with visible support infrastructure and order flow | Keep foreground uncluttered on narrow screens | Optional subtle future overlay only | Static | `Established shop scene pending` | Needed from art generation | Main midgame shop image |
-| `scene_busy_shop_with_covered_car` | `frontend/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp` | Tofu Shop Overview scene | Covered-car teaser condition, such as First Upgrade Purchased or First 100 Tips | Yes | 16:9 | 1600x900 or 1920x1080 | Established shop plus restrained covered-car hint in background | Covered car should be visible but not dominate | Static | Static | `Covered car scene pending` | Needed from art generation | Story teaser only; no Dream Garage mechanics |
+| `scene_tiny_shop_empty` | `frontend/nospill/images/scene_tiny_shop_empty.webp` | Tofu Shop Overview scene | Initial parked shop state before meaningful shop action | Yes | 16:9 | 1600x900 or 1920x1080 | Tiny starter shop, quiet counter, simple tofu presence | Keep important objects centered for mobile crop | Static | Static | `Tiny shop scene pending` if file is missing | Integrated | Minimal shop presence; no Dream Garage implication |
+| `scene_tiny_shop_working` | `frontend/nospill/images/scene_tiny_shop_working.webp` | Tofu Shop Overview scene | First production loop has started | Yes | 16:9 | 1600x900 or 1920x1080 | Same tiny shop, visibly active prep/stock/order work | Avoid tiny readable text | Static or very subtle future overlay | Static | `Working shop scene pending` if file is missing | Integrated | Shows the shop beginning to operate |
+| `scene_tiny_shop_upgraded` | `frontend/nospill/images/scene_tiny_shop_upgraded.webp` | Tofu Shop Overview scene | First upgrade or early station growth | Yes | 16:9 | 1600x900 or 1920x1080 | Better counter setup, packaging, or slightly improved station props | Leave room for action cards below, not inside art | Static | Static | `Growing shop scene pending` if file is missing | Integrated | Also used as the temporary visual alias for `scene_busy_shop_established` |
+| `scene_busy_shop_established` | `frontend/nospill/images/scene_tiny_shop_upgraded.webp` | Tofu Shop Overview scene | Support infrastructure such as Delivery Shelf, Shop Sign, Counter Service, or 25+ orders | Yes | 16:9 | 1600x900 or 1920x1080 | Temporarily reuses the upgraded-shop image so normal gameplay never shows missing art | Keep foreground uncluttered on narrow screens | Optional subtle future overlay only | Static | Uses upgraded-shop fallback art | Aliased | Dedicated `scene_busy_shop_established.webp` is optional future work |
+| `scene_busy_shop_with_covered_car` | `frontend/nospill/images/scene_busy_shop_with_covered_car.webp` | Tofu Shop Overview scene | Covered-car teaser condition, such as First Upgrade Purchased or First 100 Tips | Yes | 16:9 | 1600x900 or 1920x1080 | Established shop plus restrained covered-car hint in background | Covered car should be visible but not dominate | Static | Static | `Covered car scene pending` if file is missing | Integrated | Story teaser only; no Dream Garage mechanics |
+
+`scene_busy_shop_established` is currently aliased to `scene_tiny_shop_upgraded.webp`.
+Players should not see a missing-art placeholder for the established-shop state during normal
+gameplay. A dedicated `scene_busy_shop_established.webp` can be added later if the midgame needs a
+more distinct visual state.
 
 ## Optional Future Overlays
 
@@ -47,8 +52,8 @@ Make three to five full-scene images first. Recommended order:
 1. `scene_tiny_shop_empty`, 16:9, 1600x900 or 1920x1080.
 2. `scene_tiny_shop_working`, 16:9, 1600x900 or 1920x1080.
 3. `scene_tiny_shop_upgraded`, 16:9, 1600x900 or 1920x1080.
-4. `scene_busy_shop_established`, 16:9, 1600x900 or 1920x1080.
-5. `scene_busy_shop_with_covered_car`, 16:9, 1600x900 or 1920x1080.
+4. `scene_busy_shop_with_covered_car`, 16:9, 1600x900 or 1920x1080.
+5. Optional later: a dedicated `scene_busy_shop_established`, 16:9, 1600x900 or 1920x1080.
 
 Do not commission separate visible layer art until the full-scene approach has been playtested.
 
@@ -62,7 +67,7 @@ Do not commission separate visible layer art until the full-scene approach has b
 
 ## What Is Not Implemented
 
-- Final scene art.
+- Dedicated `scene_busy_shop_established.webp` art.
 - Dream Garage, factory, manufacturer, or spaceship systems.
 - Clickable scene mechanics.
 - Visible per-layer art tiles.

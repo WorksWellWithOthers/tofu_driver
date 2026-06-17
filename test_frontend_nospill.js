@@ -6035,34 +6035,55 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert(spec.includes('MVP Art Pack'));
   assert(spec.includes('full-scene variants'));
   [
-    'frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp',
-    'frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_working.webp',
-    'frontend/nospill/images/scenes/tofu-shop/scene_tiny_shop_upgraded.webp',
-    'frontend/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp',
-    'frontend/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp',
+    'frontend/nospill/images/scene_tiny_shop_empty.webp',
+    'frontend/nospill/images/scene_tiny_shop_working.webp',
+    'frontend/nospill/images/scene_tiny_shop_upgraded.webp',
+    'frontend/nospill/images/scene_busy_shop_with_covered_car.webp',
   ].forEach((expectedPath) => assert(spec.includes(expectedPath), `${expectedPath} should be specified`));
+  assert(spec.includes('scene_busy_shop_established` is currently aliased to `scene_tiny_shop_upgraded.webp`'));
   assert(spec.includes('Reduced-Motion Behavior'));
-  assert(spec.includes('Needed from art generation'));
+  assert(spec.includes('Integrated'));
+  assert(spec.includes('optional future work'));
   assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'scenes', 'tofu-shop', 'README.md')));
 
   [
     'scene_tiny_shop_empty.webp',
     'scene_tiny_shop_working.webp',
     'scene_tiny_shop_upgraded.webp',
-    'scene_busy_shop_established.webp',
     'scene_busy_shop_with_covered_car.webp',
   ].forEach((filename) => {
     assert.strictEqual(
-      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'scenes', 'tofu-shop', filename)),
-      false,
-      `${filename} should be supplied later by art generation, not committed as a fake final asset`,
+      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', filename)),
+      true,
+      `${filename} should exist as a real integrated scene asset`,
     );
   });
+  assert.strictEqual(
+    fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'scene_busy_shop_established.webp')),
+    false,
+    'scene_busy_shop_established.webp should remain optional future work while the state aliases to upgraded art',
+  );
 
   const context = loadNoSpillContext();
   assert.strictEqual(
     context.TOFU_SHOP_SCENE_ASSETS.scene_tiny_shop_empty.src,
-    '/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp',
+    '/static/nospill/images/scene_tiny_shop_empty.webp',
+  );
+  assert.strictEqual(
+    context.TOFU_SHOP_SCENE_ASSETS.scene_tiny_shop_working.src,
+    '/static/nospill/images/scene_tiny_shop_working.webp',
+  );
+  assert.strictEqual(
+    context.TOFU_SHOP_SCENE_ASSETS.scene_tiny_shop_upgraded.src,
+    '/static/nospill/images/scene_tiny_shop_upgraded.webp',
+  );
+  assert.strictEqual(
+    context.TOFU_SHOP_SCENE_ASSETS.scene_busy_shop_established.src,
+    '/static/nospill/images/scene_tiny_shop_upgraded.webp',
+  );
+  assert.strictEqual(
+    context.TOFU_SHOP_SCENE_ASSETS.scene_busy_shop_with_covered_car.src,
+    '/static/nospill/images/scene_busy_shop_with_covered_car.webp',
   );
   assert.strictEqual(
     context.getSceneAsset('missing_future_layer').placeholder,
@@ -6102,7 +6123,7 @@ function testTofuShopLivingSceneV1Groundwork() {
   const sceneHtml = context.renderTofuShopLivingScene(coveredCar);
   assert(sceneHtml.includes('aria-label="Tofu Shop living scene"'));
   assert(sceneHtml.includes('data-scene-id="scene_busy_shop_with_covered_car"'));
-  assert(sceneHtml.includes('/static/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp'));
+  assert(sceneHtml.includes('/static/nospill/images/scene_busy_shop_with_covered_car.webp'));
   assert(!sceneHtml.includes('data-scene-layer='));
   assert(!sceneHtml.includes('Tofu Press art pending'));
   assert(!sceneHtml.includes('Delivery Shelf art pending'));
@@ -6113,9 +6134,14 @@ function testTofuShopLivingSceneV1Groundwork() {
     gameState: advanced,
     reducedMotion: false,
   });
-  assert(fallbackLayer.includes('/static/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp'));
+  assert(fallbackLayer.includes('/static/nospill/images/scene_tiny_shop_upgraded.webp'));
   assert(fallbackLayer.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
-  assert(fallbackLayer.includes('Established shop scene pending'));
+  assert(!fallbackLayer.includes('/static/nospill/images/scene_busy_shop_established.webp'));
+  const establishedHtml = context.renderTofuShopLivingScene(advanced);
+  assert(establishedHtml.includes('data-scene-id="scene_busy_shop_established"'));
+  assert(establishedHtml.includes('/static/nospill/images/scene_tiny_shop_upgraded.webp'));
+  assert(!establishedHtml.includes('/static/nospill/images/scene_busy_shop_established.webp'));
+  assert(establishedHtml.includes('hidden>Established shop scene pending</div>'));
 
   const reducedContext = loadNoSpillContext({
     window: {

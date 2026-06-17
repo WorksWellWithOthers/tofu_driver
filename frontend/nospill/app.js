@@ -682,31 +682,31 @@ const CHARACTER_ART_MANIFEST = {
 
 const TOFU_SHOP_SCENE_ASSETS = {
   scene_tiny_shop_empty: {
-    src: "/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_empty.webp",
+    src: "/static/nospill/images/scene_tiny_shop_empty.webp",
     label: "Tiny Shop",
     placeholder: "Tiny shop scene pending",
     kind: "full_scene",
   },
   scene_tiny_shop_working: {
-    src: "/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_working.webp",
+    src: "/static/nospill/images/scene_tiny_shop_working.webp",
     label: "Working Shop",
     placeholder: "Working shop scene pending",
     kind: "full_scene",
   },
   scene_tiny_shop_upgraded: {
-    src: "/static/nospill/images/scenes/tofu-shop/scene_tiny_shop_upgraded.webp",
+    src: "/static/nospill/images/scene_tiny_shop_upgraded.webp",
     label: "Growing Shop",
     placeholder: "Growing shop scene pending",
     kind: "full_scene",
   },
   scene_busy_shop_established: {
-    src: "/static/nospill/images/scenes/tofu-shop/scene_busy_shop_established.webp",
+    src: "/static/nospill/images/scene_tiny_shop_upgraded.webp",
     label: "Established Shop",
     placeholder: "Established shop scene pending",
     kind: "full_scene",
   },
   scene_busy_shop_with_covered_car: {
-    src: "/static/nospill/images/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp",
+    src: "/static/nospill/images/scene_busy_shop_with_covered_car.webp",
     label: "Covered Car Teaser",
     placeholder: "Covered car scene pending",
     kind: "full_scene",
