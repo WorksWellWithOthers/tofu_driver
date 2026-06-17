@@ -211,6 +211,12 @@ globalThis.surfaceFromHash = surfaceFromHash;
 globalThis.setAppSurface = setAppSurface;
 globalThis.initializeAppSurface = initializeAppSurface;
 globalThis.renderSurfaceNavigation = renderSurfaceNavigation;
+globalThis.motionSupportStatus = motionSupportStatus;
+globalThis.requestMotionPermission = requestMotionPermission;
+globalThis.MOTION_SUPPORT_MESSAGES = MOTION_SUPPORT_MESSAGES;
+globalThis.startRun = startRun;
+globalThis.updateStartReadiness = updateStartReadiness;
+globalThis.handleCalibrationTimeout = handleCalibrationTimeout;
 globalThis.returnToDashboard = returnToDashboard;
 globalThis.takeAnotherCupTest = takeAnotherCupTest;
 globalThis.normalizedDiscordConfig = normalizedDiscordConfig;
@@ -1056,6 +1062,177 @@ globalThis.activeDashboardActionDisabled = elements.gameCtaButton.disabled;
   assert.strictEqual(context.activeDashboardActionDisabled, true);
 }
 
+async function testCupTestMobileMotionSupportDetection() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(source.includes('Motion sensors require HTTPS'));
+  assert(html.includes('This browser does not appear to support motion sensors.'));
+  assert(html.includes('Tofu Garage'));
+  assert(!html.includes('Go to Tofu Garage'));
+
+  const supportedContext = loadNoSpillContext({
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+      DeviceMotionEvent: function DeviceMotionEvent() {},
+    },
+  });
+  assert.strictEqual(supportedContext.motionSupportStatus().state, 'supported');
+  assert.strictEqual(supportedContext.motionSupportStatus().canAttemptStart, true);
+
+  function PermissionMotion() {}
+  PermissionMotion.requestPermission = async () => 'granted';
+  const permissionContext = loadNoSpillContext({
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+      DeviceMotionEvent: PermissionMotion,
+    },
+  });
+  assert.strictEqual(permissionContext.motionSupportStatus().state, 'permission-needed');
+  assert.strictEqual(permissionContext.motionSupportStatus().canAttemptStart, true);
+  assert.strictEqual((await permissionContext.requestMotionPermission()).ok, true);
+
+  function DeniedMotion() {}
+  DeniedMotion.requestPermission = async () => 'denied';
+  const deniedContext = loadNoSpillContext({
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+      DeviceMotionEvent: DeniedMotion,
+    },
+  });
+  const denied = await deniedContext.requestMotionPermission();
+  assert.strictEqual(denied.ok, false);
+  assert.strictEqual(denied.state, 'permission-denied');
+  assert(denied.reason.includes('Motion permission was denied.'));
+
+  function ThrowingMotion() {}
+  ThrowingMotion.requestPermission = async () => {
+    throw new Error('gesture required');
+  };
+  const throwingContext = loadNoSpillContext({
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+      DeviceMotionEvent: ThrowingMotion,
+    },
+  });
+  const thrown = await throwingContext.requestMotionPermission();
+  assert.strictEqual(thrown.ok, false);
+  assert.strictEqual(thrown.state, 'permission-error');
+  assert(thrown.reason.includes('could not be requested'));
+
+  const insecureContext = loadNoSpillContext({
+    window: {
+      isSecureContext: false,
+      location: { protocol: 'http:', hostname: 'example.com' },
+      DeviceMotionEvent: function DeviceMotionEvent() {},
+    },
+  });
+  assert.strictEqual(insecureContext.motionSupportStatus().state, 'insecure');
+  assert(insecureContext.motionSupportStatus().message.includes('HTTPS'));
+
+  const unsupportedContext = loadNoSpillContext({
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+    },
+  });
+  assert.strictEqual(unsupportedContext.motionSupportStatus().state, 'unsupported');
+  assert(unsupportedContext.motionSupportStatus().message.includes('does not appear to support motion sensors'));
+
+  function StartMotion() {}
+  StartMotion.requestPermission = async () => 'granted';
+  const startContext = loadNoSpillContext({
+    document: {
+      addEventListener() {},
+      querySelectorAll(selector) {
+        if (selector === '[data-safety-check]') return [{ checked: true }, { checked: true }, { checked: true }];
+        return [];
+      },
+    },
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+      DeviceMotionEvent: StartMotion,
+      addEventListener(type) {
+        this.addedEventType = type;
+      },
+      removeEventListener(type) {
+        this.removedEventType = type;
+      },
+      setTimeout() {
+        this.timeoutScheduled = true;
+      },
+      matchMedia() {
+        return { matches: false };
+      },
+    },
+  });
+  startContext.performance = { now: () => 1234 };
+  startContext.requestAnimationFrame = (callback) => {
+    if (typeof callback === 'function') callback();
+    return 1;
+  };
+  await vm.runInContext(`(async () => {
+function makeMotionNode(name) {
+  const node = {
+    name,
+    textContent: "",
+    innerHTML: "",
+    checked: false,
+    disabled: false,
+    classListValue: null,
+    dataset: {},
+  };
+  node.classList = {
+    toggle(className, hidden) {
+      if (className === "is-hidden") node.classListValue = Boolean(hidden);
+    },
+    add() {},
+    remove() {},
+    contains() { return false; },
+  };
+  node.scrollIntoView = function scrollIntoView() {};
+  return node;
+}
+elements = {
+  landingView: makeMotionNode("landing"),
+  runView: makeMotionNode("run"),
+  unsupportedView: makeMotionNode("unsupported"),
+  summaryView: makeMotionNode("summary"),
+  setupFlow: makeMotionNode("setup"),
+  landingStatus: makeMotionNode("status"),
+  unsupportedCopy: makeMotionNode("unsupportedCopy"),
+  startButton: makeMotionNode("start"),
+  audioToggle: { checked: false },
+  audioToggleRunning: { checked: false },
+  runModeLabel: makeMotionNode("runMode"),
+  runStatus: makeMotionNode("runStatus"),
+  surfaceNavButtons: [],
+};
+appState.mode = "basic";
+appState.surface = "cup-test";
+await startRun();
+globalThis.startRunAddedEvent = window.addedEventType;
+globalThis.startRunCalibrating = appState.calibrating;
+globalThis.startRunUnsupportedHidden = elements.unsupportedView.classListValue;
+handleCalibrationTimeout();
+globalThis.noDataStatus = elements.landingStatus.textContent;
+globalThis.noDataUnsupportedHidden = elements.unsupportedView.classListValue;
+})()`, startContext);
+  assert.strictEqual(startContext.startRunAddedEvent, 'devicemotion');
+  assert.strictEqual(startContext.startRunCalibrating, true);
+  assert.strictEqual(startContext.startRunUnsupportedHidden, true);
+  assert(startContext.noDataStatus.includes('no sensor data has arrived yet'));
+  assert.strictEqual(startContext.noDataUnsupportedHidden, true);
+
+  assert.strictEqual(startContext.surfaceFromHash('#/cup-test'), 'cup-test');
+  assert.strictEqual(startContext.surfaceFromHash('#/garage'), 'shop');
+  assert.strictEqual(startContext.surfaceFromHash(''), 'cup-test');
+}
+
 function testTwoSurfaceRoutingSeparatesShopAndCupTest() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   assert(html.includes('data-app-surface="shop"'));
@@ -1085,6 +1262,7 @@ function testTwoSurfaceRoutingSeparatesShopAndCupTest() {
 function makeTextNode() {
   return { textContent: "", dataset: {} };
 }
+
 function makeFocusNode() {
   const node = { scrolled: false, focused: false, classes: new Set() };
   node.classList = {
@@ -1226,7 +1404,7 @@ globalThis.hashCrew = surfaceFromHash("#/crew");
   assert.strictEqual(context.defaultCupNavCurrent, 'page');
   assert.strictEqual(context.defaultBrandTitle, "Don't Spill the Cup");
   assert.strictEqual(context.defaultBrandPrimary, 'Take the Cup Test');
-  assert.strictEqual(context.defaultBrandSecondary, 'Go to Tofu Garage');
+  assert.strictEqual(context.defaultBrandSecondary, 'Tofu Garage');
   assert.strictEqual(context.shopHiddenOnShop, false);
   assert.strictEqual(context.cupHiddenOnShop, true);
   assert.strictEqual(context.crewHiddenOnShop, true);
@@ -1244,7 +1422,7 @@ globalThis.hashCrew = surfaceFromHash("#/crew");
   assert.strictEqual(context.cupBrandTitle, "Don't Spill the Cup");
   assert.strictEqual(context.cupBrandCopy, 'Keep the cup steady. Drive smoothly. Build the Tofu Garage while parked.');
   assert.strictEqual(context.cupBrandPrimary, 'Take the Cup Test');
-  assert.strictEqual(context.cupBrandSecondary, 'Go to Tofu Garage');
+  assert.strictEqual(context.cupBrandSecondary, 'Tofu Garage');
   assert.strictEqual(context.shopHiddenOnCrew, true);
   assert.strictEqual(context.cupHiddenOnCrew, true);
   assert.strictEqual(context.crewHiddenOnCrew, false);
@@ -1252,7 +1430,7 @@ globalThis.hashCrew = surfaceFromHash("#/crew");
   assert.strictEqual(context.crewBrandEyebrow, 'Delivery Crew');
   assert.strictEqual(context.crewBrandTitle, 'Delivery Crew');
   assert.strictEqual(context.crewBrandCopy, 'Crew collection is coming later. Build the Tofu Garage and complete Cup Test deliveries to discover future crew stories.');
-  assert.strictEqual(context.crewBrandPrimary, 'Go to Tofu Garage');
+  assert.strictEqual(context.crewBrandPrimary, 'Tofu Garage');
   assert.strictEqual(context.crewBrandSecondary, "Take Don't Spill the Cup");
   assert.strictEqual(context.actionAnchorScrolled, true);
   assert.strictEqual(context.actionAnchorFocused, true);
@@ -4213,8 +4391,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260616a'));
-  assert(html.includes('/static/nospill/app.css?v=20260616a'));
+  assert(html.includes('/static/nospill/app.js?v=20260617a'));
+  assert(html.includes('/static/nospill/app.css?v=20260617a'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -7127,7 +7305,7 @@ function testQualifiedRouteAnalysisAndQualification() {
   assert.strictEqual(qualification.status, 'qualified');
 }
 
-function run() {
+async function run() {
   testNoSpillIsNotLinkedFromExistingFrontendSurfaces();
   testNoSitemapOrRobotsRevealNoSpill();
   testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
@@ -7137,6 +7315,7 @@ function run() {
   testSmoothControlRecapDriveShapeTrailAndDailyCreditFollowup();
   testFirstTimeGameDashboardIsVisibleBeforeSetup();
   testTwoSurfaceRoutingSeparatesShopAndCupTest();
+  await testCupTestMobileMotionSupportDetection();
   testProgressiveRevealTeasersUnlockAfterFirstDelivery();
   testTofuShopGeneratorUpgradeUiIsHonestAndProgressive();
   testEarlyShopResourceFunnelMakesTipsObvious();
@@ -7209,4 +7388,7 @@ function run() {
   testQualifiedRouteAnalysisAndQualification();
 }
 
-run();
+run().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

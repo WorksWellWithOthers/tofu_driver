@@ -6567,24 +6567,59 @@ function hasDeviceMotionSupport() {
   return Boolean(getDeviceMotionConstructor());
 }
 
+const MOTION_SUPPORT_MESSAGES = {
+  supported: "Tap Start & Calibrate to enable motion.",
+  permissionNeeded: "Motion permission needed. Tap Start & Calibrate to allow motion access.",
+  permissionDenied: "Motion permission was denied. Enable Motion & Orientation access in browser settings, then reload.",
+  permissionError: "Motion permission could not be requested. Check browser Motion settings, then try Start & Calibrate again.",
+  insecure: "Motion sensors require HTTPS. Open Tofu Driver over HTTPS to use Don't Spill the Cup.",
+  unsupported: "This browser does not appear to support motion sensors. Try Safari or Chrome on a mobile device.",
+  noData: "Motion permission was granted, but no sensor data has arrived yet. Keep the phone still, check browser Motion settings, or reload.",
+};
+
+function motionSecureContextStatus() {
+  if (typeof window === "undefined") return { secure: true };
+  if (window.isSecureContext !== false) return { secure: true };
+  const location = window.location || {};
+  const hostname = String(location.hostname || "").toLowerCase();
+  const protocol = String(location.protocol || "");
+  const localHost = hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+  return { secure: protocol === "https:" || localHost };
+}
+
+function motionSupportStatus() {
+  const secure = motionSecureContextStatus();
+  if (!secure.secure) {
+    return { state: "insecure", canAttemptStart: false, message: MOTION_SUPPORT_MESSAGES.insecure };
+  }
+  const DeviceMotion = getDeviceMotionConstructor();
+  if (!DeviceMotion) {
+    return { state: "unsupported", canAttemptStart: false, message: MOTION_SUPPORT_MESSAGES.unsupported };
+  }
+  if (typeof DeviceMotion.requestPermission === "function") {
+    return { state: "permission-needed", canAttemptStart: true, message: MOTION_SUPPORT_MESSAGES.permissionNeeded };
+  }
+  return { state: "supported", canAttemptStart: true, message: MOTION_SUPPORT_MESSAGES.supported };
+}
+
 async function requestMotionPermission() {
   const DeviceMotion = getDeviceMotionConstructor();
   if (!DeviceMotion) {
-    return { ok: false, reason: "DeviceMotion is not available in this browser." };
+    return { ok: false, state: "unsupported", reason: MOTION_SUPPORT_MESSAGES.unsupported };
   }
   if (typeof DeviceMotion.requestPermission === "function") {
     try {
       const response = await DeviceMotion.requestPermission();
       if (response !== "granted") {
         trackEvent("tofu_driver_motion_permission_denied", { mode: modeAnalyticsLabel(appState.mode) });
-        return { ok: false, reason: "Motion permission was not granted." };
+        return { ok: false, state: "permission-denied", reason: MOTION_SUPPORT_MESSAGES.permissionDenied };
       }
     } catch (_) {
       trackEvent("tofu_driver_motion_permission_denied", { mode: modeAnalyticsLabel(appState.mode) });
-      return { ok: false, reason: "Motion permission could not be requested." };
+      return { ok: false, state: "permission-error", reason: MOTION_SUPPORT_MESSAGES.permissionError };
     }
   }
-  return { ok: true, reason: "" };
+  return { ok: true, state: "granted", reason: "" };
 }
 
 function motionVectorFromEvent(event) {
@@ -6747,9 +6782,9 @@ function handleCalibrationTimeout() {
     return;
   }
   stopRunSensors();
-  showUnsupported(
-    "Motion sensor data did not arrive. Try a mobile browser on HTTPS and allow motion access.",
-  );
+  showView("landing");
+  if (elements.setupFlow) elements.setupFlow.classList.remove("is-hidden");
+  setLandingStatus(MOTION_SUPPORT_MESSAGES.noData);
 }
 
 function startLocationWatch() {
@@ -7276,7 +7311,7 @@ function renderBrandShelf() {
   }
   if (elements.brandPrimaryCta) {
     elements.brandPrimaryCta.textContent = crewSurface
-      ? "Go to Tofu Garage"
+      ? "Tofu Garage"
       : shopSurface
         ? "Continue Tofu Garage"
         : "Take the Cup Test";
@@ -7287,7 +7322,7 @@ function renderBrandShelf() {
       ? "Take Don't Spill the Cup"
       : shopSurface
         ? "Take Don't Spill the Cup"
-        : "Go to Tofu Garage";
+        : "Tofu Garage";
     elements.brandSecondaryCta.dataset.brandAction = crewSurface || shopSurface ? "cup-test" : "shop";
   }
 }
@@ -7550,10 +7585,10 @@ async function startAxisPreview() {
     }
     return;
   }
-  if (!hasDeviceMotionSupport()) {
+  const support = motionSupportStatus();
+  if (!support.canAttemptStart) {
     if (elements.mountStatus) {
-      elements.mountStatus.textContent =
-        "DeviceMotion is not available in this browser.";
+      elements.mountStatus.textContent = support.message;
     }
     return;
   }
@@ -11351,12 +11386,26 @@ function selectedSafetyChecksComplete() {
 
 function updateStartReadiness() {
   const ready = selectedSafetyChecksComplete();
-  elements.startButton.disabled = !ready;
+  const support = motionSupportStatus();
+  elements.startButton.disabled = !ready || !support.canAttemptStart;
   setLandingStatus(
-    ready
-      ? "Ready. Start while parked and keep the phone mounted."
-      : "Complete the safety checklist to begin.",
+    !ready
+      ? "Complete the safety checklist to begin."
+      : support.message,
   );
+}
+
+function showMotionStartFailure(result) {
+  const message = result && result.reason
+    ? result.reason
+    : MOTION_SUPPORT_MESSAGES.permissionError;
+  if (result && result.state === "unsupported") {
+    showUnsupported(message);
+    return;
+  }
+  showView("landing");
+  if (elements.setupFlow) elements.setupFlow.classList.remove("is-hidden");
+  setLandingStatus(message);
 }
 
 function updateModeCopy() {
@@ -11399,9 +11448,10 @@ async function startRun() {
     simulator: false,
   });
   stopAxisPreview();
-  if (!hasDeviceMotionSupport()) {
+  const support = motionSupportStatus();
+  if (!support.canAttemptStart) {
     trackEvent("tofu_driver_sensor_unavailable", { mode: modeAnalyticsLabel(appState.mode) });
-    showUnsupported("DeviceMotion is not available in this browser.");
+    showUnsupported(support.message);
     return;
   }
   appState.audioEnabled = elements.audioToggle.checked;
@@ -11411,7 +11461,7 @@ async function startRun() {
   const permission = await requestMotionPermission();
   if (!permission.ok) {
     stopAudioCoach();
-    showUnsupported(permission.reason);
+    showMotionStartFailure(permission);
     return;
   }
 
@@ -11953,11 +12003,7 @@ function initNoSpillApp() {
   renderDiscordCtas("landing");
   drawCupCanvas(elements.cupCanvas, appState.currentG, appState.waterLeft);
   startShopGeneratorTimer();
-  if (!hasDeviceMotionSupport()) {
-    setLandingStatus(
-      "This browser has not exposed motion sensors yet. Start will check again on a phone.",
-    );
-  }
+  updateStartReadiness();
 }
 
 if (typeof document !== "undefined") {

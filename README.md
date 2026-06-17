@@ -132,6 +132,15 @@ node test_frontend_nospill.js
 Open `frontend/nospill/index.html` in a browser for static inspection. Device motion behavior needs
 a real mobile browser over HTTPS for full testing.
 
+Mobile motion troubleshooting:
+
+- iOS Safari may require a user gesture before motion permission can be requested. Tap
+  `Start & Calibrate`; do not expect permission prompts on page load.
+- Don’t Spill the Cup requires HTTPS for motion sensors, except local development contexts such as
+  `localhost`.
+- Permission denied, insecure HTTP, true unsupported browsers, and “permission granted but no
+  sensor data yet” are separate states with separate copy.
+
 ## Local QA Modes
 
 Append `?simulator=1` to enable the hidden local Delivery Simulator. Simulated deliveries are

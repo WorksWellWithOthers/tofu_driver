@@ -181,7 +181,8 @@ Canonical references:
    reveal scene without activating Dream Garage mechanics.
 14. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
    such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
-15. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+15. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, including first load,
+   `#/cup-test` reload, permission-needed, permission-denied, and no-motion-data cases.
 16. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
 17. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
