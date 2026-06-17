@@ -14,6 +14,8 @@
 - Driver Level can provide only a small capped Reputation bonus to shop orders. Tofu Shop does not
   level the driver, and Driver Level never changes Cup Test scoring or qualification.
 - Basic Mode uses device motion only and does not request location.
+- Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
+  iOS Safari keeps the `Start & Calibrate` user gesture and avoids false permission-denied states.
 - Qualified Run Mode is opt-in and may request location only after explicit start.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
@@ -194,8 +196,9 @@ Canonical references:
    reveal scene without activating Dream Garage mechanics.
 16. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
    such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
-17. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, including first load,
-   `#/cup-test` reload, permission-needed, permission-denied, and no-motion-data cases.
+17. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
+   muted, including first load, `#/cup-test` reload, permission-needed, permission-denied, and
+   no-motion-data cases.
 18. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
 19. Confirm custom-domain DNS and certificate status for `tofudriver.com`.

@@ -95,6 +95,11 @@ These rules are authoritative for all current and future features:
 - Do not show shop, crew, sound, upgrade, reward-claiming, or social actions during an active drive.
 - Basic Mode must not request location.
 - Qualified Run Mode may request location only after explicit opt-in/start.
+- Motion permission must be requested from the explicit `Start & Calibrate` tap before optional
+  audio setup or other awaited work, so mobile Safari keeps the user-gesture chain.
+- Permission-needed, permission-denied, insecure-context, unsupported-browser, and no-motion-data
+  states must stay distinct. Do not show permission-denied copy until the browser actually returns a
+  denied response.
 - Do not upload raw motion, raw GPS, route traces, coordinates, maps, street names, speed logs, or
   license plates.
 - Keep the current MVP local-first and static-browser friendly.
