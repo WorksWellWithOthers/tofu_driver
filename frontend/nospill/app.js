@@ -6018,18 +6018,25 @@ function getSceneAsset(layerId) {
 }
 
 function hasMikaForShopScene(gameState) {
-  const state = normalizeGameState(gameState);
+  const state = gameState && gameState.shop ? gameState : normalizeGameState(gameState);
   return state.collection.selectedCharacterId === "mika"
     || state.collection.unlockedCharacterIds.includes("mika");
 }
 
-function hasCompletedFirstShopLoopForScene(gameState) {
-  const state = normalizeGameState(gameState);
-  return fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.workingOrders;
+function sceneFulfilledOrderCount(state) {
+  return safeNonNegativeInteger(state && state.shop ? state.shop.lifetimeDeliveryOrders : 0, 0, 1000000);
 }
 
-function hasMeaningfulShopUpgradeForScene(gameState) {
-  const state = normalizeGameState(gameState);
+function sceneCounterServiceUnlocked(state) {
+  return Boolean(state && state.stamps && state.stamps.first_10_orders)
+    || sceneFulfilledOrderCount(state) >= 10;
+}
+
+function hasCompletedFirstShopLoopForScene(state) {
+  return sceneFulfilledOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.workingOrders;
+}
+
+function hasMeaningfulShopUpgradeForScene(state) {
   const upgrades = state.shop.stationUpgrades || {};
   return Boolean(state.stamps.first_upgrade_purchased)
     || safeNonNegativeInteger(upgrades.prep_counter_faster, 0, 100) > 0
@@ -6038,20 +6045,18 @@ function hasMeaningfulShopUpgradeForScene(gameState) {
     || safeNonNegativeInteger(upgrades.tofu_press_double, 0, 100) > 0;
 }
 
-function hasSustainedOrderProgressForScene(gameState) {
-  const state = normalizeGameState(gameState);
-  return fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.upgradedOrders
+function hasSustainedOrderProgressForScene(state) {
+  return sceneFulfilledOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.upgradedOrders
     || Boolean(state.stamps.first_10_orders)
     || Boolean(state.stamps.first_family_tofu_tray)
     || Boolean(state.stamps.first_100_tips)
     || safeNonNegativeNumber(state.shop.lifetimeTips, 0, SHOP_MAX_RESOURCE) >= TOFU_SHOP_SCENE_THRESHOLDS.upgradedLifetimeTips;
 }
 
-function hasEstablishedShopForScene(gameState) {
-  const state = normalizeGameState(gameState);
+function hasEstablishedShopForScene(state) {
   const deliveryShelfCount = safeNonNegativeInteger(state.shop.stations.delivery_shelf, 0, 100000);
   const shopSignCount = safeNonNegativeInteger(state.shop.stations.shop_sign, 0, 100000);
-  return fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.establishedOrders
+  return sceneFulfilledOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.establishedOrders
     || safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0
     || safeNonNegativeInteger(state.shop.shopLevel, 0, 100000) >= 10
     || (
@@ -6060,17 +6065,16 @@ function hasEstablishedShopForScene(gameState) {
     );
 }
 
-function hasEarnedCoveredCarTeaserForScene(gameState) {
-  const state = normalizeGameState(gameState);
+function hasEarnedCoveredCarTeaserForScene(state) {
   if (!hasEstablishedShopForScene(state)) return false;
   return Boolean(state.seenStoryBeatIds.includes("covered_car_teaser"))
     || safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0
     || (
-      isCounterServiceUnlocked(state)
+      sceneCounterServiceUnlocked(state)
       && (
         Boolean(state.stamps.first_upgrade_purchased)
         || Boolean(state.stamps.first_100_tips)
-        || fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.coveredCarOrders
+        || sceneFulfilledOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.coveredCarOrders
       )
     );
 }

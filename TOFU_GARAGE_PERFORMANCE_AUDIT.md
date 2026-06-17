@@ -157,6 +157,37 @@ High-midgame reproduction fixture:
 - high Reputation, low-to-mid Tips
 - Upgrades tab or Overview visible while the live shop tick runs
 
+## Living Scene Interaction Regression: 2026-06
+
+Observed after the slower Living Scene pacing pass:
+
+- Tofu Garage buttons could require double-clicking or feel unresponsive, especially on mobile.
+- The regression appeared after the scene selector became more milestone-driven.
+
+Actual root cause found:
+
+- The new scene milestone helper chain repeatedly called full `normalizeGameState()` through helper
+  functions during Overview renders. `normalizeGameState()` copies several nested state objects and
+  syncs shop generator state, so doing this several extra times during live shop refreshes increased
+  main-thread work exactly where clicks need to stay responsive.
+- Decorative Living Scene elements were not explicitly pointer-inert, so image/stage boxes had
+  normal pointer behavior even though the scene is not a control surface.
+
+Fix applied:
+
+- Living Scene threshold helpers now consume the already-normalized state from
+  `getTofuShopSceneState()` and read scalar milestone fields directly.
+- Decorative scene containers, images, and placeholders use `pointer-events: none` and
+  `user-select: none`.
+- Static JS/CSS cache keys were bumped so mobile browsers fetch the interaction fix.
+
+Guardrails:
+
+- Decorative scene code must not attach timers, event listeners, animation frames, or large
+  `aria-live` regions.
+- Scene visuals must never cover or intercept controls.
+- If scene work again hurts responsiveness, disable the decorative scene before adding content.
+
 ## BigNumber Decision
 
 BigNumber or mantissa/exponent is not needed now.

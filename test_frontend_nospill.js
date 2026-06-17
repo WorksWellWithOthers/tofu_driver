@@ -4506,8 +4506,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260617a'));
-  assert(html.includes('/static/nospill/app.css?v=20260617a'));
+  assert(html.includes('/static/nospill/app.js?v=20260617b'));
+  assert(html.includes('/static/nospill/app.css?v=20260617b'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -6793,6 +6793,8 @@ function testTofuShopLivingSceneV1Groundwork() {
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   assert(css.includes('@media (prefers-reduced-motion: reduce)'));
   assert(!css.includes('animation: shop-scene-pulse'));
+  assert(css.includes('.nospill-shop-scene'));
+  assert(css.includes('pointer-events: none;'));
 
   context.activeSceneState = advanced;
   vm.runInContext(`
@@ -6813,6 +6815,15 @@ globalThis.activeSceneHtml = renderTofuShopLivingScene(activeSceneState);
     source.indexOf('function getSceneAsset'),
     source.indexOf('function selectedSoundPack'),
   ).toLowerCase();
+  const sceneThresholdSource = source.slice(
+    source.indexOf('function sceneFulfilledOrderCount'),
+    source.indexOf('function getTofuShopSceneState'),
+  );
+  assert(!sceneThresholdSource.includes('normalizeGameState('));
+  assert(!sceneSource.includes('aria-live'));
+  assert(!sceneSource.includes('setinterval'));
+  assert(!sceneSource.includes('addeventlistener'));
+  assert(!sceneSource.includes('requestanimationframe'));
   [
     'navigator.geolocation',
     'routetrace',

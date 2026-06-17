@@ -10,6 +10,10 @@ Scene art is cosmetic only. It must not affect Cup Test score, cargo thresholds,
 qualification, rewards, speed, distance, or safety-sensitive logic. It must not appear during active
 Cup Test, motion permission, calibration, or active driving states.
 
+Scene art is never a control surface. Decorative scene containers, images, placeholders, and future
+overlays must not intercept pointer/touch events, attach event listeners, add timers, add large
+`aria-live` regions, or trigger repeated full renders.
+
 Full-scene swaps are milestone rewards, not live mirrors for every small shop purchase. Station
 cards, upgrade cards, and action buttons carry granular progression. The scene should advance more
 slowly than the mechanics so each image feels like a story beat.

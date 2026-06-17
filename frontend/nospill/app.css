@@ -749,12 +749,16 @@
 .nospill-shop-scene {
   display: grid;
   gap: 8px;
+  position: relative;
+  z-index: 0;
   border: 1px solid rgba(158, 233, 191, 0.2);
   border-radius: 8px;
   padding: 10px;
   background:
     linear-gradient(180deg, rgba(158, 233, 191, 0.09), transparent 42%),
     #070a0a;
+  pointer-events: none;
+  user-select: none;
 }
 
 .nospill-shop-scene-head {
@@ -788,12 +792,14 @@
   background:
     repeating-linear-gradient(135deg, rgba(244, 247, 239, 0.04) 0 2px, transparent 2px 18px),
     linear-gradient(180deg, #121817, #0b0f10);
+  pointer-events: none;
 }
 
 .nospill-shop-scene-image {
   min-width: 0;
   display: grid;
   min-height: 0;
+  pointer-events: none;
   background:
     radial-gradient(circle at 24% 20%, rgba(158, 233, 191, 0.16), transparent 34%),
     linear-gradient(140deg, rgba(240, 185, 90, 0.08), transparent 42%),
@@ -813,6 +819,7 @@
   font-weight: 800;
   line-height: 1.25;
   text-align: center;
+  pointer-events: none;
 }
 
 .nospill-shop-scene-image img {
