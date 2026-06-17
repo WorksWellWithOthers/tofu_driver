@@ -654,27 +654,31 @@ const CHARACTER_ART_MANIFEST = {
   perfect_pour_courier: {},
   mika: {
     shop_assistant_main_portrait: {
-      src: "/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp",
+      src: "/static/nospill/images/shop_assistant_main_portrait.webp",
       alt: "Mika, the Night Shift Manager, holding a clipboard in the Tofu Shop.",
     },
     result_screen_cameo: {
-      src: "/static/nospill/images/characters/mika/result_screen_cameo.webp",
+      src: "/static/nospill/images/result_screen_cameo.webp",
       alt: "Mika calmly reviewing a completed smooth delivery.",
     },
     coach_recap_expression_neutral: {
-      src: "/static/nospill/images/characters/mika/coach_neutral.webp",
+      src: "/static/nospill/images/coach_neutral.webp",
       alt: "Mika with a calm coaching expression.",
     },
     coach_recap_expression_pleased: {
-      src: "/static/nospill/images/characters/mika/coach_pleased.webp",
+      src: "/static/nospill/images/coach_pleased.webp",
       alt: "Mika looking quietly pleased with the smooth delivery.",
     },
     crew_profile_card: {
-      src: "/static/nospill/images/characters/mika/crew_profile_card.webp",
+      src: "/static/nospill/images/crew_profile_card.webp",
       alt: "Mika crew profile portrait.",
     },
     reward_unlock_card_art: {
-      src: "/static/nospill/images/characters/mika/reward_unlock_splash.webp",
+      src: "/static/nospill/images/reward_unlock_splash.webp",
+      alt: "Mika in a restrained reward splash for parked unlock moments.",
+    },
+    stamp_fanfare_cameo: {
+      src: "/static/nospill/images/reward_unlock_splash.webp",
       alt: "Mika in a restrained reward splash for parked unlock moments.",
     },
   },

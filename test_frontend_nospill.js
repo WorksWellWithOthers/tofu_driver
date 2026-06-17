@@ -5827,12 +5827,12 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert(inventory.includes('Mika MVP Pack'));
   assert(inventory.includes('6-image MVP'));
   [
-    '/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp',
-    '/static/nospill/images/characters/mika/result_screen_cameo.webp',
-    '/static/nospill/images/characters/mika/coach_neutral.webp',
-    '/static/nospill/images/characters/mika/coach_pleased.webp',
-    '/static/nospill/images/characters/mika/crew_profile_card.webp',
-    '/static/nospill/images/characters/mika/reward_unlock_splash.webp',
+    '/static/nospill/images/shop_assistant_main_portrait.webp',
+    '/static/nospill/images/result_screen_cameo.webp',
+    '/static/nospill/images/coach_neutral.webp',
+    '/static/nospill/images/coach_pleased.webp',
+    '/static/nospill/images/crew_profile_card.webp',
+    '/static/nospill/images/reward_unlock_splash.webp',
   ].forEach((expectedFile) => assert(inventory.includes(expectedFile), `${expectedFile} should be inventoried`));
   assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'characters', 'mika', 'README.md')));
   [
@@ -5844,9 +5844,9 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
     'reward_unlock_splash.webp',
   ].forEach((filename) => {
     assert.strictEqual(
-      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', 'characters', 'mika', filename)),
-      false,
-      `${filename} should be supplied later by art generation, not committed as a fake final asset`,
+      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', filename)),
+      true,
+      `${filename} should exist as a real integrated Mika asset`,
     );
   });
   const runViewHtml = html.slice(
@@ -5868,12 +5868,13 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert.strictEqual(mikaCatalog.name, 'Mika');
   assert.strictEqual(mikaCatalog.role, 'Night Shift Manager');
   const mikaExpectedPaths = {
-    shop_assistant_main_portrait: '/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp',
-    result_screen_cameo: '/static/nospill/images/characters/mika/result_screen_cameo.webp',
-    coach_recap_expression_neutral: '/static/nospill/images/characters/mika/coach_neutral.webp',
-    coach_recap_expression_pleased: '/static/nospill/images/characters/mika/coach_pleased.webp',
-    crew_profile_card: '/static/nospill/images/characters/mika/crew_profile_card.webp',
-    reward_unlock_card_art: '/static/nospill/images/characters/mika/reward_unlock_splash.webp',
+    shop_assistant_main_portrait: '/static/nospill/images/shop_assistant_main_portrait.webp',
+    result_screen_cameo: '/static/nospill/images/result_screen_cameo.webp',
+    coach_recap_expression_neutral: '/static/nospill/images/coach_neutral.webp',
+    coach_recap_expression_pleased: '/static/nospill/images/coach_pleased.webp',
+    crew_profile_card: '/static/nospill/images/crew_profile_card.webp',
+    reward_unlock_card_art: '/static/nospill/images/reward_unlock_splash.webp',
+    stamp_fanfare_cameo: '/static/nospill/images/reward_unlock_splash.webp',
   };
   Object.entries(mikaExpectedPaths).forEach(([slotId, expectedPath]) => {
     const asset = context.getCharacterAsset('mika', slotId);
@@ -5902,12 +5903,16 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   mikaState.collection.selectedCharacterId = 'mika';
   const mikaCameo = context.renderCharacterCameo('shop_assistant_main_portrait', mikaState);
   assert(mikaCameo.includes('data-character-id="mika"'));
-  assert(mikaCameo.includes('/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp'));
+  assert(mikaCameo.includes('/static/nospill/images/shop_assistant_main_portrait.webp'));
   assert(mikaCameo.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
   assert(mikaCameo.includes('Character art coming soon'));
   assert(mikaCameo.includes('hidden>M</div>'));
   const mikaPleased = context.renderCharacterCameo('coach_recap_expression_pleased', mikaState);
-  assert(mikaPleased.includes('/static/nospill/images/characters/mika/coach_pleased.webp'));
+  assert(mikaPleased.includes('/static/nospill/images/coach_pleased.webp'));
+  const mikaRewardSplash = context.renderCharacterCameo('reward_unlock_card_art', mikaState);
+  assert(mikaRewardSplash.includes('/static/nospill/images/reward_unlock_splash.webp'));
+  const mikaStampSplash = context.renderCharacterCameo('stamp_fanfare_cameo', mikaState);
+  assert(mikaStampSplash.includes('/static/nospill/images/reward_unlock_splash.webp'));
 
   context.artSlotState = mikaState;
   vm.runInContext(`
@@ -5982,7 +5987,7 @@ globalThis.activeCrewArtHtml = elements.characterList.innerHTML;
   assert(context.parkedOverviewArtHtml.includes('data-scene-id='));
   assert(!context.parkedOverviewArtHtml.includes('data-character-slot="shop_assistant_main_portrait"'));
   assert(context.parkedCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
-  assert(context.parkedCrewArtHtml.includes('/static/nospill/images/characters/mika/crew_profile_card.webp'));
+  assert(context.parkedCrewArtHtml.includes('/static/nospill/images/crew_profile_card.webp'));
   assert(context.parkedCrewArtHtml.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
   assert.strictEqual(context.activeCameoHtml, '');
   assert(!context.activeCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
@@ -6127,7 +6132,7 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert(!sceneHtml.includes('data-scene-layer='));
   assert(!sceneHtml.includes('Tofu Press art pending'));
   assert(!sceneHtml.includes('Delivery Shelf art pending'));
-  assert(!sceneHtml.includes('/static/nospill/images/characters/mika/shop_assistant_main_portrait.webp'));
+  assert(!sceneHtml.includes('/static/nospill/images/shop_assistant_main_portrait.webp'));
   assert(sceneHtml.includes('Decorative parked scene'));
 
   const fallbackLayer = context.renderSceneLayer({ id: 'scene_busy_shop_established', visible: true }, {
