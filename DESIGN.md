@@ -295,6 +295,10 @@ Current design principles:
   best action, ready orders, Prep Counter progress, the best available order card, and one relevant
   station or upgrade. A new player should not need to open Orders to understand or play the first
   loop.
+- The Tofu Shop Living Scene is a decorative parked Overview panel, not a control surface. It should
+  present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
+  milestones, while buttons and gameplay decisions remain separate UI. Do not show separate
+  per-layer art placeholder tiles in the Overview.
 - The first Passport stamp should be a Stamp Fanfare moment. The celebration is local-only,
   repeat-suppressed per stamp, accessible, and parked/result-screen only. It must never interrupt an
   active Cup Test, and it should respect reduced-motion and audio settings.
