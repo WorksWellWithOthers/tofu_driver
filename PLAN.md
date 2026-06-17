@@ -5,8 +5,9 @@
 - Tofu Driver is a static browser app currently source-located at `frontend/nospill/`.
 - Root/no hash defaults to `#/cup-test`.
 - `#/cup-test` shows Don't Spill the Cup, the smooth-driving challenge.
-- `#/shop` shows Tofu Shop, the parked-only idle/incremental game.
-- `#/crew` shows Delivery Crew when collection systems are relevant.
+- `#/shop` shows Tofu Garage, the parked-only idle/incremental mode whose first business is the
+  Tofu Shop. `#/garage` aliases to the same surface while `#/shop` remains supported.
+- `#/crew` shows the Delivery Crew parked placeholder/collection surface.
 - Delivery Driver progression is now separated from Tofu Shop progression: Cup Test runs grant
   Driver XP/Driver Level, while shop orders and Counter Service grant Tips, Reputation, Shop XP,
   Shop Level progress, stamps, and shop resources.
@@ -47,8 +48,9 @@
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
   language and local wallet context: generators use Buy, instant actions spend Spirit, timed effects
   show duration/active state, and tokens use Use Token.
-- Cup-first visitors now get clearer parked paths into Tofu Shop from the landing copy and Cup Test
-  result action without making the shop a driving-time prompt.
+- Cup-first visitors now get clearer parked paths into Tofu Garage from the landing copy and Cup
+  Test result action without making the shop a driving-time prompt. Continue actions land near the
+  Tofu Garage action area rather than the page top.
 - Don't Spill the Cup result cards now include safe summarized result flavor: Cargo Type, Trip Time,
   Drive Shape, a decorative Cup Trail, Daily Delivery Credit copy, and a Coach Recap focused on
   smooth hands, brake feather, decel control, transition smoothness, cargo balance, passenger
@@ -56,6 +58,14 @@
 - Character-art slots and parked-only placeholders are implemented for future Delivery Crew/shop
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
   expectations, and smallest recommended first asset pack.
+- Mika, Night Shift Manager, is wired as the first real character asset pack target. The manifest
+  expects six stable `.webp` paths under `frontend/nospill/assets/characters/mika/`, while missing
+  files still fall back to placeholders until final art is generated.
+- Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It uses placeholder
+  scene layers, stable future art paths, milestone-based layer reveal, Mika cameo reuse, and
+  reduced-motion-safe decorative activity without adding new shop mechanics.
+- Delivery Crew is a clickable parked surface with future/deferred copy and CTAs back toward Tofu
+  Garage and Don't Spill the Cup; it is no longer a dead visible nav item.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
   stays inline with compact reward feedback so repeated order handoffs do not block the loop.
 - Tofu Shop tab panels are scoped: Production owns station buying, Upgrades owns upgrade buying,
@@ -153,13 +163,21 @@ Canonical references:
 10. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
    Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
    distance, route difficulty, racing technique, or public-road competition.
-11. Produce the first small character-art pack against `CHARACTER_ART_ASSET_INVENTORY.md` only
-   after the parked placeholder surfaces feel correctly placed.
-12. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-13. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+11. Generate the MVP Tofu Shop scene art pack from `TOFU_SHOP_LIVING_SCENE_ASSET_SPEC.md`:
+   `shop_base_tiny`, `tofu_boxes_idle`, `prep_counter_visible`, `delivery_shelf_visible`,
+   `shop_sign_basic`, `covered_car_teaser`, and optional `tofu_box_loop`.
+12. Replace Tofu Shop scene placeholders with real assets, then add one small tofu/order animation
+   with a static reduced-motion fallback.
+13. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
+   reveal scene without activating Dream Garage mechanics.
+14. Generate and review the six-file Mika MVP art pack against
+   `CHARACTER_ART_ASSET_INVENTORY.md`, then drop the final `.webp` files into
+   `frontend/nospill/assets/characters/mika/`.
+15. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+16. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-14. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-15. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+17. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+18. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 

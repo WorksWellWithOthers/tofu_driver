@@ -13,7 +13,8 @@ only when it changes state, gives player feedback, is tested, and fits this prog
 
 ## 1. Product Role
 
-Tofu Shop is the parked-only idle/incremental game inside Tofu Driver.
+Tofu Shop is the first parked-only idle/incremental business inside Tofu Garage, the user-facing
+home progression mode in Tofu Driver.
 
 Its role:
 
@@ -529,7 +530,7 @@ implementation pass deliberately aligns code to them.
 | Time | Expected State | New Mechanic | Primary Button | Bottleneck | Reward Feeling |
 | --- | --- | --- | --- | --- | --- |
 | 0:00 | Fresh shop has stock, 1 ready order, 1 Tofu Press, 1 Prep Counter | Simple Tofu Box | Fulfill Shop Order | none yet | immediate first action |
-| 0:30 | First order result shows Tips/Reputation/Shop XP and first story beat | Shop Order Complete | Return to Tofu Shop | need more Tips or next order | the shop woke up |
+| 0:30 | First order result shows Tips/Reputation/Shop XP and first story beat | Shop Order Complete | Return to Tofu Garage | need more Tips or next order | the shop woke up |
 | 1:00 | Prep Counter progress is visible | ready/preparing order split | Wait for Prep Counter or Fulfill Shop Order | order prep | the shop works while parked |
 | 2:00 | First purchase is close or available | Tidy Packaging / first station choice | Buy bottleneck-solving improvement | Tips | clear progress toward first upgrade |
 | 3:00 | Player understands stock runway | Tofu Stock runway copy | Buy Tofu Press if stock is low; otherwise order throughput | stock or throughput | resources have different jobs |
@@ -597,7 +598,7 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | buy_tidy_packaging | Buy Tidy Packaging | Upgrades | First Loop | First order complete and Prep Counter/order throughput is the bottleneck | Enough Tips | Need 20 Tips. Fulfill prepared orders first. | 20 Tips target | Prep Counter output x1.5 | 1 to 3 minutes | Slow order prep | Buy Tidy Packaging | Implemented |
 | buy_double_labels | Buy Double Labels | Upgrades | First Shop | Own 2 Prep Counters | Enough Tips | Need 120 Tips. | 120 Tips target | Prep Counter output x2 | 10 to 20 minutes | Order throughput plateau | Buy Double Labels | Implemented, target tuning pending |
 | view_passport | View Passport | Passport | First Loop / First Shop | First stamp earned or teaser unlocked | Passport is discovered | Earn a stamp-worthy shop moment first. | none | Opens stamp/status collection | 5 to 10 minutes | Collection curiosity | View Passport | Partial |
-| visit_tofu_shop | Visit Tofu Shop | Cup Test result | Cup-first discovery | Cup Test result screen shown and player is parked | Always | none | none | Returns to shop/dashboard | After a Cup Test result | Helps Cup-first players find the parked shop loop | Visit Tofu Shop | Implemented |
+| visit_tofu_garage | Visit Tofu Garage | Cup Test result | Cup-first discovery | Cup Test result screen shown and player is parked | Always | none | none | Returns to the Tofu Garage action area | After a Cup Test result | Helps Cup-first players find the parked shop loop | Visit Tofu Garage | Implemented |
 | take_cup_test | Take Don't Spill the Cup | Shop/Cup Test | Always secondary from shop | Always visible as optional boost path | Parked; setup/safety complete for start | Complete the safety checklist before starting. | none | Starts optional smooth-driving challenge | Any time | Certified boost/status path | Take the Cup Test | Implemented |
 | buy_delivery_shelf | Buy Delivery Shelf | Production | First Shop | 10 fulfilled orders, First Family Tofu Tray, or upgrade/level milestone | Enough Tips/Prep Capacity | Unlocks after the core order loop is established. | 90 Tips runtime V1; 800 Tips target later | Boosts Prep Counter throughput | 10 to 20 minutes | Scaling order flow | Buy Delivery Shelf | V1 implemented |
 | buy_shop_sign | Buy Shop Sign | Production | First Shop | 10 Reputation, 100 lifetime Tips, or Delivery Shelf owned | Enough Tips | Need Reputation, Tips, or Delivery Shelf. | 140 Tips runtime V1; 300 Tips target later | Boosts Reputation gain from orders | 20 to 40 minutes | Reputation unlock pressure | Buy Shop Sign | V1 implemented |
@@ -1758,7 +1759,7 @@ First action:
 - Fulfill Max is labeled with the selected/best order type
 - First Shop Order stamp unlocks or is revealed after the first order
 - normal shop-order fulfillment stays inline
-- Cup Test result offers a parked `Visit Tofu Shop` CTA
+- Cup Test result offers a parked `Visit Tofu Garage` CTA that lands near the shop action area
 - no share-card clutter appears for ordinary shop order results
 
 Order prep:

@@ -15,7 +15,7 @@ The product has three main player-facing surfaces:
 
 - `Don't Spill the Cup` / `The Cup Test`: the smooth-driving challenge and iconic first visitor
   experience.
-- `Tofu Shop`: the parked-only idle/incremental management game and base progression layer.
+- `Tofu Garage`: the parked-only idle/incremental mode and base progression layer.
 - `Delivery Crew`: the parked cosmetic/audio/collection surface.
 
 Supporting concepts:
@@ -29,9 +29,12 @@ Canonical hierarchy:
 
 1. Tofu Driver is the brand and app.
 2. Don't Spill the Cup is the default visitor-facing challenge.
-3. Tofu Shop is the home progression game.
+3. Tofu Garage is the home progression mode.
 4. Delivery Crew is a collection/customization surface.
 5. Delivery Log / Ledger records what happened.
+
+Tofu Shop is the first business inside Tofu Garage. User-facing navigation should say `Tofu Garage`
+so the mode reads as a game world, not a merchandise store.
 
 ## Product Surfaces
 
@@ -39,22 +42,23 @@ The current static app uses hash routes:
 
 - root/no hash defaults to `#/cup-test`
 - `#/cup-test` shows `Don't Spill the Cup`
-- `#/shop` shows `Tofu Shop`
-- `#/crew` shows `Delivery Crew` when relevant
+- `#/shop` shows `Tofu Garage`; `#/garage` is an alias for the same surface
+- `#/crew` shows `Delivery Crew`
 
 Default visitor behavior:
 
 - The first page is `Don't Spill the Cup`.
 - Cup page primary CTA: `Take the Cup Test`.
-- Cup page secondary CTA: visit or start the Tofu Shop.
-- Cup result screens can include a small parked CTA back to Tofu Shop so Cup-first visitors discover
+- Cup page secondary CTA: visit or start Tofu Garage.
+- Cup result screens can include a small parked CTA back to Tofu Garage so Cup-first visitors discover
   the home progression loop without interrupting active driving.
-- Tofu Shop page primary CTA: the current shop loop, such as `Fulfill Shop Order` or the next shop
-  action.
-- Delivery Crew is reachable when character/sound systems are relevant.
+- Tofu Garage page primary CTA: the current shop loop, such as `Fulfill Shop Order` or the next shop
+  action, and Continue actions land near the shop action area rather than the page top.
+- Delivery Crew is reachable as a parked placeholder/collection surface and must not be a dead nav
+  item.
 
 This resolves the older tension between "the shop is the base game" and "the cup challenge is the
-default page": the Cup Test is the iconic first surface, while Tofu Shop is the base parked
+default page": the Cup Test is the iconic first surface, while Tofu Garage is the base parked
 progression layer.
 
 ## Progression Ownership

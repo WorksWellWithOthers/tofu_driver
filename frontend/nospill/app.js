@@ -569,6 +569,13 @@ const CHARACTER_CATALOG = [
     unlock: "Perfect Pour",
     flavor: "Arrives with the cup exactly as it left.",
   },
+  {
+    id: "mika",
+    name: "Mika",
+    role: "Night Shift Manager",
+    unlock: "Future Mika character pack",
+    flavor: "Sharp, calm, and quietly impressed by smooth deliveries.",
+  },
 ];
 
 const CHARACTER_ART_SLOTS = {
@@ -598,7 +605,14 @@ const CHARACTER_ART_SLOTS = {
     purpose: "Post-run smooth-control recap",
     placeholder: "Coach portrait not yet assigned",
     imageType: "expression portrait",
-    aspectRatio: "1:1",
+    aspectRatio: "4:5",
+  },
+  coach_recap_expression_pleased: {
+    label: "Coach Recap",
+    purpose: "Post-run positive smooth-control recap",
+    placeholder: "Coach portrait not yet assigned",
+    imageType: "expression portrait",
+    aspectRatio: "4:5",
   },
   reward_unlock_card_art: {
     label: "Reward Art",
@@ -611,8 +625,8 @@ const CHARACTER_ART_SLOTS = {
     label: "Crew Profile",
     purpose: "Delivery Crew collection card",
     placeholder: "Crew portrait not yet assigned",
-    imageType: "square profile portrait",
-    aspectRatio: "1:1",
+    imageType: "crew profile portrait",
+    aspectRatio: "4:5",
   },
   stamp_fanfare_cameo: {
     label: "Stamp Cameo",
@@ -635,6 +649,119 @@ const CHARACTER_ART_MANIFEST = {
   sleepy_dispatcher: {},
   tea_master: {},
   perfect_pour_courier: {},
+  mika: {
+    shop_assistant_main_portrait: {
+      src: "/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp",
+      alt: "Mika, the Night Shift Manager, holding a clipboard in the Tofu Shop.",
+    },
+    result_screen_cameo: {
+      src: "/static/nospill/assets/characters/mika/result_screen_cameo.webp",
+      alt: "Mika calmly reviewing a completed smooth delivery.",
+    },
+    coach_recap_expression_neutral: {
+      src: "/static/nospill/assets/characters/mika/coach_neutral.webp",
+      alt: "Mika with a calm coaching expression.",
+    },
+    coach_recap_expression_pleased: {
+      src: "/static/nospill/assets/characters/mika/coach_pleased.webp",
+      alt: "Mika looking quietly pleased with the smooth delivery.",
+    },
+    crew_profile_card: {
+      src: "/static/nospill/assets/characters/mika/crew_profile_card.webp",
+      alt: "Mika crew profile portrait.",
+    },
+    reward_unlock_card_art: {
+      src: "/static/nospill/assets/characters/mika/reward_unlock_splash.webp",
+      alt: "Mika in a restrained reward splash for parked unlock moments.",
+    },
+  },
+};
+
+const TOFU_SHOP_SCENE_ASSETS = {
+  shop_base_tiny: {
+    src: "/static/nospill/assets/scenes/tofu-shop/shop_base_tiny.webp",
+    label: "Tiny Shop",
+    placeholder: "Tiny shop scene pending",
+    kind: "base",
+  },
+  tofu_boxes_idle: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/tofu_boxes_idle.webp",
+    label: "Tofu Boxes",
+    placeholder: "Tofu box art pending",
+    kind: "layer",
+  },
+  tofu_order_motion: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/tofu_order_motion.webp",
+    label: "Order Motion",
+    placeholder: "Order motion art pending",
+    kind: "activity",
+  },
+  tofu_press_visible: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/tofu_press_visible.webp",
+    label: "Tofu Press",
+    placeholder: "Tofu Press art pending",
+    kind: "layer",
+  },
+  prep_counter_visible: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/prep_counter_visible.webp",
+    label: "Prep Counter",
+    placeholder: "Prep Counter art pending",
+    kind: "layer",
+  },
+  prep_counter_upgraded: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/prep_counter_upgraded.webp",
+    label: "Upgraded Prep Counter",
+    placeholder: "Upgraded Prep Counter art pending",
+    kind: "layer",
+  },
+  delivery_shelf_visible: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_visible.webp",
+    label: "Delivery Shelf",
+    placeholder: "Delivery Shelf art pending",
+    kind: "layer",
+  },
+  delivery_shelf_expanded: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_expanded.webp",
+    label: "Expanded Delivery Shelf",
+    placeholder: "Expanded Delivery Shelf art pending",
+    kind: "layer",
+  },
+  shop_sign_basic: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/shop_sign_basic.webp",
+    label: "Shop Sign",
+    placeholder: "Shop Sign art pending",
+    kind: "layer",
+  },
+  shop_sign_upgraded: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/shop_sign_upgraded.webp",
+    label: "Upgraded Shop Sign",
+    placeholder: "Upgraded Shop Sign art pending",
+    kind: "layer",
+  },
+  counter_service_hint: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/counter_service_hint.webp",
+    label: "Counter Service",
+    placeholder: "Counter Service art pending",
+    kind: "activity",
+  },
+  covered_car_teaser: {
+    src: "/static/nospill/assets/scenes/tofu-shop/layers/covered_car_teaser.webp",
+    label: "Covered Car",
+    placeholder: "Covered car teaser art pending",
+    kind: "teaser",
+  },
+  tofu_box_loop: {
+    src: "/static/nospill/assets/scenes/tofu-shop/sprites/tofu_box_loop.webp",
+    label: "Tofu Box Loop",
+    placeholder: "Tofu box sprite pending",
+    kind: "sprite",
+  },
+  order_fulfilled_loop: {
+    src: "/static/nospill/assets/scenes/tofu-shop/sprites/order_fulfilled_loop.webp",
+    label: "Order Fulfilled Loop",
+    placeholder: "Order fulfilled sprite pending",
+    kind: "sprite",
+  },
 };
 
 const SOUND_PACK_CATALOG = [
@@ -5594,7 +5721,12 @@ function renderCharacterCameo(slotId, gameState = loadGameState(), options = {})
   const label = options.label || slot.label;
   const copy = options.copy || character.flavor || slot.purpose;
   const art = asset.src
-    ? `<img src="${escapeHtml(asset.src)}" alt="${escapeHtml(asset.alt || `${character.name} ${label}`)}" loading="lazy" />`
+    ? `<img
+        src="${escapeHtml(asset.src)}"
+        alt="${escapeHtml(asset.alt || `${character.name} ${label}`)}"
+        loading="lazy"
+        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+      /><div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(`${label}: ${asset.placeholder}`)}" hidden>${escapeHtml(character.name.slice(0, 1))}</div>`
     : `<div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(`${label}: ${asset.placeholder}`)}">${escapeHtml(character.name.slice(0, 1))}</div>`;
   return `
     <div class="nospill-character-cameo ${asset.src ? "" : "is-placeholder"}" data-character-slot="${escapeHtml(slotId)}" data-character-id="${escapeHtml(character.id)}">
@@ -5605,6 +5737,156 @@ function renderCharacterCameo(slotId, gameState = loadGameState(), options = {})
         <small>${escapeHtml(asset.src ? copy : asset.placeholder)}</small>
       </div>
     </div>
+  `;
+}
+
+function getSceneAsset(layerId) {
+  const asset = TOFU_SHOP_SCENE_ASSETS[layerId] || null;
+  return {
+    layerId,
+    src: asset && typeof asset.src === "string" ? asset.src : "",
+    label: asset && typeof asset.label === "string" ? asset.label : layerId || "Scene Layer",
+    placeholder: asset && typeof asset.placeholder === "string" ? asset.placeholder : "Scene art pending",
+    kind: asset && typeof asset.kind === "string" ? asset.kind : "layer",
+  };
+}
+
+function hasMikaForShopScene(gameState) {
+  const state = normalizeGameState(gameState);
+  return state.collection.selectedCharacterId === "mika"
+    || state.collection.unlockedCharacterIds.includes("mika");
+}
+
+function getTofuShopSceneState(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  const prep = orderPrepProgress(state);
+  const deliveryShelfCount = safeNonNegativeInteger(state.shop.stations.delivery_shelf, 0, 100000);
+  const shopSignCount = safeNonNegativeInteger(state.shop.stations.shop_sign, 0, 100000);
+  const prepUpgradeLevel = safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_faster, 0, 100)
+    + safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_double, 0, 100);
+  const recentShopOrder = recentShopReward(state);
+  return {
+    activeDrive: appState.running || appState.calibrating,
+    reducedMotion: prefersReducedMotion(),
+    readyOrders: prep.ready,
+    prepRunning: prep.running,
+    stockShortage: Boolean(prep.waitingForTofu),
+    prepBottleneck: isOrderPrepBottleneck(state),
+    recentlyFulfilled: Boolean(recentShopOrder || appState.shopInlineResult),
+    counterServiceUnlocked: isCounterServiceUnlocked(state),
+    counterServiceRunning: Boolean(state.shop.counterService.running),
+    mikaVisible: hasMikaForShopScene(state),
+    coveredCarVisible: Boolean(
+      state.stamps.first_upgrade_purchased
+      || state.stamps.first_100_tips
+      || state.seenStoryBeatIds.includes("covered_car_teaser")
+    ),
+    milestones: {
+      hasTofuPress: safeNonNegativeInteger(state.shop.stations.tofu_press, 0, 100000) > 0,
+      hasPrepCounter: safeNonNegativeInteger(state.shop.stations.prep_counter, 0, 100000) > 0
+        || state.shop.lifetimeDeliveryOrders > 0,
+      hasPrepUpgrade: prepUpgradeLevel > 0 || Boolean(state.stamps.first_upgrade_purchased),
+      hasDeliveryShelf: deliveryShelfCount > 0,
+      hasExpandedDeliveryShelf: deliveryShelfCount >= 5,
+      hasShopSign: shopSignCount > 0,
+      hasUpgradedShopSign: shopSignCount >= 5 || state.shop.reputation >= 100,
+    },
+  };
+}
+
+function getTofuShopSceneLayers(sceneState) {
+  if (!sceneState || sceneState.activeDrive) return [];
+  const layers = [
+    { id: "shop_base_tiny", visible: true, activity: "static" },
+    { id: "tofu_boxes_idle", visible: true, activity: sceneState.stockShortage ? "low_stock" : "stocked" },
+    { id: "tofu_press_visible", visible: sceneState.milestones.hasTofuPress, activity: "production" },
+    { id: "prep_counter_visible", visible: sceneState.milestones.hasPrepCounter, activity: sceneState.prepRunning ? "preparing" : "paused" },
+    { id: "prep_counter_upgraded", visible: sceneState.milestones.hasPrepUpgrade, activity: "upgraded" },
+    { id: "delivery_shelf_visible", visible: sceneState.milestones.hasDeliveryShelf, activity: "support" },
+    { id: "delivery_shelf_expanded", visible: sceneState.milestones.hasExpandedDeliveryShelf, activity: "expanded" },
+    { id: "shop_sign_basic", visible: sceneState.milestones.hasShopSign, activity: "reputation" },
+    { id: "shop_sign_upgraded", visible: sceneState.milestones.hasUpgradedShopSign, activity: "known" },
+    {
+      id: "tofu_order_motion",
+      visible: sceneState.readyOrders > 0 || sceneState.recentlyFulfilled || sceneState.prepBottleneck,
+      activity: sceneState.recentlyFulfilled ? "fulfilled" : sceneState.readyOrders > 0 ? "ready" : "prepping",
+      animated: true,
+    },
+    {
+      id: "counter_service_hint",
+      visible: sceneState.counterServiceUnlocked,
+      activity: sceneState.counterServiceRunning ? "running" : "available",
+      animated: true,
+    },
+    { id: "mika_shop_cameo", visible: sceneState.mikaVisible, activity: "cameo", characterSlot: "shop_assistant_main_portrait" },
+    { id: "covered_car_teaser", visible: sceneState.coveredCarVisible, activity: "story_teaser" },
+  ];
+  return layers.filter((layer) => layer.visible);
+}
+
+function renderSceneLayer(layer, options = {}) {
+  if (!layer || !layer.id) return "";
+  if (layer.characterSlot === "shop_assistant_main_portrait") {
+    return `
+      <div class="nospill-shop-scene-layer nospill-shop-scene-character" data-scene-layer="${escapeHtml(layer.id)}" data-scene-activity="${escapeHtml(layer.activity || "static")}">
+        ${renderCharacterCameo(layer.characterSlot, options.gameState, {
+          label: "Night Shift",
+          copy: "Mika keeps the parked shop scene organized.",
+        })}
+      </div>
+    `;
+  }
+  const asset = getSceneAsset(layer.id);
+  const animated = Boolean(layer.animated && !options.reducedMotion);
+  const art = asset.src
+    ? `<img
+        src="${escapeHtml(asset.src)}"
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+      /><div class="nospill-shop-scene-placeholder" role="img" aria-label="${escapeHtml(`${asset.label}: ${asset.placeholder}`)}" hidden>${escapeHtml(asset.placeholder)}</div>`
+    : `<div class="nospill-shop-scene-placeholder" role="img" aria-label="${escapeHtml(`${asset.label}: ${asset.placeholder}`)}">${escapeHtml(asset.placeholder)}</div>`;
+  return `
+    <div
+      class="nospill-shop-scene-layer ${animated ? "is-animated" : "is-static"}"
+      data-scene-layer="${escapeHtml(layer.id)}"
+      data-scene-activity="${escapeHtml(layer.activity || "static")}"
+      data-scene-kind="${escapeHtml(asset.kind)}"
+    >
+      ${art}
+      <span class="nospill-shop-scene-layer-label">${escapeHtml(asset.label)}</span>
+    </div>
+  `;
+}
+
+function renderTofuShopLivingScene(gameState = loadGameState()) {
+  const state = normalizeGameState(gameState);
+  const sceneState = getTofuShopSceneState(state);
+  if (sceneState.activeDrive) return "";
+  const layers = getTofuShopSceneLayers(sceneState);
+  const layerHtml = layers.map((layer) => renderSceneLayer(layer, {
+    gameState: state,
+    reducedMotion: sceneState.reducedMotion,
+  })).join("");
+  const activity = sceneState.stockShortage
+    ? "Waiting for Tofu Stock"
+    : sceneState.counterServiceRunning
+      ? "Counter Service is handling pickups"
+      : sceneState.readyOrders > 0
+        ? `${formatShopCount(sceneState.readyOrders)} ready order${sceneState.readyOrders === 1 ? "" : "s"}`
+        : "Prep Counter is warming up";
+  return `
+    <section class="nospill-shop-scene ${sceneState.reducedMotion ? "is-reduced-motion" : "is-motion-ok"}" aria-label="Tofu Shop living scene">
+      <div class="nospill-shop-scene-head">
+        <span>Tofu Shop Scene</span>
+        <strong>${escapeHtml(activity)}</strong>
+      </div>
+      <div class="nospill-shop-scene-stage" aria-label="Parked visual shop scene. Decorative only; use the controls below to play.">
+        ${layerHtml}
+      </div>
+      <p>Decorative parked scene. Shop controls stay below.</p>
+    </section>
   `;
 }
 
@@ -6865,7 +7147,7 @@ function showView(viewName) {
 
 function surfaceFromHash(hashValue = "") {
   const value = String(hashValue || "").replace(/^#\/?/, "").toLowerCase();
-  if (value === "shop") return "shop";
+  if (value === "shop" || value === "garage") return "shop";
   if (value === "crew") return "crew";
   return "cup-test";
 }
@@ -6877,15 +7159,9 @@ function surfaceHash(surface) {
 
 function renderSurfaceNavigation(gameState = null) {
   const activeDrive = appState.running || appState.calibrating;
-  const state = gameState ? normalizeGameState(gameState) : currentGameState();
-  const reveal = progressiveRevealState(state);
   if (elements.surfaceNavButtons) {
     elements.surfaceNavButtons.forEach((button) => {
       const active = button.dataset.surfaceTarget === appState.surface;
-      const crewNav = button.dataset.surfaceTarget === "crew";
-      if (crewNav && button.classList) {
-        button.classList.toggle("is-hidden", !reveal.crew && !reveal.sounds && appState.surface !== "crew");
-      }
       button.classList.toggle("is-active", active);
       if (active) {
         button.setAttribute("aria-current", "page");
@@ -6904,7 +7180,7 @@ function renderBrandShelf() {
     elements.brandShelfEyebrow.textContent = crewSurface
       ? "Delivery Crew"
       : shopSurface
-        ? "Tofu Shop"
+        ? "Tofu Garage"
         : "Certified Challenge";
   }
   if (elements.landingTitle) {
@@ -6916,23 +7192,23 @@ function renderBrandShelf() {
   }
   if (elements.brandShelfCopy) {
     elements.brandShelfCopy.textContent = shopSurface
-      ? "A cozy delivery-management game you can play at home."
+      ? "A parked idle-management game. Start with tofu orders, then grow toward the garage."
       : crewSurface
-        ? "Choose your local crew, characters, and gentle sound packs while parked."
-        : "Keep the cup steady. Drive smoothly. Boost the Tofu Shop.";
+        ? "Crew collection is coming later. Build the Tofu Garage and complete Cup Test deliveries to discover future crew stories."
+        : "Keep the cup steady. Drive smoothly. Build the Tofu Garage while parked.";
   }
   if (elements.brandShelfSafety) {
     elements.brandShelfSafety.textContent = shopSurface
-      ? "Play the shop anytime. Take Don't Spill the Cup when you're ready for a certified smooth-delivery boost."
+      ? "Run the Tofu Shop while parked. Take Don't Spill the Cup when you're ready for a certified smooth-delivery boost."
       : crewSurface
         ? "Crew and sound choices never change real-world driving score."
         : "Start while parked. Basic Mode uses motion only; Qualified Run is opt-in.";
   }
   if (elements.brandPrimaryCta) {
     elements.brandPrimaryCta.textContent = crewSurface
-      ? "Go to Tofu Shop"
+      ? "Go to Tofu Garage"
       : shopSurface
-        ? "Continue the Shop"
+        ? "Continue Tofu Garage"
         : "Take the Cup Test";
     elements.brandPrimaryCta.dataset.brandAction = crewSurface ? "shop" : shopSurface ? "shop" : "cup-test";
   }
@@ -6941,9 +7217,30 @@ function renderBrandShelf() {
       ? "Take Don't Spill the Cup"
       : shopSurface
         ? "Take Don't Spill the Cup"
-        : "Go to Tofu Shop";
+        : "Go to Tofu Garage";
     elements.brandSecondaryCta.dataset.brandAction = crewSurface || shopSurface ? "cup-test" : "shop";
   }
+}
+
+function scrollAndFocusParkedNode(node, options = {}) {
+  if (!node || (node.classList && node.classList.contains && node.classList.contains("is-hidden"))) return;
+  const behavior = prefersReducedMotion() ? "auto" : "smooth";
+  if (typeof node.scrollIntoView === "function") {
+    node.scrollIntoView({ behavior, block: options.block || "start" });
+  }
+  if (options.focus && typeof node.focus === "function") {
+    node.focus({ preventScroll: true });
+  }
+}
+
+function surfaceScrollTarget(surface, options = {}) {
+  if (surface === "shop") {
+    if (options.target === "actions" && elements.tofuGarageActions) return elements.tofuGarageActions;
+    return elements.tofuShopSection || elements.landingView;
+  }
+  if (surface === "crew") return elements.collectionSection || elements.landingView;
+  if (surface === "cup-test") return elements.setupFlow || elements.landingView;
+  return elements.landingView;
 }
 
 function setAppSurface(surface = "cup-test", options = {}) {
@@ -6969,8 +7266,11 @@ function setAppSurface(surface = "cup-test", options = {}) {
   ) {
     window.location.hash = surfaceHash(nextSurface);
   }
-  if (options.scroll && elements.landingView && typeof elements.landingView.scrollIntoView === "function") {
-    elements.landingView.scrollIntoView({ behavior: "smooth", block: "start" });
+  if (options.scroll) {
+    scrollAndFocusParkedNode(surfaceScrollTarget(nextSurface, options), {
+      block: options.scrollBlock || "start",
+      focus: Boolean(options.focus),
+    });
   }
   if (options.trackNav && previousSurface !== nextSurface) {
     trackEvent("tofu_driver_nav_clicked", { target_view: analyticsViewName(nextSurface) });
@@ -7912,7 +8212,7 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "start_shop",
       title: "Next: Start the Tofu Shop",
-      copy: "Pack your first order at home, then take the Cup Test when you're ready for a certified boost.",
+      copy: "Start the parked shop loop inside Tofu Garage, then take the Cup Test when you're ready for a certified boost.",
       buttonLabel: "Start the Shop",
       disabled: false,
     };
@@ -7937,9 +8237,9 @@ function nextBestAction(gameState, options = {}) {
   }
   return {
     type: "continue_shop",
-    title: "Next: Continue the Shop",
+    title: "Next: Continue Tofu Garage",
     copy: "Let the press work, fulfill prepared orders, or take the Cup Test for certified progress.",
-    buttonLabel: "View Tofu Shop",
+    buttonLabel: "View Tofu Garage",
     disabled: false,
   };
 }
@@ -8948,14 +9248,11 @@ function renderOverviewPanel(state) {
   return `
     <h4>Overview</h4>
     ${renderNextMilestoneCard(state)}
+    ${renderTofuShopLivingScene(state)}
     <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
     <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.</p>
     <p class="nospill-panel-helper">Tips buy upgrades. ${escapeHtml(runway.message)}</p>
     <div class="nospill-idle-grid">
-      ${renderCharacterCameo("shop_assistant_main_portrait", state, {
-        label: "On Shift",
-        copy: "Cosmetic crew art belongs on parked shop screens.",
-      })}
       ${renderPreparingOrderCard(state)}
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
       ${renderOverviewImprovementCard(state)}
@@ -10016,7 +10313,7 @@ function continueFromStampFanfare() {
 function viewPassportFromStampFanfare() {
   hideStampFanfare();
   const state = currentGameState();
-  setAppSurface("shop", { updateHash: true, scroll: true });
+  setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
   appState.shopTab = isPassportTabUnlocked(state) ? "passport" : "overview";
   renderGamePanels(state);
   setSummaryStatusMessage("Passport stamp recorded.");
@@ -10024,7 +10321,7 @@ function viewPassportFromStampFanfare() {
 
 function continueFromDiscoveryFanfare() {
   hideDiscoveryFanfare();
-  setAppSurface("shop", { updateHash: true, scroll: true });
+  setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
   appState.shopTab = "overview";
   renderGamePanels(currentGameState());
 }
@@ -10033,7 +10330,7 @@ function viewSystemFromDiscoveryFanfare() {
   const fanfare = appState.currentDiscoveryFanfare;
   hideDiscoveryFanfare();
   let state = currentGameState();
-  setAppSurface("shop", { updateHash: true, scroll: true });
+  setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
   appState.shopTab = fanfare && fanfare.tabId ? fanfare.tabId : "overview";
   appState.highlightedShopTab = "";
   state = clearNewlyRevealedTab(state, appState.shopTab);
@@ -10061,11 +10358,11 @@ function renderShopOrderResult(result) {
   if (elements.returnDashboardButton) {
     elements.returnDashboardButton.textContent = canFulfillAnother
       ? "Fulfill Another Shop Order"
-      : "Return to Tofu Shop";
+      : "Return to Tofu Garage";
   }
   if (elements.newRunButton) {
     elements.newRunButton.textContent = canFulfillAnother
-      ? "Return to Tofu Shop"
+      ? "Return to Tofu Garage"
       : "Take Don't Spill the Cup";
     elements.newRunButton.classList.toggle("is-hidden", false);
   }
@@ -10177,7 +10474,7 @@ function renderSummary(summary) {
   }
   if (elements.returnDashboardButton) {
     elements.returnDashboardButton.textContent = reveal.shop
-      ? "Visit Tofu Shop"
+      ? "Visit Tofu Garage"
       : "Return to Dashboard";
   }
   if (elements.newRunButton) {
@@ -11069,14 +11366,9 @@ function scrollToDashboardTarget(target) {
   const node = target === "simulator" && isSimulatorEnabled()
     ? elements.simulatorPanel
     : target === "shop" && elements.tofuShopSection
-      ? elements.tofuShopSection
+      ? elements.tofuGarageActions || elements.tofuShopSection
       : elements.landingView;
-  if (node && node.classList && node.classList.contains && node.classList.contains("is-hidden")) {
-    return;
-  }
-  if (node && typeof node.scrollIntoView === "function") {
-    node.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  scrollAndFocusParkedNode(node, { focus: target === "shop" });
 }
 
 function returnToDashboard(target = "shop") {
@@ -11165,7 +11457,7 @@ function handleNextBestAction() {
     return;
   }
   if (actionType === "buy_station") {
-    setAppSurface("shop", { updateHash: true, scroll: true });
+    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
     appState.shopTab = "production";
     renderGamePanels(currentGameState());
     setSummaryStatusMessage("Choose the recommended shop station while parked.");
@@ -11176,7 +11468,7 @@ function handleNextBestAction() {
     return;
   }
   if (actionType === "continue_shop") {
-    focusShopUpgrade("");
+    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
     setSummaryStatusMessage("Review the Tofu Shop while parked.");
     return;
   }
@@ -11211,7 +11503,7 @@ function bindEvents() {
         revealSetupFlow();
         return;
       }
-      setAppSurface("shop", { updateHash: true, scroll: true });
+      setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
       renderGamePanels(loadGameState());
     });
   }
@@ -11221,7 +11513,7 @@ function bindEvents() {
       const target = elements.brandSecondaryCta.dataset.brandAction === "cup-test"
         ? "cup-test"
         : "shop";
-      setAppSurface(target, { updateHash: true, scroll: true, trackNav: true });
+      setAppSurface(target, { updateHash: true, scroll: true, trackNav: true, target: target === "shop" ? "actions" : "", focus: target === "shop" });
       renderGamePanels(loadGameState());
     });
   }
@@ -11229,7 +11521,11 @@ function bindEvents() {
     elements.surfaceNavButtons.forEach((button) => {
       button.addEventListener("click", () => {
         if (appState.running || appState.calibrating) return;
-        const surface = button.dataset.surfaceTarget === "cup-test" ? "cup-test" : "shop";
+        const surface = button.dataset.surfaceTarget === "cup-test"
+          ? "cup-test"
+          : button.dataset.surfaceTarget === "crew"
+            ? "crew"
+            : "shop";
         setAppSurface(surface, { updateHash: true, scroll: true, trackNav: true });
         renderGamePanels(loadGameState());
       });
@@ -11333,6 +11629,7 @@ function cacheElements() {
     surfaceSections: Array.from(document.querySelectorAll("[data-app-surface]")),
     surfaceNavButtons: Array.from(document.querySelectorAll("[data-surface-target]")),
     tofuShopSection: document.getElementById("tofu-shop"),
+    tofuGarageActions: document.getElementById("tofu-garage-actions"),
     deliveryBoardSection: document.getElementById("delivery-board-section"),
     collectionSection: document.getElementById("delivery-crew"),
     introCtaButton: document.getElementById("intro-cta-button"),

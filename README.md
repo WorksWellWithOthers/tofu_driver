@@ -3,18 +3,18 @@
 Tofu Driver is a static browser app with two connected experiences:
 
 - `Don't Spill the Cup`: the default smooth-driving challenge.
-- `Tofu Shop`: a parked-only idle/incremental shop game.
+- `Tofu Garage`: a parked-only idle/incremental game mode whose first business is the Tofu Shop.
 
 The Cup Test can provide optional certified smooth-delivery boosts for the shop, but ordinary Tofu
-Shop progression is playable at home without sensors or location.
+Tofu Garage progression is playable at home without sensors or location.
 
-Cup-first visitors can reach Tofu Shop from the landing page and from parked Cup Test results.
+Cup-first visitors can reach Tofu Garage from the landing page and from parked Cup Test results.
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
 decorative Cup Trail, Daily Delivery Credit, and Coach Recap labels. These are derived from
 summarized motion only and must not expose speed, distance, GPS, maps, street names, route traces,
 or racing/performance-driving technique.
 
-Tofu Shop starts with a focused first loop and reveals depth over time. The first Passport stamp
+Tofu Shop, the first Tofu Garage business, starts with a focused first loop and reveals depth over time. The first Passport stamp
 uses a local Stamp Fanfare, and the first meaningful hidden shop system uses a local Discovery
 Fanfare so progression moments are visible without exposing the full future roadmap.
 
@@ -72,8 +72,9 @@ The static app uses hash routing:
 
 - root/no hash defaults to `#/cup-test`
 - `#/cup-test`: Don't Spill the Cup
-- `#/shop`: Tofu Shop
-- `#/crew`: Delivery Crew collection controls when relevant
+- `#/shop`: Tofu Garage
+- `#/garage`: Tofu Garage alias; `#/shop` remains supported
+- `#/crew`: Delivery Crew parked placeholder/collection controls
 
 ## Project Layout
 
