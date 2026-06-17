@@ -721,6 +721,16 @@ const TOFU_SHOP_SCENE_ASSETS = {
   },
 };
 
+const TOFU_SHOP_SCENE_THRESHOLDS = {
+  workingOrders: 3,
+  upgradedOrders: 10,
+  upgradedLifetimeTips: 100,
+  establishedOrders: 25,
+  establishedDeliveryShelves: 5,
+  establishedShopSigns: 5,
+  coveredCarOrders: 25,
+};
+
 const SOUND_PACK_CATALOG = [
   {
     id: "default",
@@ -6013,6 +6023,58 @@ function hasMikaForShopScene(gameState) {
     || state.collection.unlockedCharacterIds.includes("mika");
 }
 
+function hasCompletedFirstShopLoopForScene(gameState) {
+  const state = normalizeGameState(gameState);
+  return fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.workingOrders;
+}
+
+function hasMeaningfulShopUpgradeForScene(gameState) {
+  const state = normalizeGameState(gameState);
+  const upgrades = state.shop.stationUpgrades || {};
+  return Boolean(state.stamps.first_upgrade_purchased)
+    || safeNonNegativeInteger(upgrades.prep_counter_faster, 0, 100) > 0
+    || safeNonNegativeInteger(upgrades.prep_counter_double, 0, 100) > 0
+    || safeNonNegativeInteger(upgrades.tofu_press_faster, 0, 100) > 0
+    || safeNonNegativeInteger(upgrades.tofu_press_double, 0, 100) > 0;
+}
+
+function hasSustainedOrderProgressForScene(gameState) {
+  const state = normalizeGameState(gameState);
+  return fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.upgradedOrders
+    || Boolean(state.stamps.first_10_orders)
+    || Boolean(state.stamps.first_family_tofu_tray)
+    || Boolean(state.stamps.first_100_tips)
+    || safeNonNegativeNumber(state.shop.lifetimeTips, 0, SHOP_MAX_RESOURCE) >= TOFU_SHOP_SCENE_THRESHOLDS.upgradedLifetimeTips;
+}
+
+function hasEstablishedShopForScene(gameState) {
+  const state = normalizeGameState(gameState);
+  const deliveryShelfCount = safeNonNegativeInteger(state.shop.stations.delivery_shelf, 0, 100000);
+  const shopSignCount = safeNonNegativeInteger(state.shop.stations.shop_sign, 0, 100000);
+  return fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.establishedOrders
+    || safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0
+    || safeNonNegativeInteger(state.shop.shopLevel, 0, 100000) >= 10
+    || (
+      deliveryShelfCount >= TOFU_SHOP_SCENE_THRESHOLDS.establishedDeliveryShelves
+      && shopSignCount >= TOFU_SHOP_SCENE_THRESHOLDS.establishedShopSigns
+    );
+}
+
+function hasEarnedCoveredCarTeaserForScene(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!hasEstablishedShopForScene(state)) return false;
+  return Boolean(state.seenStoryBeatIds.includes("covered_car_teaser"))
+    || safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0
+    || (
+      isCounterServiceUnlocked(state)
+      && (
+        Boolean(state.stamps.first_upgrade_purchased)
+        || Boolean(state.stamps.first_100_tips)
+        || fulfilledShopOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.coveredCarOrders
+      )
+    );
+}
+
 function getTofuShopSceneState(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const prep = orderPrepProgress(state);
@@ -6021,30 +6083,18 @@ function getTofuShopSceneState(gameState = loadGameState()) {
   const prepUpgradeLevel = safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_faster, 0, 100)
     + safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_double, 0, 100);
   const recentShopOrder = recentShopReward(state);
-  const shopActionStarted = Number(state.shop.lifetimeTofuPacked || 0) > 0
-    || Number(state.shop.lifetimeDeliveryOrders || 0) > 0
-    || Number(state.shop.lifetimeTips || 0) > 0
-    || Boolean(state.stamps.first_shop_order);
-  const hasEarlyUpgrade = prepUpgradeLevel > 0
-    || Boolean(state.stamps.first_upgrade_purchased)
-    || safeNonNegativeInteger(state.shop.stations.tofu_press, 0, 100000) > 1
-    || safeNonNegativeInteger(state.shop.stations.prep_counter, 0, 100000) > 1;
-  const hasSupportInfrastructure = deliveryShelfCount > 0
-    || shopSignCount > 0
-    || isCounterServiceUnlocked(state)
-    || state.shop.lifetimeDeliveryOrders >= 25;
-  const coveredCarVisible = Boolean(
-    state.stamps.first_upgrade_purchased
-    || state.stamps.first_100_tips
-    || state.seenStoryBeatIds.includes("covered_car_teaser")
-  );
+  const hasWorkingShop = hasCompletedFirstShopLoopForScene(state);
+  const hasUpgradedShop = hasMeaningfulShopUpgradeForScene(state)
+    || hasSustainedOrderProgressForScene(state);
+  const hasEstablishedShop = hasEstablishedShopForScene(state);
+  const coveredCarVisible = hasEarnedCoveredCarTeaserForScene(state);
   const sceneId = coveredCarVisible
     ? "scene_busy_shop_with_covered_car"
-    : hasSupportInfrastructure
+    : hasEstablishedShop
       ? "scene_busy_shop_established"
-      : hasEarlyUpgrade
+      : hasUpgradedShop
         ? "scene_tiny_shop_upgraded"
-        : shopActionStarted
+        : hasWorkingShop
           ? "scene_tiny_shop_working"
           : "scene_tiny_shop_empty";
   return {

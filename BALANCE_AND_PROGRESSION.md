@@ -1025,8 +1025,11 @@ Early UI rule:
 - Newly revealed tabs should show an explicit `New` badge or equivalent text. Do not rely on an
   unexplained outline or glow. The badge should clear once the player views the tab, including when
   the Discovery Fanfare action opens it.
-- A covered-car teaser may appear once after an early meaningful milestone such as First Upgrade
-  Purchased. It should say only that an old car waits behind the shop and should not create a Dream
+- Living Scene image swaps are larger story rewards, not one-station feedback. A single Tofu Press,
+  Prep Counter, Delivery Shelf, or Shop Sign purchase should remain visible in cards/buttons rather
+  than immediately changing the full-scene image.
+- A covered-car teaser may appear only after the shop is established and a larger teaser milestone is
+  earned. It should say only that an old car waits behind the shop and should not create a Dream
   Garage tab, part catalog, event loop, Builder Stars, Dream Jar, or Project Car Value.
 
 ### Reveal Rules By System
@@ -1423,7 +1426,7 @@ These are design targets, not runtime constants.
 | Time | Garage Beat |
 | --- | --- |
 | 0 to 10 minutes | garage hidden; focus on shop loop |
-| 10 to 30 minutes | subtle teaser: covered car behind shop |
+| 10 to 30 minutes | establish shop rhythm; covered car stays hidden unless the shop has clearly earned the teaser |
 | 30 to 60 minutes | Dream Garage unlock or first look |
 | 1 to 2 hours | Stage 0 restoration parts |
 | 2 to 6 hours | Stage 1 daily build and first event |
@@ -1467,8 +1470,8 @@ emotionally connected to a larger dream.
 | Moment | Visibility |
 | --- | --- |
 | Before first shop loop | garage hidden |
-| After first 100 Tips or Shop Level 2 | covered car teaser |
-| After 10 fulfilled orders or first Family Tofu Tray | Dream Garage active |
+| After established shop plus First 100 Tips, First Upgrade Purchased, 25+ orders, or Second Register | covered car teaser |
+| Later first-session or follow-up session milestone | Dream Garage active |
 | After Stage 0 complete | first closed-course event teaser |
 | After Stage 1 basics | events active |
 | After Stage 3 | sell/complete build prestige visible |

@@ -86,8 +86,9 @@
   controls remain separate UI. Four real WebP scene assets are integrated; the established-shop
   state temporarily aliases to the upgraded-shop image until dedicated art exists. The normal scene
   card is polished rather than debug-style: real-art states do not show `art pending` copy, raw
-  scene IDs, or implementation labels, and the covered-car scene uses only a restrained purpose
-  hint.
+  scene IDs, or implementation labels. Scene swaps are intentionally slower than station purchases:
+  small purchases stay in cards/buttons, while full-scene images wait for larger story milestones.
+  The covered-car scene uses only a restrained purpose hint.
 - Delivery Crew is a clickable parked surface with future/deferred copy and CTAs back toward Tofu
   Garage and Don't Spill the Cup; it is no longer a dead visible nav item.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
@@ -201,8 +202,8 @@ Canonical references:
    flicker, oversized empty panels, debug/pending copy, or controls being pushed too far down.
 14. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
    reduced-motion fallback.
-15. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
-   reveal scene without activating Dream Garage mechanics.
+15. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
+   timing. Later, design the garage reveal scene without activating Dream Garage mechanics.
 16. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
    such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
 17. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and

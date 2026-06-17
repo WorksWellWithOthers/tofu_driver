@@ -3208,6 +3208,7 @@ globalThis.storyUpgradeOk = upgrade.ok;
 globalThis.storyTeaserTitle = upgrade.storyTeaser && upgrade.storyTeaser.title;
 globalThis.storyTeaserCopy = upgrade.storyTeaser && upgrade.storyTeaser.copy;
 globalThis.storySeenIds = upgrade.gameState.seenStoryBeatIds.slice();
+upgrade.gameState.shop.lifetimeDeliveryOrders = 25;
 appState.shopStoryTeaser = upgrade.storyTeaser;
 appState.shopTab = "overview";
 renderTofuShop(upgrade.gameState);
@@ -6666,13 +6667,42 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert.strictEqual(freshLayers.length, 1);
   assert.strictEqual(freshLayers[0].id, 'scene_tiny_shop_empty');
 
+  const onePress = context.defaultGameState();
+  onePress.shop.stations.tofu_press = 1;
+  assert.strictEqual(context.getTofuShopSceneState(onePress).sceneId, 'scene_tiny_shop_empty');
+
+  const onePrepCounter = context.defaultGameState();
+  onePrepCounter.shop.stations.prep_counter = 1;
+  assert.strictEqual(context.getTofuShopSceneState(onePrepCounter).sceneId, 'scene_tiny_shop_empty');
+
+  const oneOrder = context.defaultGameState();
+  oneOrder.shop.lifetimeDeliveryOrders = 1;
+  assert.strictEqual(context.getTofuShopSceneState(oneOrder).sceneId, 'scene_tiny_shop_empty');
+
+  const oneShelf = context.defaultGameState();
+  oneShelf.shop.stations.delivery_shelf = 1;
+  oneShelf.shop.stations.shop_sign = 1;
+  assert.strictEqual(context.getTofuShopSceneState(oneShelf).sceneId, 'scene_tiny_shop_empty');
+
   const working = context.defaultGameState();
-  working.shop.lifetimeDeliveryOrders = 1;
+  working.shop.lifetimeDeliveryOrders = 3;
   assert.strictEqual(context.getTofuShopSceneState(working).sceneId, 'scene_tiny_shop_working');
+
+  const nineOrders = context.defaultGameState();
+  nineOrders.shop.lifetimeDeliveryOrders = 9;
+  assert.strictEqual(context.getTofuShopSceneState(nineOrders).sceneId, 'scene_tiny_shop_working');
 
   const upgraded = context.defaultGameState();
   upgraded.shop.stationUpgrades.prep_counter_faster = 1;
   assert.strictEqual(context.getTofuShopSceneState(upgraded).sceneId, 'scene_tiny_shop_upgraded');
+
+  const upgradedByOrders = context.defaultGameState();
+  upgradedByOrders.shop.lifetimeDeliveryOrders = 10;
+  assert.strictEqual(context.getTofuShopSceneState(upgradedByOrders).sceneId, 'scene_tiny_shop_upgraded');
+
+  const earlyCoveredCar = context.defaultGameState();
+  earlyCoveredCar.stamps.first_upgrade_purchased = true;
+  assert.strictEqual(context.getTofuShopSceneState(earlyCoveredCar).sceneId, 'scene_tiny_shop_upgraded');
 
   const advanced = context.defaultGameState();
   advanced.shop.stationUpgrades.prep_counter_faster = 1;
@@ -6684,6 +6714,11 @@ function testTofuShopLivingSceneV1Groundwork() {
   advanced.collection.unlockedCharacterIds.push('mika');
   advanced.collection.selectedCharacterId = 'mika';
   assert.strictEqual(context.getTofuShopSceneState(advanced).sceneId, 'scene_busy_shop_established');
+
+  const fluctuatingResources = JSON.parse(JSON.stringify(advanced));
+  fluctuatingResources.shop.tofuStock = 0;
+  fluctuatingResources.shop.deliveryOrders = 1000000;
+  assert.strictEqual(context.getTofuShopSceneState(fluctuatingResources).sceneId, 'scene_busy_shop_established');
 
   const coveredCar = JSON.parse(JSON.stringify(advanced));
   coveredCar.stamps.first_upgrade_purchased = true;
