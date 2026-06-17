@@ -485,6 +485,11 @@ the shop, crew surface, result screens, or safe share-card flavor. They must not
 - require risky driving
 - play distracting reward sounds during active drive
 
+Character art is prepared through named parked-only asset slots and placeholders. The inventory and
+production checklist live in `CHARACTER_ART_ASSET_INVENTORY.md`; runtime slots should degrade to
+clear placeholder copy when final art is missing. Character cameos belong on parked shop, crew,
+result, recap, reward, and stamp surfaces only, not active-drive UI.
+
 Muted mode must mute cosmetic sounds. Active-drive audio coach remains separate and user-controlled.
 
 ## Delivery Log And Ledger

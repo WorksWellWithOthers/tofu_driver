@@ -48,6 +48,9 @@
   Drive Shape, a decorative Cup Trail, Daily Delivery Credit copy, and a Coach Recap focused on
   smooth hands, brake feather, decel control, transition smoothness, cargo balance, passenger
   comfort, and consistency.
+- Character-art slots and parked-only placeholders are implemented for future Delivery Crew/shop
+  assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
+  expectations, and smallest recommended first asset pack.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
   stays inline with compact reward feedback so repeated order handoffs do not block the loop.
 - Tofu Shop tab panels are scoped: Production owns station buying, Upgrades owns upgrade buying,
@@ -145,11 +148,13 @@ Canonical references:
 10. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
    Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
    distance, route difficulty, racing technique, or public-road competition.
-11. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
-12. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+11. Produce the first small character-art pack against `CHARACTER_ART_ASSET_INVENTORY.md` only
+   after the parked placeholder surfaces feel correctly placed.
+12. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS.
+13. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-13. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-14. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+14. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+15. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 

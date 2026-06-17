@@ -920,7 +920,7 @@ Disabled copy should be specific:
 - `Need 20 more Tips. Fulfill shop orders to earn Tips.`
 - `Need 1 prepared order. Prep Counter is preparing the next order.`
 - `Need more Tofu Stock. Pack tofu or buy Tofu Press.`
-- `Need 1 Prep Capacity. Prep Capacity recover over time.`
+- `Need 1 Prep Capacity. Prep Capacity recovers over time.`
 
 ## 11. Progressive Reveal Rules
 
@@ -1077,7 +1077,7 @@ the formula.
 | Labeled Bins | 1 Star | Prep Counter output +15% | Shop only |
 | Bigger Thermos | 1 Star | Offline cap +1 hour | Shop only |
 | Familiar Counter | 1 Star | First 10 orders give +25% Tips | Shop only |
-| Extra Hands | 2 Stars | Prep Capacity recover more often | Shop only |
+| Extra Hands | 2 Stars | Prep Capacity recovers more often | Shop only |
 | Calm Opening | 2 Stars | Start with 1 Delivery Order after exam | Shop only |
 
 No License Perk may improve real-world Cup Test scoring, qualification, speed, route rewards, or

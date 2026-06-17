@@ -83,6 +83,8 @@ The static app uses hash routing:
 - `frontend/nospill/runtime-config.js`: disabled default runtime config for optional analytics
 - `frontend/nospill/assets/`: app raster artwork
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
+- `CHARACTER_ART_ASSET_INVENTORY.md`: parked-only character art slot inventory, placeholder rules,
+  and MVP asset-pack recommendation
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /
