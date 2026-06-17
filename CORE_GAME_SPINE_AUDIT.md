@@ -78,14 +78,15 @@ right time, creates a meaningful decision, has tests, and fits the progression c
 
 V1 should include:
 
-1. First Shop Order remains the first stamp/fanfare.
-2. First Upgrade Purchased stamp and ledger feedback.
-3. First Family Tofu Tray stamp and ledger feedback.
-4. First 10 Orders and First 100 Tips stamps verified by tests.
-5. Delivery Shelf reveal tied to meaningful shop milestones and a tested Prep Counter boost.
-6. Shop Sign reveal tied to Reputation/100 Tips/Delivery Shelf and a tested order Reputation boost.
-7. Double Mold or Double Labels visible after the related station/order bottleneck.
-8. Next Best Action continues to prioritize orders, bottlenecks, and useful purchases over Cup Test.
+1. First Tips Earned is the first visible shop milestone.
+2. First Shop Order remains the first stamp/fanfare and can be earned by starter Counter Service.
+3. First Upgrade Purchased stamp and ledger feedback.
+4. First Family Tofu Tray stamp and ledger feedback.
+5. First 10 Orders and First 100 Tips stamps verified by tests.
+6. Delivery Shelf reveal tied to meaningful shop milestones and a tested Prep Counter boost.
+7. Shop Sign reveal tied to Reputation/100 Tips/Delivery Shelf and a tested order Reputation boost.
+8. Double Mold or Double Labels visible after the related station/order bottleneck.
+9. Next Best Action continues to prioritize Counter Service, bottlenecks, and useful purchases over Cup Test.
 
 ## Stay Deferred
 

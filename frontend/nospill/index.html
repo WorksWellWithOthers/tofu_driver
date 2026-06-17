@@ -89,13 +89,13 @@
 
         <div class="nospill-next-action-card" aria-label="Next best action">
           <p class="nospill-kicker">Next Best Action</p>
-          <h4 id="game-next-action-title">Next: Fulfill Simple Tofu Box</h4>
+          <h4 id="game-next-action-title">Next: Watch the first order complete</h4>
           <p id="game-next-action-copy">
-            You have prepared orders ready. Hand them off to earn Tips for stations and upgrades.
+            The starter shop runs by itself. Buy your first upgrade when Tips arrive.
           </p>
           <div class="nospill-next-action-buttons">
             <button class="nospill-primary nospill-game-primary-cta" id="game-cta-button" type="button">
-              Fulfill Simple Tofu Box
+              View Counter Service
             </button>
             <button class="nospill-secondary" id="game-certified-cta-button" type="button">
               Take the Cup Test
@@ -354,20 +354,24 @@
           </div>
         </div>
 
-        <div class="nospill-shop-action-row" id="tofu-garage-actions" tabindex="-1" aria-label="Tofu Garage action area">
-          <button class="nospill-primary" id="pack-tofu-button" type="button" disabled>
+        <details class="nospill-shop-action-row nospill-manual-backup" id="tofu-garage-actions" tabindex="-1" aria-label="Tofu Garage action area">
+          <summary>Manual Backup</summary>
+          <p class="nospill-panel-helper">
+            For emergencies only. The starter shop normally runs itself.
+          </p>
+          <button class="nospill-secondary" id="pack-tofu-button" type="button" disabled>
             Pack Tofu
           </button>
           <button class="nospill-secondary" id="fulfill-shop-order-button" type="button" disabled>
-            Fulfill Shop Order
+            Fulfill One Manually
           </button>
           <p class="nospill-panel-helper" id="pack-tofu-helper">
-            Pack tofu while parked. The Tofu Press also adds stock over time.
+            Manual packing is a backup. Tofu Press and Supplier Contracts are the real supply path.
           </p>
           <p class="nospill-panel-helper" id="fulfill-shop-order-helper">
             Prep Counter needs delivery orders first.
           </p>
-        </div>
+        </details>
 
         <div class="nospill-shop-tabs" aria-label="Tofu Shop panels">
           <label class="nospill-field nospill-buy-multiplier" for="shop-buy-multiplier">

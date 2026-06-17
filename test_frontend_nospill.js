@@ -974,8 +974,8 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(html.includes('id="game-daily-goal"'));
   assert(html.includes('id="game-daily-reward"'));
   assert(html.includes('id="game-next-action-title"'));
-  assert(html.includes('Next: Fulfill Simple Tofu Box'));
-  assert(html.includes('Hand them off to earn Tips'));
+  assert(html.includes('Next: Watch the first order complete'));
+  assert(html.includes('The starter shop runs by itself'));
   assert(html.includes('id="game-certified-cta-button"'));
   assert(html.includes('id="game-driver-license"'));
   assert(html.includes('Level 1 &middot; Rookie Carrier'));
@@ -1000,7 +1000,7 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(!firstRunMain.includes('Import Progress'));
   assert(!firstRunMain.includes('Reset Progress'));
   assert(html.includes('nospill-game-primary-cta'));
-  assert(html.includes('Fulfill Simple Tofu Box'));
+  assert(html.includes('View Counter Service'));
   assert(html.includes('Tips'));
   assert(html.indexOf('id="game-daily-goal"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-daily-reward"') < html.indexOf('id="game-cta-button"'));
@@ -1063,10 +1063,10 @@ globalThis.activeDashboardActionDisabled = elements.gameCtaButton.disabled;
 `, context);
 
   assert.strictEqual(context.dashboardDriverLicense, 'Level 1 · Rookie Carrier');
-  assert.strictEqual(context.dashboardActionTitle, 'Next: Fulfill Simple Tofu Box');
-  assert(context.dashboardActionCopy.includes('earn Tips for stations and upgrades'));
-  assert.strictEqual(context.dashboardActionLabel, 'Fulfill Simple Tofu Box');
-  assert.strictEqual(context.dashboardActionType, 'fulfill_shop_order');
+  assert.strictEqual(context.dashboardActionTitle, 'Next: Watch the first order complete');
+  assert(context.dashboardActionCopy.includes('The starter shop runs by itself'));
+  assert.strictEqual(context.dashboardActionLabel, 'View Counter Service');
+  assert.strictEqual(context.dashboardActionType, 'watch_starter_shop');
   assert.strictEqual(context.dashboardTotalXp, '0 Driver XP');
   assert.strictEqual(context.dashboardGear, '0/3');
   assert.strictEqual(context.dashboardTeasersHidden, false);
@@ -1683,10 +1683,10 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.firstShopSectionHidden, false);
   assert.strictEqual(context.firstCollectionSectionHidden, true);
   assert.strictEqual(context.firstPackDisabled, false);
-  assert.strictEqual(context.firstPackText, 'Pack Tofu (backup)');
-  assert(context.firstPackHelper.includes('Tofu Stock feeds Prep Counter and larger orders'));
+  assert.strictEqual(context.firstPackText, 'Pack Tofu');
+  assert(context.firstPackHelper.includes('Manual packing is a backup'));
   assert.strictEqual(context.firstFulfillDisabled, false);
-  assert(context.firstFulfillHelper.includes('Turn prepared orders into Tips'));
+  assert(context.firstFulfillHelper.includes('Counter Service is the normal handoff path'));
   assert(context.firstProductionHtml.includes('Tofu Press'));
   assert(context.firstProductionHtml.includes('Buy Tofu Press'));
   assert(context.firstProductionHtml.includes('data-shop-station="tofu_press"'));
@@ -1713,7 +1713,7 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.notStrictEqual(context.afterDashboardStock, 'Locked');
   assert(context.afterDashboardPassport.includes('stamps collected.'));
   assert.strictEqual(context.afterPackDisabled, false);
-  assert.strictEqual(context.afterPackText, 'Pack Tofu (backup)');
+  assert.strictEqual(context.afterPackText, 'Pack Tofu');
   assert(context.afterProductionHtml.includes('Tofu Press'));
   assert(context.afterProductionHtml.includes('Prep Counter'));
   assert(!context.afterProductionHtml.includes('data-shop-upgrade="tofu_press"'));
@@ -2074,39 +2074,36 @@ globalThis.funnelOrdersAfterMax = fulfilled.gameState.shop.deliveryOrders;
 globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
 `, context);
 
-  assert.strictEqual(context.funnelAction.type, 'fulfill_shop_order');
-  assert.strictEqual(context.funnelAction.title, 'Next: Fulfill Max Simple Orders');
-  assert.strictEqual(context.funnelAction.buttonLabel, 'Fulfill Max Simple Orders');
-  assert.strictEqual(context.funnelAction.orderQuantity, 'max');
+  assert.strictEqual(context.funnelAction.type, 'wait_counter_service');
+  assert.strictEqual(context.funnelAction.title, 'Next: Let Counter Service work');
+  assert.strictEqual(context.funnelAction.buttonLabel, 'Counter Service Running');
   assert.strictEqual(context.funnelBottleneck.label, 'Need Tips');
   assert(!context.funnelBottleneck.label.includes('Certified boost available'));
-  assert(context.funnelBottleneck.action.includes('Fulfill shop orders'));
-  assert.strictEqual(context.funnelTopTitle, 'Next: Fulfill Max Simple Orders');
-  assert(context.funnelTopCopy.includes('earn Tips for stations and upgrades'));
-  assert.strictEqual(context.funnelTopButton, 'Fulfill Max Simple Orders');
-  assert.strictEqual(context.funnelTopAction, 'fulfill_shop_order');
-  assert.strictEqual(context.funnelTopQuantity, 'max');
-  assert.strictEqual(context.funnelPackText, 'Pack Tofu (backup)');
-  assert(context.funnelPackHelper.includes('Tofu Stock feeds Prep Counter and larger orders'));
-  assert(context.funnelPackHelper.includes('Tips buy upgrades'));
-  assert(context.funnelFulfillHelper.includes('Turn prepared orders into Tips'));
+  assert(context.funnelBottleneck.action.includes('Counter Service'));
+  assert.strictEqual(context.funnelTopTitle, 'Next: Let Counter Service work');
+  assert(context.funnelTopCopy.includes('Counter Service will hand them off automatically'));
+  assert.strictEqual(context.funnelTopButton, 'Counter Service Running');
+  assert.strictEqual(context.funnelTopAction, 'wait_counter_service');
+  assert.strictEqual(context.funnelPackText, 'Pack Tofu');
+  assert(context.funnelPackHelper.includes('Manual packing is a backup'));
+  assert(context.funnelFulfillHelper.includes('Counter Service is the normal handoff path'));
   assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Tips'));
-  assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
+  assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
   assert(context.funnelOverviewHtml.includes('Tips buy upgrades.'));
   assert(context.funnelOverviewHtml.includes('Preparing Next Order'));
   assert(context.funnelOverviewHtml.includes('role="progressbar"'));
   assert(context.funnelOverviewHtml.includes('Simple Tofu Box'));
   assert(context.funnelOverviewHtml.includes('Reward: +10 Tips, +1 Reputation, +8 Shop XP.'));
-  assert(context.funnelOverviewHtml.includes('Fulfill Max Simple Tofu Box x83'));
+  assert(!context.funnelOverviewHtml.includes('Fulfill Max Simple Tofu Box x83'));
   assert(context.funnelOverviewHtml.includes('Optional Certified Boost'));
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
   assert.strictEqual(context.funnelOrdersFallbackTab, 'overview');
   assert(context.funnelOrdersFallbackHtml.includes('Overview'));
-  assert(context.funnelOrdersFallbackHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
+  assert(context.funnelOrdersFallbackHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
   assert(context.funnelOrdersFallbackHtml.includes('Reward: +10 Tips, +1 Reputation, +8 Shop XP.'));
-  assert(context.funnelOrdersFallbackHtml.includes('Fulfill Simple Tofu Box'));
-  assert(context.funnelOrdersFallbackHtml.includes('Fulfill Max Simple Tofu Box x83'));
-  assert(context.funnelProductionHtml.includes('Fulfill shop orders to earn Tips.'));
+  assert(context.funnelOrdersFallbackHtml.includes('Counter Service'));
+  assert(!context.funnelOrdersFallbackHtml.includes('Fulfill Max Simple Tofu Box x83'));
+  assert(context.funnelProductionHtml.includes('Let Counter Service earn Tips.'));
   assert.strictEqual(context.funnelFulfilledOk, true);
   assert.strictEqual(context.funnelFulfilledQuantity, 83);
   assert.strictEqual(context.funnelTipsAfterMax, 830);
@@ -2279,7 +2276,7 @@ globalThis.highReadyOrdersHtml = elements.shopTabPanel.innerHTML;
   assert(!context.waitingOrdersText.includes('0.3'));
   assert(context.waitingPrepStatus.includes('Next order is 30% prepared.'));
   assert(context.waitingPrepStatus.includes('seconds remaining'));
-  assert.strictEqual(context.waitingPackText, 'Pack Tofu (backup)');
+  assert.strictEqual(context.waitingPackText, 'Pack Tofu');
   assert.strictEqual(context.waitingFulfillDisabled, true);
   assert(context.waitingFulfillHelper.includes('Need 1 prepared order.'));
   assert(context.waitingFulfillHelper.includes('Next order is 30% prepared.'));
@@ -2294,7 +2291,6 @@ globalThis.highReadyOrdersHtml = elements.shopTabPanel.innerHTML;
   assert(context.waitingOrdersHtml.includes('Preparing next order'));
   assert(context.waitingOrdersHtml.includes('30% prepared'));
   assert(context.waitingOrdersHtml.includes('Prep Counter tofu per prepared order: 2.'));
-  assert(context.waitingOrdersHtml.includes('Need 1 prepared order.'));
   assert(!/\d+\.\d{4,}/.test(context.waitingOrdersHtml));
   assert.strictEqual(context.waitingBlockedOk, false);
   assert(context.waitingBlockedReason.includes('Need 1 prepared order.'));
@@ -2309,7 +2305,7 @@ globalThis.highReadyOrdersHtml = elements.shopTabPanel.innerHTML;
   assert(context.pausedOrdersHtml.includes('Need more Tofu Stock.'));
   assert(context.pausedOrdersHtml.includes('aria-valuenow="45"'));
   assert(context.pausedOrdersHtml.includes('is-paused'));
-  assert.strictEqual(context.highReadyAction.title, 'Next: Fulfill Max Simple Orders');
+  assert.strictEqual(context.highReadyAction.title, 'Next: Watch the first order complete');
   assert(context.highReadyOrdersHtml.includes('Next order preparing'));
   assert(context.highReadyOrdersHtml.includes('Ready orders can be fulfilled now.'));
   assert(context.highReadyOrdersHtml.includes('aria-valuenow="52"'));
@@ -2454,7 +2450,7 @@ globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.g
   assert(context.highUpgradePanelHtml.includes('Tidy Packaging Lv 0'));
   assert(context.highUpgradePanelHtml.includes('Prep Counter output x1.5'));
   assert(context.highUpgradePanelHtml.includes('Prep Counter: 1 order / 40 sec -&gt; 1 order / 27 sec.'));
-  assert(context.highOrdersHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
+  assert(context.highOrdersHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
   assert(context.highOrdersHtml.includes('Enough tofu for 18 more orders.'));
   assert(context.highOrdersHtml.includes('Uses 6 tofu stock and 1 ready order.'));
   assert(context.highOrdersHtml.includes('Prep Counter tofu per prepared order: 2.'));
@@ -2596,9 +2592,7 @@ globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(context.compactStarsText, '100K');
   assert.strictEqual(context.compactStateTips, 1000000000);
   assert.strictEqual(context.compactStateStock, 2400000);
-  assert(context.compactOrdersHtml.includes('Fulfill Max Festival Bento x6.42K'));
-  assert(context.compactOrdersHtml.includes('Reward: +835K Tips'));
-  assert(context.compactOrdersHtml.includes('Uses: 482K tofu stock, 12.8K ready orders'));
+  assert(context.compactOrdersHtml.includes('Ready Orders') || context.compactOrdersHtml.includes('Delivery Orders'));
   assert(context.compactProductionHtml.includes('K Tips'));
   assert(context.compactProductionHtml.includes('Need 1 more Prep Capacity'));
   assert(context.compactUpgradeHtml.includes('Station Upgrades') || context.compactUpgradeHtml.includes('Maxed'));
@@ -3423,10 +3417,9 @@ function testShopOrderTypeProgressionAndRewards() {
   const nextFamily = context.nextBestAction(maxFamilySource, {
     date: new Date('2026-06-15T12:00:00.000Z'),
   });
-  assert.strictEqual(nextFamily.type, 'fulfill_shop_order');
-  assert.strictEqual(nextFamily.orderTypeId, 'family_tofu_tray');
-  assert.strictEqual(nextFamily.title, 'Next: Fulfill Family Tofu Tray');
-  assert(nextFamily.copy.includes('larger order'));
+  assert.strictEqual(nextFamily.type, 'wait_counter_service');
+  assert.strictEqual(nextFamily.title, 'Next: Let Counter Service work');
+  assert(nextFamily.copy.includes('Counter Service'));
 
   vm.runInContext(`
 function makeNode() {
@@ -3502,15 +3495,15 @@ globalThis.orderTypeTabsHtml = elements.shopTabList.innerHTML;
   assert.strictEqual(context.orderTypeTab, 'overview');
   assert(!context.orderTypeTabsHtml.includes('>Orders<'));
   assert(context.freshOrderTypePanelHtml.includes('Simple Tofu Box'));
-  assert(context.freshOrderTypePanelHtml.includes('Fulfill Simple Tofu Box'));
+  assert(!context.freshOrderTypePanelHtml.includes('Fulfill Simple Tofu Box'));
   assert(!context.freshOrderTypePanelHtml.includes('Family Tofu Tray'));
   assert(!context.freshOrderTypePanelHtml.includes('Festival Bento'));
   assert(!context.freshOrderTypePanelHtml.includes('Catering Crate'));
-  assert(context.orderTypePanelHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.'));
+  assert(context.orderTypePanelHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
   assert(context.orderTypePanelHtml.includes('Family Tofu Tray'));
   assert(context.orderTypePanelHtml.includes('Uses 24 tofu stock and 1 ready order.'));
   assert(context.orderTypePanelHtml.includes('Reward: +45 Tips, +3 Reputation, +24 Shop XP.'));
-  assert(context.orderTypePanelHtml.includes('Fulfill Max Family Tofu Tray x4'));
+  assert(!context.orderTypePanelHtml.includes('Fulfill Max Family Tofu Tray x4'));
   assert(!context.orderTypePanelHtml.includes('Catering Crate'));
   assert(!context.orderTypePanelHtml.includes('Production'));
   assert(!context.orderTypePanelHtml.includes('Station Upgrades'));
@@ -3673,8 +3666,8 @@ function testTofuShopNextMilestoneBarGuidesImplementedSpine() {
   assert.strictEqual(context.clampPercent(150), 100);
 
   const fresh = context.defaultGameState();
-  assert.strictEqual(context.nextMilestoneForShop(fresh).id, 'first_shop_order');
-  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('First Shop Order'), true);
+  assert.strictEqual(context.nextMilestoneForShop(fresh).id, 'first_tips_earned');
+  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('First Tips Earned'), true);
   assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('Reward:'), true);
   assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('$1T fictional Net Worth'), false);
 
@@ -3695,8 +3688,6 @@ function testTofuShopNextMilestoneBarGuidesImplementedSpine() {
   afterTen.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
   afterTen.shop.tofuStock = 12;
   afterTen.shop.deliveryOrders = 1;
-  assert.strictEqual(context.nextMilestoneForShop(afterTen).id, 'counter_service_start');
-  afterTen.shop.counterService.running = true;
   const familyMilestone = context.nextMilestoneForShop(afterTen);
   assert.strictEqual(familyMilestone.id, 'first_family_tofu_tray');
   assert(familyMilestone.progressText.includes('Need 24 Tofu Stock and 1 ready order'));
@@ -3751,19 +3742,20 @@ appState.running = false;
 `, context);
 
   assert(context.nextMilestoneFreshHtml.includes('Next Milestone'));
-  assert(context.nextMilestoneFreshHtml.includes('First Shop Order'));
+  assert(context.nextMilestoneFreshHtml.includes('First Tips Earned'));
   assert(context.nextMilestoneFreshHtml.includes('Simple Tofu Box'));
   assert(context.nextMilestoneFreshHtml.includes('Ready Orders'));
   assert(context.nextMilestoneFreshHtml.includes('Preparing next delivery order'));
   assert(context.nextMilestoneFreshHtml.includes('Reward: +10 Tips, +1 Reputation, +8 Shop XP.'));
   assert(context.nextMilestoneFreshHtml.includes('nospill-available-badge'));
   assert(context.nextMilestoneFreshHtml.includes('Available'));
+  assert(!context.nextMilestoneFreshHtml.includes('Fulfill Simple Tofu Box'));
   assert(context.nextMilestoneFreshHtml.includes('Current Bottleneck'));
   assert(!context.nextMilestoneFreshHtml.includes('$1T fictional Net Worth'));
   assert(context.nextMilestoneLongRoadHtml.includes('Long road: $1T fictional Net Worth'));
   assert(!context.nextMilestoneLongRoadHtml.includes('Net Worth:'));
   assert(!context.nextMilestoneLongRoadHtml.includes('Company Value'));
-  assert(context.nextMilestoneMissingOrderHtml.includes('Need 24 more tofu stock'));
+  assert(context.nextMilestoneMissingOrderHtml.includes('Need 24 Tofu Stock and 1 ready order'));
   assert(!context.nextMilestoneMissingOrderHtml.includes('0.649941'));
   assert(!context.activeDriveMilestoneHtml.includes('Next Milestone'));
 
@@ -3877,6 +3869,9 @@ function testTofuShopStationMilestoneBoostsV1() {
   nearPress.shop.deliveryOrders = 0;
   nearPress.shop.prepSlots = 100;
   nearPress.shop.counterService.running = true;
+  nearPress.shop.lifetimeDeliveryOrders = 1;
+  nearPress.shop.lifetimeTips = 10;
+  nearPress.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
   const nearPressAction = context.nextBestAction(nearPress, { date: new Date('2026-06-15T12:00:00.000Z') });
   assert.strictEqual(nearPressAction.type, 'buy_station');
   assert.strictEqual(nearPressAction.stationId, 'tofu_press');
@@ -3935,7 +3930,8 @@ function testCounterServiceV1AutomatesEarnedShopHandoffs() {
     window: { localStorage: makeLocalStorage() },
   });
   const fresh = context.defaultGameState();
-  assert.strictEqual(context.isCounterServiceUnlocked(fresh), false);
+  assert.strictEqual(context.isCounterServiceUnlocked(fresh), true);
+  assert.strictEqual(fresh.shop.counterService.running, true);
 
   vm.runInContext(`
 function makeNode() {
@@ -3957,10 +3953,21 @@ appState.shopTab = "overview";
 renderTofuShop(${JSON.stringify(fresh)});
 globalThis.counterFreshHtml = elements.shopTabPanel.innerHTML;
 `, context);
-  assert(!context.counterFreshHtml.includes('Counter Service'));
+  assert(context.counterFreshHtml.includes('Counter Service'));
+  assert(context.counterFreshHtml.includes('Regular customers can pick up prepared orders automatically.'));
+
+  const freshAuto = JSON.parse(JSON.stringify(fresh));
+  freshAuto.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+  const freshAutoTick = context.applyCounterServiceTick(freshAuto, new Date('2026-06-15T12:00:10.000Z'));
+  assert.strictEqual(freshAutoTick.completed, 1);
+  assert.strictEqual(freshAutoTick.gameState.shop.tips, 10);
+  assert.strictEqual(freshAutoTick.gameState.shop.reputation, 1);
+  assert.strictEqual(freshAutoTick.gameState.shop.lifetimeDeliveryOrders, 1);
+  assert(freshAutoTick.gameState.stamps.first_shop_order);
 
   const unlocked = context.defaultGameState();
   unlocked.shop.lifetimeDeliveryOrders = 10;
+  unlocked.shop.lifetimeTips = 100;
   unlocked.shop.deliveryOrders = 0;
   unlocked.shop.tofuStock = 100;
   unlocked.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
@@ -3968,6 +3975,7 @@ globalThis.counterFreshHtml = elements.shopTabPanel.innerHTML;
   unlocked.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
   unlocked.shop.stationUpgrades.prep_counter_faster = 1;
   assert.strictEqual(context.isCounterServiceUnlocked(unlocked), true);
+  unlocked.shop.counterService.running = false;
   assert.strictEqual(unlocked.shop.counterService.running, false);
 
   vm.runInContext(`
@@ -3983,7 +3991,7 @@ globalThis.counterUnlockedMilestone = nextMilestoneForShop(${JSON.stringify(unlo
   assert(context.counterUnlockedHtml.includes('Start Counter Service'));
   assert(context.counterUnlockedHtml.includes('Pause Counter Service'));
   assert.strictEqual(context.counterUnlockedAction.type, 'start_counter_service');
-  assert.strictEqual(context.counterUnlockedMilestone.id, 'counter_service_start');
+  assert.strictEqual(context.counterUnlockedMilestone.id, 'first_family_tofu_tray');
 
   const started = context.startCounterService(unlocked, {
     now: new Date('2026-06-15T12:00:00.000Z'),
@@ -4072,7 +4080,7 @@ appState.running = false;
 `, context);
   assert.strictEqual(context.counterActiveStart.ok, false);
   assert.strictEqual(context.counterActiveTick.completed, 0);
-  assert(!context.counterActiveHtml.includes('Counter Service'));
+  assert(!context.counterActiveHtml.includes('data-counter-service-action'));
 
   vm.runInContext(`
 appState.shopInlineResult = "";
@@ -4779,15 +4787,15 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
   });
   const first = context.defaultGameState();
   const firstAction = context.nextBestAction(first, { date: new Date('2026-06-14T12:00:00.000Z') });
-  assert.strictEqual(firstAction.type, 'fulfill_shop_order');
-  assert.strictEqual(firstAction.title, 'Next: Fulfill Simple Tofu Box');
-  assert.strictEqual(firstAction.buttonLabel, 'Fulfill Simple Tofu Box');
+  assert.strictEqual(firstAction.type, 'watch_starter_shop');
+  assert.strictEqual(firstAction.title, 'Next: Watch the first order complete');
+  assert.strictEqual(firstAction.buttonLabel, 'View Counter Service');
 
   const startedShop = context.packTofu(first, { activeDrive: false }).gameState;
   const packAction = context.nextBestAction(startedShop, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
-  assert.strictEqual(packAction.type, 'fulfill_shop_order');
+  assert.strictEqual(packAction.type, 'watch_starter_shop');
 
   const incompleteDaily = context.applySimulatedDelivery(
     'shaky_practice',
@@ -4797,7 +4805,7 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
   const incompleteAction = context.nextBestAction(incompleteDaily, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
-  assert(['pack_tofu', 'fulfill_shop_order', 'buy_upgrade', 'cup_test'].includes(incompleteAction.type));
+  assert(['watch_starter_shop', 'wait_counter_service', 'buy_upgrade', 'buy_station', 'cup_test'].includes(incompleteAction.type));
 
   const completeDaily = context.applySimulatedDelivery(
     'smooth_commute',
@@ -4809,10 +4817,9 @@ function testNextBestActionHierarchyStaysSinglePrimary() {
   const fulfillAction = context.nextBestAction(fulfillReady, {
     date: new Date('2026-06-14T12:00:00.000Z'),
   });
-  assert.strictEqual(fulfillAction.type, 'fulfill_shop_order');
-  assert.strictEqual(fulfillAction.title, 'Next: Fulfill Max Simple Orders');
-  assert.strictEqual(fulfillAction.buttonLabel, 'Fulfill Max Simple Orders');
-  assert.strictEqual(fulfillAction.orderQuantity, 'max');
+  assert.strictEqual(fulfillAction.type, 'watch_starter_shop');
+  assert.strictEqual(fulfillAction.title, 'Next: Watch the first order complete');
+  assert.strictEqual(fulfillAction.buttonLabel, 'View Counter Service');
 
   const funded = JSON.parse(JSON.stringify(completeDaily));
   funded.shop.tips = 100;
@@ -4871,9 +4878,9 @@ globalThis.topActionTitle = elements.gameNextActionTitle.textContent;
 globalThis.topActionButton = elements.gameCtaButton.textContent;
 globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
 `, context);
-  assert.strictEqual(context.topActionTitle, 'Next: Fulfill Simple Tofu Box');
-  assert.strictEqual(context.topActionButton, 'Fulfill Simple Tofu Box');
-  assert.strictEqual(context.topActionType, 'fulfill_shop_order');
+  assert.strictEqual(context.topActionTitle, 'Next: Watch the first order complete');
+  assert.strictEqual(context.topActionButton, 'View Counter Service');
+  assert.strictEqual(context.topActionType, 'watch_starter_shop');
 
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const actionStart = html.indexOf('class="nospill-next-action-card"');
@@ -6014,6 +6021,7 @@ state.shop.tips = 1000;
 state.shop.reputation = 160;
 state.shop.shopLevel = getShopLevel(state.shop.reputation);
 state.shop.prepSlots = 100;
+state.shop.counterService.running = false;
 state.shop.lastGeneratorTickAt = "2026-06-14T12:00:00.000Z";
 state.shop.lastShopTickAt = "2026-06-14T12:00:00.000Z";
 saveGameState(state);

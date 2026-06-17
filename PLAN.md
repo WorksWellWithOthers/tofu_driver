@@ -40,11 +40,11 @@
   line after an early milestone without implementing a Net Worth counter or valuation system.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
-- Counter Service V1 is the first earned automation layer. It unlocks after First 10 Orders, starts
-  paused, auto-fulfills Best Available prepared orders every 10 seconds only while parked and the
-  page is open, shows supplied/blocked shop-income status, can be upgraded through Order Bell,
-  Wider Counter, Pickup Routine, and managed-shop bulk upgrades, and does not run during offline
-  progress.
+- Counter Service V1 is the starter automation layer. It is available from the first session, runs
+  by default on fresh saves, auto-fulfills Best Available prepared orders every 10 seconds only
+  while parked and the page is open, shows supplied/blocked shop-income status, can be upgraded
+  through Order Bell, Wider Counter, Pickup Routine, and managed-shop bulk upgrades, and does not
+  run during offline progress.
 - Managed Shop Phase V1 is implemented as a narrow continuation of Tofu Shop: Counter Service can
   grow from 1 to 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew, and
   Catering Crate gives the midgame a larger stock/Ready Order sink without adding Dream Garage,
@@ -112,17 +112,17 @@
   Spine V1 adds tested First Upgrade Purchased, First Family Tofu Tray, First 10 Orders, and First
   100 Tips stamp milestones; Delivery Shelf is the first tested throughput support station; Shop
   Sign is the first tested Reputation support station.
-- Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
-  Reputation, and Shop XP.
+- Tofu Garage now starts idle-first: Tofu Press, Prep Counter, and starter Counter Service move the
+  first Simple Tofu Box without repeated player labor.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
   players back to fulfilling shop orders.
-- Next Best Action follows the current bottleneck: ready orders point to fulfillment, early low
-  stock can point to Pack Tofu/Tofu Press, high-midgame stock blocks point to Supplier Contracts or
-  stock upgrades, and healthy stock with slow orders points to Tidy Packaging, Prep Counter, or
-  order prep rather than Tofu Press.
-- Pack Tofu is a backup/tutorial Tofu Stock action, and Don't Spill the Cup is an optional certified
-  boost rather than the normal shop bottleneck during order prep, Tip shortages, or managed-shop
-  supply shortages.
+- Next Best Action follows the current bottleneck: fresh saves point to watching the starter shop,
+  ready orders point to Counter Service, early low stock points to Tofu Press, high-midgame stock
+  blocks point to Supplier Contracts or stock upgrades, and healthy stock with slow orders points
+  to Tidy Packaging, Prep Counter, or order prep rather than Tofu Press.
+- Pack Tofu and manual fulfillment are collapsed Manual Backup actions. Don't Spill the Cup is an
+  optional certified boost rather than the normal shop bottleneck during order prep, Tip shortages,
+  or managed-shop supply shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
 - Regular Customers remain deferred until Counter Service V1 has been playtested. Dream Garage
@@ -271,13 +271,12 @@ Deferred until after the First Loop Contract is playtested:
 
 ## Resolved Decisions
 
-- Fresh Tofu Shop state should start with one ready Delivery Order.
-- Fresh Tofu Shop state should start with one running Prep Counter.
-- Fresh Tofu Shop state should start with Tofu Stock so the first order can be fulfilled
-  immediately.
+- Fresh Tofu Shop state starts with one ready Delivery Order, one Tofu Press, one Prep Counter, and
+  running starter Counter Service.
+- Fresh Tofu Shop state starts with Tofu Stock so the first order can be completed automatically.
 - Tofu Stock is an ingredient/runway resource, not the purchase currency.
 - Tips are the early purchase currency.
-- Fulfill Shop Order is the early money-conversion action.
+- Starter Counter Service is the early money-conversion action.
 - Don't Spill the Cup is optional for ordinary Tofu Shop progression.
 
 ## Open Questions
@@ -288,7 +287,7 @@ Deferred until after the First Loop Contract is playtested:
   fulfilled orders?
 - When should Passport become a visible tab instead of a teaser?
 - How many active buttons should be visible before minute 10?
-- Should Pack Tofu remain forever, or become less visible once Tofu Press production is stable?
+- Tune how often Manual Backup should be opened after Tofu Press and Supplier Contracts are stable.
 - Should the first License Exam target be 4 hours, 6 hours, or later after playtesting?
 - Should saved local sessions migrate if the storage key changes?
 - Should merch unlocks remain local-only for the MVP?

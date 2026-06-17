@@ -558,6 +558,19 @@
   scroll-margin-top: 18px;
 }
 
+.nospill-manual-backup {
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(244, 247, 239, 0.035);
+}
+
+.nospill-manual-backup summary {
+  cursor: pointer;
+  color: #bbc7c0;
+  font-weight: 800;
+}
+
 .nospill-shop-action-row:focus {
   outline: 2px solid rgba(158, 233, 191, 0.72);
   outline-offset: 4px;

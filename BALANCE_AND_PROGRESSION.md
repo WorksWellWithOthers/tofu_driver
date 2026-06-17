@@ -67,7 +67,7 @@ Tofu Shop is a one-loop incremental game that earns the right to unfold.
 Core MVP loop:
 
 ```text
-Tofu Stock -> Prep Counter -> Delivery Orders -> Fulfill Shop Order -> Tips -> Buy Stations/Upgrades -> First Stamp
+Tofu Press -> Prep Counter -> Starter Counter Service -> Tips -> Buy Stations/Upgrades -> First Stamp
 ```
 
 Keep this loop fun before expanding Routes, Crew, Garage, Shop Spirit, Rivals, License Exams, or
@@ -349,9 +349,8 @@ Rules:
 
 ### Counter Service V1
 
-Counter Service is the first earned automation layer. It unlocks after First 10 Orders and starts
-paused, because manual fulfillment should teach the stock-to-orders-to-Tips loop before automation
-removes the repeated handoff chore.
+Counter Service is the starter automation layer. It is available immediately and runs by default on
+fresh saves, because Tofu Garage should begin as idle management rather than a clicker.
 
 V1 behavior:
 
@@ -514,19 +513,19 @@ system.
 
 | Time Window | Player Goal | Visible Resources | Visible Active Buttons | Visible Disabled Buttons | Hidden Systems | Intended Bottleneck | Next Best Action Text | Expected Reward | Expected Unlock / Story Beat |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 0:00 to 0:30 | Understand that one shop order is ready | Tofu Stock, Delivery Orders, Tips, Reputation, Shop XP | Fulfill Shop Order; Take the Cup Test as secondary | Buy Tofu Press if shown but unaffordable | Routes, Crew, Garage, Shop Spirit, Rivals, License, deep Passport, character/sound economy | Delivery Orders as the first money opportunity | `Fulfill Shop Order` | +Tips, +Reputation, +Shop XP | `The first order leaves the counter.` |
-| 0:30 to 1:00 | See the result and stay in the shop | Tips, Reputation, Shop XP, Tofu Stock, ready/preparing orders | Inline order feedback; Fulfill Shop Order if another order is ready | Tidy Packaging if the Prep Counter bottleneck is visible but not affordable | Advanced panels remain hidden | Need Tips or waiting for next order | `Fulfill Shop Order` or `Wait for Prep Counter` | Inline shop-order feedback | First Shop Order stamp should appear or be teased |
-| 1:00 to 2:00 | Learn that Prep Counter rebuilds orders | Tofu Stock, Ready Orders, Next Order progress, Tips | Fulfill Shop Order when ready; Buy Tidy Packaging if affordable; Buy Tofu Press if stock is low; Take the Cup Test secondary | Tidy Packaging if close but unaffordable | Routes, Crew, Garage, Spirit, Rivals, License | Either Tips or order preparation | `Fulfill Shop Order`, `Buy Tidy Packaging`, or `Wait for Prep Counter` | Another order payout or progress toward first purchase | `The counter is learning the rhythm.` |
-| 2:00 to 3:00 | Make or approach the first meaningful purchase | Tips, Tofu Stock runway, order prep progress | Buy Tidy Packaging if affordable; Buy Prep Counter if affordable; Buy Tofu Press or Steady Pressing only if stock is low; Fulfill Shop Order | Buy Prep Counter if not affordable | Full Passport, Routes, Crew, Garage, Spirit, License | First purchase cost | `Buy Tidy Packaging` or `Fulfill Shop Order` | First order-throughput bump or clear progress toward it | Upgrade card becomes visible only when relevant |
-| 3:00 to 5:00 | Understand stock versus throughput | Tofu Stock runway, Ready Orders, Tips, Reputation | Buy Prep Counter if stock is healthy and orders are slow; Buy Tidy Packaging; Buy Tofu Press if stock is low; Fulfill Shop Order | Steady Pressing if stock is healthy and not relevant | Routes only as subtle teaser if needed; Crew/Garage/Spirit/Rivals/License hidden | Stock runway or order throughput | `Buy Prep Counter`, `Buy Tidy Packaging`, or `Buy Tofu Press` based on bottleneck | Visible `/sec` improvement | Passport teaser after first stamp |
-| 5:00 to 10:00 | Own the basic loop and see first collection hook | Tofu Stock, Delivery Orders, Tips, Reputation, Shop XP, first stamp | Fulfill Max Orders if multiple ready; Buy Tofu Press; Buy Prep Counter; Buy Tidy Packaging; Buy Steady Pressing when stock is low; View Passport | Better Boxes if close but not unlocked | Routes as teaser only; Crew/Garage/Spirit/Rivals/License hidden | Clear bottleneck-solving upgrade | `Buy the clearest bottleneck-solving upgrade` | First meaningful production bump and stamp feeling | First Passport card; hint that Routes exist later |
+| 0:00 to 0:30 | Understand that the shop runs itself | Tofu Stock, Delivery Orders, Tips, Reputation, Shop XP | Watch Counter Service; Take the Cup Test as secondary | Buy Tofu Press if shown but unaffordable | Routes, Crew, Garage, Shop Spirit, Rivals, License, deep Passport, character/sound economy | Waiting for first automatic handoff | `Watch the first order complete` | +Tips, +Reputation, +Shop XP | `The first order leaves the counter.` |
+| 0:30 to 1:00 | See automatic payout and stay in the shop | Tips, Reputation, Shop XP, Tofu Stock, ready/preparing orders | Buy first useful station/upgrade if affordable | Tidy Packaging if the Prep Counter bottleneck is visible but not affordable | Advanced panels remain hidden | Need Tips or waiting for next order | `Buy Tofu Press`, `Buy Tidy Packaging`, or `Wait for Prep Counter` | Inline shop-order feedback | First Shop Order stamp should appear or be teased |
+| 1:00 to 2:00 | Learn that Prep Counter rebuilds orders | Tofu Stock, Ready Orders, Next Order progress, Tips | Buy Tidy Packaging if affordable; Buy Tofu Press if stock is low; Take the Cup Test secondary | Prep Counter station if close but unaffordable | Routes, Crew, Garage, Spirit, Rivals, License | Either Tips or order preparation | `Buy Tidy Packaging`, `Buy Tofu Press`, or `Wait for Counter Service` | Another automatic payout or progress toward first purchase | `The counter is learning the rhythm.` |
+| 2:00 to 3:00 | Make or approach the first meaningful purchase | Tips, Tofu Stock runway, order prep progress | Buy Tidy Packaging if affordable; Buy Prep Counter if affordable; Buy Tofu Press or Steady Pressing only if stock is low | Buy Prep Counter if not affordable | Full Passport, Routes, Crew, Garage, Spirit, License | First purchase cost | `Buy bottleneck-solving improvement` | First order-throughput bump or clear progress toward it | Upgrade card becomes visible only when relevant |
+| 3:00 to 5:00 | Understand stock versus throughput | Tofu Stock runway, Ready Orders, Tips, Reputation | Buy Prep Counter if stock is healthy and orders are slow; Buy Tidy Packaging; Buy Tofu Press if stock is low | Steady Pressing if stock is healthy and not relevant | Routes only as subtle teaser if needed; Crew/Garage/Spirit/Rivals/License hidden | Stock runway or order throughput | `Buy Prep Counter`, `Buy Tidy Packaging`, or `Buy Tofu Press` based on bottleneck | Visible `/sec` improvement | Passport teaser after first stamp |
+| 5:00 to 10:00 | Own the basic loop and see first collection hook | Tofu Stock, Delivery Orders, Tips, Reputation, Shop XP, first stamp | Buy Counter Service upgrade; Buy Tofu Press; Buy Prep Counter; Buy Tidy Packaging; Buy Steady Pressing when stock is low; View Passport | Better Boxes if close but not unlocked | Routes as teaser only; Crew/Garage/Spirit/Rivals/License hidden | Clear bottleneck-solving upgrade | `Buy the clearest bottleneck-solving upgrade` | First meaningful production bump and stamp feeling | First Passport card; hint that Routes exist later |
 
 By 10 minutes, a normal player should have:
 
-- fulfilled multiple shop orders
+- completed multiple automatic shop order handoffs
 - seen Delivery Orders rebuild without refresh
 - understood that Tofu Stock feeds Prep Counter
-- understood that Delivery Orders become Tips
+- understood that Counter Service turns Delivery Orders into Tips
 - bought or clearly progressed toward the first upgrade
 - earned or seen the First Shop Order stamp
 - seen Don't Spill the Cup as optional, not mandatory
@@ -561,12 +560,12 @@ implementation pass deliberately aligns code to them.
 
 | Time | Expected State | New Mechanic | Primary Button | Bottleneck | Reward Feeling |
 | --- | --- | --- | --- | --- | --- |
-| 0:00 | Fresh shop has stock, 1 ready order, 1 Tofu Press, 1 Prep Counter | Simple Tofu Box | Fulfill Shop Order | none yet | immediate first action |
-| 0:30 | First order result shows Tips/Reputation/Shop XP and first story beat | Shop Order Complete | Return to Tofu Garage | need more Tips or next order | the shop woke up |
-| 1:00 | Prep Counter progress is visible | ready/preparing order split | Wait for Prep Counter or Fulfill Shop Order | order prep | the shop works while parked |
+| 0:00 | Fresh shop has stock, 1 ready order, 1 Tofu Press, 1 Prep Counter, and running Counter Service | Simple Tofu Box | Watch Counter Service | none yet | the shop runs by itself |
+| 0:30 | First automatic order result shows Tips/Reputation/Shop XP and first story beat | Shop Order Complete | Return to Tofu Garage | need more Tips or next order | the shop woke up |
+| 1:00 | Prep Counter progress is visible | ready/preparing order split | Wait for Prep Counter or buy the first bottleneck fix | order prep | the shop works while parked |
 | 2:00 | First purchase is close or available | Tidy Packaging / first station choice | Buy bottleneck-solving improvement | Tips | clear progress toward first upgrade |
 | 3:00 | Player understands stock runway | Tofu Stock runway copy | Buy Tofu Press if stock is low; otherwise order throughput | stock or throughput | resources have different jobs |
-| 5:00 | Multiple orders have been fulfilled | Family Tofu Tray close or unlocked | Fulfill larger order or improve Prep Counter | larger order requirements | extra stock has a purpose |
+| 5:00 | Multiple orders have been automatically handed off | Family Tofu Tray close or unlocked | Improve Counter Service or Prep Counter | larger order requirements | extra stock has a purpose |
 | 10:00 | First loop is proven | Passport teaser and first meaningful upgrade path | Buy Tidy Packaging / View Passport | Tips or order prep | first collection/status hook |
 | 20:00 | Shop starts feeling larger | Delivery Shelf or Shop Sign preview | Buy Delivery Shelf / Buy Shop Sign | throughput or Reputation | the counter becomes a shop |
 | 40:00 | First route/story teaser makes sense | Shop Street preview | Start Shop Street if unlocked | Reputation/Shop Reach | new fictional goal |
@@ -589,8 +588,8 @@ First-day target:
 
 | Phase | Time Target | Main Fantasy | Core Systems | Visible Tabs | Primary Resources | Primary Buttons | Upgrades | Unlocks | Expected Session Length | Exit Condition |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1. First Loop | 0 to 10 minutes | A small counter starts moving | Tofu Press, Prep Counter, Orders, first upgrade, first stamp | Overview, Orders, Production basics, maybe Passport teaser | Tofu Stock, Delivery Orders, Tips | Fulfill Shop Order, Buy Tidy Packaging, Buy Prep Counter, Buy Tofu Press when stock is low, Take Cup Test secondary | Tidy Packaging, Steady Pressing only when stock is low, early station counts | First Shop Order stamp | 1 to 5 minutes | Player understands stock -> orders -> Tips |
-| 2. First Shop | 10 to 60 minutes | The counter becomes a shop | Delivery Shelf, Shop Sign, Passport, Ledger light | Overview, Orders, Production, Upgrades, Passport, Ledger | Tips, Reputation, Delivery Orders | Fulfill Max Orders, Buy Delivery Shelf, Buy Shop Sign, View Passport | Tidy Packaging, Double Labels, Better Boxes, Shop Sign | First route teaser, fuller Passport | 5 to 15 minutes | Reputation and shop systems need expansion |
+| 1. First Loop | 0 to 10 minutes | A small counter starts moving by itself | Tofu Press, Prep Counter, starter Counter Service, first upgrade, first stamp | Overview, Orders, Production basics, maybe Passport teaser | Tofu Stock, Delivery Orders, Tips | Watch Counter Service, Buy Tidy Packaging, Buy Prep Counter, Buy Tofu Press when stock is low, Take Cup Test secondary | Tidy Packaging, Steady Pressing only when stock is low, early station counts | First Shop Order stamp | 1 to 5 minutes | Player understands stock -> orders -> automatic Tips |
+| 2. First Shop | 10 to 60 minutes | The counter becomes a shop | Delivery Shelf, Shop Sign, Passport, Ledger light | Overview, Orders, Production, Upgrades, Passport, Ledger | Tips, Reputation, Delivery Orders | Upgrade Counter Service, Buy Delivery Shelf, Buy Shop Sign, View Passport | Tidy Packaging, Double Labels, Better Boxes, Shop Sign | First route teaser, fuller Passport | 5 to 15 minutes | Reputation and shop systems need expansion |
 | 3. First Automation | 1 to 6 hours | The shop starts helping itself | Regular Customers, Shop Street, Apprentice preview | Routes, simple Crew preview, Production, Passport | Tips, Reputation, Shop Reach, Route Knowledge | Start Shop Street, Hire Apprentice Driver, Assign Crew preview | Regular Smile, Delivery Shelf upgrades | First route stamp, first apprentice teaser | 10 to 20 minutes | Manual orders feel repetitive and automation is earned |
 | 4. First License | 4 to 6 hours | A plateau becomes a choice | License Exam preview, requirements, first perks | License, Passport, Routes, Ledger | Reputation, Stamps, Route Knowledge, fulfilled orders | View License Exam, Take License Exam, Confirm/Cancel | Final pre-exam convenience upgrades | Local Delivery License | 10 to 30 minutes | Requirements met and player chooses prestige |
 | 5. Post-License Rebuild | After first License Exam | The early shop rebuilds faster | License Perks, faster starting stations, deeper early flow | Overview, Orders, Production, License, Passport | License Stars, Tips, Tofu Stock, Orders | Buy License Perk, rebuild stations, Fulfill Max | Morning Prep, Labeled Bins, Bigger Thermos | Permanent perk identity | 5 to 15 minutes | Player reaches old plateau faster |
@@ -612,8 +611,9 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | id | label | surface | phase | visible when | enabled when | disabled reason | cost | effect | expected first use time | bottleneck solved | next best action text | status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | pack_tofu | Pack Tofu | Shop | First Loop | Shop visible | Parked; shop unlocked | Park first. | none | Adds small Tofu Stock | 0 to 2 minutes, backup only | Low Tofu Stock | Pack Tofu | Implemented |
-| fulfill_shop_order | Fulfill Shop Order | Shop/Orders | First Loop | Delivery Orders visible | Ready Orders >= 1; parked | Need 1 prepared order. Prep Counter is preparing the next order. | 1 Delivery Order | Grants Tips, Reputation, Shop XP; ledger/result feedback | 0:00 to 0:30 | Converts orders into purchase currency | Fulfill Shop Order | Implemented |
-| fulfill_simple_tofu_box | Fulfill Simple Tofu Box | Orders | First Loop | Immediately | 6 Tofu Stock and 1 ready order | Need 1 prepared order or more Tofu Stock. | 6 Tofu Stock, 1 Delivery Order | +10 Tips, +1 Reputation, +8 Shop XP | 0:00 to 0:30 | Tutorial money conversion and first stock-pressure lesson | Fulfill Shop Order | Implemented |
+| fulfill_shop_order | Manual Fulfill Shop Order | Manual Backup / Orders | First Loop | Manual Backup opened | Ready Orders >= 1; parked | Need 1 prepared order. Prep Counter is preparing the next order. | 1 Delivery Order | Grants Tips, Reputation, Shop XP; ledger/result feedback | backup only | Emergency conversion if automation is paused | Manual Backup | Implemented as backup |
+| starter_counter_service | Starter Counter Service | Overview | First Loop | Immediately | Ready Orders >= 1 and Tofu Stock for best available order; parked | Waiting for Tofu Stock or ready orders. | order cost by type | +Tips, +Reputation, +Shop XP through batched handoffs | 0:00 | Converts orders into purchase currency automatically | Watch Counter Service | Implemented |
+| fulfill_simple_tofu_box | Simple Tofu Box | Orders | First Loop | Immediately | 6 Tofu Stock and 1 ready order | Need 1 prepared order or more Tofu Stock. | 6 Tofu Stock, 1 Delivery Order | +10 Tips, +1 Reputation, +8 Shop XP | 0:00 to 0:30 | Starter money conversion and first stock-pressure lesson | Watch Counter Service | Implemented |
 | fulfill_family_tofu_tray | Fulfill Family Tofu Tray | Orders | First Shop | 5 fulfilled orders or Shop Level 2 | 24 Tofu Stock and 1 ready order | Need Family unlock, ready order, or more Tofu Stock. | 24 Tofu Stock, 1 Delivery Order | +45 Tips, +3 Reputation, +24 Shop XP | 5 to 10 minutes | Makes extra Tofu Stock valuable | Fulfill Family Tofu Tray | Implemented |
 | fulfill_festival_bento | Fulfill Festival Bento | Orders | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 Tofu Stock and 2 ready orders | Need Festival unlock, 2 ready orders, or more Tofu Stock. | 75 Tofu Stock, 2 Delivery Orders | +130 Tips, +8 Reputation, +70 Shop XP | 20 to 40 minutes | First big payout | Fulfill Festival Bento | Implemented |
 | fulfill_catering_crate | Fulfill Catering Crate | Orders | Managed Shop | 100 fulfilled orders, 250 Reputation, Shop Level 25 | Enough Tofu Stock and ready orders | Need 240 Tofu Stock and 5 ready orders. | 240 Tofu Stock, 5 Delivery Orders | +520 Tips, +25 Reputation, +260 Shop XP | Midgame | Mid-game stock and Ready Order sink | Fulfill Catering Crate | Implemented |
@@ -621,11 +621,11 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | fulfill_max_simple_orders | Fulfill Max Simple Orders | Orders | First Loop / First Shop | Multiple Simple Tofu Boxes can be fulfilled and larger orders are not the best option | Enough Tofu Stock and ready orders for at least 2 Simple Tofu Boxes | Need more Tofu Stock or ready Delivery Orders. | max affordable Simple Tofu Boxes | Converts simple orders into Tips/Reputation/Shop XP | 5 to 10 minutes | Avoids repeated tutorial-order clicks | Fulfill Max Simple Orders | Implemented |
 | fulfill_max_best_order | Fulfill Max Best Order | Orders | First Shop | Larger order type is unlocked and affordable | Enough Tofu Stock and ready orders for at least 1 best order type | Need more Tofu Stock or ready Delivery Orders. | max affordable best order type | Converts stock/order stockpile into strongest available payout | 5 to 20 minutes | Makes extra stock useful | Fulfill Max `<Order Type>` | Implemented |
 | fulfill_max_orders | Fulfill Max `<Order Type>` | Orders | First Shop | More than one selected/best order can be fulfilled | Enough Tofu Stock and ready orders for at least 2 of that type | Need more Tofu Stock or ready Delivery Orders. | max affordable typed orders | Converts all affordable typed orders into rewards | 5 to 10 minutes | Avoids click spam | Fulfill Max `<Order Type>` | Implemented |
-| buy_tofu_press | Buy Tofu Press | Production | First Loop | Production basics visible | Enough Tips; Prep Capacity available | Need more Tips. Fulfill shop orders to earn Tips. | Tips, station growth | Adds Tofu Stock/sec | 1 to 3 minutes if stock is low | Low Tofu Stock runway | Buy Tofu Press | Implemented |
+| buy_tofu_press | Buy Tofu Press | Production | First Loop | Production basics visible | Enough Tips; Prep Capacity available | Need more Tips. Let Counter Service earn Tips. | Tips, station growth | Adds Tofu Stock/sec | 1 to 3 minutes if stock is low | Low Tofu Stock runway | Buy Tofu Press | Implemented |
 | buy_max_tofu_press | Buy Max Tofu Press | Production | First Shop | Buy Tofu Press visible; multiplier relevant | Can afford at least 1 press | Need more Tips. | max affordable Tips/Prep Capacity | Buys multiple presses | 10 to 20 minutes | Avoids repetitive station buying | Buy Max Tofu Press | Implemented |
-| buy_prep_counter | Buy Prep Counter | Production | First Loop | Production basics visible | Enough Tips; Prep Capacity available | Need more Tips or Prep Capacity. Fulfill shop orders to earn Tips. | Tips plus Prep Capacity | Adds Delivery Orders/sec and Tofu Stock consumption | 3 to 6 minutes when orders are slow | Order throughput | Buy Prep Counter | Implemented |
+| buy_prep_counter | Buy Prep Counter | Production | First Loop | Production basics visible | Enough Tips; Prep Capacity available | Need more Tips or Prep Capacity. Let Counter Service earn Tips. | Tips plus Prep Capacity | Adds Delivery Orders/sec and Tofu Stock consumption | 3 to 6 minutes when orders are slow | Order throughput | Buy Prep Counter | Implemented |
 | buy_max_prep_counter | Buy Max Prep Counter | Production | First Shop | Buy Prep Counter visible; multiplier relevant | Can afford at least 1 counter | Need more Tips or Prep Capacity. | max affordable Tips/Prep Capacity | Buys multiple counters | 15 to 30 minutes | Avoids repetitive station buying | Buy Max Prep Counter | Implemented |
-| buy_steady_pressing | Buy Steady Pressing | Upgrades | First Loop | Stock runway is low or extra Tofu Presses make stock growth relevant | Enough Tips | Need 20 Tips. Fulfill shop orders to earn Tips. | 20 Tips target | Tofu Press output x1.5 | 1 to 5 minutes when stock is low | Slow stock rebuild | Buy Steady Pressing | Implemented |
+| buy_steady_pressing | Buy Steady Pressing | Upgrades | First Loop | Stock runway is low or extra Tofu Presses make stock growth relevant | Enough Tips | Need 20 Tips. Let Counter Service earn Tips. | 20 Tips target | Tofu Press output x1.5 | 1 to 5 minutes when stock is low | Slow stock rebuild | Buy Steady Pressing | Implemented |
 | buy_double_mold | Buy Double Mold | Upgrades | First Shop | Own 3 Tofu Presses | Enough Tips | Need 40 Tips. | 40 Tips target | Tofu Press output x2 | 5 to 10 minutes | First production plateau | Buy Double Mold | Implemented, target tuning pending |
 | buy_tidy_packaging | Buy Tidy Packaging | Upgrades | First Loop | First order complete and Prep Counter/order throughput is the bottleneck | Enough Tips | Need 20 Tips. Fulfill prepared orders first. | 20 Tips target | Prep Counter output x1.5 | 1 to 3 minutes | Slow order prep | Buy Tidy Packaging | Implemented |
 | buy_double_labels | Buy Double Labels | Upgrades | First Shop | Own 2 Prep Counters | Enough Tips | Need 120 Tips. | 120 Tips target | Prep Counter output x2 | 10 to 20 minutes | Order throughput plateau | Buy Double Labels | Implemented, target tuning pending |
@@ -774,10 +774,10 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
   orders, and Counter Crew after Pickup Window plus 1K fulfilled orders or strong Reputation
 - Associated upgrades: Order Bell, Wider Counter, Pickup Routine, Second Register, Pickup Window,
   and Counter Crew; future stock reserve and priority tuning remain documented only
-- Urgent when: prepared-order fulfillment becomes repetitive after the player has learned the loop
-- Less urgent when: the player still needs manual order choices to understand stock/order costs
-- Expected first use: after First 10 Orders
-- V1 runtime behavior: starts paused, can be started/paused from Overview, runs only while parked and
+- Urgent when: prepared orders are ready or the starter shop needs a visible automatic handoff
+- Less urgent when: the player is solving a stock/prep bottleneck before the next handoff can run
+- Expected first use: immediately on a fresh save
+- V1 runtime behavior: starts running on fresh saves, can be started/paused from Overview, runs only while parked and
   the page is open, shows income or blocked-state copy, and never auto-fulfills offline
 - Status: V1 implemented / needs playtest tuning
 
@@ -957,23 +957,24 @@ visible as an optional certified boost, but it should not override the normal sh
 
 | State | Current Bottleneck | Next Best Action | Secondary Action | What Not To Recommend |
 | --- | --- | --- | --- | --- |
-| Ready Orders >= 1 and Tips are low | Need Tips | Fulfill Shop Order or Fulfill Max Orders | Take Cup Test as optional boost | Buy Tofu Press as primary |
-| Ready Orders >= 2 | Convert work to Tips | Fulfill Max Orders | View Orders | Manual single-order spam |
+| Fresh shop, first order not complete | First automatic handoff | Watch Counter Service | Take Cup Test as optional boost | Manual Fulfill Shop Order as primary |
+| Ready Orders >= 1 and Tips are low | Need Tips | Let Counter Service work | Take Cup Test as optional boost | Buy Tofu Press as primary if stock is healthy |
+| Ready Orders >= 2 | Convert work to Tips | Upgrade or run Counter Service | View Orders / Manual Backup | Manual single-order spam |
 | No ready orders, order prep in progress | Preparing Delivery Order | Wait for Prep Counter | Pack Tofu only if stock is low | Certified boost as bottleneck |
 | High Tofu Stock, slow order prep | Prep Counter throughput | Buy Prep Counter or Buy Tidy Packaging if affordable; otherwise wait for Prep Counter | Tofu Press available with `not urgent` copy | Buy Tofu Press as dominant action |
-| Low Tofu Stock runway, early shop | Low Tofu Stock | Pack Tofu or Buy Tofu Press | Wait for Prep Counter if already running | Buy Prep Counter if it will starve immediately |
+| Low Tofu Stock runway, early shop | Low Tofu Stock | Buy Tofu Press | Manual Pack Tofu only as emergency backup | Buy Prep Counter if it will starve immediately |
 | Counter Service stock-blocked, managed shop | Tofu supply scale | Buy Supplier Contract with Reputation | Rush Stock, Tofu Press, or stock upgrade | Manual Pack Tofu as primary action |
 | Upgrade affordable and current bottleneck matches it | Upgrade available | Buy the bottleneck-solving upgrade | Fulfill orders if ready | Generic upgrade if it solves the wrong bottleneck |
 | Next unlock close | Unlock pressure | Show the requirement and direct action | Continue orders/routes | Reveal full future system list |
-| Offline return with many orders | Convert offline progress | Fulfill Max Orders | Review Ledger | Cup Test as primary |
+| Offline return with many orders | Convert offline progress | Start/upgrade Counter Service | Review Ledger / Manual Backup | Cup Test as primary |
 | Cup Test available but shop loop has work | Optional certified boost | Continue shop loop | Take Don't Spill the Cup as secondary | `Certified boost available` as current bottleneck |
 | License Exam close | Prestige requirements | View License Exam requirements | Continue missing requirement | Take License Exam if requirements are not met |
 
 Disabled copy should be specific:
 
-- `Need 20 more Tips. Fulfill shop orders to earn Tips.`
+- `Need 20 more Tips. Let Counter Service earn Tips.`
 - `Need 1 prepared order. Prep Counter is preparing the next order.`
-- `Need more Tofu Stock. Pack tofu or buy Tofu Press.`
+- `Need more Tofu Stock. Let Tofu Press work or buy more supply.`
 - `Need 1 Prep Capacity. Prep Capacity recovers over time.`
 
 ## 11. Progressive Reveal Rules
@@ -1692,7 +1693,7 @@ Starter first-loop balance sheet:
 
 | id | label | phase | visibleAt | enabledWhen | primaryResource | costFormula | baseCost | growthRate | effectFormula | expectedUnlockTime | expectedTimeToBuy | bottleneckSolved | nextBestActionText | replacesOrAutomates | safetyNotes | status |
 | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- | --- |
-| fulfill_shop_order | Fulfill Shop Order | First Loop | Start | Ready Orders >= 1 | Delivery Orders | flat | 1 order | 1.0 | +10 Tips, +1 Reputation, +8 Shop XP | 0:00 | immediate | Converts orders to spendable progress | Fulfill Simple Tofu Box | none | Parked-only, no sensors | Implemented |
+| starter_counter_service | Starter Counter Service | First Loop | Start | Ready Orders >= 1 and supplied | Delivery Orders, Tofu Stock | flat by order type | 1 order handoff | 1.0 | +10 Tips, +1 Reputation, +8 Shop XP for Simple Tofu Box | 0:00 | 10 to 30 seconds | Converts orders to spendable progress automatically | Watch Counter Service | manual fulfillment | Parked-only, no sensors | Implemented |
 | family_tofu_tray | Family Tofu Tray | First Shop | 5 fulfilled orders or Shop Level 2 | 24 stock and 1 ready order | Tofu Stock, Delivery Orders | flat | 24 stock + 1 order | 1.0 | +45 Tips, +3 Reputation, +24 Shop XP | 5 to 10 minutes | when unlocked and stocked | Extra stock has value | Fulfill Family Tofu Tray | simple order only | Shop only | Implemented |
 | festival_bento | Festival Bento | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 stock and 2 ready orders | Tofu Stock, Delivery Orders | flat | 75 stock + 2 orders | 1.0 | +130 Tips, +8 Reputation, +70 Shop XP | 20 to 40 minutes | when unlocked and stocked | First big payout | Fulfill Festival Bento | smaller orders | Shop only | Implemented |
 | tofu_press | Tofu Press | First Loop | Start | always owned; buys require Tips | Tips | baseCost * growthRate ^ owned | 15 | 1.15 | +0.10 stock/sec target each | 0:00 | about 2 orders for first extra | Low Tofu Stock | Buy Tofu Press | Pack Tofu pressure | Shop only | Implemented, target value gap |
@@ -1752,7 +1753,8 @@ progression contract.
 | Tofu Press live production | Implemented | `frontend/nospill/app.js`, live tick tests | produces Tofu Stock over elapsed time | first-loop rate tuning |
 | Prep Counter conversion | Implemented | `applyShopGeneratorTick`, order prep tests | consumes Tofu Stock and prepares Delivery Orders | first-loop pacing simulation |
 | Tofu Stock runway | Implemented | `tofuStockRunway`, runway tests | explains whether stock is enough and avoids bad Tofu Press recommendations | mobile copy polish |
-| Fulfill Shop Order | Implemented | order fulfillment helpers/tests | converts orders into Tips/Reputation/Shop XP and gives feedback | keep Driver XP separate from shop progress |
+| Starter Counter Service | Implemented | counter service helpers/tests | converts orders into Tips/Reputation/Shop XP automatically while parked | tune first-order timing |
+| Manual Fulfill Shop Order | Implemented as backup | order fulfillment helpers/tests | converts orders into Tips/Reputation/Shop XP and gives feedback when manually used | keep secondary to automation |
 | Order-size ladder | Implemented | order catalog, typed fulfillment, Overview order cards, Next Best Action tests | Simple Tofu Box, Family Tofu Tray, and Festival Bento consume typed tofu/order costs and pay typed rewards | tune unlock timing and presentation |
 | Tips purchase currency | Implemented | station/upgrade costs and disabled copy | buys stations/upgrades | tune first purchase timing |
 | Ready order/progress display | Implemented | ready order UI/tests | hides raw fractional order count | refine ETA copy |
@@ -1763,7 +1765,7 @@ progression contract.
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs 20 Tips, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
-| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
+| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts running on fresh saves, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
 | Supplier Contracts | Implemented | Reputation-cost station upgrades, rates, Next Best Action, tests | Soy Supplier Contract, Morning Soy Delivery, and Bulk Soy Delivery add Tofu Stock/sec as a high-midgame Reputation sink so Counter Service stock blocks are solved through management, not manual Pack Tofu | tune Reputation costs and stock/sec support after playtesting |
 | Manager Desk V1 | Implemented | Manager Desk station upgrades, Next Milestone/Next Best Action, Counter Service scalar batch processing, tests | Hire Shift Manager raises Counter Service batch size to 25; Wholesale Pickup clears capped waiting-order batches when supplied without adding a new tab, franchise mode, or per-order objects | tune costs, queue threshold, and whether a later dedicated manager surface is needed |
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
@@ -1828,9 +1830,9 @@ Purchases:
 Bottlenecks:
 
 - high stock recommends Prep Counter/order throughput
-- early low stock recommends Pack Tofu or Tofu Press
+- early low stock recommends Tofu Press, with Pack Tofu as Manual Backup only
 - high-midgame stock-blocked Counter Service recommends Supplier Contracts or scalable supply
-- ready orders recommend Fulfill Shop Order or Fulfill Max Orders
+- ready orders recommend running or upgrading Counter Service
 - Cup Test remains optional and does not override normal shop bottlenecks
 
 Reveal:

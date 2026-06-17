@@ -206,7 +206,7 @@ Design stance:
 Current core loop target:
 
 ```text
-Tofu Stock -> Delivery Orders -> Fulfill Shop Order -> Tips -> Upgrade -> First Stamp
+Tofu Press -> Prep Counter -> Starter Counter Service -> Tips -> Upgrade -> First Stamp
 ```
 
 The loop should become fun before deeper systems are expanded.
@@ -229,9 +229,10 @@ Current design principles:
 - The incremental design transcript audit reinforces four durable rules: make the first five
   minutes obvious, balance active play with idle progress, delegate repeated chores only after
   mastery, and add novelty through earned shop layers rather than early UI clutter.
-- Tofu Shop is idle-first, not clicker-first. Manual actions teach the loop, automation replaces
-  repeated labor, and player decisions, not clicking speed, drive progression. Every repeated
-  manual action needs an automation exit.
+- Tofu Garage is idle-first from the start. The shop performs repeated labor automatically:
+  Tofu Press makes stock, Prep Counter prepares orders, and starter Counter Service handles slow
+  Simple Tofu Box pickups. Manual actions are not the core loop; the player clicks decisions,
+  upgrades, bottleneck fixes, and strategic spends.
 - Good player actions include buying upgrades, solving bottlenecks, starting or pausing Counter
   Service, spending Shop Spirit, and later choosing business direction, car-build direction, or a
   prestige reset. Bad repeated labor includes clicking hundreds of times to make tofu, manually
@@ -265,15 +266,17 @@ Current design principles:
 - The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, Festival Bento, and
   Catering Crate. The early stock costs are 6, 24, and 75 Tofu Stock respectively, with Catering
   Crate acting as a later managed-shop stock/Ready Order sink.
-- Core Game Spine V1 adds the first short milestone ladder after the first stamp: First Upgrade
-  Purchased, First Family Tofu Tray, First 10 Orders, and First 100 Tips. Delivery Shelf is the
-  first throughput support station, and Shop Sign is the first Reputation support station.
+- Core Game Spine V1 now starts with automatic First Tips Earned and the First Shop Order stamp,
+  followed by First Upgrade Purchased, First 10 Orders, First Family Tofu Tray, and First 100 Tips.
+  Delivery Shelf is the first throughput support station, and Shop Sign is the first Reputation
+  support station.
 - Station Milestone Boosts V1 rewards owned station counts without adding a new tab or currency:
   5/10 Tofu Presses and Prep Counters accelerate stock/order production, 5/10 Delivery Shelves
   improve Prep Counter support, and 5/10 Shop Signs improve Reputation support. These are
   total multipliers, not stacked threshold multipliers.
-- Counter Service V1 is the first earned automation layer: after First 10 Orders, regular customers
-  can pick up prepared orders automatically while the page is open and the player is parked.
+- Counter Service V1 is the starter automation layer. It is available on fresh saves, runs by
+  default while parked, and can complete the first Simple Tofu Box without manual fulfillment.
+  Later Counter Service upgrades remain earned after early shop momentum.
 - Managed Shop Phase V1 extends Counter Service after Pickup Routine with finite bulk handoff
   upgrades: Second Register, Pickup Window, and Counter Crew. This is still local Tofu Shop
   automation, not franchise mode or Dream Garage.
@@ -290,10 +293,11 @@ Current design principles:
 - New active decisions should replace automated chores. When Counter Service removes repeated order
   handoffs, the next decisions should be stock supply, service rate, larger orders, or later support
   stations, not more mandatory clicking.
-- Fulfill Shop Order requires at least one ready Delivery Order.
-- Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and Shop XP.
+- Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
+  Delivery Order, consumes Delivery Orders, and grants Tips, Reputation, and Shop XP, but it is not
+  the primary progression loop.
 - Tips buy more production, stations, and upgrades.
-- The early UI must teach that Tips come from fulfilled shop orders.
+- The early UI must teach that Tips come from automatic Counter Service handoffs.
 - Pack Tofu is a backup/manual Tofu Stock action, not the main money action.
 - Recommendations should follow the current bottleneck: promote Tofu Press when stock is low, but
   promote Prep Counter, order prep, or Tidy Packaging when stock is plentiful and orders are slow.

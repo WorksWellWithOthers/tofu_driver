@@ -2710,7 +2710,7 @@ function defaultShopState() {
     lastShopTickAt: "",
     lastGeneratorTickAt: "",
     counterService: {
-      running: false,
+      running: true,
       priority: "best_available",
       lastHandoffAt: "",
       lastResult: "",
@@ -2755,7 +2755,7 @@ function normalizeCounterService(counterService) {
   const source = counterService && typeof counterService === "object" ? counterService : {};
   const priority = source.priority === "simple_only" ? "simple_only" : "best_available";
   return {
-    running: Boolean(source.running),
+    running: source.running === undefined ? true : Boolean(source.running),
     priority,
     lastHandoffAt: typeof source.lastHandoffAt === "string" ? source.lastHandoffAt : "",
     lastResult: typeof source.lastResult === "string" ? source.lastResult.slice(0, 180) : "",
@@ -3949,7 +3949,7 @@ function shopOrderDisabledReason(orderType, gameState, unlocked = shopOrderTypeU
   }
   if (state.shop.tofuStock < orderType.tofuRequired) {
     const tofuNeeded = Math.max(1, Math.ceil(orderType.tofuRequired - state.shop.tofuStock));
-    return `Need ${formatShopCost(tofuNeeded)} more tofu stock. Pack tofu or buy a Tofu Press.`;
+    return `Need ${formatShopCost(tofuNeeded)} more tofu stock. Let Tofu Press work or buy more supply.`;
   }
   return "";
 }
@@ -4040,7 +4040,7 @@ function tofuStockRunway(gameState) {
       : `Tofu Stock is getting low: enough for ${remainingLabel} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}.`;
   } else {
     label = "Empty";
-    message = "Need more Tofu Stock. Pack tofu or buy a Tofu Press.";
+    message = "Need more Tofu Stock. Let Tofu Press work or buy more supply.";
   }
   return {
     tofuStock,
@@ -4336,7 +4336,7 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   if (!unlocked) return station.unlock || "Locked.";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  if (tipsNeeded > 0) return `Need ${formatShopCost(tipsNeeded)} more Tips. Fulfill shop orders to earn Tips.`;
+  if (tipsNeeded > 0) return `Need ${formatShopCost(tipsNeeded)} more Tips. Let Counter Service earn Tips.`;
   const prepNeeded = Math.max(0, Math.ceil(safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots));
   if (prepNeeded > 0) return `Need ${formatShopCount(prepNeeded)} more Prep Capacity`;
   return "";
@@ -4400,7 +4400,7 @@ function shopUpgradeById(upgradeId) {
 function stationUpgradeRevealReason(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
-  if (upgrade.id === "counter_service_bell") return "Unlocks after Counter Service arrives";
+  if (upgrade.id === "counter_service_bell") return "Unlocks after First 10 Orders or First 100 Tips";
   if (upgrade.id === "counter_service_wide") return "Unlocks after Order Bell and 20 fulfilled orders";
   if (upgrade.id === "counter_service_routine") return "Unlocks after Wider Counter and First Family Tofu Tray";
   if (upgrade.id === "counter_service_register") return "Unlocks after Pickup Routine and 25 fulfilled orders";
@@ -4427,7 +4427,11 @@ function stationUpgradeRevealReason(upgrade, gameState) {
 function stationUpgradeIsRevealed(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
-  if (upgrade.id === "counter_service_bell") return isCounterServiceUnlocked(state);
+  if (upgrade.id === "counter_service_bell") {
+    return Boolean(state.stamps.first_10_orders || state.stamps.first_100_tips)
+      || fulfilledShopOrderCount(state) >= 10
+      || safeNonNegativeInteger(state.shop.lifetimeTips, 0, SHOP_MAX_RESOURCE) >= 100;
+  }
   if (upgrade.id === "counter_service_wide") {
     return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_bell, 0, 1) > 0
       && orders >= 20;
@@ -4537,7 +4541,7 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
     return missing.length ? `Need ${missing.join(" and ")}.` : "";
   }
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  return tipsNeeded > 0 ? `Need ${formatShopCost(tipsNeeded)} more Tips. Fulfill shop orders to earn Tips.` : "";
+  return tipsNeeded > 0 ? `Need ${formatShopCost(tipsNeeded)} more Tips. Let Counter Service earn Tips.` : "";
 }
 
 function stationUpgradePreviewText(upgrade, gameState) {
@@ -4795,8 +4799,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
 }
 
 function isCounterServiceUnlocked(gameState) {
-  const state = normalizeGameState(gameState);
-  return Boolean(state.stamps.first_10_orders) || fulfilledShopOrderCount(state) >= 10;
+  return Boolean(normalizeGameState(gameState).shop);
 }
 
 function counterServicePriorityLabel(priority) {
@@ -4904,7 +4907,7 @@ function counterServiceProgress(gameState, now = new Date()) {
       running: false,
       percent: 0,
       etaSeconds: null,
-      message: "Unlocks after 10 fulfilled shop orders.",
+      message: "Counter Service is available from the starter shop.",
     };
   }
   if (!service.running || appState.running || appState.calibrating) {
@@ -4945,7 +4948,7 @@ function startCounterService(gameState, options = {}) {
     return { ok: false, reason: "Counter Service runs only while parked.", gameState: next };
   }
   if (!isCounterServiceUnlocked(next)) {
-    return { ok: false, reason: "Unlocks after 10 fulfilled shop orders.", gameState: next };
+    return { ok: false, reason: "Counter Service is not available yet.", gameState: next };
   }
   const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
   const nowIso = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
@@ -4965,7 +4968,7 @@ function pauseCounterService(gameState, options = {}) {
     return { ok: false, reason: "Counter Service controls unlock after you finish and park.", gameState: next };
   }
   if (!isCounterServiceUnlocked(next)) {
-    return { ok: false, reason: "Unlocks after 10 fulfilled shop orders.", gameState: next };
+    return { ok: false, reason: "Counter Service is not available yet.", gameState: next };
   }
   next.shop.counterService.running = false;
   next.shop.counterService.lastResult = "Counter Service paused.";
@@ -5381,9 +5384,6 @@ function buyStationUpgrade(upgradeId, gameState) {
   const counterServiceUpgrade = upgrade.stationId === "counter_service";
   const supplierUpgrade = isSupplierUpgrade(upgrade);
   const managerUpgrade = isManagerDeskUpgrade(upgrade);
-  if (counterServiceUpgrade && !isCounterServiceUnlocked(next)) {
-    return { ok: false, reason: "Counter Service unlocks after 10 fulfilled orders.", gameState: next };
-  }
   if (!counterServiceUpgrade && !supplierUpgrade && !managerUpgrade && (!station || !stationIsUnlocked(station, next))) {
     return { ok: false, reason: "Station is locked.", gameState: next };
   }
@@ -8411,6 +8411,10 @@ function nextBestAction(gameState, options = {}) {
   const stockMilestone = nextVisibleStationMilestone(state, { stationIds: ["tofu_press"] });
   const prepMilestone = nextVisibleStationMilestone(state, { stationIds: ["prep_counter", "delivery_shelf"] });
   const reputationMilestone = nextVisibleStationMilestone(state, { stationIds: ["shop_sign"] });
+  const fulfilled = fulfilledShopOrderCount(state);
+  const idleStarterActive = shopUnlocked
+    && fulfilled < 1
+    && state.shop.counterService.running;
   if (activeDrive) {
     return {
       type: "active_drive",
@@ -8459,7 +8463,7 @@ function nextBestAction(gameState, options = {}) {
         title: "Next: Buy Tofu Press",
         copy: stockMilestone && stockMilestone.close
             ? `Counter Service is waiting for Tofu Stock. You are close to ${formatShopCount(stockMilestone.milestone.threshold)} Tofu Presses for ${stockMilestone.milestone.reward}.`
-            : "Counter Service is waiting for Tofu Stock. A Tofu Press helps keep larger orders supplied.",
+            : "Tofu Stock is low and Counter Service is waiting. A Tofu Press helps keep larger orders supplied.",
         buttonLabel: "View Production",
         stationId: "tofu_press",
         disabled: false,
@@ -8475,10 +8479,40 @@ function nextBestAction(gameState, options = {}) {
       };
     }
     return {
-      type: "pack_tofu",
-      title: "Next: Pack Tofu",
-      copy: "Counter Service is waiting for Tofu Stock. Pack tofu or invest in the press.",
-      buttonLabel: "Pack Tofu",
+      type: "buy_station",
+      title: "Next: Improve Tofu Supply",
+      copy: "Tofu Stock is low and Counter Service is waiting. Let the press and supply upgrades solve this; manual Pack Tofu is only an emergency backup.",
+      buttonLabel: "View Production",
+      stationId: "tofu_press",
+      disabled: false,
+    };
+  }
+  if (idleStarterActive) {
+    if (runway.isLow && tofuPressStation) {
+      return {
+        type: "buy_station",
+        title: "Next: Buy Tofu Press",
+        copy: "Tofu Stock is low. Add press output so the starter shop can keep preparing orders automatically.",
+        buttonLabel: "View Production",
+        stationId: "tofu_press",
+        disabled: false,
+      };
+    }
+    if (tofuPressStation) {
+      return {
+        type: "buy_station",
+        title: "Next: Buy Tofu Press",
+        copy: "The starter counter is already handling orders. Add press output when Tips arrive so the shop stays supplied.",
+        buttonLabel: "View Production",
+        stationId: "tofu_press",
+        disabled: false,
+      };
+    }
+    return {
+      type: "watch_starter_shop",
+      title: "Next: Watch the first order complete",
+      copy: "The starter shop runs by itself: Tofu Press makes stock, Prep Counter prepares orders, and Counter Service handles the first pickup.",
+      buttonLabel: "View Counter Service",
       disabled: false,
     };
   }
@@ -8530,38 +8564,22 @@ function nextBestAction(gameState, options = {}) {
       upgradeId: counterUpgrade.id,
     };
   }
-  if (shopUnlocked && prep.ready > 0 && bestOrder) {
-    const simpleOrder = bestOrder.id === "simple_tofu_box";
-    const maxQuantity = maxFulfillableShopOrderQuantity(state, bestOrder);
-    const useMax = simpleOrder && maxQuantity > 1;
-    const singleSimpleLabel = "Fulfill Simple Tofu Box";
-    return {
-      type: "fulfill_shop_order",
-      title: useMax
-        ? "Next: Fulfill Max Simple Orders"
-        : simpleOrder
-          ? `Next: ${singleSimpleLabel}`
-          : `Next: Fulfill ${bestOrder.name}`,
-      copy: simpleOrder
-        ? "You have prepared orders ready. Hand them off to earn Tips for stations and upgrades."
-        : "You have enough tofu for a larger order. Use extra Tofu Stock for bigger payouts.",
-      buttonLabel: useMax
-        ? "Fulfill Max Simple Orders"
-        : simpleOrder
-          ? singleSimpleLabel
-          : `Fulfill ${bestOrder.name}`,
-      orderQuantity: useMax ? "max" : "1",
-      orderTypeId: bestOrder.id,
-      disabled: false,
-    };
-  }
   if (shopUnlocked && isCounterServiceUnlocked(state) && !state.shop.counterService.running) {
     return {
       type: "start_counter_service",
       title: "Next: Start Counter Service",
-      copy: "Manual fulfillment taught the loop. Counter Service can now handle prepared order pickups while the shop is open.",
+      copy: "The shop is idle-first. Restart Counter Service so prepared order pickups happen automatically.",
       buttonLabel: "Start Counter Service",
       disabled: false,
+    };
+  }
+  if (shopUnlocked && prep.ready > 0 && bestOrder && state.shop.counterService.running) {
+    return {
+      type: "wait_counter_service",
+      title: "Next: Let Counter Service work",
+      copy: "Prepared orders are ready. Counter Service will hand them off automatically; buy upgrades when Tips arrive.",
+      buttonLabel: "Counter Service Running",
+      disabled: true,
     };
   }
   if (shopUnlocked && prep.ready < 1 && tidyAffordable && runway.isHealthy) {
@@ -8658,10 +8676,11 @@ function nextBestAction(gameState, options = {}) {
   }
   if (shopUnlocked && lowTofuStock) {
     return {
-      type: "pack_tofu",
-      title: "Next: Pack Tofu",
-      copy: "Tofu Stock is low. Pack a few blocks or let the Tofu Press work.",
-      buttonLabel: "Pack Tofu",
+      type: "buy_station",
+      title: "Next: Improve Tofu Supply",
+      copy: "Tofu Stock is low. Buy Tofu Press or supplier support when available; manual packing is only a backup.",
+      buttonLabel: "View Production",
+      stationId: "tofu_press",
       disabled: false,
     };
   }
@@ -8677,7 +8696,7 @@ function nextBestAction(gameState, options = {}) {
   return {
     type: "continue_shop",
     title: "Next: Continue Tofu Garage",
-    copy: "Let the press work, fulfill prepared orders, or take the Cup Test for certified progress.",
+    copy: "Let the starter shop work, buy bottleneck upgrades, or take the Cup Test for optional certified progress.",
     buttonLabel: "View Tofu Garage",
     disabled: false,
   };
@@ -8840,7 +8859,7 @@ function stationPurposeCopy(stationId, gameState) {
       return "Not urgent: you have enough tofu for now. Tofu Press helps when Prep Counter starts using stock faster.";
     }
     if (runway.isLow) {
-      return "Tofu Stock is low. Pack tofu or buy a Tofu Press.";
+      return "Tofu Stock is low. Let Tofu Press work or buy more supply.";
     }
     return "Presses tofu for future orders.";
   }
@@ -9231,6 +9250,15 @@ function renderShopOrderCard(orderType, gameState, options = {}) {
   const availability = canFulfill
     ? `<small class="nospill-available-badge">Available</small>`
     : "";
+  const actions = options.hideActions
+    ? []
+    : [
+        fulfillOrderButton(`Fulfill ${orderType.name}`, orderType.id, "1", !canFulfill, "nospill-secondary", disabledReason),
+        maxQuantity > 1
+          ? fulfillOrderButton(`Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)}`, orderType.id, "max", false, "nospill-secondary")
+          : "",
+        maxRewardCopy ? `<small class="nospill-action-reason">${escapeHtml(maxRewardCopy)}</small>` : "",
+      ];
   return renderIdleCard({
     title: orderType.name,
     status: unlocked ? `Ready Orders: ${formatShopCount(prep.ready)}` : "Locked",
@@ -9239,13 +9267,7 @@ function renderShopOrderCard(orderType, gameState, options = {}) {
       : shopOrderUnlockReason(orderType),
     locked: !unlocked,
     extra: availability,
-    actions: [
-      fulfillOrderButton(`Fulfill ${orderType.name}`, orderType.id, "1", !canFulfill, "nospill-primary", disabledReason),
-      maxQuantity > 1
-        ? fulfillOrderButton(`Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)}`, orderType.id, "max", false, "nospill-secondary")
-        : "",
-      maxRewardCopy ? `<small class="nospill-action-reason">${escapeHtml(maxRewardCopy)}</small>` : "",
-    ],
+    actions,
   });
 }
 
@@ -9469,6 +9491,20 @@ function nextVisibleStationMilestone(gameState, options = {}) {
 function nextMilestoneForShop(gameState) {
   const state = normalizeGameState(gameState);
   const fulfilled = fulfilledShopOrderCount(state);
+  if (state.shop.lifetimeTips < 1) {
+    const simpleOrder = shopOrderTypeById("simple_tofu_box");
+    const targetTips = simpleOrder ? simpleOrder.tips : 10;
+    const progress = nextMilestoneProgress(state.shop.lifetimeTips, targetTips);
+    return {
+      id: "first_tips_earned",
+      name: "First Tips Earned",
+      progressText: `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} lifetime Tips`,
+      percent: progress.percent,
+      reward: "First shop payout",
+      guidance: "The starter shop runs by itself. Watch Counter Service complete the first Simple Tofu Box.",
+    };
+  }
+
   if (!state.stamps.first_shop_order && fulfilled < 1) {
     const progress = nextMilestoneProgress(fulfilled, 1);
     return {
@@ -9477,7 +9513,7 @@ function nextMilestoneForShop(gameState) {
       progressText: `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} order fulfilled`,
       percent: progress.percent,
       reward: "First Passport stamp",
-      guidance: "Fulfill the Simple Tofu Box to open the passport.",
+      guidance: "Counter Service can earn this stamp automatically from the starter shop.",
     };
   }
 
@@ -9502,20 +9538,6 @@ function nextMilestoneForShop(gameState) {
       percent: progress.percent,
       reward: "New shop support",
       guidance: "Keep converting prepared orders into Tips.",
-    };
-  }
-
-  if (isCounterServiceUnlocked(state)
-    && !state.shop.counterService.running
-    && safeNonNegativeInteger(state.shop.counterService.lifetimeHandoffs, 0, 1000000) < 1
-  ) {
-    return {
-      id: "counter_service_start",
-      name: "Counter Service",
-      progressText: "Unlocked after First 10 Orders",
-      percent: 100,
-      reward: "Automatic prepared-order pickups",
-      guidance: "Start Counter Service when manual order handoff starts feeling repetitive.",
     };
   }
 
@@ -9725,11 +9747,11 @@ function renderOverviewPanel(state) {
     ${renderNextMilestoneCard(state)}
     ${renderTofuShopLivingScene(state)}
     <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
-    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.</p>
+    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.</p>
     <p class="nospill-panel-helper">Tips buy upgrades. ${escapeHtml(runway.message)}</p>
     <div class="nospill-idle-grid">
       ${renderPreparingOrderCard(state)}
-      ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
+      ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
       ${renderOverviewImprovementCard(state)}
       ${renderCounterServiceCard(state)}
       ${renderRecentShopRewardCard(state)}
@@ -9831,11 +9853,11 @@ function renderOrdersPanel(state) {
     .map((orderType) => renderShopOrderCard(orderType, state));
   return `
     <h4>Orders</h4>
-    <p class="nospill-panel-helper">Tofu Stock becomes Delivery Orders. Delivery Orders become Tips.</p>
+    <p class="nospill-panel-helper">Tofu Stock becomes Delivery Orders. Counter Service normally turns Delivery Orders into Tips.</p>
     <p class="nospill-panel-helper">Uses: Prep Counter + larger orders. Tofu Stock is inventory, not money.</p>
     <p class="nospill-panel-helper">Prep Counter uses ${formatShopCost(PREP_COUNTER_CONSUME_PER_ORDER)} tofu stock to prepare 1 delivery order.</p>
     <p class="nospill-panel-helper">Tofu Stock prepares orders. Bigger orders use more tofu and pay more Tips.</p>
-    <p class="nospill-panel-helper">Fulfill prepared shop orders to earn Tips. Tips buy stations and upgrades.</p>
+    <p class="nospill-panel-helper">Manual fulfillment is a parked backup, not the main progression loop. Tips buy stations and upgrades.</p>
     <div class="nospill-idle-grid">
       ${orderCards.join("")}
       ${renderPreparingOrderCard(state)}
@@ -10158,10 +10180,10 @@ function currentBottleneck(gameState) {
   const bestOrder = bestFulfillableShopOrderType(state);
   const upgrade = affordableShopUpgrade(state);
   const prepCounterStation = affordableShopStation(state, "prep_counter");
-  if (prep.ready > 0 && !bestOrder) return { id: "tofu", label: "Low Tofu Stock", action: "Pack tofu or buy Tofu Press." };
-  if (prep.ready > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Fulfill shop orders to earn Tips." };
-  if (prep.ready > 0) return { id: "orders_ready", label: "Orders ready", action: bestOrder && bestOrder.id !== "simple_tofu_box" ? `Fulfill ${bestOrder.name} for a bigger payout.` : "Fulfill shop orders for Tips." };
-  if (prep.ready < 1 && runway.isLow) return { id: "tofu", label: "Low Tofu Stock", action: "Pack tofu or buy Tofu Press." };
+  if (prep.ready > 0 && !bestOrder) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Supplier support; manual packing is backup only." };
+  if (prep.ready > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Counter Service will turn prepared orders into Tips." };
+  if (prep.ready > 0) return { id: "orders_ready", label: "Orders ready", action: bestOrder && bestOrder.id !== "simple_tofu_box" ? `Counter Service can use ${bestOrder.name} for a bigger payout.` : "Counter Service converts ready orders into Tips." };
+  if (prep.ready < 1 && runway.isLow) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Supplier support; manual packing is backup only." };
   if (prep.ready < 1 && prep.running && runway.isHealthy && upgrade && upgrade.stationId === "prep_counter") {
     return { id: "prep_upgrade", label: "Prep Counter upgrade available", action: `Buy ${upgrade.name} to prepare orders faster.` };
   }
@@ -10272,9 +10294,7 @@ function renderTofuShop(gameState = loadGameState()) {
     elements.packTofuButton.textContent = activeDrive
       ? "Park First"
       : reveal.shop
-        ? prep.ready > 0 || shop.tofuStock >= 10
-          ? "Pack Tofu (backup)"
-          : "Pack Tofu"
+        ? "Pack Tofu"
         : "Start the Shop";
   }
   if (elements.fulfillShopOrderButton) {
@@ -10285,23 +10305,23 @@ function renderTofuShop(gameState = loadGameState()) {
     elements.fulfillShopOrderButton.textContent = activeDrive
       ? "Park First"
       : bestOrder && bestOrder.id === "simple_tofu_box"
-        ? "Fulfill Simple Tofu Box"
+        ? "Fulfill One Simple Box"
         : bestOrder
-          ? `Fulfill ${bestOrder.name}`
-          : "Fulfill Shop Order";
+          ? `Fulfill One ${bestOrder.name}`
+          : "Fulfill One Manually";
   }
   if (elements.packTofuHelper) {
     elements.packTofuHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
       : reveal.shop
-        ? "Tofu Stock feeds Prep Counter and larger orders. Tips buy upgrades."
+        ? "Manual packing is a backup. Tofu Press and Supplier Contracts are the real supply path."
         : "The press is warming up. Start the shop while parked.";
   }
   if (elements.fulfillShopOrderHelper) {
     elements.fulfillShopOrderHelper.textContent = appState.running || appState.calibrating
       ? "Shop actions unlock after you finish and park."
       : prep.ready > 0
-        ? "Turn prepared orders into Tips, Reputation, and XP."
+        ? "Manual fulfillment is available, but Counter Service is the normal handoff path."
         : `Need 1 prepared order. ${prep.message}`;
   }
   renderShopTabs(state);
@@ -12013,9 +12033,11 @@ function handleNextBestAction() {
     handleCounterServiceAction("start");
     return;
   }
-  if (actionType === "continue_shop") {
+  if (actionType === "continue_shop" || actionType === "watch_starter_shop") {
     setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
-    setSummaryStatusMessage("Review the Tofu Shop while parked.");
+    setSummaryStatusMessage(actionType === "watch_starter_shop"
+      ? "Watch the starter shop run, then buy the first useful upgrade."
+      : "Review the Tofu Shop while parked.");
     return;
   }
   if (actionType === "active_drive") return;
