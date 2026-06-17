@@ -114,6 +114,7 @@ globalThis.fulfillShopOrders = fulfillShopOrders;
 globalThis.isCounterServiceUnlocked = isCounterServiceUnlocked;
 globalThis.counterServiceOrderType = counterServiceOrderType;
 globalThis.counterServiceIntervalSeconds = counterServiceIntervalSeconds;
+globalThis.counterServiceBatchSize = counterServiceBatchSize;
 globalThis.counterServiceIncomeStatus = counterServiceIncomeStatus;
 globalThis.counterServiceProgress = counterServiceProgress;
 globalThis.startCounterService = startCounterService;
@@ -138,6 +139,7 @@ globalThis.buyGarageUpgrade = buyGarageUpgrade;
 globalThis.hireCrewRole = hireCrewRole;
 globalThis.buySpiritGenerator = buySpiritGenerator;
 globalThis.useShopSpiritBoost = useShopSpiritBoost;
+globalThis.shopSpiritInstantAmount = shopSpiritInstantAmount;
 globalThis.useFestivalBoost = useFestivalBoost;
 globalThis.licenseExamStatus = licenseExamStatus;
 globalThis.takeLicenseExam = takeLicenseExam;
@@ -150,6 +152,10 @@ globalThis.buyShopUpgrade = buyShopUpgrade;
 globalThis.applyDeliveryToShop = applyDeliveryToShop;
 globalThis.sanitizeShopStateForExport = sanitizeShopStateForExport;
 globalThis.getCharacterCatalog = getCharacterCatalog;
+globalThis.CHARACTER_ART_SLOTS = CHARACTER_ART_SLOTS;
+globalThis.CHARACTER_ART_MANIFEST = CHARACTER_ART_MANIFEST;
+globalThis.getCharacterAsset = getCharacterAsset;
+globalThis.renderCharacterCameo = renderCharacterCameo;
 globalThis.getSoundPackCatalog = getSoundPackCatalog;
 globalThis.evaluateCollectionUnlocks = evaluateCollectionUnlocks;
 globalThis.selectCharacter = selectCharacter;
@@ -1607,7 +1613,7 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert(context.positiveOfflineText.includes('While you were away: +'));
   assert(context.positiveOfflineText.includes('tofu stock'));
   assert(context.positiveOfflineText.includes('delivery orders'));
-  assert(context.fractionalPrepHtml.includes('Need 1 more Prep Slot'));
+  assert(context.fractionalPrepHtml.includes('Need 1 more Prep Capacity'));
   assert(!context.fractionalPrepHtml.includes('0.65'));
   ['Routes', 'Training', 'Crew', 'Garage', 'Shop Spirit', 'Rivals', 'License', 'Passport'].forEach((label) => {
     assert(!context.rawAccumulatedTabsHtml.includes(`>${label}<`), label);
@@ -2253,7 +2259,8 @@ globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(context.compactTipsText, '1B');
   assert.strictEqual(context.compactReputationText, '1B');
   assert(/[KMB]/.test(context.compactLevelProgressText));
-  assert(context.compactPrepSlotsText.includes('1.05K/'));
+  assert(context.compactPrepSlotsText.includes('available'));
+  assert(!context.compactPrepSlotsText.includes('/'));
   assert.strictEqual(context.compactReachText, '12.8K');
   assert(context.compactSpiritText.includes('K/'));
   assert.strictEqual(context.compactStarsText, '100K');
@@ -2263,9 +2270,9 @@ globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert(context.compactOrdersHtml.includes('Reward: +835K Tips'));
   assert(context.compactOrdersHtml.includes('Uses: 482K tofu stock, 12.8K ready orders'));
   assert(context.compactProductionHtml.includes('K Tips'));
-  assert(context.compactProductionHtml.includes('Need 1 more Prep Slot'));
-  assert(context.compactUpgradeHtml.includes('K Tips'));
-  assert(context.compactUpgradeHtml.includes('K more Tips'));
+  assert(context.compactProductionHtml.includes('Need 1 more Prep Capacity'));
+  assert(context.compactUpgradeHtml.includes('Station Upgrades') || context.compactUpgradeHtml.includes('Maxed'));
+  assert(!context.compactUpgradeHtml.includes(' -&gt; 1 order / 1 sec'));
   const visible = [
     context.compactOrdersHtml,
     context.compactProductionHtml,
@@ -2901,6 +2908,31 @@ function testShopOrderTypeProgressionAndRewards() {
   assert.strictEqual(festival.tofuUsed, 75);
   assert.strictEqual(festival.gameState.shop.tofuStock, 0);
   assert.strictEqual(festival.gameState.shop.deliveryOrders, 0);
+
+  const cateringType = context.getShopOrderTypes().find((orderType) => orderType.id === 'catering_crate');
+  const cateringLocked = context.defaultGameState();
+  cateringLocked.shop.lifetimeDeliveryOrders = 99;
+  cateringLocked.shop.reputation = 250;
+  cateringLocked.shop.shopLevel = 25;
+  assert.strictEqual(context.shopOrderTypeUnlocked(cateringType, cateringLocked), false);
+  const cateringSource = context.defaultGameState();
+  cateringSource.shop.lifetimeDeliveryOrders = 100;
+  cateringSource.shop.reputation = 20000;
+  cateringSource.shop.shopLevel = context.getShopLevel(cateringSource.shop.reputation);
+  cateringSource.shop.tofuStock = 240;
+  cateringSource.shop.deliveryOrders = 5;
+  assert.strictEqual(context.shopOrderTypeUnlocked(cateringType, cateringSource), true);
+  const catering = context.fulfillShopOrders(cateringSource, 1, {
+    activeDrive: false,
+    orderTypeId: 'catering_crate',
+  });
+  assert.strictEqual(catering.ok, true);
+  assert.strictEqual(catering.orderType.id, 'catering_crate');
+  assert.strictEqual(catering.tipsGained, 520);
+  assert.strictEqual(catering.reputationGained, 25);
+  assert.strictEqual(catering.xpGained, 260);
+  assert.strictEqual(catering.deliveryOrdersUsed, 5);
+  assert.strictEqual(catering.tofuUsed, 240);
 
   const maxFamilySource = JSON.parse(JSON.stringify(fiveSimple));
   maxFamilySource.shop.tofuStock = 96;
@@ -3717,6 +3749,53 @@ globalThis.wideLockedHtml = elements.shopTabPanel.innerHTML;
   const routine = context.buyStationUpgrade('counter_service_routine', routineReady);
   assert.strictEqual(routine.ok, true);
   assert.strictEqual(context.counterServiceIntervalSeconds(routine.gameState), 4);
+  assert.strictEqual(context.counterServiceBatchSize(routine.gameState), 1);
+
+  const registerReady = JSON.parse(JSON.stringify(routine.gameState));
+  registerReady.shop.tips = 2000;
+  registerReady.shop.lifetimeDeliveryOrders = 25;
+  const register = context.buyStationUpgrade('counter_service_register', registerReady);
+  assert.strictEqual(register.ok, true);
+  assert.strictEqual(context.counterServiceBatchSize(register.gameState), 2);
+  const windowLocked = context.buyStationUpgrade('counter_service_window', register.gameState);
+  assert.strictEqual(windowLocked.ok, false);
+  const windowReady = JSON.parse(JSON.stringify(register.gameState));
+  windowReady.shop.tips = 5000;
+  windowReady.shop.lifetimeDeliveryOrders = 100;
+  const windowUpgrade = context.buyStationUpgrade('counter_service_window', windowReady);
+  assert.strictEqual(windowUpgrade.ok, true);
+  assert.strictEqual(context.counterServiceBatchSize(windowUpgrade.gameState), 5);
+  const crewLocked = context.buyStationUpgrade('counter_service_crew', windowUpgrade.gameState);
+  assert.strictEqual(crewLocked.ok, false);
+  const crewReady = JSON.parse(JSON.stringify(windowUpgrade.gameState));
+  crewReady.shop.tips = 20000;
+  crewReady.shop.lifetimeDeliveryOrders = 1000;
+  const crew = context.buyStationUpgrade('counter_service_crew', crewReady);
+  assert.strictEqual(crew.ok, true);
+  assert.strictEqual(context.counterServiceBatchSize(crew.gameState), 10);
+
+  const batchSource = JSON.parse(JSON.stringify(register.gameState));
+  batchSource.shop.counterService.running = true;
+  batchSource.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+  batchSource.shop.deliveryOrders = 20;
+  batchSource.shop.tofuStock = 2000;
+  const batchTipsBefore = batchSource.shop.tips;
+  const batchTick = context.applyCounterServiceTick(batchSource, new Date('2026-06-15T12:00:04.000Z'));
+  assert.strictEqual(batchTick.completed, 2);
+  assert.strictEqual(batchTick.gameState.shop.deliveryOrders < batchSource.shop.deliveryOrders, true);
+  assert.strictEqual(batchTick.gameState.shop.tofuStock < batchSource.shop.tofuStock, true);
+  assert.strictEqual(batchTick.gameState.shop.tips > batchTipsBefore, true);
+  assert(context.counterServiceIncomeStatus(batchSource).text.includes('batch 2'));
+
+  vm.runInContext(`
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(crew.gameState)});
+globalThis.maxedCounterHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.maxedCounterHtml.includes('Counter Crew Lv 1'));
+  assert(context.maxedCounterHtml.includes('Maxed'));
+  assert(!context.maxedCounterHtml.includes('Buy Counter Crew'));
+  assert(!context.maxedCounterHtml.includes('Counter Service: batch 10 -&gt; 10'));
 
   const pileup = JSON.parse(JSON.stringify(state));
   pileup.shop.stationUpgrades.counter_service_bell = 0;
@@ -3767,11 +3846,20 @@ globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
   assert(!context.spiritPanelHtml.includes('Use Boost'));
   assert(!context.spiritPanelHtml.includes('Use Festival Boost'));
   assert(context.spiritPanelHtml.includes('Spend 10 Spirit'));
+  assert(context.spiritPanelHtml.includes('Rush Stock'));
+  assert(context.spiritPanelHtml.includes('Adds 30 seconds of Tofu Stock production'));
   assert(context.spiritPanelHtml.includes('Start Double Batch'));
   assert(context.spiritPanelHtml.includes('Use Token'));
   assert(context.spiritPanelHtml.includes('Duration:'));
   assert(context.spiritPanelHtml.includes('Active for about'));
   assert(context.spiritPanelHtml.includes('Need 3 Spirit'));
+  assert(!context.spiritPanelHtml.includes('Calm Shop Focus'));
+
+  const spiritAmountState = JSON.parse(JSON.stringify(spirit));
+  spiritAmountState.shop.stations.tofu_press = 20;
+  spiritAmountState.shop.stationUpgrades.tofu_press_faster = 5;
+  const rushBoost = context.shopSpiritInstantAmount({ id: 'rush_prep', type: 'instant_tofu', seconds: 30 }, spiritAmountState);
+  assert(rushBoost >= 30);
   assert(context.spiritPanelHtml.includes('You have 12'));
   assert(!context.spiritPanelHtml.includes('Calm Shop Focus'));
 
@@ -5373,6 +5461,128 @@ function findDailyDeliveryDate(context, missionId) {
   throw new Error(`No deterministic ${missionId} delivery date found`);
 }
 
+function testCharacterArtAssetSlotsAndPlaceholders() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const inventory = fs.readFileSync(path.join(ROOT, 'CHARACTER_ART_ASSET_INVENTORY.md'), 'utf8');
+  assert(inventory.includes('| Asset ID | Surface / Screen | Route / UI Area | Purpose |'));
+  [
+    'shop_assistant_main_portrait',
+    'result_screen_cameo',
+    'coach_recap_expression_neutral',
+    'reward_unlock_card_art',
+    'crew_profile_card',
+    'stamp_fanfare_cameo',
+    'share_card_cameo_optional',
+  ].forEach((slotId) => assert(inventory.includes(slotId), `${slotId} should be inventoried`));
+  assert(inventory.includes('Minimum Viable Asset Pack'));
+  assert(inventory.includes('5-image MVP'));
+  const runViewHtml = html.slice(
+    html.indexOf('id="run-view"'),
+    html.indexOf('id="unsupported-view"'),
+  );
+  assert(!runViewHtml.includes('data-character-slot'));
+  assert(!runViewHtml.includes('Character art coming soon'));
+
+  const context = loadNoSpillContext();
+  assert(context.CHARACTER_ART_SLOTS.shop_assistant_main_portrait);
+  assert.strictEqual(
+    context.getCharacterAsset('angry_tofu_driver', 'crew_profile_card').status,
+    'placeholder',
+  );
+  const missingSlot = context.renderCharacterCameo('undefined_future_slot', context.defaultGameState());
+  assert(missingSlot.includes('Character art coming soon'));
+  assert(missingSlot.includes('Asset slot not yet defined.'));
+
+  const freshPlaceholder = context.renderCharacterCameo('shop_assistant_main_portrait', context.defaultGameState());
+  assert(freshPlaceholder.includes('data-character-slot="shop_assistant_main_portrait"'));
+  assert(freshPlaceholder.includes('Character art coming soon'));
+  assert(freshPlaceholder.includes('is-placeholder'));
+
+  const unlocked = context.defaultGameState();
+  unlocked.collection.unlockedCharacterIds.push('angry_tofu_driver', 'sleepy_dispatcher');
+  unlocked.collection.selectedCharacterId = 'sleepy_dispatcher';
+  const selectedHtml = context.renderCharacterCameo('result_screen_cameo', unlocked);
+  assert(selectedHtml.includes('Sleepy Dispatcher'));
+  assert(selectedHtml.includes('result_screen_cameo'));
+  assert(selectedHtml.includes('Result cameo art pending'));
+
+  context.artSlotState = unlocked;
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    value: "",
+    classListValue: null,
+  };
+  node.classList = {
+    toggle(_className, hidden) {
+      node.classListValue = Boolean(hidden);
+    },
+    add() {},
+    remove() {},
+  };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  packTofuButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  deliveryWallGrid: makeNode(),
+  shopOfflineEarnings: makeNode(),
+  selectedCharacterBadge: makeNode(),
+  selectedCharacterName: makeNode(),
+  selectedCharacterFlavor: makeNode(),
+  selectedSoundPackName: makeNode(),
+  selectedSoundPackFlavor: makeNode(),
+  characterList: makeNode(),
+  soundPackList: makeNode(),
+  previewSoundButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.shopTab = "overview";
+renderTofuShop(artSlotState);
+globalThis.parkedOverviewArtHtml = elements.shopTabPanel.innerHTML;
+renderCollectionPanel(artSlotState);
+globalThis.parkedCrewArtHtml = elements.characterList.innerHTML;
+appState.running = true;
+globalThis.activeCameoHtml = renderCharacterCameo("result_screen_cameo", artSlotState);
+renderCollectionPanel(artSlotState);
+globalThis.activeCrewArtHtml = elements.characterList.innerHTML;
+`, context);
+  assert(context.parkedOverviewArtHtml.includes('data-character-slot="shop_assistant_main_portrait"'));
+  assert(context.parkedOverviewArtHtml.includes('Sleepy Dispatcher'));
+  assert(context.parkedCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
+  assert(context.parkedCrewArtHtml.includes('Crew portrait not yet assigned'));
+  assert.strictEqual(context.activeCameoHtml, '');
+  assert(!context.activeCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
+}
+
 function testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted() {
   const localStorage = makeLocalStorage();
   const context = loadNoSpillContext({ window: { localStorage } });
@@ -6284,6 +6494,7 @@ function run() {
   testExpandedIdleShopLayerMechanics();
   testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault();
   testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();
+  testCharacterArtAssetSlotsAndPlaceholders();
   testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted();
   testDeliverySimulatorIsHiddenLocalAndSummarized();
   testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels();

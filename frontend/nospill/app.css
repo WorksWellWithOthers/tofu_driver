@@ -673,6 +673,74 @@
   line-height: 1.45;
 }
 
+.nospill-character-cameo-card:empty {
+  display: none;
+}
+
+.nospill-character-cameo {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 76px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(158, 233, 191, 0.22);
+  border-radius: 8px;
+  padding: 11px;
+  background:
+    linear-gradient(135deg, rgba(158, 233, 191, 0.08), transparent 56%),
+    #0b0f10;
+}
+
+.nospill-character-cameo img,
+.nospill-character-art-placeholder {
+  width: 76px;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(244, 247, 239, 0.16);
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(135deg, rgba(244, 247, 239, 0.06) 0 2px, transparent 2px 12px),
+    #101516;
+}
+
+.nospill-character-cameo img {
+  object-fit: cover;
+}
+
+.nospill-character-art-placeholder {
+  color: #9ee9bf;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+.nospill-character-cameo span {
+  display: block;
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-character-cameo strong {
+  display: block;
+  margin-top: 3px;
+  color: #f4f7ef;
+  line-height: 1.2;
+}
+
+.nospill-character-cameo small {
+  display: block;
+  margin-top: 4px;
+  color: #bbc7c0;
+  line-height: 1.35;
+}
+
+.nospill-stamp-rewards .nospill-character-cameo {
+  grid-column: 1 / -1;
+}
+
 .nospill-shop-safety {
   padding: 10px 12px;
   border: 1px solid rgba(240, 185, 90, 0.34);

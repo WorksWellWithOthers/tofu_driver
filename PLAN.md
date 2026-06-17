@@ -33,7 +33,12 @@
 - Counter Service V1 is the first earned automation layer. It unlocks after First 10 Orders, starts
   paused, auto-fulfills Best Available prepared orders every 10 seconds only while parked and the
   page is open, shows supplied/blocked shop-income status, can be upgraded through Order Bell,
-  Wider Counter, and Pickup Routine, and does not run during offline progress.
+  Wider Counter, Pickup Routine, and managed-shop bulk upgrades, and does not run during offline
+  progress.
+- Managed Shop Phase V1 is implemented as a narrow continuation of Tofu Shop: Counter Service can
+  grow from 1 to 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew, and
+  Catering Crate gives the midgame a larger stock/Ready Order sink without adding Dream Garage,
+  franchise mode, Net Worth, routes, or a new tab.
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
   language and local wallet context: generators use Buy, instant actions spend Spirit, timed effects
   show duration/active state, and tokens use Use Token.
@@ -125,13 +130,13 @@ Canonical references:
    and Shop Sign are clear.
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
-6. Playtest Counter Service V1: confirm First 10 Orders is the right unlock, the 10/8/6/4 second
-   upgrade path feels helpful without deleting choices, and active-page-only automation does not
-   skip pacing.
-7. Tune the implemented Next Milestone Bar against playtest behavior, then consider Station
-   Milestone Boosts V1 as the next low-clutter compounding layer.
-8. Add novelty only when playtesting shows repetition: candidate order is station milestones,
-   Counter Service tuning, Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
+6. Playtest Counter Service and Managed Shop V1: confirm First 10 Orders is the right unlock, the
+   10/8/6/4 second interval ladder and 2/5/10 batch ladder feel helpful without deleting choices,
+   and active-page-only automation does not skip pacing.
+7. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
+   behavior before adding higher station thresholds.
+8. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
+   Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
    Worth systems until the local shop loop keeps a player engaged.
 9. Expand balance tests only where playtesting reveals gaps:
@@ -149,9 +154,11 @@ Canonical references:
 Transcript-derived priority ladder:
 
 1. `Now`: playtest the first 5-10 minutes and tune the current implemented shop spine.
-2. `Now`: playtest Station Milestone Boosts V1 and Counter Service rate/stock-pressure tuning.
-3. `Soon`: first 10-minute tuning, support-station pacing, and possible 25+ station milestone design.
-4. `Later`: Regular Customers V1, Shop Spirit tuning, Dream Garage Stage 0, and License preview.
+2. `Now`: playtest Station Milestone Boosts V1, Counter Service batch upgrades, Catering Crate, and
+   stock-pressure tuning.
+3. `Soon`: first 10-minute tuning, support-station pacing, Shop Spirit emergency-spend tuning, and
+   possible 25+ station milestone design.
+4. `Later`: Regular Customers V1, Dream Garage Stage 0, and License preview.
 5. `Avoid for now`: social systems, premium cosmetics, Net Worth valuation, broad route expansion,
    and any new tab/currency that does not solve a felt bottleneck.
 
@@ -174,8 +181,8 @@ Future endgame/business sequence:
 
 1. Keep the $1T Net Worth target as design direction only.
 2. Stabilize and tune the First Loop Contract.
-3. Tune Next Milestone Bar V1, Counter Service V1, and Station Milestone Boosts V1 before adding
-   more station thresholds.
+3. Tune Next Milestone Bar V1, Counter Service/Managed Shop V1, and Station Milestone Boosts V1
+   before adding more station thresholds.
 4. Add Dream Garage teaser and Stage 0 before any valuation system.
 5. Add business valuation only after Dream Garage, project-car sale, and franchise loops are fun.
 6. Add social showcase/scout concepts only after a privacy/account/backend design exists.

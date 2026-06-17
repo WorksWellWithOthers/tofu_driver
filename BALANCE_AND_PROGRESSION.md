@@ -179,7 +179,7 @@ License Exam reset rule.
 | Tips | Main purchase currency | Fulfilled orders, Regular Customers, routes, certified boosts | Stations, upgrades, garage, crew, route cards | Immediately after first order | Scarce early, abundant later | Cannot buy next improvement | Resets |
 | Reputation | Unlock currency and social proof | Orders, routes, certified smooth results, stamps | Mostly gates, rarely spent | After first order | Scarce and meaningful | Next system remains locked | Resets, lifetime persists |
 | XP | Local player/shop progress feedback | Orders, routes, training, Cup Test results | None by default | After first order | Steady visible progress | Level requirements not met | Lifetime should persist unless prestige design says otherwise |
-| Prep Slots | Staffing/capacity gate | Timed recovery, perks | Station, crew, and route expansion purchases | When multi-buy/staffing matters | Mild friction, not a first-loop blocker | Cannot add more capacity yet | Resets, perks persist |
+| Prep Capacity | Staffing/capacity gate | Timed recovery, perks | Station, crew, and route expansion purchases | When multi-buy/staffing matters | Mild friction, not a first-loop blocker | Cannot add more capacity yet | Resets, perks persist |
 | Shop Reach | Fictional expansion gate | Fictional route cards and route milestones | District, route, crew unlocks | With routes | Mid-game scarce | New district/route locked | Resets unless perked |
 | Shop Spirit | Parked-only boost energy | Tea Kettle, Shrine Corner, Festival Lanterns | Shop Spirit boosts | After stable production | Optional and capped | Cannot trigger active shop boost | Resets |
 | Route Knowledge | Fictional mastery/progression | Fictional routes, Training Lot | Route unlocks, mastery gates, License requirements | With routes | Mid-game mastery pressure | Route/license requirement not met | Resets, lifetime records persist |
@@ -195,7 +195,7 @@ License Exam reset rule.
 | Tips | spendable shop money | order types, Regular Customers, routes, certified boosts | stations, upgrades, crew, garage, route cards | after first order | drives almost every early purchase | Better Boxes, Regular Smile, License Perks | bigger stations, automation, route systems |
 | Reputation | proof the shop is known | orders, Shop Sign, route cards, stamps, certified boosts | unlock gates more than spending | after first order | opens systems without draining the main currency | Shop Sign, Word of Mouth, route mastery bonuses | routes, Crew preview, License requirements |
 | XP | local progress meter | orders, routes, training, Cup Test summaries | level gates only | after first order | gives visible growth and shop-level pacing | Better Boxes, route reports, certified result bonuses | level labels, License requirements |
-| Prep Slots | available staff attention/capacity | timed recovery, License Perks | station/crew/route expansion | after basic purchases matter | prevents unlimited instant expansion without creating click spam | Extra Hands, Dispatcher Desk, staffing upgrades | crew hiring, route assignments, network stations |
+| Prep Capacity | available staff attention/capacity | timed recovery, License Perks | station/crew/route expansion | after basic purchases matter | prevents unlimited instant expansion without creating click spam | Extra Hands, Dispatcher Desk, staffing upgrades | crew hiring, route assignments, network stations |
 | Shop Reach | fictional shop footprint | route cards, route mastery, Reputation milestones | district/route unlocks | with routes | expands the fictional world without using real maps | Shop Sign, Route Notebook, route mastery | new route cards, regional network |
 | Shop Spirit | parked boost energy | Tea Kettle, Shrine Corner, Festival Lanterns | shop-only boosts | after stable production | adds short active sessions without driving pressure | Warmer Kettle, Festival Lanterns, Spirit milestones | Festival Boosts, event orders |
 | Route Knowledge | fictional mastery notes | route cards, Training Lot, route reports | route unlock/mastery gates | with routes | makes route play more than one-off rewards | Route Notebook, Training Lot upgrades | License requirements, route automation |
@@ -253,9 +253,22 @@ K, M, B, T, Qa, Qi, Sx, Sp, Oc, No, Dc
 ```
 
 Formatting is display-only. Internal resource values, costs, rewards, and progress state remain
-exact. Discrete missing requirements such as Prep Slots, ready orders, station counts, stamps, and
+exact. Discrete missing requirements such as Prep Capacity, ready orders, station counts, stamps, and
 License Stars round up in disabled reasons. Small live balances may show short decimals when that is
 needed to make ticking visible, but long raw decimals should never be exposed.
+
+### Prep Capacity
+
+Prep Capacity is the recovering expansion pool for station purchases. It is not the same thing as
+ready Delivery Orders and should not be shown as a confusing `0/234` style order counter.
+
+Player-facing rules:
+
+- use `Prep Capacity`, not `Prep Slots`, in current UI
+- show the available amount and max capacity only where useful for station buying
+- disabled station buttons should say what capacity is missing
+- Overview should prioritize ready orders and Prep Counter progress; Production owns the station
+  capacity explanation
 
 ### Next Milestone Bar
 
@@ -273,6 +286,8 @@ Implemented target order:
 6. Delivery Shelf unlock.
 7. Shop Sign unlock.
 8. Counter Service start, after First 10 Orders if it has not been acknowledged yet.
+9. Managed Shop goals such as Second Register, Pickup Window, Counter Crew, and Catering Crate when
+   early milestones are complete.
 
 Rules:
 
@@ -309,7 +324,9 @@ V1 behavior:
   result screens or fanfares
 - V1 finite upgrades improve handoff interval: Order Bell `10s -> 8s`, Wider Counter `8s -> 6s`,
   and Pickup Routine `6s -> 4s`
-- future upgrades may add bulk handoff, stock reserves, and priority tuning, but those are not in V1
+- Managed Shop V1 adds finite bulk upgrades: Second Register makes each handoff process 2 orders,
+  Pickup Window raises the batch to 5, and Counter Crew raises the batch to 10 when supplied
+- future upgrades may add stock reserves and priority tuning, but those are not in V1
 
 Regular Customers remain future. Counter Service is the current narrow automation slice.
 
@@ -345,6 +362,29 @@ Presses, 5/10 Prep Counters, 5/10 Delivery Shelves, and 5/10 Shop Signs. Each us
 shows one clear production/support bump, and remains shop-only with no Cup Test scoring effect.
 Higher thresholds such as 25+ owned stations remain future tuning candidates.
 
+### Managed Shop Phase V1
+
+Managed Shop Phase V1 is the first post-automation shop layer. It is still Tofu Shop, not Dream
+Garage, franchise mode, Net Worth, or route expansion.
+
+Implemented scope:
+
+- Counter Service bulk handoff upgrades after Pickup Routine: Second Register, Pickup Window, and
+  Counter Crew
+- Counter Service Tips/min estimates include interval and batch size only when supplied
+- Catering Crate as a midgame order sink after 100 fulfilled orders, 250 Reputation, and Shop
+  Level 25
+- Next Milestone and Next Best Action can point toward bulk handoff upgrades or the larger order
+  when Ready Orders pile up
+
+Design rules:
+
+- bulk handoffs solve repeated fulfillment pressure without adding a new tab
+- Tofu Stock remains a meaningful bottleneck; stock-blocked automation should point to Pack Tofu,
+  Tofu Press, or Steady Pressing
+- maxed upgrades show `Maxed`, current effect, and no buy button/cost/no-op before-after preview
+- route-related upgrades remain hidden or locked until route systems are meaningful
+
 ### Order Size Ladder
 
 Raw Tofu Stock must not directly multiply Tips. Instead, stock matters because larger order types
@@ -355,7 +395,7 @@ require more tofu and pay better rewards.
 | Simple Tofu Box | available immediately | 6 | 1 | 10 | 1 | 8 | tutorial order; teaches that orders become Tips and stock is a real input | 0:00 | Implemented |
 | Family Tofu Tray | after 5 fulfilled orders or Shop Level 2 | 24 | 1 | 45 | 3 | 24 | first moment extra Tofu Stock matters | 5 to 10 minutes | Implemented |
 | Festival Bento | after 25 fulfilled orders or 50 Reputation | 75 | 2 | 130 | 8 | 70 | first big payout and first multi-order sink | 20 to 40 minutes | Implemented |
-| Catering Crate | after Delivery Shelf/Shop Sign are meaningful | 50 | 5 | 400 | 20 | 180 | mid-game stock sink | First day | Future/hidden |
+| Catering Crate | after 100 fulfilled orders, 250 Reputation, and Shop Level 25 | 240 | 5 | 520 | 25 | 260 | mid-game stock and Ready Order sink | Midgame managed shop | Implemented |
 | Neighborhood Bundle | after first fictional route progress | 90 | 8 | 850 | 35 | 320 | connects shop orders to the route/network phase | First day or later | Future |
 | Regional Tofu Order | after first License Exam or Regional Tofu Network preview | 250 | 20 | 3000 | 120 | 1100 | late-game stock sink and prestige runway test | Post-License | Future |
 
@@ -364,7 +404,7 @@ Order UI contract:
 - show available order types as cards in Overview
 - show tofu cost, ready-order cost, Tips/Reputation/XP preview, unlock condition, and disabled
   reason
-- hide Catering Crate until a later mid-game pass
+- reveal Catering Crate only when the managed shop needs a larger stock/order sink
 - label Fulfill Max with the order type, such as `Fulfill Max Family Tofu Tray x4`
 - if no order type is specified, Fulfill Max should use the best currently fulfillable order type
 
@@ -393,13 +433,13 @@ more valuable rather than replacing them.
 | ---: | --- | --- | --- | --- | --- | --- |
 | 1 | Tofu Press | Tofu Stock | none | creates the ingredient/runway resource | immediately | buy more press capacity when stock runway is low |
 | 2 | Prep Counter | Delivery Orders | Tofu Stock | turns stock into money opportunities | immediately | buy more counters when stock is healthy but orders are slow |
-| 3 | Delivery Shelf | Prep Counter throughput/order handling | Tips, Prep Slots | makes the order pipeline scale without click spam | 10 to 20 minutes | buy support when counters become cramped |
-| 4 | Shop Sign | Reputation gains and Regular Customer unlock pressure | Tips, Prep Slots | shifts focus from pure Tips to shop visibility | 20 to 40 minutes | invest when the next system is reputation-gated |
+| 3 | Delivery Shelf | Prep Counter throughput/order handling | Tips, Prep Capacity | makes the order pipeline scale without click spam | 10 to 20 minutes | buy support when counters become cramped |
+| 4 | Shop Sign | Reputation gains and Regular Customer unlock pressure | Tips, Prep Capacity | shifts focus from pure Tips to shop visibility | 20 to 40 minutes | invest when the next system is reputation-gated |
 | 5 | Counter Service | order handoff automation | ready Delivery Orders and Tofu Stock reserves | removes repeated fulfillment clicks after manual mastery | after First 10 Orders | start/pause automation while preserving manual control |
 | 6 | Regular Customers | passive Tips from simple orders | Delivery Orders if available | reduces manual money conversion chores beyond handoff automation | 30 to 60+ minutes | choose passive income versus more raw production |
 | 7 | Shop Street / Fictional Route Cards | Tips, Reputation, Shop Reach, Route Knowledge, stamps | Tofu Stock, Delivery Orders | adds story goals and mastery without real roads | 40 to 90 minutes | spend resources on route cards or keep scaling shop |
 | 8 | Apprentice Driver | automated fictional route/shop task output | Delivery Orders, route slots | removes chores after the player understands them | 1 to 2 hours | assign limited crew to the best fictional task |
-| 9 | Dispatcher Desk | automation efficiency and crew assignment clarity | Tips, Prep Slots | makes automation legible and scalable | 2 to 4 hours | invest in coordination instead of raw stations |
+| 9 | Dispatcher Desk | automation efficiency and crew assignment clarity | Tips, Prep Capacity | makes automation legible and scalable | 2 to 4 hours | invest in coordination instead of raw stations |
 | 10 | Regional Tofu Network | broad lower-tier multipliers and prestige requirements | high Tips, Shop Reach, License progress | late-game scale and prestige pressure | after first License Exam | build a network or prepare for the next exam |
 
 Each tier should make earlier tiers more valuable:
@@ -523,15 +563,15 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | fulfill_simple_tofu_box | Fulfill Simple Tofu Box | Orders | First Loop | Immediately | 6 Tofu Stock and 1 ready order | Need 1 prepared order or more Tofu Stock. | 6 Tofu Stock, 1 Delivery Order | +10 Tips, +1 Reputation, +8 XP | 0:00 to 0:30 | Tutorial money conversion and first stock-pressure lesson | Fulfill Shop Order | Implemented |
 | fulfill_family_tofu_tray | Fulfill Family Tofu Tray | Orders | First Shop | 5 fulfilled orders or Shop Level 2 | 24 Tofu Stock and 1 ready order | Need Family unlock, ready order, or more Tofu Stock. | 24 Tofu Stock, 1 Delivery Order | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | Makes extra Tofu Stock valuable | Fulfill Family Tofu Tray | Implemented |
 | fulfill_festival_bento | Fulfill Festival Bento | Orders | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 Tofu Stock and 2 ready orders | Need Festival unlock, 2 ready orders, or more Tofu Stock. | 75 Tofu Stock, 2 Delivery Orders | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | First big payout | Fulfill Festival Bento | Implemented |
-| fulfill_catering_crate | Fulfill Catering Crate | Orders | Later | Future mid-game | TBD | Hidden until later. | 50 Tofu Stock, 5 Delivery Orders target | +400 Tips, +20 Reputation, +180 XP target | Later | Mid-game stock sink | Fulfill Catering Crate | Future |
+| fulfill_catering_crate | Fulfill Catering Crate | Orders | Managed Shop | 100 fulfilled orders, 250 Reputation, Shop Level 25 | Enough Tofu Stock and ready orders | Need 240 Tofu Stock and 5 ready orders. | 240 Tofu Stock, 5 Delivery Orders | +520 Tips, +25 Reputation, +260 XP | Midgame | Mid-game stock and Ready Order sink | Fulfill Catering Crate | Implemented |
 | fulfill_10_orders | Fulfill 10 Orders | Overview | First Shop | Ready Orders can exceed 10 | Ready Orders >= 10; parked | Need 10 ready Delivery Orders. | 10 Delivery Orders | Grants 10x order rewards inline | 10 to 20 minutes | Reduces repeated order clicks | Fulfill 10 Orders | Implemented, reveal timing pending |
 | fulfill_max_simple_orders | Fulfill Max Simple Orders | Orders | First Loop / First Shop | Multiple Simple Tofu Boxes can be fulfilled and larger orders are not the best option | Enough Tofu Stock and ready orders for at least 2 Simple Tofu Boxes | Need more Tofu Stock or ready Delivery Orders. | max affordable Simple Tofu Boxes | Converts simple orders into Tips/Reputation/XP | 5 to 10 minutes | Avoids repeated tutorial-order clicks | Fulfill Max Simple Orders | Implemented |
 | fulfill_max_best_order | Fulfill Max Best Order | Orders | First Shop | Larger order type is unlocked and affordable | Enough Tofu Stock and ready orders for at least 1 best order type | Need more Tofu Stock or ready Delivery Orders. | max affordable best order type | Converts stock/order stockpile into strongest available payout | 5 to 20 minutes | Makes extra stock useful | Fulfill Max `<Order Type>` | Implemented |
 | fulfill_max_orders | Fulfill Max `<Order Type>` | Orders | First Shop | More than one selected/best order can be fulfilled | Enough Tofu Stock and ready orders for at least 2 of that type | Need more Tofu Stock or ready Delivery Orders. | max affordable typed orders | Converts all affordable typed orders into rewards | 5 to 10 minutes | Avoids click spam | Fulfill Max `<Order Type>` | Implemented |
-| buy_tofu_press | Buy Tofu Press | Production | First Loop | Production basics visible | Enough Tips; Prep Slots available | Need more Tips. Fulfill shop orders to earn Tips. | Tips, station growth | Adds Tofu Stock/sec | 1 to 3 minutes if stock is low | Low Tofu Stock runway | Buy Tofu Press | Implemented |
-| buy_max_tofu_press | Buy Max Tofu Press | Production | First Shop | Buy Tofu Press visible; multiplier relevant | Can afford at least 1 press | Need more Tips. | max affordable Tips/Prep Slots | Buys multiple presses | 10 to 20 minutes | Avoids repetitive station buying | Buy Max Tofu Press | Implemented |
-| buy_prep_counter | Buy Prep Counter | Production | First Loop | Production basics visible | Enough Tips; Prep Slots available | Need more Tips or Prep Slots. Fulfill shop orders to earn Tips. | Tips plus Prep Slot | Adds Delivery Orders/sec and Tofu Stock consumption | 3 to 6 minutes when orders are slow | Order throughput | Buy Prep Counter | Implemented |
-| buy_max_prep_counter | Buy Max Prep Counter | Production | First Shop | Buy Prep Counter visible; multiplier relevant | Can afford at least 1 counter | Need more Tips or Prep Slots. | max affordable Tips/Prep Slots | Buys multiple counters | 15 to 30 minutes | Avoids repetitive station buying | Buy Max Prep Counter | Implemented |
+| buy_tofu_press | Buy Tofu Press | Production | First Loop | Production basics visible | Enough Tips; Prep Capacity available | Need more Tips. Fulfill shop orders to earn Tips. | Tips, station growth | Adds Tofu Stock/sec | 1 to 3 minutes if stock is low | Low Tofu Stock runway | Buy Tofu Press | Implemented |
+| buy_max_tofu_press | Buy Max Tofu Press | Production | First Shop | Buy Tofu Press visible; multiplier relevant | Can afford at least 1 press | Need more Tips. | max affordable Tips/Prep Capacity | Buys multiple presses | 10 to 20 minutes | Avoids repetitive station buying | Buy Max Tofu Press | Implemented |
+| buy_prep_counter | Buy Prep Counter | Production | First Loop | Production basics visible | Enough Tips; Prep Capacity available | Need more Tips or Prep Capacity. Fulfill shop orders to earn Tips. | Tips plus Prep Capacity | Adds Delivery Orders/sec and Tofu Stock consumption | 3 to 6 minutes when orders are slow | Order throughput | Buy Prep Counter | Implemented |
+| buy_max_prep_counter | Buy Max Prep Counter | Production | First Shop | Buy Prep Counter visible; multiplier relevant | Can afford at least 1 counter | Need more Tips or Prep Capacity. | max affordable Tips/Prep Capacity | Buys multiple counters | 15 to 30 minutes | Avoids repetitive station buying | Buy Max Prep Counter | Implemented |
 | buy_steady_pressing | Buy Steady Pressing | Upgrades | First Loop | Stock runway is low or extra Tofu Presses make stock growth relevant | Enough Tips | Need 20 Tips. Fulfill shop orders to earn Tips. | 20 Tips target | Tofu Press output x1.5 | 1 to 5 minutes when stock is low | Slow stock rebuild | Buy Steady Pressing | Implemented |
 | buy_double_mold | Buy Double Mold | Upgrades | First Shop | Own 3 Tofu Presses | Enough Tips | Need 40 Tips. | 40 Tips target | Tofu Press output x2 | 5 to 10 minutes | First production plateau | Buy Double Mold | Implemented, target tuning pending |
 | buy_tidy_packaging | Buy Tidy Packaging | Upgrades | First Loop | First order complete and Prep Counter/order throughput is the bottleneck | Enough Tips | Need 20 Tips. Fulfill prepared orders first. | 20 Tips target | Prep Counter output x1.5 | 1 to 3 minutes | Slow order prep | Buy Tidy Packaging | Implemented |
@@ -539,14 +579,14 @@ Fresh players should not see 20 active buttons. Buttons unfold by phase.
 | view_passport | View Passport | Passport | First Loop / First Shop | First stamp earned or teaser unlocked | Passport is discovered | Earn a stamp-worthy shop moment first. | none | Opens stamp/status collection | 5 to 10 minutes | Collection curiosity | View Passport | Partial |
 | visit_tofu_shop | Visit Tofu Shop | Cup Test result | Cup-first discovery | Cup Test result screen shown and player is parked | Always | none | none | Returns to shop/dashboard | After a Cup Test result | Helps Cup-first players find the parked shop loop | Visit Tofu Shop | Implemented |
 | take_cup_test | Take Don't Spill the Cup | Shop/Cup Test | Always secondary from shop | Always visible as optional boost path | Parked; setup/safety complete for start | Complete the safety checklist before starting. | none | Starts optional smooth-driving challenge | Any time | Certified boost/status path | Take the Cup Test | Implemented |
-| buy_delivery_shelf | Buy Delivery Shelf | Production | First Shop | 10 fulfilled orders, First Family Tofu Tray, or upgrade/level milestone | Enough Tips/Prep Slots | Unlocks after the core order loop is established. | 90 Tips runtime V1; 800 Tips target later | Boosts Prep Counter throughput | 10 to 20 minutes | Scaling order flow | Buy Delivery Shelf | V1 implemented |
+| buy_delivery_shelf | Buy Delivery Shelf | Production | First Shop | 10 fulfilled orders, First Family Tofu Tray, or upgrade/level milestone | Enough Tips/Prep Capacity | Unlocks after the core order loop is established. | 90 Tips runtime V1; 800 Tips target later | Boosts Prep Counter throughput | 10 to 20 minutes | Scaling order flow | Buy Delivery Shelf | V1 implemented |
 | buy_shop_sign | Buy Shop Sign | Production | First Shop | 10 Reputation, 100 lifetime Tips, or Delivery Shelf owned | Enough Tips | Need Reputation, Tips, or Delivery Shelf. | 140 Tips runtime V1; 300 Tips target later | Boosts Reputation gain from orders | 20 to 40 minutes | Reputation unlock pressure | Buy Shop Sign | V1 implemented |
 | buy_better_boxes | Buy Better Boxes | Upgrades | First Shop | 15 fulfilled orders or Tip income plateau | Enough Tips | Unlocks after 15 fulfilled orders. | 200 Tips target | +25% Tips per order | 15 to 30 minutes | Tip income plateau | Buy Better Boxes | Partial |
 | buy_regular_smile | Buy Regular Smile | Upgrades | First Automation | Regular Customers visible | Enough Tips | Unlocks after stable shop production. | 500 Tips target | small passive Tips/sec | 30 to 60 minutes | Manual order conversion chores | Buy Regular Smile | Future |
 | start_shop_street | Start Shop Street | Routes | First Automation | First fictional route discovered | Enough Tofu Stock and Delivery Orders | Build Reputation or Shop Reach to unlock fictional route cards. | Tofu Stock and Delivery Orders | Grants Tips, Reputation, Route Knowledge, Shop Reach, route stamp chance | 40 to 90 minutes | New mid-game goal | Start Shop Street | Placeholder |
-| hire_apprentice_driver | Hire Apprentice Driver | Crew | First Automation | First route progress exists | Enough Tips/Prep Slots | Unlocks after route progress. | Tips plus Prep Slot | Begins fictional automation path | 1 to 2 hours | Manual route/order chores | Hire Apprentice Driver | Placeholder |
+| hire_apprentice_driver | Hire Apprentice Driver | Crew | First Automation | First route progress exists | Enough Tips/Prep Capacity | Unlocks after route progress. | Tips plus Prep Capacity | Begins fictional automation path | 1 to 2 hours | Manual route/order chores | Hire Apprentice Driver | Placeholder |
 | assign_crew | Assign Crew | Crew | First Automation | Crew member hired | Route/crew slot available | Hire crew first. | Delivery Orders or route slot | Assigns fictional automation | 1 to 2 hours | Repeated route handling | Assign Crew | Placeholder |
-| buy_tea_kettle | Buy Tea Kettle | Shop Spirit | Festival / Spirit | Stable production; Spirit layer unlocked | Enough Tips/Prep Slots | Need Tips. | Tips plus Prep Slot | Generates Shop Spirit/sec | Later | Boost energy generation | Buy Tea Kettle | Placeholder |
+| buy_tea_kettle | Buy Tea Kettle | Shop Spirit | Festival / Spirit | Stable production; Spirit layer unlocked | Enough Tips/Prep Capacity | Need Tips. | Tips plus Prep Capacity | Generates Shop Spirit/sec | Later | Boost energy generation | Buy Tea Kettle | Placeholder |
 | spend_shop_spirit | Spend Spirit | Shop Spirit | Festival / Spirit | Shop Spirit available and action matters | Enough Shop Spirit; parked | Need Spirit and current wallet amount. | Shop Spirit | Instant parked-only action such as tofu stock or ready orders | Later | Short active shop recovery | Spend X Spirit | Placeholder |
 | start_spirit_effect | Start Effect | Shop Spirit | Festival / Spirit | Timed effect matters | Enough Shop Spirit; parked; effect not already active | Need Spirit, or effect already active. | Shop Spirit | Starts a timed shop-only effect with visible duration/remaining state | Later | Short active shop burst | Start Lunch Hour / Start Double Batch | Placeholder |
 | use_spirit_token | Use Token | Shop Spirit | Festival / Spirit | Festival token exists and route/story context is relevant | Token ready; parked | Need token ready. | token | Consumes a parked-only token | Later | Event/token payoff | Use Token | Placeholder |
@@ -576,13 +616,13 @@ productionPerSecond = baseProduction * owned * multipliers
 | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Press | Makes Tofu Stock | First Loop, immediately | 15 Tips target after starter press | 1.15 | Tofu Stock | none | 0.10 stock/sec target; current runtime may differ | owned count * multipliers | Low Tofu Stock runway | When stock supports 10+ future orders | Steady Pressing, Double Mold |
 | Prep Counter | Turns Tofu Stock into Delivery Orders | First Loop, immediately | 50 Tips target; current runtime may differ | 1.16 | Delivery Orders | 2 Tofu Stock/order | 0.025 orders/sec | owned count * multipliers, limited by stock | Slow order prep | When ready orders accumulate faster than player spends them | Tidy Packaging, Double Labels |
-| Delivery Shelf | Supports order throughput/capacity | First Shop, 10 to 20 minutes | 800 Tips target | 1.17 | Prep Counter support or order capacity | Tips/Prep Slots | boost only | multiplicative support | Order flow scaling | When order throughput is no longer the limiter | Neat Handoff, Double Stack |
-| Shop Sign | Reputation unlock engine | First Shop, 20 to 40 minutes | 300 Tips target | 1.18 | Reputation modifier or small passive reputation | Tips/Prep Slots | small reputation effect | multiplier or flat boost | Low Reputation | When next systems are no longer reputation-gated | Brighter Sign, Word of Mouth |
+| Delivery Shelf | Supports order throughput/capacity | First Shop, 10 to 20 minutes | 800 Tips target | 1.17 | Prep Counter support or order capacity | Tips/Prep Capacity | boost only | multiplicative support | Order flow scaling | When order throughput is no longer the limiter | Neat Handoff, Double Stack |
+| Shop Sign | Reputation unlock engine | First Shop, 20 to 40 minutes | 300 Tips target | 1.18 | Reputation modifier or small passive reputation | Tips/Prep Capacity | small reputation effect | multiplier or flat boost | Low Reputation | When next systems are no longer reputation-gated | Brighter Sign, Word of Mouth |
 | Regular Customers | First passive Tips | First Automation, 30 to 60+ minutes | 500 Tips target | 1.20 | Tips/sec | Delivery Orders slowly, if available | small Tips/sec | owned count * loyalty multipliers | Too much manual order fulfillment | When passive Tips meet baseline costs | Loyalty Card, Bring a Friend, Regular Smile |
 | Shop Street Route | First fictional route card | First Automation, 40 to 90 minutes | route cost, not station cost | 1.0 or route mastery curve | Tips, Reputation, Route Knowledge, Shop Reach, stamps | Tofu Stock and Delivery Orders | instant or timed route reward | mastery improves reward/stability | Need new goals after shop loop | When mastered and auto-eligible | Route Familiarity, Careful Notes |
-| Apprentice Driver | First automation | First Automation, 1 to 2 hours | Tips plus Prep Slots | 1.25 | automated fictional route/order rewards | Delivery Orders, route slots | slow automation | crew count * assignment rules | Repeated manual chores | When Dispatcher handles routing | Better Clipboard, Team Routine |
-| Dispatcher Desk | Automation management | Later, 2 to 4 hours | 900 Tips target | 1.26 | route assignment efficiency | Tips/Prep Slots | automation modifier | global automation multiplier | Too many manual assignments | When network automation dominates | Dispatcher Routine |
-| Regional Tofu Network | Late-game scale | After first License Exam | 2400 Tips target or later | 1.32 | broad production multiplier | Tips/Prep Slots | global boost | broad multiplier | Late-game scaling | Never urgent early; hidden first session | Network Notes, Regional Counter |
+| Apprentice Driver | First automation | First Automation, 1 to 2 hours | Tips plus Prep Capacity | 1.25 | automated fictional route/order rewards | Delivery Orders, route slots | slow automation | crew count * assignment rules | Repeated manual chores | When Dispatcher handles routing | Better Clipboard, Team Routine |
+| Dispatcher Desk | Automation management | Later, 2 to 4 hours | 900 Tips target | 1.26 | route assignment efficiency | Tips/Prep Capacity | automation modifier | global automation multiplier | Too many manual assignments | When network automation dominates | Dispatcher Routine |
+| Regional Tofu Network | Late-game scale | After first License Exam | 2400 Tips target or later | 1.32 | broad production multiplier | Tips/Prep Capacity | global boost | broad multiplier | Late-game scaling | Never urgent early; hidden first session | Network Notes, Regional Counter |
 
 ### Generator / Station Detail Cards
 
@@ -633,7 +673,7 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Starting cost: 800 Tips target
 - Cost growth: 1.17 target
 - Produces: no primary resource by itself; boosts order handling and Prep Counter support
-- Consumes: Tips and possibly Prep Slots to buy
+- Consumes: Tips and possibly Prep Capacity to buy
 - Base production rate: support multiplier only
 - Milestone thresholds: owned 5, 10, 25
 - Associated upgrades: Neat Handoff, Double Stack
@@ -652,7 +692,7 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Starting cost: 300 Tips target
 - Cost growth: 1.18 target
 - Produces: Reputation modifier or small passive Reputation
-- Consumes: Tips and possibly Prep Slots to buy
+- Consumes: Tips and possibly Prep Capacity to buy
 - Base production rate: each owned Shop Sign boosts Reputation from fulfilled orders by 10%;
   sign upgrades can add more Reputation multiplier later.
 - Milestone thresholds: owned 5, 10, 25
@@ -676,9 +716,11 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Base production rate: 1 handoff / 10 seconds
 - Priority: Best Available, ordered Festival Bento -> Family Tofu Tray -> Simple Tofu Box
 - Milestone thresholds: Order Bell after unlock, Wider Counter after Order Bell and 20 fulfilled
-  orders, Pickup Routine after Wider Counter and First Family Tofu Tray
-- Associated upgrades: Order Bell, Wider Counter, Pickup Routine; future bulk handoff, stock
-  reserve, and priority tuning remain documented only
+  orders, Pickup Routine after Wider Counter and First Family Tofu Tray, Second Register after
+  Pickup Routine and 25 fulfilled orders, Pickup Window after Second Register and 100 fulfilled
+  orders, and Counter Crew after Pickup Window plus 1K fulfilled orders or strong Reputation
+- Associated upgrades: Order Bell, Wider Counter, Pickup Routine, Second Register, Pickup Window,
+  and Counter Crew; future stock reserve and priority tuning remain documented only
 - Urgent when: prepared-order fulfillment becomes repetitive after the player has learned the loop
 - Less urgent when: the player still needs manual order choices to understand stock/order costs
 - Expected first use: after First 10 Orders
@@ -726,7 +768,7 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Stable id: `apprentice_driver`
 - Label: `Apprentice Driver`
 - Unlock condition: first route progress and repeated fictional tasks
-- Starting cost: Tips plus Prep Slots target
+- Starting cost: Tips plus Prep Capacity target
 - Cost growth: 1.25 target
 - Produces: automated fictional route/shop rewards
 - Consumes: Delivery Orders and route slots
@@ -746,7 +788,7 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Starting cost: 900 Tips target
 - Cost growth: 1.26 target
 - Produces: automation efficiency
-- Consumes: Tips and Prep Slots
+- Consumes: Tips and Prep Capacity
 - Base production rate: assignment multiplier only
 - Milestone thresholds: owned 1, 3, 5, 10
 - Associated upgrades: Better Clipboard, Team Routine
@@ -878,7 +920,7 @@ Disabled copy should be specific:
 - `Need 20 more Tips. Fulfill shop orders to earn Tips.`
 - `Need 1 prepared order. Prep Counter is preparing the next order.`
 - `Need more Tofu Stock. Pack tofu or buy Tofu Press.`
-- `Need 1 Prep Slot. Prep Slots recover over time.`
+- `Need 1 Prep Capacity. Prep Capacity recover over time.`
 
 ## 11. Progressive Reveal Rules
 
@@ -1035,7 +1077,7 @@ the formula.
 | Labeled Bins | 1 Star | Prep Counter output +15% | Shop only |
 | Bigger Thermos | 1 Star | Offline cap +1 hour | Shop only |
 | Familiar Counter | 1 Star | First 10 orders give +25% Tips | Shop only |
-| Extra Hands | 2 Stars | Prep Slots recover more often | Shop only |
+| Extra Hands | 2 Stars | Prep Capacity recover more often | Shop only |
 | Calm Opening | 2 Stars | Start with 1 Delivery Order after exam | Shop only |
 
 No License Perk may improve real-world Cup Test scoring, qualification, speed, route rewards, or
@@ -1595,14 +1637,14 @@ Starter first-loop balance sheet:
 | family_tofu_tray | Family Tofu Tray | First Shop | 5 fulfilled orders or Shop Level 2 | 24 stock and 1 ready order | Tofu Stock, Delivery Orders | flat | 24 stock + 1 order | 1.0 | +45 Tips, +3 Reputation, +24 XP | 5 to 10 minutes | when unlocked and stocked | Extra stock has value | Fulfill Family Tofu Tray | simple order only | Shop only | Implemented |
 | festival_bento | Festival Bento | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 stock and 2 ready orders | Tofu Stock, Delivery Orders | flat | 75 stock + 2 orders | 1.0 | +130 Tips, +8 Reputation, +70 XP | 20 to 40 minutes | when unlocked and stocked | First big payout | Fulfill Festival Bento | smaller orders | Shop only | Implemented |
 | tofu_press | Tofu Press | First Loop | Start | always owned; buys require Tips | Tips | baseCost * growthRate ^ owned | 15 | 1.15 | +0.10 stock/sec target each | 0:00 | about 2 orders for first extra | Low Tofu Stock | Buy Tofu Press | Pack Tofu pressure | Shop only | Implemented, target value gap |
-| prep_counter | Prep Counter | First Loop | Start | always owned; buys require Tips/Prep Slots | Tips, Prep Slots | baseCost * growthRate ^ owned | 50 | 1.16 | +0.025 orders/sec target each; consumes 2 stock/order | 0:00 | 4 to 6 minutes for first extra | Slow/no Delivery Orders | Buy Prep Counter | manual waiting | Shop only | Implemented, target cost gap |
+| prep_counter | Prep Counter | First Loop | Start | always owned; buys require Tips/Prep Capacity | Tips, Prep Capacity | baseCost * growthRate ^ owned | 50 | 1.16 | +0.025 orders/sec target each; consumes 2 stock/order | 0:00 | 4 to 6 minutes for first extra | Slow/no Delivery Orders | Buy Prep Counter | manual waiting | Shop only | Implemented, target cost gap |
 | steady_pressing | Steady Pressing | First Loop | Stock runway low or extra Tofu Presses make stock growth relevant | Tips >= 20 | Tips | upgrade growth | 20 | TBD | Tofu Press output x1.5 at level 1 | 1 to 5 minutes when stock is low | about 2 simple orders in a stock-bottleneck state | Slow stock rebuild | Buy Steady Pressing | none | Shop language only | Implemented |
 | double_mold | Double Mold | First Shop | Own 3 Tofu Presses | Tips >= 40 | Tips | flat or upgrade growth | 40 | TBD | Tofu Press output x2 | 3 to 8 minutes | TBD | First stock plateau | Buy Double Mold | none | Shop language only | Implemented, tuning pending |
 | tidy_packaging | Tidy Packaging | First Loop | First order complete and Prep Counter/order throughput bottleneck | Tips >= 20 | Tips | upgrade growth | 20 | TBD | Prep Counter output x1.5 | 1 to 3 minutes | about 2 simple orders | Slow order prep | Buy Tidy Packaging | none | Shop language only | Implemented |
 | first_shop_order_stamp | First Shop Order Stamp | First Loop | First order fulfilled | automatic | none | none | 0 | 1.0 | Unlock first stamp, Stamp Fanfare, and Passport teaser | 0:00 to 1:00 | immediate | Collection reveal | View Passport | none | Local-only stamp; fanfare repeats are suppressed | Implemented |
-| delivery_shelf | Delivery Shelf | First Shop | 10 to 20 minutes or 25 orders fulfilled | Tips/Prep Slots available | Tips | station growth | 800 | 1.17 | Prep Counter support/capacity | 10 to 20 minutes | TBD | Scaling order flow | Buy Delivery Shelf | none | Shop only | Partial |
+| delivery_shelf | Delivery Shelf | First Shop | 10 to 20 minutes or 25 orders fulfilled | Tips/Prep Capacity available | Tips | station growth | 800 | 1.17 | Prep Counter support/capacity | 10 to 20 minutes | TBD | Scaling order flow | Buy Delivery Shelf | none | Shop only | Partial |
 | shop_sign | Shop Sign | First Shop | 10 Reputation or reputation gate | Tips available | Tips | station growth | 300 | 1.18 | +50% Reputation/order target or route unlock support | 20 to 40 minutes | TBD | Reputation unlock pressure | Buy Shop Sign | none | Shop only | Partial |
-| counter_service | Counter Service | First Automation | First 10 Orders | manually started and page open | ready orders + Tofu Stock | interval upgrades | 0 | 1.0 | 1 automatic best-available handoff / 10 seconds, upgradeable to 8/6/4 seconds | after 10 orders | immediate after unlock | Repeated manual handoff chore | Start Counter Service | repeated Fulfill clicks | Parked-only, active-page-only, no offline auto-fulfillment | Implemented V1 |
+| counter_service | Counter Service | First Automation / Managed Shop | First 10 Orders | manually started and page open | ready orders + Tofu Stock | interval and batch upgrades | 0 | 1.0 | 1 automatic best-available handoff / 10 seconds, upgradeable to 8/6/4 seconds and 2/5/10 order batches | after 10 orders | immediate after unlock | Repeated manual handoff chore, then oversized Ready Order piles | Start Counter Service / Buy bulk upgrade | repeated Fulfill clicks | Parked-only, active-page-only, no offline auto-fulfillment | Implemented V1 |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
 
 ## Implementation Slices
@@ -1614,12 +1656,12 @@ already exists.
 | Slice | Goal | Files Likely Touched | Tests Required | What Not To Include |
 | --- | --- | --- | --- | --- |
 | 1. First Loop Contract | Align fresh state, first order, first upgrade timing, first stamp, and early reveal | `frontend/nospill/app.js`, `test_frontend_nospill.js`, docs | fresh order available, Simple Tofu Box rewards, first stamp, no advanced clutter, no resource-negative state | Routes, Crew, Garage, Spirit, Rivals, License |
-| 2. Order Types | Make Tofu Stock matter through larger orders | `app.js`, tests, `BALANCE_AND_PROGRESSION.md`, `IMPLEMENTATION_STATUS.md` | Family/Festival unlocks, typed costs/rewards, Fulfill Max labeling, raw stock does not multiply Tips | route contracts, Catering Crate if pacing is not ready |
+| 2. Order Types | Make Tofu Stock matter through larger orders | `app.js`, tests, `BALANCE_AND_PROGRESSION.md`, `IMPLEMENTATION_STATUS.md` | Family/Festival/Catering unlocks, typed costs/rewards, Fulfill Max labeling, raw stock does not multiply Tips | route contracts and larger network orders later |
 | 3. Early Upgrade Timing | Make first purchases solve current bottlenecks | `app.js`, tests | first extra station timing, Steady Pressing timing, Tidy Packaging timing, disabled reasons | broad upgrade catalog expansion |
 | 4. Passport First Stamp | Make first collection moment rewarding without showing full catalog | `app.js`, tests, docs | First Shop Order stamp reveal, View Passport teaser, stamp persists | deep Passport filters/categories |
 | 5. Delivery Shelf / Shop Sign | Add first-shop support systems after the core loop is stable | `app.js`, tests, docs | reveal timing, Tips costs, throughput/reputation effects, no first-screen clutter | full route network |
 | 6. First Route Card | Introduce Shop Street as fictional parked content | `app.js`, tests, docs | route cost/reward, fictional copy, no real road language, route stamp | maps, real routes, route leaderboards |
-| 7. Counter Service V1 | Let the counter remove repeated prepared-order handoffs after manual mastery | `app.js`, tests, docs | First 10 Orders unlock, Start/Pause, active-page-only handoff tick, Best Available priority, finite interval upgrades, no offline auto-fulfillment | Regular Customers, crew, route automation, bulk automation upgrades |
+| 7. Counter Service / Managed Shop V1 | Let the counter remove repeated prepared-order handoffs after manual mastery, then scale batch handoffs | `app.js`, tests, docs | First 10 Orders unlock, Start/Pause, active-page-only handoff tick, Best Available priority, finite interval upgrades, finite bulk upgrades, no offline auto-fulfillment | Regular Customers, crew, route automation, stock reserve upgrades |
 | 8. First Automation Expansion | Let Apprentice Driver or Regular Customers remove later repeated fictional chores | `app.js`, tests, docs | hire/assign or passive-customer state, consumes orders, local rewards, no real driving requirement | full crew management |
 | 9. First License Exam | Add first prestige decision after a plateau | `app.js`, tests, docs | requirements, confirmation, reset/persist contract, Stars/perks | multiple exams, monetization |
 | 10. Post-License Rebuild | Make permanent perks accelerate the early loop | `app.js`, tests, docs | perk purchase, fresh run benefits, no Cup Test scoring effect | late regional network unless needed |
@@ -1657,7 +1699,7 @@ progression contract.
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs 20 Tips, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
-| Counter Service | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, and can improve to 8/6/4 second handoffs through Order Bell, Wider Counter, and Pickup Routine | tune rates and future bulk/priority upgrades after playtesting |
+| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew | tune rates and future stock-reserve/priority upgrades after playtesting |
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |

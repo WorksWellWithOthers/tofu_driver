@@ -219,11 +219,9 @@ Current design principles:
 - Larger shop order types can consume more Tofu Stock and ready Delivery Orders for better local
   Tips/Reputation/XP rewards. This order-size ladder is the intended bridge between stockpiles and
   higher payouts. Raw Tofu Stock should not directly multiply Tips.
-- The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, and Festival Bento.
-  The current first-loop stock costs are 6, 24, and 75 Tofu Stock respectively, so stock pressure
-  appears early and larger order types become the main stock sink.
-  Catering Crate and larger network orders are future/hidden until the core loop and first-shop
-  pacing are proven.
+- The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, Festival Bento, and
+  Catering Crate. The early stock costs are 6, 24, and 75 Tofu Stock respectively, with Catering
+  Crate acting as a later managed-shop stock/Ready Order sink.
 - Core Game Spine V1 adds the first short milestone ladder after the first stamp: First Upgrade
   Purchased, First Family Tofu Tray, First 10 Orders, and First 100 Tips. Delivery Shelf is the
   first throughput support station, and Shop Sign is the first Reputation support station.
@@ -233,12 +231,17 @@ Current design principles:
   total multipliers, not stacked threshold multipliers.
 - Counter Service V1 is the first earned automation layer: after First 10 Orders, regular customers
   can pick up prepared orders automatically while the page is open and the player is parked.
+- Managed Shop Phase V1 extends Counter Service after Pickup Routine with finite bulk handoff
+  upgrades: Second Register, Pickup Window, and Counter Crew. This is still local Tofu Shop
+  automation, not franchise mode or Dream Garage.
 - Counter Service should display its useful rate or blocked state honestly. If it is supplied and
   running, shop income can include a `Tips/min when supplied` line; if it lacks stock or ready
   orders, the UI should say what is missing rather than showing a misleading zero.
 - Shop Spirit actions should use action-specific language: generators use `Buy`, instant actions use
   `Spend Spirit`, timed effects use `Start Effect` or a specific effect name, and tokens use
-  `Use Token`. Route-related Spirit actions stay hidden until fictional route systems matter.
+  `Use Token`. Instant Spirit spends should be strategic emergency recovery, such as adding a
+  meaningful amount of Tofu Stock or order prep, not a new clicker loop. Route-related Spirit
+  actions stay hidden until fictional route systems matter.
 - Regular Customers, Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige remain
   deferred until Counter Service and the V1 spine have been playtested and tuned.
 - New active decisions should replace automated chores. When Counter Service removes repeated order

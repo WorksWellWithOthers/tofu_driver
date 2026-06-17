@@ -283,14 +283,13 @@ const SHOP_ORDER_TYPES = [
   {
     id: "catering_crate",
     name: "Catering Crate",
-    unlock: "future mid-game stock sink",
-    tofuRequired: 50,
+    unlock: "after 100 fulfilled orders, 250 Reputation, and Shop Level 25",
+    tofuRequired: 240,
     deliveryOrdersRequired: 5,
-    tips: 400,
-    reputation: 20,
-    xp: 180,
+    tips: 520,
+    reputation: 25,
+    xp: 260,
     purpose: "mid-game stock sink",
-    future: true,
   },
 ];
 const CERTIFIED_BOOST_HOURS = 2;
@@ -459,6 +458,9 @@ const STATION_UPGRADES = [
   { id: "counter_service_bell", stationId: "counter_service", name: "Order Bell", costTips: 180, effect: "Counter Service interval 10 sec -> 8 sec", maxLevel: 1 },
   { id: "counter_service_wide", stationId: "counter_service", name: "Wider Counter", costTips: 320, effect: "Counter Service interval 8 sec -> 6 sec", maxLevel: 1 },
   { id: "counter_service_routine", stationId: "counter_service", name: "Pickup Routine", costTips: 520, effect: "Counter Service interval 6 sec -> 4 sec", maxLevel: 1 },
+  { id: "counter_service_register", stationId: "counter_service", name: "Second Register", costTips: 1200, effect: "Counter Service batch size 1 -> 2", maxLevel: 1 },
+  { id: "counter_service_window", stationId: "counter_service", name: "Pickup Window", costTips: 4200, effect: "Counter Service batch size 2 -> 5", maxLevel: 1 },
+  { id: "counter_service_crew", stationId: "counter_service", name: "Counter Crew", costTips: 18000, effect: "Counter Service batch size 5 -> 10", maxLevel: 1 },
   { id: "regular_customer_faster", stationId: "regular_customer", name: "Loyalty Card", costTips: 650, effect: "Regular Customer tips +25%", maxLevel: 8 },
   { id: "regular_customer_double", stationId: "regular_customer", name: "Bring a Friend", costTips: 880, effect: "Regular Customer output +50%", maxLevel: 8 },
   { id: "route_familiarity", stationId: "delivery_route", name: "Route Familiarity", costTips: 1000, effect: "Fictional route rewards +20%", maxLevel: 8 },
@@ -508,8 +510,8 @@ const SPIRIT_GENERATORS = [
 ];
 
 const SHOP_SPIRIT_BOOSTS = [
-  { id: "rush_prep", name: "Rush Prep", costSpirit: 10, type: "instant_tofu", amount: 20, description: "Instant tofu stock for parked shop play." },
-  { id: "warm_counter", name: "Warm Counter", costSpirit: 15, type: "instant_orders", amount: 4, description: "Instant Delivery Orders if tofu stock is ready." },
+  { id: "rush_prep", name: "Rush Stock", costSpirit: 10, type: "instant_tofu", seconds: 30, description: "Adds 30 seconds of Tofu Stock production. Useful when Counter Service is waiting for Tofu Stock." },
+  { id: "warm_counter", name: "Warm Counter", costSpirit: 15, type: "instant_orders", seconds: 30, description: "Adds 30 seconds of order prep. Useful when Counter Service is waiting for ready orders." },
   { id: "busy_lunch", name: "Busy Lunch Hour", costSpirit: 20, type: "tips_multiplier", multiplier: 1.5, durationSeconds: 900, description: "Temporary shop tips boost." },
   { id: "double_batch", name: "Double Batch", costSpirit: 24, type: "press_multiplier", multiplier: 1.6, durationSeconds: 900, description: "Temporary Tofu Press boost." },
   { id: "calm_focus", name: "Calm Shop Focus", costSpirit: 18, type: "route_multiplier", multiplier: 1.4, durationSeconds: 900, description: "Temporary fictional route reward boost." },
@@ -527,7 +529,7 @@ const LICENSE_PERKS = [
   { id: "starter_press", name: "Start with extra Tofu Press level", costStars: 1, effect: "Future exams restart with +1 Tofu Press." },
   { id: "starter_counter", name: "Start with one Prep Counter", costStars: 1, effect: "Future exams keep Prep Counter unlocked." },
   { id: "offline_cap", name: "Higher offline cap", costStars: 1, effect: "Offline cap +1 hour." },
-  { id: "prep_slot_regen", name: "Extra Prep Slot recovery", costStars: 2, effect: "Prep Slots recover more often." },
+  { id: "prep_slot_regen", name: "Extra Prep Capacity recovery", costStars: 2, effect: "Prep Capacity recovers more often." },
   { id: "shop_multiplier", name: "Small shop production multiplier", costStars: 2, effect: "All shop production +10%." },
 ];
 
@@ -568,6 +570,72 @@ const CHARACTER_CATALOG = [
     flavor: "Arrives with the cup exactly as it left.",
   },
 ];
+
+const CHARACTER_ART_SLOTS = {
+  shop_assistant_main_portrait: {
+    label: "Shop Assistant",
+    purpose: "Tofu Shop overview helper",
+    placeholder: "Character art coming soon",
+    imageType: "bust portrait",
+    aspectRatio: "4:5",
+  },
+  shop_hint_expression_neutral: {
+    label: "Shop Hint",
+    purpose: "Tofu Shop recommendation panel",
+    placeholder: "Crew portrait not yet assigned",
+    imageType: "expression portrait",
+    aspectRatio: "1:1",
+  },
+  result_screen_cameo: {
+    label: "Result Cameo",
+    purpose: "Post-run result screen",
+    placeholder: "Result cameo art pending",
+    imageType: "portrait cameo",
+    aspectRatio: "4:5",
+  },
+  coach_recap_expression_neutral: {
+    label: "Coach Recap",
+    purpose: "Post-run smooth-control recap",
+    placeholder: "Coach portrait not yet assigned",
+    imageType: "expression portrait",
+    aspectRatio: "1:1",
+  },
+  reward_unlock_card_art: {
+    label: "Reward Art",
+    purpose: "Unlock and reward popup",
+    placeholder: "Reward art pending",
+    imageType: "card illustration",
+    aspectRatio: "16:9",
+  },
+  crew_profile_card: {
+    label: "Crew Profile",
+    purpose: "Delivery Crew collection card",
+    placeholder: "Crew portrait not yet assigned",
+    imageType: "square profile portrait",
+    aspectRatio: "1:1",
+  },
+  stamp_fanfare_cameo: {
+    label: "Stamp Cameo",
+    purpose: "Passport stamp fanfare",
+    placeholder: "Stamp cameo art pending",
+    imageType: "reward splash cameo",
+    aspectRatio: "4:3",
+  },
+  share_card_cameo_optional: {
+    label: "Share Card Cameo",
+    purpose: "Optional share-card flavor",
+    placeholder: "Share cameo art pending",
+    imageType: "small portrait cameo",
+    aspectRatio: "1:1",
+  },
+};
+
+const CHARACTER_ART_MANIFEST = {
+  angry_tofu_driver: {},
+  sleepy_dispatcher: {},
+  tea_master: {},
+  perfect_pour_courier: {},
+};
 
 const SOUND_PACK_CATALOG = [
   {
@@ -3677,6 +3745,11 @@ function shopOrderTypeUnlocked(orderType, gameState) {
   if (orderType.id === "simple_tofu_box") return true;
   if (orderType.id === "family_tofu_tray") return fulfilled >= 5 || state.shop.shopLevel >= 2;
   if (orderType.id === "festival_bento") return fulfilled >= 25 || state.shop.reputation >= 50;
+  if (orderType.id === "catering_crate") {
+    return fulfilled >= 100
+      && state.shop.reputation >= 250
+      && state.shop.shopLevel >= 25;
+  }
   return false;
 }
 
@@ -3687,6 +3760,7 @@ function shopOrderTypeRevealed(orderType, gameState) {
   if (shopOrderTypeUnlocked(orderType, state)) return true;
   if (orderType.id === "family_tofu_tray") return fulfilled >= 3 || state.shop.shopLevel >= 2;
   if (orderType.id === "festival_bento") return fulfilled >= 20 || state.shop.reputation >= 40;
+  if (orderType.id === "catering_crate") return fulfilled >= 75 || state.shop.reputation >= 200 || state.shop.shopLevel >= 20;
   return orderType.id === "simple_tofu_box";
 }
 
@@ -3694,7 +3768,7 @@ function shopOrderUnlockReason(orderType) {
   if (!orderType) return "Order unavailable.";
   if (orderType.id === "family_tofu_tray") return "Unlocks after 5 fulfilled orders or Shop Level 2.";
   if (orderType.id === "festival_bento") return "Unlocks after 25 fulfilled orders or 50 Reputation.";
-  if (orderType.id === "catering_crate") return "Future larger order.";
+  if (orderType.id === "catering_crate") return "Unlocks after 100 fulfilled orders, 250 Reputation, and Shop Level 25.";
   return "Available immediately.";
 }
 
@@ -4105,7 +4179,7 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
   if (tipsNeeded > 0) return `Need ${formatShopCost(tipsNeeded)} more Tips. Fulfill shop orders to earn Tips.`;
   const prepNeeded = Math.max(0, Math.ceil(safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots));
-  if (prepNeeded > 0) return `Need ${formatShopCount(prepNeeded)} more Prep Slot${prepNeeded === 1 ? "" : "s"}`;
+  if (prepNeeded > 0) return `Need ${formatShopCount(prepNeeded)} more Prep Capacity`;
   return "";
 }
 
@@ -4139,6 +4213,9 @@ function stationUpgradeRevealReason(upgrade, gameState) {
   if (upgrade.id === "counter_service_bell") return "Unlocks after Counter Service arrives";
   if (upgrade.id === "counter_service_wide") return "Unlocks after Order Bell and 20 fulfilled orders";
   if (upgrade.id === "counter_service_routine") return "Unlocks after Wider Counter and First Family Tofu Tray";
+  if (upgrade.id === "counter_service_register") return "Unlocks after Pickup Routine and 25 fulfilled orders";
+  if (upgrade.id === "counter_service_window") return "Unlocks after Second Register and 100 fulfilled orders";
+  if (upgrade.id === "counter_service_crew") return "Unlocks after Pickup Window and 1K fulfilled orders or 5K Reputation";
   if (upgrade.id === "tofu_press_faster") return "Unlocks when Tofu Stock is the bottleneck";
   if (upgrade.id === "tofu_press_double") return "Unlocks after owning 3 Tofu Presses";
   if (upgrade.id === "prep_counter_faster") return "Unlocks when Prep Counter is the bottleneck";
@@ -4164,6 +4241,18 @@ function stationUpgradeIsRevealed(upgrade, gameState) {
     return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_wide, 0, 1) > 0
       && Boolean(state.stamps.first_family_tofu_tray);
   }
+  if (upgrade.id === "counter_service_register") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_routine, 0, 1) > 0
+      && orders >= 25;
+  }
+  if (upgrade.id === "counter_service_window") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0
+      && orders >= 100;
+  }
+  if (upgrade.id === "counter_service_crew") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_window, 0, 1) > 0
+      && (orders >= 1000 || state.shop.reputation >= 5000);
+  }
   if (upgrade.id === "tofu_press_faster") return (hasFirstShopOrder(state) && isStockBottleneck(state)) || state.shop.stations.tofu_press >= 2;
   if (upgrade.id === "tofu_press_double") return state.shop.stations.tofu_press >= 3 || orders >= 3;
   if (upgrade.id === "prep_counter_faster") return isOrderPrepBottleneck(state) || orders >= 1 || state.shop.stations.prep_counter >= 2;
@@ -4171,9 +4260,9 @@ function stationUpgradeIsRevealed(upgrade, gameState) {
   if (upgrade.stationId === "delivery_shelf") return state.shop.stations.delivery_shelf > 0;
   if (upgrade.stationId === "shop_sign") return state.shop.stations.shop_sign > 0 || state.shop.reputation >= 10;
   if (upgrade.stationId === "regular_customer") return state.shop.stations.regular_customer > 0;
-  if (upgrade.stationId === "delivery_route") return state.shop.stations.delivery_route > 0 || state.shop.shopReach >= 2;
-  if (upgrade.stationId === "dispatcher_desk") return state.shop.stations.dispatcher_desk > 0;
-  if (upgrade.stationId === "regional_network") return state.shop.stations.regional_network > 0;
+  if (upgrade.stationId === "delivery_route") return hasRouteStoryBeat(state) && state.shop.stations.delivery_route > 0;
+  if (upgrade.stationId === "dispatcher_desk") return false;
+  if (upgrade.stationId === "regional_network") return false;
   return false;
 }
 
@@ -4223,10 +4312,17 @@ function stationUpgradePreviewText(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
   if (upgrade.stationId === "counter_service") {
+    const beforeBatch = counterServiceBatchSize(state);
     const beforeSeconds = counterServiceIntervalSeconds(state);
     const preview = normalizeGameState(state);
     preview.shop.stationUpgrades[upgrade.id] = Math.min(upgrade.maxLevel, level + 1);
+    const afterBatch = counterServiceBatchSize(preview);
     const afterSeconds = counterServiceIntervalSeconds(preview);
+    if (beforeBatch !== afterBatch) {
+      const beforePerMinute = roundTo((beforeBatch * 60) / beforeSeconds, 1);
+      const afterPerMinute = roundTo((afterBatch * 60) / afterSeconds, 1);
+      return `Counter Service: batch ${formatShopCount(beforeBatch)} -> ${formatShopCount(afterBatch)} (${beforePerMinute}/min -> ${afterPerMinute}/min when supplied).`;
+    }
     const beforePerMinute = roundTo(60 / beforeSeconds, 1);
     const afterPerMinute = roundTo(60 / afterSeconds, 1);
     return `Counter Service: 1 handoff / ${formatShopCount(beforeSeconds)} sec -> 1 handoff / ${formatShopCount(afterSeconds)} sec (${beforePerMinute}/min -> ${afterPerMinute}/min).`;
@@ -4254,6 +4350,9 @@ function stationUpgradeWhyItMatters(upgrade) {
   if (upgrade.id === "counter_service_bell") return "Helps Counter Service keep up with prepared orders.";
   if (upgrade.id === "counter_service_wide") return "Keeps larger order queues from piling up.";
   if (upgrade.id === "counter_service_routine") return "Makes automatic pickups feel smooth after Family Trays.";
+  if (upgrade.id === "counter_service_register") return "Processes two prepared orders per handoff when supplied.";
+  if (upgrade.id === "counter_service_window") return "Turns a growing Ready Orders pile into useful Tips faster.";
+  if (upgrade.id === "counter_service_crew") return "Starts the managed counter phase with larger automatic batches.";
   if (upgrade.id === "prep_counter_faster") return "Makes the next order arrive faster.";
   if (upgrade.id === "prep_counter_double") return "Turns extra counters into a bigger throughput jump.";
   if (upgrade.id === "tofu_press_faster") return "Helps when Tofu Stock is running low.";
@@ -4288,7 +4387,7 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
     return { ok: false, reason: station.unlock, gameState: next };
   }
   const quantity = buyQuantityFromRequest(next, station, requestedQuantity);
-  if (quantity < 1) return { ok: false, reason: "Not enough tips or Prep Slots.", gameState: next };
+  if (quantity < 1) return { ok: false, reason: "Not enough Tips or Prep Capacity.", gameState: next };
   const owned = safeNonNegativeInteger(next.shop.stations[station.id], 0, 100000);
   const costTips = Array.from({ length: quantity }).reduce(
     (sum, _, index) => sum + stationCost(station, owned + index),
@@ -4296,7 +4395,7 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
   );
   const prepCost = safeNonNegativeInteger(station.prepSlotCost, 0, 100) * quantity;
   if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
-  if (next.shop.prepSlots < prepCost) return { ok: false, reason: "Prep Slots are recovering.", gameState: next };
+  if (next.shop.prepSlots < prepCost) return { ok: false, reason: "Prep Capacity is recovering.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.prepSlots = safeNonNegativeNumber(next.shop.prepSlots - prepCost);
   next.shop.stations[station.id] = owned + quantity;
@@ -4455,12 +4554,20 @@ function counterServiceIntervalSeconds(gameState) {
   return COUNTER_SERVICE_HANDOFF_SECONDS;
 }
 
+function counterServiceBatchSize(gameState) {
+  const state = normalizeGameState(gameState);
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_crew, 0, 1) > 0) return 10;
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_window, 0, 1) > 0) return 5;
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0) return 2;
+  return 1;
+}
+
 function counterServiceOrderType(gameState) {
   const state = normalizeGameState(gameState);
   const priority = state.shop.counterService.priority || "best_available";
   const candidates = priority === "simple_only"
     ? ["simple_tofu_box"]
-    : ["festival_bento", "family_tofu_tray", "simple_tofu_box"];
+    : ["catering_crate", "festival_bento", "family_tofu_tray", "simple_tofu_box"];
   return candidates
     .map((orderTypeId) => shopOrderTypeById(orderTypeId))
     .find((orderType) => (
@@ -4583,10 +4690,13 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     lastOrderType: null,
   };
 
+  const batchSize = counterServiceBatchSize(next);
   for (let index = 0; index < attempts; index += 1) {
     const orderType = counterServiceOrderType(next);
     if (!orderType) break;
-    const result = fulfillShopOrders(next, 1, {
+    const availableQuantity = Math.min(batchSize, maxFulfillableShopOrderQuantity(next, orderType));
+    if (availableQuantity < 1) break;
+    const result = fulfillShopOrders(next, availableQuantity, {
       activeDrive: false,
       orderTypeId: orderType.id,
       suppressFanfare: true,
@@ -4596,11 +4706,11 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     });
     if (!result.ok) break;
     next = result.gameState;
-    totals.completed += 1;
+    totals.completed += result.quantity;
     totals.tips += result.tipsGained;
     totals.reputation += result.reputationGained;
     totals.xp += result.xpGained;
-    totals.orderCounts[orderType.name] = (totals.orderCounts[orderType.name] || 0) + 1;
+    totals.orderCounts[orderType.name] = (totals.orderCounts[orderType.name] || 0) + result.quantity;
     totals.lastOrderType = orderType;
   }
 
@@ -4674,13 +4784,25 @@ function counterServiceIncomeStatus(gameState) {
     };
   }
   const interval = counterServiceIntervalSeconds(state);
-  const tipsPerMinute = (orderType.tips * 60) / interval;
+  const batchSize = counterServiceBatchSize(state);
+  const batchQuantity = Math.min(batchSize, maxFulfillableShopOrderQuantity(state, orderType));
+  if (batchQuantity < 1) {
+    return {
+      active: false,
+      text: "Counter Service waiting for Tofu Stock",
+      status: "waiting_stock",
+      tipsPerMinute: 0,
+    };
+  }
+  const tipsPerMinute = (orderType.tips * batchQuantity * 60) / interval;
   return {
     active: true,
-    text: `Counter Service: +${formatShopRate(tipsPerMinute)} Tips/min when supplied`,
+    text: `Counter Service: +${formatShopRate(tipsPerMinute)} Tips/min when supplied · batch ${formatShopCount(batchQuantity)}`,
     status: "running",
     tipsPerMinute,
     orderType,
+    batchQuantity,
+    batchSize,
   };
 }
 
@@ -5017,8 +5139,9 @@ function useShopSpiritBoost(boostId, gameState, options = {}) {
   }
   if (next.shop.shopSpirit < boost.costSpirit) return { ok: false, reason: "Not enough Shop Spirit.", gameState: next };
   next.shop.shopSpirit = safeNonNegativeNumber(next.shop.shopSpirit - boost.costSpirit);
-  if (boost.type === "instant_tofu") next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + boost.amount);
-  if (boost.type === "instant_orders") next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders + boost.amount);
+  const instantAmount = shopSpiritInstantAmount(boost, next);
+  if (boost.type === "instant_tofu") next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + instantAmount);
+  if (boost.type === "instant_orders") next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders + instantAmount);
   if (boost.multiplier) {
     const expiresAt = new Date(Date.now() + boost.durationSeconds * 1000).toISOString();
     next.shop.activeFestivalBoosts = normalizeShopBoosts([
@@ -5400,6 +5523,66 @@ function selectedCharacter(gameState) {
     (character) => state.collection.unlockedCharacterIds.includes(character.id),
   );
   return firstUnlocked ? { ...firstUnlocked } : null;
+}
+
+function defaultCharacterForArt(gameState) {
+  return selectedCharacter(gameState) || {
+    id: "shop_assistant_placeholder",
+    name: "Delivery Crew",
+    role: "Crew",
+    flavor: "A shop assistant portrait will appear here after character art is assigned.",
+  };
+}
+
+function getCharacterAsset(characterId, slotId) {
+  const slot = CHARACTER_ART_SLOTS[slotId] || null;
+  const character = CHARACTER_CATALOG.find((candidate) => candidate.id === characterId) || null;
+  const manifest = CHARACTER_ART_MANIFEST[characterId] || {};
+  const asset = manifest[slotId] || null;
+  return {
+    slotId,
+    characterId,
+    slot,
+    character,
+    src: asset && typeof asset.src === "string" ? asset.src : "",
+    alt: asset && typeof asset.alt === "string" ? asset.alt : "",
+    status: asset && asset.src ? "assigned" : "placeholder",
+    placeholder: slot ? slot.placeholder : "Character art coming soon",
+  };
+}
+
+function renderCharacterCameo(slotId, gameState = loadGameState(), options = {}) {
+  if (appState.running || appState.calibrating || options.activeDrive) return "";
+  const slot = CHARACTER_ART_SLOTS[slotId];
+  if (!slot) {
+    return `
+      <div class="nospill-character-cameo is-placeholder" data-character-slot="${escapeHtml(slotId || "unknown")}">
+        <div class="nospill-character-art-placeholder" aria-hidden="true">?</div>
+        <div>
+          <span>Character Slot</span>
+          <strong>Character art coming soon</strong>
+          <small>Asset slot not yet defined.</small>
+        </div>
+      </div>
+    `;
+  }
+  const character = options.character || defaultCharacterForArt(gameState);
+  const asset = getCharacterAsset(character.id, slotId);
+  const label = options.label || slot.label;
+  const copy = options.copy || character.flavor || slot.purpose;
+  const art = asset.src
+    ? `<img src="${escapeHtml(asset.src)}" alt="${escapeHtml(asset.alt || `${character.name} ${label}`)}" loading="lazy" />`
+    : `<div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(`${label}: ${asset.placeholder}`)}">${escapeHtml(character.name.slice(0, 1))}</div>`;
+  return `
+    <div class="nospill-character-cameo ${asset.src ? "" : "is-placeholder"}" data-character-slot="${escapeHtml(slotId)}" data-character-id="${escapeHtml(character.id)}">
+      ${art}
+      <div>
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(character.name)}</strong>
+        <small>${escapeHtml(asset.src ? copy : asset.placeholder)}</small>
+      </div>
+    </div>
+  `;
 }
 
 function selectedSoundPack(gameState) {
@@ -7553,8 +7736,8 @@ function nextBestAction(gameState, options = {}) {
         type: "buy_station",
         title: "Next: Buy Tofu Press",
         copy: stockMilestone && stockMilestone.close
-          ? `Counter Service is waiting for Tofu Stock. You are close to ${formatShopCount(stockMilestone.milestone.threshold)} Tofu Presses for ${stockMilestone.milestone.reward}.`
-          : "Counter Service is waiting for Tofu Stock. A Tofu Press helps keep larger orders supplied.",
+            ? `Counter Service is waiting for Tofu Stock. You are close to ${formatShopCount(stockMilestone.milestone.threshold)} Tofu Presses for ${stockMilestone.milestone.reward}.`
+            : "Counter Service is waiting for Tofu Stock. A Tofu Press helps keep larger orders supplied.",
         buttonLabel: "View Production",
         stationId: "tofu_press",
         disabled: false,
@@ -7957,7 +8140,7 @@ function renderShopGeneratorCard(generatorId, gameState) {
       <small>${escapeHtml(rate)}</small>
       <small>${escapeHtml(helper)}</small>
       ${milestoneCopy ? `<small>${escapeHtml(milestoneCopy)}</small>` : ""}
-      ${station ? `<small>Next: ${formatShopCost(cost)} Tips${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Slot` : ""}</small>` : ""}
+      ${station ? `<small>Next: ${formatShopCost(cost)} Tips${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : ""}</small>` : ""}
       <div class="nospill-idle-actions">
         ${actionButton(`Buy ${label} · ${formatShopCost(cost)} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
         ${actionButton(`Buy Max ${label}`, "data-shop-station-max", stationId, !canBuy, "nospill-secondary", disabledReason)}
@@ -7991,6 +8174,28 @@ function spiritBoostDisabledReason(boost, state) {
     : "";
 }
 
+function shopSpiritInstantAmount(boost, gameState) {
+  const state = normalizeGameState(gameState);
+  const rates = getShopGeneratorRates(state);
+  const seconds = safeNonNegativeInteger(boost && boost.seconds, 30, 3600);
+  if (boost && boost.type === "instant_tofu") {
+    const bestOrder = bestUnlockedShopOrderType(state);
+    return Math.max(
+      safeNonNegativeInteger(boost.amount, 0, 1000000),
+      Math.ceil(rates.tofuPressPerSecond * seconds),
+      safeNonNegativeInteger(bestOrder.tofuRequired, 6, 1000000),
+    );
+  }
+  if (boost && boost.type === "instant_orders") {
+    return Math.max(
+      safeNonNegativeInteger(boost.amount, 0, 1000000),
+      Math.ceil(rates.prepOrdersPerSecond * seconds),
+      1,
+    );
+  }
+  return safeNonNegativeInteger(boost && boost.amount, 0, 1000000);
+}
+
 function festivalBoostDisabledReason(boost, state) {
   const ready = safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000);
   return ready < 1 ? `Need 1 ${boost.name} · You have 0` : "";
@@ -8017,6 +8222,12 @@ function spiritBoostCopy(boost, state) {
   if (boost.durationSeconds) {
     return `${boost.description} Duration: ${formatShopCount(Math.ceil(boost.durationSeconds / 60))} min. Does not stack; start it when the shop is parked.`;
   }
+  if (boost.type === "instant_tofu") {
+    return `${boost.description} Adds ${formatShopCount(shopSpiritInstantAmount(boost, state))} Tofu Stock right now.`;
+  }
+  if (boost.type === "instant_orders") {
+    return `${boost.description} Adds ${formatShopCount(shopSpiritInstantAmount(boost, state))} ready order${shopSpiritInstantAmount(boost, state) === 1 ? "" : "s"} right now.`;
+  }
   return `${boost.description} Instant parked-only action.`;
 }
 
@@ -8032,7 +8243,18 @@ function renderStationUpgradeCard(upgrade, gameState) {
   );
   const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, cost, level);
   const canBuy = unlocked && level < upgrade.maxLevel && !disabledReason;
-  const status = level >= upgrade.maxLevel ? "Maxed" : `${formatShopCost(cost)} Tips`;
+  if (unlocked && level >= upgrade.maxLevel) {
+    const maxedCopy = upgrade.stationId === "counter_service"
+      ? `Current effect is active. Counter Service is ${formatShopCount(counterServiceBatchSize(state))} order${counterServiceBatchSize(state) === 1 ? "" : "s"} per handoff at 1 handoff / ${formatShopCount(counterServiceIntervalSeconds(state))} sec.`
+      : `${upgrade.effect}. Current effect is active.`;
+    return renderIdleCard({
+      title: `${upgrade.name} Lv ${level}`,
+      status: "Maxed",
+      copy: maxedCopy,
+      actions: [],
+    });
+  }
+  const status = `${formatShopCost(cost)} Tips`;
   return renderIdleCard({
     title: `${upgrade.name} Lv ${level}`,
     status,
@@ -8307,6 +8529,7 @@ function renderCounterServiceCard(state) {
   const startDisabled = service.running;
   const pauseDisabled = !service.running;
   const interval = counterServiceIntervalSeconds(state);
+  const batchSize = counterServiceBatchSize(state);
   return renderIdleCard({
     title: "Counter Service",
     status,
@@ -8316,6 +8539,10 @@ function renderCounterServiceCard(state) {
         <div class="nospill-counter-service-row">
           <span>Rate</span>
           <strong>1 handoff / ${formatShopCount(interval)} sec</strong>
+        </div>
+        <div class="nospill-counter-service-row">
+          <span>Batch</span>
+          <strong>${formatShopCount(batchSize)} order${batchSize === 1 ? "" : "s"} / handoff</strong>
         </div>
         <div class="nospill-counter-service-row">
           <span>Priority</span>
@@ -8550,7 +8777,60 @@ function nextMilestoneForShop(gameState) {
     };
   }
 
-  const stationMilestone = nextVisibleStationMilestone(state);
+  const closeStationMilestone = nextVisibleStationMilestone(state);
+  if (closeStationMilestone && (closeStationMilestone.close || closeStationMilestone.affordable)) {
+    return {
+      id: `station_${closeStationMilestone.stationId}_${closeStationMilestone.milestone.threshold}`,
+      name: `${formatShopCount(closeStationMilestone.milestone.threshold)} ${closeStationMilestone.station.name}`,
+      progressText: `${formatShopCount(closeStationMilestone.progress.current)} / ${formatShopCount(closeStationMilestone.progress.required)} owned`,
+      percent: closeStationMilestone.progress.percent,
+      reward: closeStationMilestone.milestone.reward,
+      guidance: `Buy ${closeStationMilestone.station.name} when it matches the current bottleneck.`,
+    };
+  }
+
+  const counterUpgrade = visibleRelevantStationUpgrades(state).find((upgrade) => (
+    upgrade.stationId === "counter_service"
+    && safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel) < upgrade.maxLevel
+  ));
+  if (counterUpgrade) {
+    const level = safeNonNegativeInteger(state.shop.stationUpgrades[counterUpgrade.id], 0, counterUpgrade.maxLevel);
+    const cost = stationUpgradeCostTips(counterUpgrade, level);
+    const progress = nextMilestoneProgress(state.shop.tips, cost);
+    return {
+      id: counterUpgrade.id,
+      name: counterUpgrade.name,
+      progressText: `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} Tips`,
+      percent: progress.percent,
+      reward: counterUpgrade.effect,
+      guidance: stationUpgradeIsRevealed(counterUpgrade, state)
+        ? stationUpgradeWhyItMatters(counterUpgrade)
+        : stationUpgradeRevealReason(counterUpgrade, state),
+    };
+  }
+
+  const cateringCrate = shopOrderTypeById("catering_crate");
+  if (cateringCrate && !shopOrderTypeUnlocked(cateringCrate, state)) {
+    const ordersProgress = nextMilestoneProgress(fulfilled, 100);
+    const reputationProgress = nextMilestoneProgress(state.shop.reputation, 250);
+    const levelProgress = nextMilestoneProgress(state.shop.shopLevel, 25);
+    const progress = [ordersProgress, reputationProgress, levelProgress]
+      .sort((a, b) => a.percent - b.percent)[0];
+    return {
+      id: "catering_crate_unlock",
+      name: "Catering Crate",
+      progressText: progress === ordersProgress
+        ? `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} orders fulfilled`
+        : progress === reputationProgress
+          ? `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} Reputation`
+          : `Shop Level ${formatShopCount(progress.current)} / ${formatShopCount(progress.required)}`,
+      percent: progress.percent,
+      reward: "A larger managed-shop order",
+      guidance: "Grow the managed counter so bulk pickups have a bigger order target.",
+    };
+  }
+
+  const stationMilestone = closeStationMilestone || nextVisibleStationMilestone(state);
   if (stationMilestone) {
     return {
       id: `station_${stationMilestone.stationId}_${stationMilestone.milestone.threshold}`,
@@ -8563,13 +8843,12 @@ function nextMilestoneForShop(gameState) {
   }
 
   return {
-    id: "counter_service_tuning",
-    name: "Counter Service Tuning",
-    progressText: "Future upgrades documented",
-    percent: 0,
-    reward: "Better automation later",
-    guidance: "Counter Service V1 is active. Future upgrades can improve priority, bulk, and stock reserves after playtesting.",
-    future: true,
+    id: "managed_shop",
+    name: "Managed Shop Phase",
+    progressText: "Keep balancing stock, prep, and automatic handoffs",
+    percent: 100,
+    reward: "A smoother managed counter",
+    guidance: "Tune station counts, bulk handoffs, and larger orders before future shop layers arrive.",
   };
 }
 
@@ -8620,6 +8899,10 @@ function renderOverviewPanel(state) {
     <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Fulfilled orders earn Tips.</p>
     <p class="nospill-panel-helper">Tips buy upgrades. ${escapeHtml(runway.message)}</p>
     <div class="nospill-idle-grid">
+      ${renderCharacterCameo("shop_assistant_main_portrait", state, {
+        label: "On Shift",
+        copy: "Cosmetic crew art belongs on parked shop screens.",
+      })}
       ${renderPreparingOrderCard(state)}
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
       ${renderOverviewImprovementCard(state)}
@@ -8646,7 +8929,7 @@ function renderProductionPanel(state) {
   });
   return `
     <h4>Production</h4>
-    <p class="nospill-panel-helper">Stations use Tips and Prep Slots. New stations appear when the core loop needs them.</p>
+    <p class="nospill-panel-helper">Stations use Tips and Prep Capacity. Prep Capacity is the recovering expansion pool for adding more stations.</p>
     <div class="nospill-idle-grid">
       ${visibleStations.map((station) => {
         const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
@@ -8656,7 +8939,7 @@ function renderProductionPanel(state) {
         const reason = stationPurchaseDisabledReason(station, state, cost, unlocked);
         return renderIdleCard({
           title: station.name,
-          status: unlocked ? `${formatShopCost(cost)} tips · ${formatShopCount(station.prepSlotCost)} Prep Slot` : "Locked",
+          status: unlocked ? `${formatShopCost(cost)} tips · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : "Locked",
           copy: unlocked
             ? `Owned: ${formatShopCount(owned)}. ${stationPurposeCopy(station.id, state)} ${stationMilestoneText(station.id, owned)}`
             : station.unlock,
@@ -9036,7 +9319,7 @@ function currentBottleneck(gameState) {
     return { id: "preparing_order", label: "Preparing Delivery Order", action: runway.isHealthy ? "Wait for Prep Counter or improve Prep Counter." : "Wait for Prep Counter." };
   }
   if (prep.ready < 1) return { id: "orders", label: "No Delivery Orders", action: prep.message };
-  if (state.shop.prepSlots < 1) return { id: "prep_slots", label: "Prep Slots recovering", action: "Wait for prep capacity" };
+  if (state.shop.prepSlots < 1) return { id: "prep_capacity", label: "Prep Capacity recovering", action: "Wait for prep capacity" };
   if (SHOP_STATIONS.some((station) => stationIsUnlocked(station, state) && state.shop.tips >= stationCost(station, state.shop.stations[station.id]))) {
     return { id: "upgrade", label: "Station affordable", action: "Buy a shop station" };
   }
@@ -9113,7 +9396,7 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopPrepSlots) {
     elements.shopPrepSlots.textContent = reveal.shop
-      ? `${formatShopCount(shop.prepSlots)}/${formatShopCount(getPrepSlotMax(shop))}`
+      ? `${formatShopCount(shop.prepSlots)} available · ${formatShopCount(getPrepSlotMax(shop))} max`
       : "Locked";
   }
   if (elements.shopReach) {
@@ -9211,6 +9494,7 @@ function renderCollectionItem(item, { unlocked, selected, type, activeDrive }) {
     : `data-character-id="${escapeHtml(item.id)}"`;
   return `
     <div class="nospill-collection-item ${unlocked ? "" : "is-locked"}">
+      ${type === "character" ? renderCharacterCameo("crew_profile_card", null, { character: item, activeDrive }) : ""}
       <header>
         <strong>${escapeHtml(item.name)}</strong>
         <small>${escapeHtml(type === "sound" ? "Sound Pack" : item.role)}</small>
@@ -9464,6 +9748,16 @@ function renderDeliverySummary(summary) {
   const shopRewardLine = (shop.tofuStockGained || shop.tipsGained || shop.reputationGained)
     ? `+${formatShopCount(shop.tofuStockGained || 0)} tofu · +${formatShopCount(shop.tipsGained || 0)} tips · +${formatShopCount(shop.reputationGained || 0)} reputation`
     : "No shop rewards from this practice";
+  if (elements.summaryCharacterCameo) {
+    elements.summaryCharacterCameo.innerHTML = renderCharacterCameo(
+      "result_screen_cameo",
+      collectionState,
+      {
+        label: crew ? "Delivery Crew" : "Result Cameo",
+        copy: crew ? crew.flavor : "Character art can appear here after the run ends.",
+      },
+    );
+  }
   elements.deliverySummaryGrid.innerHTML = [
     summary.simulated
       ? summaryMetric("Test Mode", qualified ? "Simulated Delivery" : "Simulated Practice Delivery")
@@ -9508,7 +9802,13 @@ function renderDeliverySummary(summary) {
     elements.cupTrailCard.innerHTML = renderCupTrail(summary);
   }
   if (elements.coachRecapCard) {
-    elements.coachRecapCard.innerHTML = renderCoachRecap(summary);
+    elements.coachRecapCard.innerHTML = [
+      renderCharacterCameo("coach_recap_expression_neutral", collectionState, {
+        label: "Coach Recap",
+        copy: "Outcome-based smooth-control feedback belongs after the run.",
+      }),
+      renderCoachRecap(summary),
+    ].join("");
   }
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = rewards.commuteMasteryMessage || coach.message || "";
@@ -9577,6 +9877,10 @@ function showStampFanfare(fanfare, gameState = loadGameState()) {
   if (elements.stampFanfareRewards) {
     const rewards = fanfare.rewards || {};
     elements.stampFanfareRewards.innerHTML = [
+      renderCharacterCameo("stamp_fanfare_cameo", gameState, {
+        label: "Stamp Cameo",
+        copy: "Reward splash art belongs on parked fanfare moments.",
+      }),
       stampFanfareRewardMetric("Tips", `+${formatShopCount(rewards.tips || 0)}`),
       stampFanfareRewardMetric("Reputation", `+${formatShopCount(rewards.reputation || 0)}`),
       stampFanfareRewardMetric("XP", `+${formatShopCount(rewards.xp || 0)}`),
@@ -9707,6 +10011,7 @@ function renderShopOrderResult(result) {
   }
   if (elements.cupTrailCard) elements.cupTrailCard.innerHTML = "";
   if (elements.coachRecapCard) elements.coachRecapCard.innerHTML = "";
+  if (elements.summaryCharacterCameo) elements.summaryCharacterCameo.innerHTML = "";
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = result.report || "Shop order complete.";
   }
@@ -11070,6 +11375,7 @@ function cacheElements() {
     summaryStatusLabel: document.getElementById("summary-status-label"),
     summaryTitle: document.getElementById("summary-title"),
     summaryWater: document.getElementById("summary-water"),
+    summaryCharacterCameo: document.getElementById("summary-character-cameo"),
     summaryGrid: document.getElementById("summary-grid"),
     routeContext: document.getElementById("route-context"),
     routeGrid: document.getElementById("route-grid"),
