@@ -67,9 +67,9 @@
 - Mika, Night Shift Manager, is wired as the first real character asset pack target. The manifest
   expects six stable `.webp` paths under `frontend/nospill/assets/characters/mika/`, while missing
   files still fall back to placeholders until final art is generated.
-- Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It uses placeholder
-  scene layers, stable future art paths, milestone-based layer reveal, Mika cameo reuse, and
-  reduced-motion-safe decorative activity without adding new shop mechanics.
+- Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It now renders one
+  cohesive full-scene image/placeholder at a time, selected from milestone-based scene variants,
+  while gameplay controls remain separate UI.
 - Delivery Crew is a clickable parked surface with future/deferred copy and CTAs back toward Tofu
   Garage and Don't Spill the Cup; it is no longer a dead visible nav item.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now
@@ -173,10 +173,10 @@ Canonical references:
    Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
    distance, route difficulty, racing technique, or public-road competition.
 11. Generate the MVP Tofu Shop scene art pack from `TOFU_SHOP_LIVING_SCENE_ASSET_SPEC.md`:
-   `shop_base_tiny`, `tofu_boxes_idle`, `prep_counter_visible`, `delivery_shelf_visible`,
-   `shop_sign_basic`, `covered_car_teaser`, and optional `tofu_box_loop`.
-12. Replace Tofu Shop scene placeholders with real assets, then add one small tofu/order animation
-   with a static reduced-motion fallback.
+   `scene_tiny_shop_empty`, `scene_tiny_shop_working`, `scene_tiny_shop_upgraded`,
+   `scene_busy_shop_established`, and `scene_busy_shop_with_covered_car`.
+12. Replace Tofu Shop full-scene placeholders with real assets, then consider one subtle overlay or
+   tofu/order animation inside the same scene panel with a static reduced-motion fallback.
 13. Tune Tofu Shop living-scene milestone unlock timing after playtesting; later, design the garage
    reveal scene without activating Dream Garage mechanics.
 14. Generate and review the six-file Mika MVP art pack against

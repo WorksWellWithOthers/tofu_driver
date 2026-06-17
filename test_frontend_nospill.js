@@ -5978,9 +5978,9 @@ globalThis.activeCameoHtml = renderCharacterCameo("result_screen_cameo", artSlot
 renderCollectionPanel(artSlotState);
 globalThis.activeCrewArtHtml = elements.characterList.innerHTML;
 `, context);
-  assert(context.parkedOverviewArtHtml.includes('data-character-slot="shop_assistant_main_portrait"'));
-  assert(context.parkedOverviewArtHtml.includes('Mika'));
-  assert(context.parkedOverviewArtHtml.includes('data-character-id="mika"'));
+  assert(context.parkedOverviewArtHtml.includes('nospill-shop-scene'));
+  assert(context.parkedOverviewArtHtml.includes('data-scene-id='));
+  assert(!context.parkedOverviewArtHtml.includes('data-character-slot="shop_assistant_main_portrait"'));
   assert(context.parkedCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
   assert(context.parkedCrewArtHtml.includes('/static/nospill/assets/characters/mika/crew_profile_card.webp'));
   assert(context.parkedCrewArtHtml.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
@@ -6033,35 +6033,24 @@ function testTofuShopLivingSceneV1Groundwork() {
   const specPath = path.join(ROOT, 'TOFU_SHOP_LIVING_SCENE_ASSET_SPEC.md');
   const spec = fs.readFileSync(specPath, 'utf8');
   assert(spec.includes('MVP Art Pack'));
+  assert(spec.includes('full-scene variants'));
   [
-    'frontend/nospill/assets/scenes/tofu-shop/shop_base_tiny.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/tofu_boxes_idle.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/tofu_order_motion.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/tofu_press_visible.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/prep_counter_visible.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/prep_counter_upgraded.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_visible.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_expanded.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/shop_sign_basic.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/shop_sign_upgraded.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/counter_service_hint.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/layers/covered_car_teaser.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/sprites/tofu_box_loop.webp',
-    'frontend/nospill/assets/scenes/tofu-shop/sprites/order_fulfilled_loop.webp',
+    'frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp',
+    'frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_working.webp',
+    'frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_upgraded.webp',
+    'frontend/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp',
+    'frontend/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp',
   ].forEach((expectedPath) => assert(spec.includes(expectedPath), `${expectedPath} should be specified`));
   assert(spec.includes('Reduced-Motion Behavior'));
   assert(spec.includes('Needed from art generation'));
   assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'scenes', 'tofu-shop', 'README.md')));
-  assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'scenes', 'tofu-shop', 'layers', 'README.md')));
-  assert(fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'scenes', 'tofu-shop', 'sprites', 'README.md')));
 
   [
-    'shop_base_tiny.webp',
-    path.join('layers', 'tofu_boxes_idle.webp'),
-    path.join('layers', 'prep_counter_visible.webp'),
-    path.join('layers', 'delivery_shelf_visible.webp'),
-    path.join('layers', 'shop_sign_basic.webp'),
-    path.join('layers', 'covered_car_teaser.webp'),
+    'scene_tiny_shop_empty.webp',
+    'scene_tiny_shop_working.webp',
+    'scene_tiny_shop_upgraded.webp',
+    'scene_busy_shop_established.webp',
+    'scene_busy_shop_with_covered_car.webp',
   ].forEach((filename) => {
     assert.strictEqual(
       fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'assets', 'scenes', 'tofu-shop', filename)),
@@ -6072,8 +6061,8 @@ function testTofuShopLivingSceneV1Groundwork() {
 
   const context = loadNoSpillContext();
   assert.strictEqual(
-    context.TOFU_SHOP_SCENE_ASSETS.shop_base_tiny.src,
-    '/static/nospill/assets/scenes/tofu-shop/shop_base_tiny.webp',
+    context.TOFU_SHOP_SCENE_ASSETS.scene_tiny_shop_empty.src,
+    '/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp',
   );
   assert.strictEqual(
     context.getSceneAsset('missing_future_layer').placeholder,
@@ -6082,14 +6071,18 @@ function testTofuShopLivingSceneV1Groundwork() {
 
   const freshState = context.defaultGameState();
   const freshSceneState = context.getTofuShopSceneState(freshState);
-  const freshLayerIds = context.getTofuShopSceneLayers(freshSceneState).map((layer) => layer.id);
-  assert(freshLayerIds.includes('shop_base_tiny'));
-  assert(freshLayerIds.includes('tofu_boxes_idle'));
-  assert(freshLayerIds.includes('tofu_press_visible'));
-  assert(freshLayerIds.includes('prep_counter_visible'));
-  assert(!freshLayerIds.includes('delivery_shelf_visible'));
-  assert(!freshLayerIds.includes('shop_sign_basic'));
-  assert(!freshLayerIds.includes('covered_car_teaser'));
+  assert.strictEqual(freshSceneState.sceneId, 'scene_tiny_shop_empty');
+  const freshLayers = context.getTofuShopSceneLayers(freshSceneState);
+  assert.strictEqual(freshLayers.length, 1);
+  assert.strictEqual(freshLayers[0].id, 'scene_tiny_shop_empty');
+
+  const working = context.defaultGameState();
+  working.shop.lifetimeDeliveryOrders = 1;
+  assert.strictEqual(context.getTofuShopSceneState(working).sceneId, 'scene_tiny_shop_working');
+
+  const upgraded = context.defaultGameState();
+  upgraded.shop.stationUpgrades.prep_counter_faster = 1;
+  assert.strictEqual(context.getTofuShopSceneState(upgraded).sceneId, 'scene_tiny_shop_upgraded');
 
   const advanced = context.defaultGameState();
   advanced.shop.stationUpgrades.prep_counter_faster = 1;
@@ -6098,36 +6091,31 @@ function testTofuShopLivingSceneV1Groundwork() {
   advanced.shop.lifetimeDeliveryOrders = 10;
   advanced.shop.ordersFulfilled = 10;
   advanced.stamps.first_10_orders = true;
-  advanced.stamps.first_upgrade_purchased = true;
   advanced.collection.unlockedCharacterIds.push('mika');
   advanced.collection.selectedCharacterId = 'mika';
-  const advancedLayerIds = context.getTofuShopSceneLayers(context.getTofuShopSceneState(advanced))
-    .map((layer) => layer.id);
-  [
-    'prep_counter_upgraded',
-    'delivery_shelf_visible',
-    'delivery_shelf_expanded',
-    'shop_sign_basic',
-    'shop_sign_upgraded',
-    'counter_service_hint',
-    'covered_car_teaser',
-    'mika_shop_cameo',
-  ].forEach((layerId) => assert(advancedLayerIds.includes(layerId), `${layerId} should be visible`));
+  assert.strictEqual(context.getTofuShopSceneState(advanced).sceneId, 'scene_busy_shop_established');
 
-  const sceneHtml = context.renderTofuShopLivingScene(advanced);
+  const coveredCar = JSON.parse(JSON.stringify(advanced));
+  coveredCar.stamps.first_upgrade_purchased = true;
+  assert.strictEqual(context.getTofuShopSceneState(coveredCar).sceneId, 'scene_busy_shop_with_covered_car');
+
+  const sceneHtml = context.renderTofuShopLivingScene(coveredCar);
   assert(sceneHtml.includes('aria-label="Tofu Shop living scene"'));
-  assert(sceneHtml.includes('data-scene-layer="shop_base_tiny"'));
-  assert(sceneHtml.includes('data-scene-layer="mika_shop_cameo"'));
-  assert(sceneHtml.includes('/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp'));
+  assert(sceneHtml.includes('data-scene-id="scene_busy_shop_with_covered_car"'));
+  assert(sceneHtml.includes('/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp'));
+  assert(!sceneHtml.includes('data-scene-layer='));
+  assert(!sceneHtml.includes('Tofu Press art pending'));
+  assert(!sceneHtml.includes('Delivery Shelf art pending'));
+  assert(!sceneHtml.includes('/static/nospill/assets/characters/mika/shop_assistant_main_portrait.webp'));
   assert(sceneHtml.includes('Decorative parked scene'));
 
-  const fallbackLayer = context.renderSceneLayer({ id: 'delivery_shelf_visible', visible: true }, {
+  const fallbackLayer = context.renderSceneLayer({ id: 'scene_busy_shop_established', visible: true }, {
     gameState: advanced,
     reducedMotion: false,
   });
-  assert(fallbackLayer.includes('/static/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_visible.webp'));
+  assert(fallbackLayer.includes('/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp'));
   assert(fallbackLayer.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
-  assert(fallbackLayer.includes('Delivery Shelf art pending'));
+  assert(fallbackLayer.includes('Established shop scene pending'));
 
   const reducedContext = loadNoSpillContext({
     window: {
@@ -6145,7 +6133,7 @@ function testTofuShopLivingSceneV1Groundwork() {
   assert(!reducedHtml.includes('is-animated'));
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   assert(css.includes('@media (prefers-reduced-motion: reduce)'));
-  assert(css.includes('.nospill-shop-scene-layer.is-animated'));
+  assert(css.includes('.nospill-shop-scene-image.is-animated'));
 
   context.activeSceneState = advanced;
   vm.runInContext(`
@@ -6237,7 +6225,9 @@ renderTofuShop(artSceneState);
 globalThis.livingSceneActiveHtml = elements.shopTabPanel.innerHTML;
 `, context);
   assert(context.livingSceneOverviewHtml.includes('nospill-shop-scene'));
-  assert(context.livingSceneOverviewHtml.includes('data-scene-layer="covered_car_teaser"'));
+  assert(context.livingSceneOverviewHtml.includes('data-scene-id="scene_busy_shop_established"'));
+  assert(!context.livingSceneOverviewHtml.includes('data-scene-layer='));
+  assert(!context.livingSceneOverviewHtml.includes('Delivery Shelf art pending'));
   assert(!context.livingSceneActiveHtml.includes('nospill-shop-scene'));
 }
 

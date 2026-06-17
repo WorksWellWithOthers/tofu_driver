@@ -768,8 +768,7 @@
   gap: 10px;
 }
 
-.nospill-shop-scene-head span,
-.nospill-shop-scene-layer-label {
+.nospill-shop-scene-head span {
   color: #93a099;
   font-size: 0.72rem;
   font-weight: 800;
@@ -784,67 +783,46 @@
 .nospill-shop-scene-stage {
   position: relative;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  min-height: 180px;
+  min-height: clamp(190px, 34vw, 360px);
   overflow: hidden;
   border: 1px solid rgba(244, 247, 239, 0.12);
   border-radius: 8px;
-  padding: 8px;
   background:
     repeating-linear-gradient(135deg, rgba(244, 247, 239, 0.04) 0 2px, transparent 2px 18px),
     linear-gradient(180deg, #121817, #0b0f10);
 }
 
-.nospill-shop-scene-layer {
+.nospill-shop-scene-image {
   min-width: 0;
   display: grid;
-  gap: 5px;
-  align-content: center;
-  min-height: 74px;
-  border: 1px solid rgba(244, 247, 239, 0.12);
-  border-radius: 8px;
-  padding: 8px;
-  background: rgba(244, 247, 239, 0.045);
+  min-height: inherit;
+  background:
+    radial-gradient(circle at 24% 20%, rgba(158, 233, 191, 0.16), transparent 34%),
+    linear-gradient(140deg, rgba(240, 185, 90, 0.08), transparent 42%),
+    rgba(244, 247, 239, 0.045);
 }
 
-.nospill-shop-scene-layer[data-scene-layer="shop_base_tiny"] {
-  grid-column: 1 / -1;
-  min-height: 92px;
-}
-
-.nospill-shop-scene-layer img,
+.nospill-shop-scene-image img,
 .nospill-shop-scene-placeholder {
   width: 100%;
-  min-height: 46px;
+  min-height: inherit;
   display: grid;
   place-items: center;
-  border-radius: 8px;
+  border-radius: 0;
   border: 1px dashed rgba(158, 233, 191, 0.28);
   color: #9ee9bf;
   background:
     linear-gradient(135deg, rgba(158, 233, 191, 0.08), transparent 58%),
     rgba(5, 6, 6, 0.82);
-  font-size: 0.74rem;
+  font-size: clamp(0.84rem, 1.8vw, 1.05rem);
   font-weight: 800;
   line-height: 1.25;
   text-align: center;
 }
 
-.nospill-shop-scene-layer img {
-  height: auto;
-  object-fit: contain;
-}
-
-.nospill-shop-scene-character {
-  grid-column: 1 / -1;
-  padding: 0;
-  border: 0;
-  background: transparent;
-}
-
-.nospill-shop-scene-character .nospill-character-cameo {
-  width: 100%;
+.nospill-shop-scene-image img {
+  height: 100%;
+  object-fit: cover;
 }
 
 .nospill-shop-scene p {
@@ -854,9 +832,9 @@
   line-height: 1.35;
 }
 
-.nospill-shop-scene-layer.is-animated[data-scene-activity="ready"],
-.nospill-shop-scene-layer.is-animated[data-scene-activity="fulfilled"],
-.nospill-shop-scene-layer.is-animated[data-scene-activity="running"] {
+.nospill-shop-scene-image.is-animated[data-scene-activity="ready"],
+.nospill-shop-scene-image.is-animated[data-scene-activity="fulfilled"],
+.nospill-shop-scene-image.is-animated[data-scene-activity="running"] {
   animation: shop-scene-pulse 2.8s ease-in-out infinite;
 }
 
@@ -1462,7 +1440,7 @@
 @media (prefers-reduced-motion: reduce) {
   .nospill-stamp-fanfare.is-animated .nospill-stamp-fanfare-card,
   .nospill-discovery-fanfare.is-animated .nospill-discovery-fanfare-card,
-  .nospill-shop-scene-layer.is-animated {
+  .nospill-shop-scene-image.is-animated {
     animation: none;
   }
 }

@@ -2,60 +2,61 @@
 
 ## Scene Philosophy
 
-The Tofu Shop Living Scene is a parked-only visual reward layer for the Tofu Shop Overview. It should
-make the shop feel alive as the idle-management loop progresses, while leaving the real play controls
-clear: bottleneck, next action, ready orders, Prep Counter progress, order cards, stations, upgrades,
-and Counter Service.
+The Tofu Shop Living Scene is a parked-only visual reward panel for the Tofu Shop Overview. V1
+visible presentation uses full-scene variants: the Overview shows one cohesive shop image at a time,
+and normal gameplay controls stay outside the artwork.
 
-Scene art is cosmetic only. It must not affect Cup Test score, cargo thresholds, route qualification,
-rewards, speed, distance, or safety-sensitive logic. It must not appear during active Cup Test,
-motion permission, calibration, or active driving states.
+Scene art is cosmetic only. It must not affect Cup Test score, cargo thresholds, route
+qualification, rewards, speed, distance, or safety-sensitive logic. It must not appear during active
+Cup Test, motion permission, calibration, or active driving states.
 
-## Layer Inventory
+## Full-Scene Variant Inventory
 
-| Asset ID | File Path | Surface | Unlock Condition | Required | Recommended Aspect Ratio | Recommended Pixel Size | Layer Position Notes | Safe-Area Notes | Animation Notes | Reduced-Motion Behavior | Placeholder Behavior | Status | Notes |
+| Asset ID | File Path | Surface | Unlock Condition | Required | Recommended Aspect Ratio | Recommended Pixel Size | Scene Notes | Safe-Area Notes | Animation Notes | Reduced-Motion Behavior | Placeholder Behavior | Status | Notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| `shop_base_tiny` | `frontend/nospill/assets/scenes/tofu-shop/shop_base_tiny.webp` | Tofu Shop Overview scene base | Always visible in parked shop | Yes | 16:9 | 1600x900 or 1920x1080 | Full scene background/base plate | Keep text-free; leave center clear for overlays | Static | Static | `Tiny shop scene pending` | Needed from art generation | Tiny starter shop, simple shelves, calm parked tone |
-| `tofu_boxes_idle` | `frontend/nospill/assets/scenes/tofu-shop/layers/tofu_boxes_idle.webp` | Scene layer | Always visible | Yes | 16:9 transparent layer | 1600x900 or 1920x1080 | Shelf/counter foreground | Avoid covering controls when cropped on mobile | Optional subtle idle sprite later | Static | `Tofu box art pending` | Needed from art generation | Shows basic stock and shop activity |
-| `tofu_order_motion` | `frontend/nospill/assets/scenes/tofu-shop/layers/tofu_order_motion.webp` | Scene activity layer | Ready orders, recent fulfillment, or prep bottleneck | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Counter handoff area | Keep motion small and non-distracting | Gentle pulse/fade only | Static layer | `Order motion art pending` | Needed from art generation | Decorative order movement, not a click target |
-| `tofu_press_visible` | `frontend/nospill/assets/scenes/tofu-shop/layers/tofu_press_visible.webp` | Scene layer | Tofu Press owned | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Back/side station zone | Do not obscure base shop identity | Static | Static | `Tofu Press art pending` | Needed from art generation | Visualizes stock production |
-| `prep_counter_visible` | `frontend/nospill/assets/scenes/tofu-shop/layers/prep_counter_visible.webp` | Scene layer | Prep Counter owned or first order prep has happened | Yes | 16:9 transparent layer | 1600x900 or 1920x1080 | Main counter area | Leave room for future character cameo | Static | Static | `Prep Counter art pending` | Needed from art generation | Core first-loop station |
-| `prep_counter_upgraded` | `frontend/nospill/assets/scenes/tofu-shop/layers/prep_counter_upgraded.webp` | Scene upgrade layer | Tidy Packaging / first meaningful prep upgrade | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Counter details or packaging props | Should read as an upgrade, not a new system | Static | Static | `Upgraded Prep Counter art pending` | Needed from art generation | Persistent visual reward for prep upgrade |
-| `delivery_shelf_visible` | `frontend/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_visible.webp` | Scene layer | Delivery Shelf exists | Yes | 16:9 transparent layer | 1600x900 or 1920x1080 | Shelf/storage area | Keep large shapes away from cropped edges | Static | Static | `Delivery Shelf art pending` | Needed from art generation | First support-station visual |
-| `delivery_shelf_expanded` | `frontend/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_expanded.webp` | Scene upgrade layer | 5 or more Delivery Shelves | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Adds shelf depth/extra bins | Should layer over or complement shelf base | Static | Static | `Expanded Delivery Shelf art pending` | Needed from art generation | Station milestone visual |
-| `shop_sign_basic` | `frontend/nospill/assets/scenes/tofu-shop/layers/shop_sign_basic.webp` | Scene layer | Shop Sign exists | Yes | 16:9 transparent layer | 1600x900 or 1920x1080 | Window/front sign area | Avoid readable tiny text | Static | Static | `Shop Sign art pending` | Needed from art generation | Shows reputation growth |
-| `shop_sign_upgraded` | `frontend/nospill/assets/scenes/tofu-shop/layers/shop_sign_upgraded.webp` | Scene upgrade layer | 5 or more Shop Signs or reputation milestone | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Improved sign/light accents | No flashing signage | Static | Static | `Upgraded Shop Sign art pending` | Needed from art generation | Reputation milestone visual |
-| `counter_service_hint` | `frontend/nospill/assets/scenes/tofu-shop/layers/counter_service_hint.webp` | Scene activity layer | First 10 Orders / Counter Service unlocked | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Pickup window/register area | Keep as background activity | Gentle pulse only | Static | `Counter Service art pending` | Needed from art generation | Shows automation without adding a new tab |
-| `covered_car_teaser` | `frontend/nospill/assets/scenes/tofu-shop/layers/covered_car_teaser.webp` | Scene teaser layer | First Upgrade Purchased, First 100 Tips, or story beat | Optional | 16:9 transparent layer | 1600x900 or 1920x1080 | Rear/side background, partially hidden | Keep restrained and mysterious | Static | Static | `Covered car teaser art pending` | Needed from art generation | Teaser only; no Dream Garage mechanics |
-| `tofu_box_loop` | `frontend/nospill/assets/scenes/tofu-shop/sprites/tofu_box_loop.webp` | Small activity sprite | Future small tofu/order motion | Optional | Square or 4:3 transparent sprite | 512x512 or 768x576 | Counter/shelf micro-animation | Must remain decorative | Optional loop | Static first frame or hidden | `Tofu box sprite pending` | Needed from art generation | Reduced-motion fallback required |
-| `order_fulfilled_loop` | `frontend/nospill/assets/scenes/tofu-shop/sprites/order_fulfilled_loop.webp` | Small activity sprite | Future order fulfilled motion | Optional | Square or 4:3 transparent sprite | 512x512 or 768x576 | Pickup marker near counter | Must not invite clicking | Optional loop | Static first frame or hidden | `Order fulfilled sprite pending` | Needed from art generation | Decorative confirmation only |
+| `scene_tiny_shop_empty` | `frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp` | Tofu Shop Overview scene | Initial parked shop state before meaningful shop action | Yes | 16:9 | 1600x900 or 1920x1080 | Tiny starter shop, quiet counter, simple tofu presence | Keep important objects centered for mobile crop | Static | Static | `Tiny shop scene pending` | Needed from art generation | Minimal shop presence; no Dream Garage implication |
+| `scene_tiny_shop_working` | `frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_working.webp` | Tofu Shop Overview scene | First production loop has started | Yes | 16:9 | 1600x900 or 1920x1080 | Same tiny shop, visibly active prep/stock/order work | Avoid tiny readable text | Static or very subtle future overlay | Static | `Working shop scene pending` | Needed from art generation | Should show the shop beginning to operate |
+| `scene_tiny_shop_upgraded` | `frontend/nospill/assets/scenes/tofu-shop/scene_tiny_shop_upgraded.webp` | Tofu Shop Overview scene | First upgrade or early station growth | Yes | 16:9 | 1600x900 or 1920x1080 | Better counter setup, packaging, or slightly improved station props | Leave room for action cards below, not inside art | Static | Static | `Growing shop scene pending` | Needed from art generation | Represents early momentum without showing every station separately |
+| `scene_busy_shop_established` | `frontend/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp` | Tofu Shop Overview scene | Support infrastructure such as Delivery Shelf, Shop Sign, Counter Service, or 25+ orders | Yes | 16:9 | 1600x900 or 1920x1080 | Busier cohesive shop with visible support infrastructure and order flow | Keep foreground uncluttered on narrow screens | Optional subtle future overlay only | Static | `Established shop scene pending` | Needed from art generation | Main midgame shop image |
+| `scene_busy_shop_with_covered_car` | `frontend/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp` | Tofu Shop Overview scene | Covered-car teaser condition, such as First Upgrade Purchased or First 100 Tips | Yes | 16:9 | 1600x900 or 1920x1080 | Established shop plus restrained covered-car hint in background | Covered car should be visible but not dominate | Static | Static | `Covered car scene pending` | Needed from art generation | Story teaser only; no Dream Garage mechanics |
 
-## Character Cameo Reuse
+## Optional Future Overlays
 
-Mika uses the existing Delivery Crew character manifest instead of a duplicate scene path:
+V1 should not show separate layer placeholder tiles in the Overview. Future implementation may add
+subtle overlays inside the single scene panel only if they preserve the cohesive-scene model.
 
-- `frontend/nospill/assets/characters/mika/shop_assistant_main_portrait.webp`
+Optional overlay candidates:
 
-The living scene renders this only when Mika is selected or unlocked. Missing Mika art falls back to
-the existing parked-only character placeholder.
+- tofu box ambient motion
+- small sign glow
+- restrained Mika cameo blended into a full-scene variant
+- small order handoff shimmer
+
+Rules for overlays:
+
+- use the single scene panel, not separate visible cards
+- keep reduced-motion static fallback
+- never create click targets or new mechanics
+- never render during active driving
+- never imply GPS, maps, routes, streets, speed, distance, or public-road competition
 
 ## MVP Art Pack
 
-Build the smallest useful first scene pack before commissioning the full layer list:
+Make three to five full-scene images first. Recommended order:
 
-1. `shop_base_tiny`, 16:9, 1600x900 or 1920x1080.
-2. `tofu_boxes_idle`, transparent WebP/PNG layer.
-3. `prep_counter_visible`, transparent WebP/PNG layer.
-4. `delivery_shelf_visible`, transparent WebP/PNG layer.
-5. `shop_sign_basic`, transparent WebP/PNG layer.
-6. `covered_car_teaser`, transparent WebP/PNG layer.
-7. Optional `tofu_box_loop` sprite with a static reduced-motion fallback.
+1. `scene_tiny_shop_empty`, 16:9, 1600x900 or 1920x1080.
+2. `scene_tiny_shop_working`, 16:9, 1600x900 or 1920x1080.
+3. `scene_tiny_shop_upgraded`, 16:9, 1600x900 or 1920x1080.
+4. `scene_busy_shop_established`, 16:9, 1600x900 or 1920x1080.
+5. `scene_busy_shop_with_covered_car`, 16:9, 1600x900 or 1920x1080.
+
+Do not commission separate visible layer art until the full-scene approach has been playtested.
 
 ## Replacement Checklist
 
 1. Drop final optimized `.webp` files at the exact documented paths.
-2. Keep transparent layers aligned to the same 16:9 base canvas.
-3. Test mobile and desktop crop behavior.
+2. Test mobile and desktop crop behavior.
+3. Confirm each scene reads as one cohesive image, not a UI grid.
 4. Confirm no active-drive, GPS, map, street, route trace, speed, or distance imagery appears.
 5. Run the normal frontend checks before committing art.
 
@@ -64,5 +65,6 @@ Build the smallest useful first scene pack before commissioning the full layer l
 - Final scene art.
 - Dream Garage, factory, manufacturer, or spaceship systems.
 - Clickable scene mechanics.
+- Visible per-layer art tiles.
 - Active-drive scene rendering.
 - Networked asset loading or backend sync.

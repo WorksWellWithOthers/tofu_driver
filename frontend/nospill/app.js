@@ -681,89 +681,35 @@ const CHARACTER_ART_MANIFEST = {
 };
 
 const TOFU_SHOP_SCENE_ASSETS = {
-  shop_base_tiny: {
-    src: "/static/nospill/assets/scenes/tofu-shop/shop_base_tiny.webp",
+  scene_tiny_shop_empty: {
+    src: "/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_empty.webp",
     label: "Tiny Shop",
     placeholder: "Tiny shop scene pending",
-    kind: "base",
+    kind: "full_scene",
   },
-  tofu_boxes_idle: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/tofu_boxes_idle.webp",
-    label: "Tofu Boxes",
-    placeholder: "Tofu box art pending",
-    kind: "layer",
+  scene_tiny_shop_working: {
+    src: "/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_working.webp",
+    label: "Working Shop",
+    placeholder: "Working shop scene pending",
+    kind: "full_scene",
   },
-  tofu_order_motion: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/tofu_order_motion.webp",
-    label: "Order Motion",
-    placeholder: "Order motion art pending",
-    kind: "activity",
+  scene_tiny_shop_upgraded: {
+    src: "/static/nospill/assets/scenes/tofu-shop/scene_tiny_shop_upgraded.webp",
+    label: "Growing Shop",
+    placeholder: "Growing shop scene pending",
+    kind: "full_scene",
   },
-  tofu_press_visible: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/tofu_press_visible.webp",
-    label: "Tofu Press",
-    placeholder: "Tofu Press art pending",
-    kind: "layer",
+  scene_busy_shop_established: {
+    src: "/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_established.webp",
+    label: "Established Shop",
+    placeholder: "Established shop scene pending",
+    kind: "full_scene",
   },
-  prep_counter_visible: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/prep_counter_visible.webp",
-    label: "Prep Counter",
-    placeholder: "Prep Counter art pending",
-    kind: "layer",
-  },
-  prep_counter_upgraded: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/prep_counter_upgraded.webp",
-    label: "Upgraded Prep Counter",
-    placeholder: "Upgraded Prep Counter art pending",
-    kind: "layer",
-  },
-  delivery_shelf_visible: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_visible.webp",
-    label: "Delivery Shelf",
-    placeholder: "Delivery Shelf art pending",
-    kind: "layer",
-  },
-  delivery_shelf_expanded: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/delivery_shelf_expanded.webp",
-    label: "Expanded Delivery Shelf",
-    placeholder: "Expanded Delivery Shelf art pending",
-    kind: "layer",
-  },
-  shop_sign_basic: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/shop_sign_basic.webp",
-    label: "Shop Sign",
-    placeholder: "Shop Sign art pending",
-    kind: "layer",
-  },
-  shop_sign_upgraded: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/shop_sign_upgraded.webp",
-    label: "Upgraded Shop Sign",
-    placeholder: "Upgraded Shop Sign art pending",
-    kind: "layer",
-  },
-  counter_service_hint: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/counter_service_hint.webp",
-    label: "Counter Service",
-    placeholder: "Counter Service art pending",
-    kind: "activity",
-  },
-  covered_car_teaser: {
-    src: "/static/nospill/assets/scenes/tofu-shop/layers/covered_car_teaser.webp",
-    label: "Covered Car",
-    placeholder: "Covered car teaser art pending",
-    kind: "teaser",
-  },
-  tofu_box_loop: {
-    src: "/static/nospill/assets/scenes/tofu-shop/sprites/tofu_box_loop.webp",
-    label: "Tofu Box Loop",
-    placeholder: "Tofu box sprite pending",
-    kind: "sprite",
-  },
-  order_fulfilled_loop: {
-    src: "/static/nospill/assets/scenes/tofu-shop/sprites/order_fulfilled_loop.webp",
-    label: "Order Fulfilled Loop",
-    placeholder: "Order fulfilled sprite pending",
-    kind: "sprite",
+  scene_busy_shop_with_covered_car: {
+    src: "/static/nospill/assets/scenes/tofu-shop/scene_busy_shop_with_covered_car.webp",
+    label: "Covered Car Teaser",
+    placeholder: "Covered car scene pending",
+    kind: "full_scene",
   },
 };
 
@@ -5884,9 +5830,36 @@ function getTofuShopSceneState(gameState = loadGameState()) {
   const prepUpgradeLevel = safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_faster, 0, 100)
     + safeNonNegativeInteger(state.shop.stationUpgrades.prep_counter_double, 0, 100);
   const recentShopOrder = recentShopReward(state);
+  const shopActionStarted = Number(state.shop.lifetimeTofuPacked || 0) > 0
+    || Number(state.shop.lifetimeDeliveryOrders || 0) > 0
+    || Number(state.shop.lifetimeTips || 0) > 0
+    || Boolean(state.stamps.first_shop_order);
+  const hasEarlyUpgrade = prepUpgradeLevel > 0
+    || Boolean(state.stamps.first_upgrade_purchased)
+    || safeNonNegativeInteger(state.shop.stations.tofu_press, 0, 100000) > 1
+    || safeNonNegativeInteger(state.shop.stations.prep_counter, 0, 100000) > 1;
+  const hasSupportInfrastructure = deliveryShelfCount > 0
+    || shopSignCount > 0
+    || isCounterServiceUnlocked(state)
+    || state.shop.lifetimeDeliveryOrders >= 25;
+  const coveredCarVisible = Boolean(
+    state.stamps.first_upgrade_purchased
+    || state.stamps.first_100_tips
+    || state.seenStoryBeatIds.includes("covered_car_teaser")
+  );
+  const sceneId = coveredCarVisible
+    ? "scene_busy_shop_with_covered_car"
+    : hasSupportInfrastructure
+      ? "scene_busy_shop_established"
+      : hasEarlyUpgrade
+        ? "scene_tiny_shop_upgraded"
+        : shopActionStarted
+          ? "scene_tiny_shop_working"
+          : "scene_tiny_shop_empty";
   return {
     activeDrive: appState.running || appState.calibrating,
     reducedMotion: prefersReducedMotion(),
+    sceneId,
     readyOrders: prep.ready,
     prepRunning: prep.running,
     stockShortage: Boolean(prep.waitingForTofu),
@@ -5895,11 +5868,7 @@ function getTofuShopSceneState(gameState = loadGameState()) {
     counterServiceUnlocked: isCounterServiceUnlocked(state),
     counterServiceRunning: Boolean(state.shop.counterService.running),
     mikaVisible: hasMikaForShopScene(state),
-    coveredCarVisible: Boolean(
-      state.stamps.first_upgrade_purchased
-      || state.stamps.first_100_tips
-      || state.seenStoryBeatIds.includes("covered_car_teaser")
-    ),
+    coveredCarVisible,
     milestones: {
       hasTofuPress: safeNonNegativeInteger(state.shop.stations.tofu_press, 0, 100000) > 0,
       hasPrepCounter: safeNonNegativeInteger(state.shop.stations.prep_counter, 0, 100000) > 0
@@ -5915,46 +5884,23 @@ function getTofuShopSceneState(gameState = loadGameState()) {
 
 function getTofuShopSceneLayers(sceneState) {
   if (!sceneState || sceneState.activeDrive) return [];
-  const layers = [
-    { id: "shop_base_tiny", visible: true, activity: "static" },
-    { id: "tofu_boxes_idle", visible: true, activity: sceneState.stockShortage ? "low_stock" : "stocked" },
-    { id: "tofu_press_visible", visible: sceneState.milestones.hasTofuPress, activity: "production" },
-    { id: "prep_counter_visible", visible: sceneState.milestones.hasPrepCounter, activity: sceneState.prepRunning ? "preparing" : "paused" },
-    { id: "prep_counter_upgraded", visible: sceneState.milestones.hasPrepUpgrade, activity: "upgraded" },
-    { id: "delivery_shelf_visible", visible: sceneState.milestones.hasDeliveryShelf, activity: "support" },
-    { id: "delivery_shelf_expanded", visible: sceneState.milestones.hasExpandedDeliveryShelf, activity: "expanded" },
-    { id: "shop_sign_basic", visible: sceneState.milestones.hasShopSign, activity: "reputation" },
-    { id: "shop_sign_upgraded", visible: sceneState.milestones.hasUpgradedShopSign, activity: "known" },
-    {
-      id: "tofu_order_motion",
-      visible: sceneState.readyOrders > 0 || sceneState.recentlyFulfilled || sceneState.prepBottleneck,
-      activity: sceneState.recentlyFulfilled ? "fulfilled" : sceneState.readyOrders > 0 ? "ready" : "prepping",
-      animated: true,
-    },
-    {
-      id: "counter_service_hint",
-      visible: sceneState.counterServiceUnlocked,
-      activity: sceneState.counterServiceRunning ? "running" : "available",
-      animated: true,
-    },
-    { id: "mika_shop_cameo", visible: sceneState.mikaVisible, activity: "cameo", characterSlot: "shop_assistant_main_portrait" },
-    { id: "covered_car_teaser", visible: sceneState.coveredCarVisible, activity: "story_teaser" },
-  ];
-  return layers.filter((layer) => layer.visible);
+  return [{
+    id: sceneState.sceneId || "scene_tiny_shop_empty",
+    visible: true,
+    activity: sceneState.counterServiceRunning
+      ? "running"
+      : sceneState.recentlyFulfilled
+        ? "fulfilled"
+        : sceneState.readyOrders > 0
+          ? "ready"
+          : "static",
+    animated: Boolean(sceneState.readyOrders > 0 || sceneState.recentlyFulfilled || sceneState.counterServiceRunning),
+    fullScene: true,
+  }];
 }
 
 function renderSceneLayer(layer, options = {}) {
   if (!layer || !layer.id) return "";
-  if (layer.characterSlot === "shop_assistant_main_portrait") {
-    return `
-      <div class="nospill-shop-scene-layer nospill-shop-scene-character" data-scene-layer="${escapeHtml(layer.id)}" data-scene-activity="${escapeHtml(layer.activity || "static")}">
-        ${renderCharacterCameo(layer.characterSlot, options.gameState, {
-          label: "Night Shift",
-          copy: "Mika keeps the parked shop scene organized.",
-        })}
-      </div>
-    `;
-  }
   const asset = getSceneAsset(layer.id);
   const animated = Boolean(layer.animated && !options.reducedMotion);
   const art = asset.src
@@ -5968,13 +5914,12 @@ function renderSceneLayer(layer, options = {}) {
     : `<div class="nospill-shop-scene-placeholder" role="img" aria-label="${escapeHtml(`${asset.label}: ${asset.placeholder}`)}">${escapeHtml(asset.placeholder)}</div>`;
   return `
     <div
-      class="nospill-shop-scene-layer ${animated ? "is-animated" : "is-static"}"
-      data-scene-layer="${escapeHtml(layer.id)}"
+      class="nospill-shop-scene-image ${animated ? "is-animated" : "is-static"}"
+      data-scene-id="${escapeHtml(layer.id)}"
       data-scene-activity="${escapeHtml(layer.activity || "static")}"
       data-scene-kind="${escapeHtml(asset.kind)}"
     >
       ${art}
-      <span class="nospill-shop-scene-layer-label">${escapeHtml(asset.label)}</span>
     </div>
   `;
 }
@@ -5983,11 +5928,12 @@ function renderTofuShopLivingScene(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const sceneState = getTofuShopSceneState(state);
   if (sceneState.activeDrive) return "";
-  const layers = getTofuShopSceneLayers(sceneState);
-  const layerHtml = layers.map((layer) => renderSceneLayer(layer, {
+  const sceneLayer = getTofuShopSceneLayers(sceneState)[0];
+  const sceneAsset = getSceneAsset(sceneLayer ? sceneLayer.id : sceneState.sceneId);
+  const sceneHtml = renderSceneLayer(sceneLayer, {
     gameState: state,
     reducedMotion: sceneState.reducedMotion,
-  })).join("");
+  });
   const activity = sceneState.stockShortage
     ? "Waiting for Tofu Stock"
     : sceneState.counterServiceRunning
@@ -5999,11 +5945,12 @@ function renderTofuShopLivingScene(gameState = loadGameState()) {
     <section class="nospill-shop-scene ${sceneState.reducedMotion ? "is-reduced-motion" : "is-motion-ok"}" aria-label="Tofu Shop living scene">
       <div class="nospill-shop-scene-head">
         <span>Tofu Shop Scene</span>
-        <strong>${escapeHtml(activity)}</strong>
+        <strong>${escapeHtml(sceneAsset.label)}</strong>
       </div>
       <div class="nospill-shop-scene-stage" aria-label="Parked visual shop scene. Decorative only; use the controls below to play.">
-        ${layerHtml}
+        ${sceneHtml}
       </div>
+      <p>${escapeHtml(activity)}</p>
       <p>Decorative parked scene. Shop controls stay below.</p>
     </section>
   `;
