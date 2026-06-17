@@ -105,6 +105,58 @@ is active. Hidden surfaces should not be rebuilt every shop tick.
 Full app rerenders still happen for route changes, button actions, and result transitions where the
 player expects immediate feedback.
 
+## Responsiveness Regression: 2026-06
+
+Observed high-midgame saves could become barely clickable around Shop Level 500+, a capped 1M
+Delivery Order queue, maxed Counter Service, and repeated offline/automation messages.
+
+Suspected causes:
+
+- duplicate shop tick/render timers
+- hidden surface rerenders during shop ticking
+- large `aria-live` regions being replaced repeatedly
+- repeated offline and Counter Service messages feeling like duplicated content
+- active tab content being appended instead of replaced
+
+Actual root cause found:
+
+- The shop tab panel was a large `aria-live` region, and live shop refreshes replaced that whole
+  panel. At high scale this could repeatedly queue large accessibility updates while the player was
+  trying to click.
+- `renderGamePanels()` refreshed shop, Cup Test, crew, simulator, delivery log, and merch surfaces
+  together even when most of those surfaces were hidden. This made high-midgame shop updates do
+  unnecessary hidden work.
+- The Delivery Board visibility path still treated shop rendering as a place to update driver-board
+  content, which added to the hidden-surface churn.
+
+Fix applied:
+
+- The large `shop-tab-panel` is no longer an `aria-live` region. The compact inline result remains
+  the live status surface for order, automation, and purchase feedback.
+- Full panel renders now update only the active hash surface: Tofu Garage, Cup Test, or Delivery
+  Crew.
+- Hidden sections are toggled consistently instead of being partially left to earlier render paths.
+- Delivery Board rendering stays on the Cup Test surface.
+- Regression tests now verify that hidden Cup/Crew surfaces are not rebuilt during a shop-surface
+  render, the large shop tab panel is not live, ledger/history remain capped, and shop queues remain
+  scalar numbers.
+
+Remaining risks:
+
+- Real mobile browsers should still be profiled with an actual high-midgame save because CSS layout,
+  images, and accessibility settings can vary by device.
+- Counter Service and Wholesale Pickup still update live shop state while the page is open; if later
+  layers add more live counters, they should use the same active-surface and compact-feedback rules.
+
+High-midgame reproduction fixture:
+
+- Shop Level 500+
+- Delivery Orders at the 1M queue cap
+- Counter Service running with Counter Crew purchased
+- Supplier Contracts purchased
+- high Reputation, low-to-mid Tips
+- Upgrades tab or Overview visible while the live shop tick runs
+
 ## BigNumber Decision
 
 BigNumber or mantissa/exponent is not needed now.

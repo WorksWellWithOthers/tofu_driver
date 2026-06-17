@@ -131,6 +131,10 @@ motion samples, speed logs, route traces, maps, coordinates, or street names.
 The app should remain usable as static HTML/CSS/JavaScript. Current implementation uses vanilla
 browser APIs.
 
+Parked idle surfaces must stay responsive at high shop scale. Live shop ticks should update only the
+active surface, avoid rebuilding hidden Cup/Crew panels, keep large panels out of `aria-live`
+regions, and use compact bounded feedback instead of repeated full-panel announcements.
+
 ## Analytics Contract
 
 Tofu Driver may use optional PostHog analytics to understand whether visitors reach the Cup Test,

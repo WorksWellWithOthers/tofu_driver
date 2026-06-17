@@ -142,6 +142,11 @@ globalThis.buyStationUpgrade = buyStationUpgrade;
 globalThis.stationUpgradeCostReputation = stationUpgradeCostReputation;
 globalThis.supplierStockPerSecond = supplierStockPerSecond;
 globalThis.nextSupplierUpgrade = nextSupplierUpgrade;
+globalThis.isManagerDeskUpgrade = isManagerDeskUpgrade;
+globalThis.managerDeskUnlocked = managerDeskUnlocked;
+globalThis.nextManagerDeskUpgrade = nextManagerDeskUpgrade;
+globalThis.wholesalePickupUnlocked = wholesalePickupUnlocked;
+globalThis.wholesalePickupQuantity = wholesalePickupQuantity;
 globalThis.completeFictionalRoute = completeFictionalRoute;
 globalThis.runTrainingDrill = runTrainingDrill;
 globalThis.buyGarageUpgrade = buyGarageUpgrade;
@@ -1626,9 +1631,12 @@ globalThis.firstProductionHtml = elements.shopTabPanel.innerHTML;
 appState.shopTab = "upgrades";
 renderTofuShop(firstRunState);
 globalThis.firstUpgradeFallbackHtml = elements.shopTabPanel.innerHTML;
+appState.surface = "crew";
+renderGamePanels(firstRunState);
 globalThis.firstCharacterHtml = elements.characterList.innerHTML;
 globalThis.firstSoundHtml = elements.soundPackList.innerHTML;
 globalThis.firstPreviewDisabled = elements.previewSoundButton.disabled;
+appState.surface = "shop";
 const simulated = applySimulatedDelivery(
   "smooth_commute",
   firstRunState,
@@ -1698,7 +1706,7 @@ globalThis.activePreviewDisabled = elements.previewSoundButton.disabled;
   assert.strictEqual(context.afterReveal.passport, true);
   assert.strictEqual(context.afterReveal.crew, true);
   assert.strictEqual(context.afterReveal.sounds, true);
-  assert.strictEqual(context.afterDeliveryBoardHidden, false);
+  assert.strictEqual(context.afterDeliveryBoardHidden, true);
   assert.strictEqual(context.afterShopSectionHidden, false);
   assert.strictEqual(context.afterCollectionSectionHidden, true);
   assert.notStrictEqual(context.afterDashboardStock, 'Locked');
@@ -4618,6 +4626,140 @@ globalThis.renderedOrderText = elements.shopDeliveryOrders.textContent;
   const action = context.nextBestAction(fullQueue);
   assert.strictEqual(action.type, 'queue_full');
   assert(action.copy.includes('order queue is full'));
+
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(!html.includes('id="shop-tab-panel" aria-live="polite"'));
+
+  vm.runInContext(`
+let shopRenderCalls = 0;
+let cupRenderCalls = 0;
+let crewRenderCalls = 0;
+function sectionNode(surface) {
+  const node = makeNode();
+  node.dataset = { appSurface: surface };
+  node.hiddenState = null;
+  node.classList = {
+    toggle(_className, hidden) { node.hiddenState = Boolean(hidden); },
+    add() { node.hiddenState = true; },
+  };
+  return node;
+}
+renderGameDashboard = () => { shopRenderCalls += 1; };
+renderTofuShop = () => { shopRenderCalls += 1; };
+renderDeliveryLog = () => { cupRenderCalls += 1; };
+renderMerchProgress = () => { cupRenderCalls += 1; };
+renderSimulatorPanel = () => { cupRenderCalls += 1; };
+renderCollectionPanel = () => { crewRenderCalls += 1; };
+renderSurfaceNavigation = () => {};
+renderBrandShelf = () => {};
+elements = {
+  surfaceSections: [sectionNode("shop"), sectionNode("cup-test"), sectionNode("crew")],
+  deliveryBoardSection: makeNode(),
+  tofuShopSection: makeNode(),
+  collectionSection: makeNode(),
+};
+appState.surface = "shop";
+renderGamePanels(${JSON.stringify(state)});
+globalThis.shopSurfaceRenderCounts = { shopRenderCalls, cupRenderCalls, crewRenderCalls };
+globalThis.shopSurfaceHiddenStates = elements.surfaceSections.map((section) => section.hiddenState);
+`, context);
+  assert.strictEqual(context.shopSurfaceRenderCounts.shopRenderCalls, 2);
+  assert.strictEqual(context.shopSurfaceRenderCounts.cupRenderCalls, 0);
+  assert.strictEqual(context.shopSurfaceRenderCounts.crewRenderCalls, 0);
+  assert.strictEqual(JSON.stringify(context.shopSurfaceHiddenStates), JSON.stringify([false, true, true]));
+}
+
+function testTofuGarageManagerDeskV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const state = context.defaultGameState();
+  state.shop.tips = 500000;
+  state.shop.reputation = 5000000;
+  state.shop.lifetimeReputation = 5000000;
+  state.shop.shopLevel = 500;
+  state.shop.tofuStock = 1000000;
+  state.shop.deliveryOrders = context.deliveryOrderQueueCapacity();
+  state.shop.lifetimeDeliveryOrders = 2000;
+  state.shop.stations.tofu_press = 100;
+  state.shop.stations.prep_counter = 100;
+  state.shop.stations.delivery_shelf = 10;
+  state.shop.stations.shop_sign = 10;
+  state.shop.stationUpgrades.counter_service_bell = 1;
+  state.shop.stationUpgrades.counter_service_wide = 1;
+  state.shop.stationUpgrades.counter_service_routine = 1;
+  state.shop.stationUpgrades.counter_service_register = 1;
+  state.shop.stationUpgrades.counter_service_window = 1;
+  state.shop.stationUpgrades.counter_service_crew = 1;
+  state.shop.stationUpgrades.soy_supplier_contract = 1;
+  state.shop.stationUpgrades.morning_soy_delivery = 1;
+  state.shop.stationUpgrades.bulk_soy_delivery = 1;
+  state.shop.counterService.running = true;
+  state.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+  state.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+  state.stamps.first_10_orders = { label: 'First 10 Orders', date: '2026-06-15T12:00:00.000Z' };
+  state.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray', date: '2026-06-15T12:00:00.000Z' };
+  state.stamps.first_100_tips = { label: 'First 100 Tips', date: '2026-06-15T12:00:00.000Z' };
+
+  assert.strictEqual(context.managerDeskUnlocked(state), true);
+  assert.strictEqual(context.nextManagerDeskUpgrade(state, false).id, 'manager_shift_manager');
+  const managerAction = context.nextBestAction(state, { date: new Date('2026-06-15T12:00:00.000Z') });
+  assert.strictEqual(managerAction.type, 'buy_upgrade');
+  assert.strictEqual(managerAction.upgradeId, 'manager_shift_manager');
+  assert(managerAction.copy.includes('Manager Desk'));
+
+  const milestone = context.nextMilestoneForShop(state);
+  assert.strictEqual(milestone.id, 'manager_shift_manager');
+  assert(milestone.reward.includes('Counter Service batch size'));
+
+  const hired = context.buyStationUpgrade('manager_shift_manager', state);
+  assert.strictEqual(hired.ok, true);
+  assert.strictEqual(context.counterServiceBatchSize(hired.gameState), 25);
+  assert(hired.costTips > 0);
+  assert(hired.costReputation > 0);
+
+  const wholesale = context.buyStationUpgrade('manager_wholesale_pickup', hired.gameState);
+  assert.strictEqual(wholesale.ok, true);
+  assert.strictEqual(context.wholesalePickupUnlocked(wholesale.gameState), true);
+  assert.strictEqual(Array.isArray(wholesale.gameState.shop.deliveryOrders), false);
+  assert(context.wholesalePickupQuantity(wholesale.gameState, 1) > 0);
+
+  const beforeOrders = wholesale.gameState.shop.deliveryOrders;
+  const tick = context.applyCounterServiceTick(
+    wholesale.gameState,
+    new Date('2026-06-15T12:00:04.000Z'),
+  );
+  assert(tick.completed > 25);
+  assert(tick.totals.wholesaleCompleted > 0);
+  assert(tick.message.includes('Wholesale Pickup'));
+  assert(tick.gameState.shop.deliveryOrders < beforeOrders);
+  assert(tick.gameState.shop.tofuStock >= 0);
+  assert.strictEqual(Array.isArray(tick.gameState.shop.deliveryOrders), false);
+  assert.strictEqual(tick.gameState.shop.ledger.filter((entry) => entry.type === 'automation' && entry.text.includes('Wholesale Pickup')).length, 1);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle() {} };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(state)});
+globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.managerUpgradeHtml.includes('Hire Shift Manager'));
+  assert(context.managerUpgradeHtml.includes('Tips + 1M Reputation'));
+  assert(context.managerUpgradeHtml.includes('Opens Manager Desk scale'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -7582,6 +7724,7 @@ async function run() {
   testCounterServicePolishStatsUpgradesAndSpiritPanel();
   testTofuGarageHighMidgameSupplyBottleneckBalance();
   testTofuGarageHighScalePerformanceGuardrails();
+  testTofuGarageManagerDeskV1();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

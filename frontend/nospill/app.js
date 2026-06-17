@@ -466,6 +466,8 @@ const STATION_UPGRADES = [
   { id: "soy_supplier_contract", stationId: "supplier_contract", name: "Soy Supplier Contract", costReputation: 25000, effect: "Tofu supply +250/sec", maxLevel: 1, supplierStockPerSecond: 250 },
   { id: "morning_soy_delivery", stationId: "supplier_contract", name: "Morning Soy Delivery", costReputation: 75000, effect: "Tofu supply +750/sec", maxLevel: 1, supplierStockPerSecond: 750 },
   { id: "bulk_soy_delivery", stationId: "supplier_contract", name: "Bulk Soy Delivery", costReputation: 200000, effect: "Tofu supply +2000/sec", maxLevel: 1, supplierStockPerSecond: 2000 },
+  { id: "manager_shift_manager", stationId: "manager_desk", name: "Hire Shift Manager", costTips: 75000, costReputation: 1000000, effect: "Counter Service batch size 10 -> 25", maxLevel: 1 },
+  { id: "manager_wholesale_pickup", stationId: "manager_desk", name: "Wholesale Pickup", costTips: 125000, costReputation: 1500000, effect: "Clears capped waiting-order batches when supplied", maxLevel: 1 },
   { id: "regular_customer_faster", stationId: "regular_customer", name: "Loyalty Card", costTips: 650, effect: "Regular Customer tips +25%", maxLevel: 8 },
   { id: "regular_customer_double", stationId: "regular_customer", name: "Bring a Friend", costTips: 880, effect: "Regular Customer output +50%", maxLevel: 8 },
   { id: "route_familiarity", stationId: "delivery_route", name: "Route Familiarity", costTips: 1000, effect: "Fictional route rewards +20%", maxLevel: 8 },
@@ -4344,6 +4346,18 @@ function isSupplierUpgrade(upgrade) {
   return Boolean(upgrade && upgrade.stationId === "supplier_contract");
 }
 
+function isManagerDeskUpgrade(upgrade) {
+  return Boolean(upgrade && upgrade.stationId === "manager_desk");
+}
+
+function managerDeskUnlocked(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_crew, 0, 1) > 0
+    && shopOrderTypeUnlocked(shopOrderTypeById("catering_crate"), state)
+    && state.shop.shopLevel >= 100
+    && state.shop.reputation >= 1000000;
+}
+
 function supplierStockPerSecond(gameState) {
   const state = normalizeGameState(gameState);
   return STATION_UPGRADES.reduce((total, upgrade) => (
@@ -4385,6 +4399,8 @@ function stationUpgradeRevealReason(upgrade, gameState) {
   if (upgrade.id === "soy_supplier_contract") return "Unlocks after Catering Crate scale, Shop Level 25, or 10K Reputation";
   if (upgrade.id === "morning_soy_delivery") return "Unlocks after Soy Supplier Contract and Shop Level 50";
   if (upgrade.id === "bulk_soy_delivery") return "Unlocks after Morning Soy Delivery and Shop Level 100";
+  if (upgrade.id === "manager_shift_manager") return "Unlocks after Counter Crew, Catering Crate, Shop Level 100, and 1M Reputation";
+  if (upgrade.id === "manager_wholesale_pickup") return "Unlocks after Hire Shift Manager";
   if (upgrade.id === "tofu_press_faster") return "Unlocks when Tofu Stock is the bottleneck";
   if (upgrade.id === "tofu_press_double") return "Unlocks after owning 3 Tofu Presses";
   if (upgrade.id === "prep_counter_faster") return "Unlocks when Prep Counter is the bottleneck";
@@ -4436,6 +4452,12 @@ function stationUpgradeIsRevealed(upgrade, gameState) {
     return safeNonNegativeInteger(state.shop.stationUpgrades.morning_soy_delivery, 0, 1) > 0
       && state.shop.shopLevel >= 100;
   }
+  if (upgrade.id === "manager_shift_manager") {
+    return managerDeskUnlocked(state);
+  }
+  if (upgrade.id === "manager_wholesale_pickup") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) > 0;
+  }
   if (upgrade.id === "tofu_press_faster") return (hasFirstShopOrder(state) && isStockBottleneck(state)) || state.shop.stations.tofu_press >= 2;
   if (upgrade.id === "tofu_press_double") return state.shop.stations.tofu_press >= 3 || orders >= 3;
   if (upgrade.id === "prep_counter_faster") return isOrderPrepBottleneck(state) || orders >= 1 || state.shop.stations.prep_counter >= 2;
@@ -4459,6 +4481,7 @@ function upgradeRelevanceScore(upgrade, gameState) {
   const readyPileup = readyDeliveryOrders(state.shop) >= 3 && tofuStockRunway(state).isHealthy;
   const stockBlockedCounter = counterServiceIncomeStatus(state).status === "waiting_stock";
   if (stockBlockedCounter && isSupplierUpgrade(upgrade)) return -1;
+  if (readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity() && isManagerDeskUpgrade(upgrade)) return -2;
   if (readyPileup && upgrade.stationId === "counter_service") return 0;
   if (isOrderPrepBottleneck(state)) {
     if (upgrade.id === "prep_counter_faster") return 0;
@@ -4471,6 +4494,7 @@ function upgradeRelevanceScore(upgrade, gameState) {
   if (upgrade.id === "prep_counter_faster") return 2;
   if (upgrade.id === "tofu_press_faster") return 3;
   if (isSupplierUpgrade(upgrade)) return 4;
+  if (isManagerDeskUpgrade(upgrade)) return 5;
   return 10;
 }
 
@@ -4493,6 +4517,14 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
   if (isSupplierUpgrade(upgrade)) {
     const reputationNeeded = Math.max(0, stationUpgradeCostReputation(upgrade, level) - state.shop.reputation);
     return reputationNeeded > 0 ? `Need ${formatShopCost(reputationNeeded)} more Reputation.` : "";
+  }
+  if (isManagerDeskUpgrade(upgrade)) {
+    const tipsNeeded = Math.max(0, stationUpgradeCostTips(upgrade, level) - state.shop.tips);
+    const reputationNeeded = Math.max(0, stationUpgradeCostReputation(upgrade, level) - state.shop.reputation);
+    const missing = [];
+    if (tipsNeeded > 0) missing.push(`${formatShopCost(tipsNeeded)} more Tips`);
+    if (reputationNeeded > 0) missing.push(`${formatShopCost(reputationNeeded)} more Reputation`);
+    return missing.length ? `Need ${missing.join(" and ")}.` : "";
   }
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
   return tipsNeeded > 0 ? `Need ${formatShopCost(tipsNeeded)} more Tips. Fulfill shop orders to earn Tips.` : "";
@@ -4524,6 +4556,16 @@ function stationUpgradePreviewText(upgrade, gameState) {
     const after = getShopGeneratorRates(preview);
     return `Tofu supply: +${formatShopRate(before.tofuPressPerSecond)}/sec -> +${formatShopRate(after.tofuPressPerSecond)}/sec.`;
   }
+  if (isManagerDeskUpgrade(upgrade)) {
+    if (upgrade.id === "manager_shift_manager") {
+      const beforeBatch = counterServiceBatchSize(state);
+      const preview = normalizeGameState(state);
+      preview.shop.stationUpgrades[upgrade.id] = 1;
+      const afterBatch = counterServiceBatchSize(preview);
+      return `Managed counter: batch ${formatShopCount(beforeBatch)} -> ${formatShopCount(afterBatch)} when supplied.`;
+    }
+    return `Wholesale Pickup clears up to ${formatShopCount(50)} waiting orders per handoff when the queue is full and tofu is supplied.`;
+  }
   const before = getShopGeneratorRates(state);
   const preview = normalizeGameState(state);
   preview.shop.stationUpgrades[upgrade.id] = Math.min(upgrade.maxLevel, level + 1);
@@ -4547,6 +4589,8 @@ function stationUpgradeWhyItMatters(upgrade) {
   if (upgrade.id === "soy_supplier_contract") return "Uses Reputation to keep Counter Service supplied for larger orders.";
   if (upgrade.id === "morning_soy_delivery") return "Adds a stronger tofu supply line for managed-shop scale.";
   if (upgrade.id === "bulk_soy_delivery") return "Helps Counter Crew keep Catering Crates supplied.";
+  if (upgrade.id === "manager_shift_manager") return "Opens Manager Desk scale without adding a new tab.";
+  if (upgrade.id === "manager_wholesale_pickup") return "Turns a full waiting-order queue into capped managed throughput.";
   if (upgrade.id === "counter_service_bell") return "Helps Counter Service keep up with prepared orders.";
   if (upgrade.id === "counter_service_wide") return "Keeps larger order queues from piling up.";
   if (upgrade.id === "counter_service_routine") return "Makes automatic pickups feel smooth after Family Trays.";
@@ -4759,10 +4803,27 @@ function counterServiceIntervalSeconds(gameState) {
 
 function counterServiceBatchSize(gameState) {
   const state = normalizeGameState(gameState);
+  if (safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) > 0) return 25;
   if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_crew, 0, 1) > 0) return 10;
   if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_window, 0, 1) > 0) return 5;
   if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0) return 2;
   return 1;
+}
+
+function wholesalePickupUnlocked(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(state.shop.stationUpgrades.manager_wholesale_pickup, 0, 1) > 0;
+}
+
+function wholesalePickupQuantity(gameState, attempts = 1) {
+  const state = normalizeGameState(gameState);
+  if (!wholesalePickupUnlocked(state)) return 0;
+  if (readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity() - 1000) return 0;
+  const simpleOrder = shopOrderTypeById("simple_tofu_box");
+  const maxByOrders = readyDeliveryOrders(state.shop);
+  const maxByTofu = Math.floor(safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE) / simpleOrder.tofuRequired);
+  const maxByCycle = Math.max(0, safeNonNegativeInteger(attempts, 0, 1000)) * 50;
+  return Math.max(0, Math.min(maxByCycle, maxByOrders, maxByTofu));
 }
 
 function counterServiceOrderType(gameState) {
@@ -4928,6 +4989,7 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
 
   const totals = {
     completed: 0,
+    wholesaleCompleted: 0,
     tips: 0,
     reputation: 0,
     shopXP: 0,
@@ -4969,6 +5031,28 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     if (completedThisHandoff < 1) break;
   }
 
+  const wholesaleQuantity = wholesalePickupQuantity(next, attempts);
+  if (wholesaleQuantity > 0) {
+    const simpleOrder = shopOrderTypeById("simple_tofu_box");
+    const tofuUsed = wholesaleQuantity * simpleOrder.tofuRequired;
+    const tipsGained = wholesaleQuantity * 6;
+    const shopXpGained = wholesaleQuantity * 3;
+    next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock - tofuUsed);
+    next.shop.deliveryOrders = clampDeliveryOrderQueue(next.shop.deliveryOrders - wholesaleQuantity);
+    next.shop.tips = safeNonNegativeInteger(next.shop.tips + tipsGained);
+    next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + tipsGained);
+    next.shop.shopXP = safeNonNegativeInteger(next.shop.shopXP + shopXpGained);
+    next.shop.lifetimeShopXP = safeNonNegativeInteger(next.shop.lifetimeShopXP + shopXpGained);
+    next.shop.lifetimeDeliveryOrders = safeNonNegativeInteger(
+      next.shop.lifetimeDeliveryOrders + wholesaleQuantity,
+    );
+    totals.completed += wholesaleQuantity;
+    totals.wholesaleCompleted = wholesaleQuantity;
+    totals.tips += tipsGained;
+    totals.shopXP += shopXpGained;
+    totals.orderCounts["Wholesale Pickup"] = wholesaleQuantity;
+  }
+
   next.shop.counterService.lastHandoffAt = nowIso;
   if (totals.completed > 0) {
     next.shop.counterService.lifetimeHandoffs = safeNonNegativeInteger(
@@ -4976,9 +5060,11 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
       0,
       1000000,
     );
-    const message = totals.completed === 1 && totals.lastOrderType
-      ? `Counter Service: ${totals.lastOrderType.name} complete · +${formatShopCount(totals.tips)} Tips`
-      : `Counter Service completed ${formatShopCount(totals.completed)} orders.`;
+    const message = totals.wholesaleCompleted > 0
+      ? `Wholesale Pickup cleared ${formatShopCount(totals.wholesaleCompleted)} waiting orders.`
+      : totals.completed === 1 && totals.lastOrderType
+        ? `Counter Service: ${totals.lastOrderType.name} complete · +${formatShopCount(totals.tips)} Tips`
+        : `Counter Service completed ${formatShopCount(totals.completed)} orders.`;
     next.shop.counterService.lastResult = message;
     next = addLedgerEntry(next, "automation", `${message} +${formatShopCount(totals.tips)} Tips, +${formatShopCount(totals.reputation)} Reputation, +${formatShopCount(totals.shopXP)} Shop XP.`);
     next.recentRewards = [{
@@ -5284,10 +5370,11 @@ function buyStationUpgrade(upgradeId, gameState) {
   const station = shopStationById(upgrade.stationId);
   const counterServiceUpgrade = upgrade.stationId === "counter_service";
   const supplierUpgrade = isSupplierUpgrade(upgrade);
+  const managerUpgrade = isManagerDeskUpgrade(upgrade);
   if (counterServiceUpgrade && !isCounterServiceUnlocked(next)) {
     return { ok: false, reason: "Counter Service unlocks after 10 fulfilled orders.", gameState: next };
   }
-  if (!counterServiceUpgrade && !supplierUpgrade && (!station || !stationIsUnlocked(station, next))) {
+  if (!counterServiceUpgrade && !supplierUpgrade && !managerUpgrade && (!station || !stationIsUnlocked(station, next))) {
     return { ok: false, reason: "Station is locked.", gameState: next };
   }
   if (!stationUpgradeIsRevealed(upgrade, next)) {
@@ -5299,6 +5386,12 @@ function buyStationUpgrade(upgradeId, gameState) {
   const costReputation = stationUpgradeCostReputation(upgrade, current);
   if (supplierUpgrade) {
     if (next.shop.reputation < costReputation) return { ok: false, reason: "Not enough reputation.", gameState: next };
+    next.shop.reputation = safeNonNegativeInteger(next.shop.reputation - costReputation);
+    next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  } else if (managerUpgrade) {
+    if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+    if (next.shop.reputation < costReputation) return { ok: false, reason: "Not enough reputation.", gameState: next };
+    next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
     next.shop.reputation = safeNonNegativeInteger(next.shop.reputation - costReputation);
     next.shop.shopLevel = getShopLevel(next.shop.reputation);
   } else {
@@ -8161,6 +8254,18 @@ function nextSupplierUpgrade(gameState, requireAffordable = false) {
   }) || null;
 }
 
+function nextManagerDeskUpgrade(gameState, requireAffordable = false) {
+  const state = normalizeGameState(gameState);
+  return visibleRelevantStationUpgrades(state).find((upgrade) => {
+    if (!isManagerDeskUpgrade(upgrade)) return false;
+    const currentLevel = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+    if (currentLevel >= upgrade.maxLevel) return false;
+    if (!requireAffordable) return true;
+    return state.shop.tips >= stationUpgradeCostTips(upgrade, currentLevel)
+      && state.shop.reputation >= stationUpgradeCostReputation(upgrade, currentLevel);
+  }) || null;
+}
+
 function affordableShopUpgrade(gameState) {
   const state = normalizeGameState(gameState);
   return visibleRelevantStationUpgrades(state).find((upgrade) => {
@@ -8168,6 +8273,10 @@ function affordableShopUpgrade(gameState) {
     if (currentLevel >= upgrade.maxLevel) return false;
     if (isSupplierUpgrade(upgrade)) {
       return state.shop.reputation >= stationUpgradeCostReputation(upgrade, currentLevel);
+    }
+    if (isManagerDeskUpgrade(upgrade)) {
+      return state.shop.tips >= stationUpgradeCostTips(upgrade, currentLevel)
+        && state.shop.reputation >= stationUpgradeCostReputation(upgrade, currentLevel);
     }
     const station = shopStationById(upgrade.stationId);
     if (upgrade.stationId === "counter_service") {
@@ -8228,6 +8337,8 @@ function nextBestAction(gameState, options = {}) {
   ));
   const supplierUpgrade = nextSupplierUpgrade(state, true);
   const supplierCandidate = nextSupplierUpgrade(state, false);
+  const managerUpgrade = nextManagerDeskUpgrade(state, true);
+  const managerCandidate = nextManagerDeskUpgrade(state, false);
   const stockMilestone = nextVisibleStationMilestone(state, { stationIds: ["tofu_press"] });
   const prepMilestone = nextVisibleStationMilestone(state, { stationIds: ["prep_counter", "delivery_shelf"] });
   const reputationMilestone = nextVisibleStationMilestone(state, { stationIds: ["shop_sign"] });
@@ -8303,6 +8414,26 @@ function nextBestAction(gameState, options = {}) {
     };
   }
   if (shopUnlocked && readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity()) {
+    if (managerUpgrade) {
+      return {
+        type: "buy_upgrade",
+        title: `Next: Buy ${managerUpgrade.name}`,
+        copy: "The order queue is full. Manager Desk upgrades turn managed-shop reputation into more throughput.",
+        buttonLabel: "View Upgrades",
+        disabled: false,
+        upgradeId: managerUpgrade.id,
+      };
+    }
+    if (managerCandidate) {
+      return {
+        type: "buy_upgrade",
+        title: `Next: Save for ${managerCandidate.name}`,
+        copy: "The order queue is full. Manager Desk is the next shop layer after Counter Crew and supplier scale.",
+        buttonLabel: "View Upgrades",
+        disabled: false,
+        upgradeId: managerCandidate.id,
+      };
+    }
     return {
       type: "queue_full",
       title: "Next: Clear the Order Queue",
@@ -8799,8 +8930,11 @@ function renderStationUpgradeCard(upgrade, gameState) {
   const station = shopStationById(upgrade.stationId);
   const counterServiceUpgrade = upgrade.stationId === "counter_service";
   const supplierUpgrade = isSupplierUpgrade(upgrade);
+  const managerUpgrade = isManagerDeskUpgrade(upgrade);
   const unlocked = Boolean(
-    (counterServiceUpgrade ? isCounterServiceUnlocked(state) : supplierUpgrade || (station && stationIsUnlocked(station, state)))
+    (counterServiceUpgrade
+      ? isCounterServiceUnlocked(state)
+      : supplierUpgrade || managerUpgrade || (station && stationIsUnlocked(station, state)))
     && stationUpgradeIsRevealed(upgrade, state),
   );
   const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, cost, level);
@@ -8810,6 +8944,8 @@ function renderStationUpgradeCard(upgrade, gameState) {
       ? `Current effect is active. Tofu supply is +${formatShopRate(getShopGeneratorRates(state).tofuPressPerSecond)}/sec including Supplier Contracts.`
       : upgrade.stationId === "counter_service"
       ? `Current effect is active. Counter Service is ${formatShopCount(counterServiceBatchSize(state))} order${counterServiceBatchSize(state) === 1 ? "" : "s"} per handoff at 1 handoff / ${formatShopCount(counterServiceIntervalSeconds(state))} sec.`
+      : managerUpgrade
+      ? `Current Manager Desk effect is active. Counter Service is ${formatShopCount(counterServiceBatchSize(state))} order${counterServiceBatchSize(state) === 1 ? "" : "s"} per handoff, and Wholesale Pickup clears capped queues when supplied.`
       : `${upgrade.effect}. Current effect is active.`;
     return renderIdleCard({
       title: `${upgrade.name} Lv ${level}`,
@@ -8820,9 +8956,13 @@ function renderStationUpgradeCard(upgrade, gameState) {
   }
   const status = supplierUpgrade
     ? `${formatShopCost(reputationCost)} Reputation`
+    : managerUpgrade
+    ? `${formatShopCost(cost)} Tips · ${formatShopCost(reputationCost)} Reputation`
     : `${formatShopCost(cost)} Tips`;
   const actionLabel = supplierUpgrade
     ? `Buy ${upgrade.name} · ${formatShopCost(reputationCost)} Reputation`
+    : managerUpgrade
+    ? `Buy ${upgrade.name} · ${formatShopCost(cost)} Tips + ${formatShopCost(reputationCost)} Reputation`
     : `Buy ${upgrade.name} · ${formatShopCost(cost)} Tips`;
   return renderIdleCard({
     title: `${upgrade.name} Lv ${level}`,
@@ -9428,6 +9568,24 @@ function nextMilestoneForShop(gameState) {
       percent: progress.percent,
       reward: "A larger managed-shop order",
       guidance: "Grow the managed counter so bulk pickups have a bigger order target.",
+    };
+  }
+
+  const managerUpgrade = nextManagerDeskUpgrade(state, false);
+  if (managerUpgrade) {
+    const level = safeNonNegativeInteger(state.shop.stationUpgrades[managerUpgrade.id], 0, managerUpgrade.maxLevel);
+    const tipsProgress = nextMilestoneProgress(state.shop.tips, stationUpgradeCostTips(managerUpgrade, level));
+    const reputationProgress = nextMilestoneProgress(state.shop.reputation, stationUpgradeCostReputation(managerUpgrade, level));
+    const progress = tipsProgress.percent < reputationProgress.percent ? tipsProgress : reputationProgress;
+    return {
+      id: managerUpgrade.id,
+      name: managerUpgrade.name,
+      progressText: progress === tipsProgress
+        ? `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} Tips`
+        : `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} Reputation`,
+      percent: progress.percent,
+      reward: managerUpgrade.effect,
+      guidance: stationUpgradeWhyItMatters(managerUpgrade),
     };
   }
 
@@ -10298,15 +10456,23 @@ function renderGamePanels(gameState = loadGameState()) {
   const reveal = progressiveRevealState(state);
   const shopSurface = appState.surface === "shop";
   const crewSurface = appState.surface === "crew";
+  const cupSurface = appState.surface === "cup-test";
   renderSurfaceNavigation(state);
-  renderGameDashboard(state);
-  renderDeliveryLog(state);
-  renderMerchProgress(state);
-  renderTofuShop(state);
-  renderCollectionPanel(state);
-  renderSimulatorPanel();
+  renderBrandShelf();
+  if (shopSurface) {
+    renderGameDashboard(state);
+    renderTofuShop(state);
+  }
+  if (cupSurface) {
+    renderDeliveryLog(state);
+    renderMerchProgress(state);
+    renderSimulatorPanel();
+  }
+  if (crewSurface) {
+    renderCollectionPanel(state);
+  }
   if (elements.deliveryBoardSection) {
-    elements.deliveryBoardSection.classList.toggle("is-hidden", !shopSurface || !reveal.firstDelivery);
+    elements.deliveryBoardSection.classList.toggle("is-hidden", !cupSurface || !reveal.firstDelivery);
   }
   if (elements.tofuShopSection) {
     elements.tofuShopSection.classList.toggle("is-hidden", !shopSurface || !reveal.shop);
@@ -10317,7 +10483,7 @@ function renderGamePanels(gameState = loadGameState()) {
   if (elements.surfaceSections) {
     elements.surfaceSections.forEach((section) => {
       const sectionSurface = section.dataset.appSurface || "shop";
-      if (sectionSurface !== appState.surface) section.classList.add("is-hidden");
+      section.classList.toggle("is-hidden", sectionSurface !== appState.surface);
     });
   }
 }

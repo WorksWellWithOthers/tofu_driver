@@ -58,6 +58,12 @@
   capped scalar queue, offline progress uses aggregate delta-time math, and ledger/inline feedback
   remain bounded. `TOFU_GARAGE_PERFORMANCE_AUDIT.md` documents why BigNumber/mantissa-exponent is
   deferred until a later absurd endgame actually needs it.
+- The 2026-06 responsiveness regression has been addressed: the large shop tab panel is no longer
+  an `aria-live` region, full panel renders update only the active hash surface, and hidden
+  Cup/Crew/simulator surfaces are not rebuilt during shop ticks.
+- Manager Desk V1 is implemented as the next narrow Tofu Shop layer after Counter Crew and supplier
+  scale. Hire Shift Manager raises Counter Service batch size to 25, and Wholesale Pickup converts
+  near-full waiting-order queues into capped scalar handoffs when supplied.
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
   language and local wallet context: generators use Buy, instant actions spend Spirit, timed effects
   show duration/active state, and tokens use Use Token.
@@ -167,13 +173,15 @@ Canonical references:
    and Shop Sign are clear.
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
-6. Playtest Counter Service, Supplier Contracts, and Managed Shop V1: confirm First 10 Orders is the
-   right unlock, the 10/8/6/4 second interval ladder and 2/5/10 batch ladder feel helpful without
-   deleting choices, Supplier Contracts relieve high-midgame stock traps without becoming infinite,
-   and active-page-only automation does not skip pacing.
+6. Playtest Counter Service, Supplier Contracts, Manager Desk V1, and Managed Shop V1: confirm First
+   10 Orders is the right unlock, the 10/8/6/4 second interval ladder and 2/5/10/25 batch ladder
+   feel helpful without deleting choices, Supplier Contracts relieve high-midgame stock traps
+   without becoming infinite, Wholesale Pickup clears capped queues without becoming passive
+   offline income, and active-page-only automation does not skip pacing.
 7. Profile/playtest high-midgame Tofu Garage after the performance guardrails: verify the order
-   queue cap feels like a useful Counter Service bottleneck, offline summaries stay compact, and
-   live counters remain responsive on mobile/desktop.
+   queue cap feels like a useful Counter Service/Manager Desk bottleneck, offline summaries stay
+   compact, no hidden sections are rebuilt during shop ticks, and live counters remain responsive on
+   mobile/desktop.
 8. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
    behavior before adding higher station thresholds.
 9. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,

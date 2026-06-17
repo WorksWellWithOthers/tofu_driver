@@ -418,12 +418,18 @@ Implemented scope:
 - Counter Service Tips/min estimates include interval and batch size only when supplied
 - Catering Crate as a midgame order sink after 100 fulfilled orders, 250 Reputation, and Shop
   Level 25
+- Manager Desk V1 after Counter Crew, Catering Crate, Shop Level 100, and 1M Reputation
+- Hire Shift Manager increases Counter Service batch size from 10 to 25 when supplied
+- Wholesale Pickup consumes capped waiting-order batches when the queue is effectively full and
+  Tofu Stock is supplied; it is active-page-only and uses scalar resource math
 - Next Milestone and Next Best Action can point toward bulk handoff upgrades or the larger order
-  when Ready Orders pile up
+  when Ready Orders pile up, then Manager Desk goals when the current managed-shop layer is maxed
 
 Design rules:
 
 - bulk handoffs solve repeated fulfillment pressure without adding a new tab
+- Wholesale Pickup exists to turn a full capped order queue into a managed-business decision, not a
+  larger backlog or a per-order object list
 - Tofu Stock remains a meaningful bottleneck; early stock pressure can point to Pack Tofu or Tofu
   Press, but managed-shop stock blocks should point to Supplier Contracts or other scalable supply
   upgrades before manual packing
@@ -1696,6 +1702,8 @@ Starter first-loop balance sheet:
 | soy_supplier_contract | Soy Supplier Contract | Managed Shop | Catering Crate scale, Shop Level 25, or 10K Reputation | 25K Reputation | Reputation | flat | 25000 | 1.0 | +250 Tofu Stock/sec support | high-midgame | when Reputation is high but Tips are stock-blocked | Counter Service waiting for Tofu Stock | Buy Soy Supplier Contract | manual Pack Tofu as main solution | Shop only, no new currency | Implemented V1 |
 | morning_soy_delivery | Morning Soy Delivery | Managed Shop | Soy Supplier Contract and Shop Level 50 | 75K Reputation | Reputation | flat | 75000 | 1.0 | +750 Tofu Stock/sec support | high-midgame | after first supplier contract | Larger order stock pressure | Buy Morning Soy Delivery | repeated stock clicking | Shop only, no new currency | Implemented V1 |
 | bulk_soy_delivery | Bulk Soy Delivery | Managed Shop | Morning Soy Delivery and Shop Level 100 | 200K Reputation | Reputation | flat | 200000 | 1.0 | +2000 Tofu Stock/sec support | high-midgame plateau | after managed-shop scale | Catering Crate/Counter Crew stock demand | Buy Bulk Soy Delivery | unsolvable stock trap | Shop only, no new currency | Implemented V1 |
+| manager_shift_manager | Hire Shift Manager | Manager Desk | Counter Crew, Catering Crate, Shop Level 100, 1M Reputation | 75K Tips + 1M Reputation | Tips + Reputation | flat | 75000 | 1.0 | Counter Service batch 10 -> 25 | high-midgame | after current Counter Service path is maxed | Queue full at managed-shop scale | Buy Hire Shift Manager | new tab/franchise jump | Parked-only, no new currency | Implemented V1 |
+| manager_wholesale_pickup | Wholesale Pickup | Manager Desk | Hire Shift Manager | 125K Tips + 1.5M Reputation | Tips + Reputation | flat | 125000 | 1.0 | Clears up to 50 waiting orders per handoff when queue is effectively full and tofu is supplied | high-midgame | after Shift Manager | Capped order queue becomes useful throughput | Buy Wholesale Pickup | per-order backlog growth | Active-page-only scalar batch, no offline fulfillment | Implemented V1 |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
 
 ## Implementation Slices
@@ -1752,6 +1760,7 @@ progression contract.
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
 | Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts paused after First 10 Orders, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
 | Supplier Contracts | Implemented | Reputation-cost station upgrades, rates, Next Best Action, tests | Soy Supplier Contract, Morning Soy Delivery, and Bulk Soy Delivery add Tofu Stock/sec as a high-midgame Reputation sink so Counter Service stock blocks are solved through management, not manual Pack Tofu | tune Reputation costs and stock/sec support after playtesting |
+| Manager Desk V1 | Implemented | Manager Desk station upgrades, Next Milestone/Next Best Action, Counter Service scalar batch processing, tests | Hire Shift Manager raises Counter Service batch size to 25; Wholesale Pickup clears capped waiting-order batches when supplied without adding a new tab, franchise mode, or per-order objects | tune costs, queue threshold, and whether a later dedicated manager surface is needed |
 | Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
