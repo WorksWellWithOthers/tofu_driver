@@ -1,6 +1,6 @@
 # Tofu Driver Character Art Asset Inventory
 
-This file is the production checklist for future parked-only character art. Character art is
+This file is the production checklist for parked-only character art. Character art is
 cosmetic flavor only. It must not affect Cup Test scoring, qualification, route validation, shop
 production, safety-sensitive behavior, or progression speed.
 
@@ -27,9 +27,8 @@ share-card art.
 
 ## Minimum Viable Asset Pack
 
-Make the smallest pack that proves the UI before commissioning many variants. The first real pack is
-Mika, Night Shift Manager, because she can support the shop, result, coach, crew, and reward slots
-without changing gameplay.
+The first real pack is Mika, Night Shift Manager. Her six-image MVP pack supports the shop, result,
+coach, crew, and reward slots without changing gameplay.
 
 1. `crew_profile_card` for Mika.
 2. `shop_assistant_main_portrait` for Mika.

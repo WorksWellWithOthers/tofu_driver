@@ -87,7 +87,7 @@ The static app uses hash routing:
 - `frontend/nospill/images/`: runtime raster images
 - `test_frontend_nospill.js`: Node-based frontend behavior checks
 - `CHARACTER_ART_ASSET_INVENTORY.md`: parked-only character art slot inventory, placeholder rules,
-  and MVP asset-pack recommendation
+  and integrated Mika MVP asset-pack paths
 - `TOFU_SHOP_LIVING_SCENE_ASSET_SPEC.md`: parked-only full-scene Tofu Shop artwork variants,
   placeholder behavior, and MVP scene-art recommendation
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction

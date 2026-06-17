@@ -299,6 +299,11 @@ Current design principles:
   present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
   milestones, while buttons and gameplay decisions remain separate UI. Do not show separate
   per-layer art placeholder tiles in the Overview.
+- Mika, Night Shift Manager, is the first implemented Delivery Crew character art pack. Her current
+  six-image MVP set lives under `/static/nospill/images/` and can appear only on parked/result
+  surfaces such as Delivery Crew, post-run results, Coach Recap, and local fanfare moments.
+  Character art is cosmetic and must never affect Cup Test scoring, cargo thresholds,
+  qualification, rewards, route validation, speed, distance, or active-drive behavior.
 - The first Passport stamp should be a Stamp Fanfare moment. The celebration is local-only,
   repeat-suppressed per stamp, accessible, and parked/result-screen only. It must never interrupt an
   active Cup Test, and it should respect reduced-motion and audio settings.
@@ -521,8 +526,9 @@ the shop, crew surface, result screens, or safe share-card flavor. They must not
 
 Character art is prepared through named parked-only asset slots and placeholders. The inventory and
 production checklist live in `CHARACTER_ART_ASSET_INVENTORY.md`; runtime slots should degrade to
-clear placeholder copy when final art is missing. Character cameos belong on parked shop, crew,
-result, recap, reward, and stamp surfaces only, not active-drive UI.
+clear placeholder copy when future art is missing. Mika's current MVP slots use real images, while
+future optional slots can still fall back to placeholders. Character cameos belong on parked shop,
+crew, result, recap, reward, and stamp surfaces only, not active-drive UI.
 
 Muted mode must mute cosmetic sounds. Active-drive audio coach remains separate and user-controlled.
 
