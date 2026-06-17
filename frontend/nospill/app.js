@@ -2432,7 +2432,7 @@ function buildStampFanfare(stampId, rewards = {}) {
     rewards: {
       tips: safeNonNegativeInteger(rewards.tipsGained, 0, SHOP_MAX_RESOURCE),
       reputation: safeNonNegativeInteger(rewards.reputationGained, 0, SHOP_MAX_RESOURCE),
-      xp: safeNonNegativeInteger(rewards.xpGained, 0, SHOP_MAX_RESOURCE),
+      shopXp: safeNonNegativeInteger(rewards.shopXpGained ?? rewards.xpGained, 0, SHOP_MAX_RESOURCE),
     },
   };
 }
@@ -2561,6 +2561,7 @@ function defaultShopState() {
     prepSlots: PREP_SLOT_BASE_MAX,
     shopReach: 0,
     shopSpirit: 0,
+    shopXP: 0,
     licenseStars: 0,
     cupStabilityXP: 0,
     routeKnowledge: 0,
@@ -2569,6 +2570,7 @@ function defaultShopState() {
     lifetimeTips: 0,
     lifetimeTofuPacked: 0,
     lifetimeReputation: 0,
+    lifetimeShopXP: 0,
     lifetimeRoutesCompleted: 0,
     lifetimeLicenseExams: 0,
     upgrades: {},
@@ -2695,6 +2697,7 @@ function normalizeShopState(shop) {
   const source = shop && typeof shop === "object" ? shop : {};
   const reputation = safeNonNegativeInteger(source.reputation, defaults.reputation);
   const tips = safeNonNegativeInteger(source.tips, defaults.tips);
+  const shopXP = safeNonNegativeInteger(source.shopXP, defaults.shopXP);
   const stations = normalizeCatalogCounts(
     source.stations || {
       tofu_press: source.generators && source.generators.tofuPress
@@ -2717,6 +2720,7 @@ function normalizeShopState(shop) {
     prepSlots: safeNonNegativeNumber(source.prepSlots, defaults.prepSlots, getPrepSlotMax({ ...defaults, ...source })),
     shopReach: safeNonNegativeInteger(source.shopReach, defaults.shopReach),
     shopSpirit: safeNonNegativeNumber(source.shopSpirit, defaults.shopSpirit, getShopSpiritMax({ ...defaults, ...source })),
+    shopXP,
     licenseStars: safeNonNegativeInteger(source.licenseStars, defaults.licenseStars, 100000),
     cupStabilityXP: safeNonNegativeInteger(source.cupStabilityXP, defaults.cupStabilityXP),
     routeKnowledge: safeNonNegativeInteger(source.routeKnowledge, defaults.routeKnowledge),
@@ -2736,6 +2740,10 @@ function normalizeShopState(shop) {
     lifetimeReputation: Math.max(
       reputation,
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
+    ),
+    lifetimeShopXP: Math.max(
+      shopXP,
+      safeNonNegativeInteger(source.lifetimeShopXP, defaults.lifetimeShopXP),
     ),
     lifetimeRoutesCompleted: safeNonNegativeInteger(source.lifetimeRoutesCompleted, defaults.lifetimeRoutesCompleted),
     lifetimeLicenseExams: safeNonNegativeInteger(source.lifetimeLicenseExams, defaults.lifetimeLicenseExams),
@@ -3436,6 +3444,17 @@ function levelProgress(totalXP) {
     level,
     currentXP: remaining,
     nextXP: levelXPRequirement(level),
+  };
+}
+
+function driverShopReputationBonus(gameState) {
+  const state = normalizeGameState(gameState);
+  const level = levelProgress(state.totalXP).level;
+  const percent = Math.min(10, Math.floor(level / 25));
+  return {
+    level,
+    percent,
+    multiplier: 1 + percent / 100,
   };
 }
 
@@ -4451,10 +4470,11 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   const signOwned = safeNonNegativeInteger(next.shop.stations.shop_sign, 0, 100000);
   const signSupport = signOwned * 0.1 + stationUpgradeLevel(next.shop, "shop_sign_faster") * 0.2;
   const signBonus = 1 + signSupport * stationMilestoneMultiplier("shop_sign", signOwned);
+  const driverBonus = driverShopReputationBonus(next);
   const garageBonus = safeNonNegativeInteger(next.shop.garage.delivery_mat, 0, 100) >= 3 ? 1 : 0;
   const tipsGained = Math.round(orderType.tips * quantity);
-  const reputationGained = Math.round((orderType.reputation * quantity + garageBonus) * signBonus);
-  const xpGained = orderType.xp * quantity;
+  const reputationGained = Math.round((orderType.reputation * quantity + garageBonus) * signBonus * driverBonus.multiplier);
+  const shopXpGained = orderType.xp * quantity;
   const previousShopLevel = next.shop.shopLevel;
   next.shop.deliveryOrders = Math.max(0, safeNonNegativeNumber(next.shop.deliveryOrders, 0) - deliveryOrdersUsed);
   next.shop.tofuStock = Math.max(0, safeNonNegativeNumber(next.shop.tofuStock, 0) - tofuUsed);
@@ -4462,9 +4482,9 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + tipsGained);
   next.shop.reputation = safeNonNegativeInteger(next.shop.reputation + reputationGained);
   next.shop.lifetimeReputation = safeNonNegativeInteger(next.shop.lifetimeReputation + reputationGained);
+  next.shop.shopXP = safeNonNegativeInteger(next.shop.shopXP + shopXpGained);
+  next.shop.lifetimeShopXP = safeNonNegativeInteger(next.shop.lifetimeShopXP + shopXpGained);
   next.shop.lifetimeDeliveryOrders = safeNonNegativeInteger(next.shop.lifetimeDeliveryOrders + deliveryOrdersUsed);
-  next.totalXP = Math.max(0, Math.round(Number(next.totalXP || 0) + xpGained));
-  next.level = levelForXP(next.totalXP);
   next.shop.shopLevel = getShopLevel(next.shop.reputation);
   const firstShopOrderStampUnlocked = !next.stamps.first_shop_order;
   if (firstShopOrderStampUnlocked) {
@@ -4485,7 +4505,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     const queued = queueStampFanfare(next, "first_shop_order", {
       tipsGained,
       reputationGained,
-      xpGained,
+      shopXpGained,
     });
     next = queued.gameState;
     stampFanfare = queued.stampFanfare;
@@ -4512,7 +4532,8 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
       label: quantity > 1 ? `${orderType.name}s Complete` : `${orderType.name} Complete`,
       tipsGained,
       reputationGained,
-      xpGained,
+      shopXpGained,
+      xpGained: shopXpGained,
     }, ...next.recentRewards].slice(0, 12);
   }
   return {
@@ -4525,7 +4546,8 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
     tofuUsed,
     tipsGained,
     reputationGained,
-    xpGained,
+    shopXpGained,
+    xpGained: shopXpGained,
     firstShopOrderStampUnlocked,
     firstFamilyTrayStampUnlocked,
     stampFanfare,
@@ -4685,7 +4707,7 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     completed: 0,
     tips: 0,
     reputation: 0,
-    xp: 0,
+    shopXP: 0,
     orderCounts: {},
     lastOrderType: null,
   };
@@ -4709,7 +4731,7 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     totals.completed += result.quantity;
     totals.tips += result.tipsGained;
     totals.reputation += result.reputationGained;
-    totals.xp += result.xpGained;
+    totals.shopXP += result.shopXpGained || result.xpGained || 0;
     totals.orderCounts[orderType.name] = (totals.orderCounts[orderType.name] || 0) + result.quantity;
     totals.lastOrderType = orderType;
   }
@@ -4725,14 +4747,15 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
       ? `Counter Service: ${totals.lastOrderType.name} complete · +${formatShopCount(totals.tips)} Tips`
       : `Counter Service completed ${formatShopCount(totals.completed)} orders.`;
     next.shop.counterService.lastResult = message;
-    next = addLedgerEntry(next, "automation", `${message} +${formatShopCount(totals.tips)} Tips, +${formatShopCount(totals.reputation)} Reputation, +${formatShopCount(totals.xp)} XP.`);
+    next = addLedgerEntry(next, "automation", `${message} +${formatShopCount(totals.tips)} Tips, +${formatShopCount(totals.reputation)} Reputation, +${formatShopCount(totals.shopXP)} Shop XP.`);
     next.recentRewards = [{
       date: nowIso,
       type: "shop_order",
       label: "Counter Service",
       tipsGained: totals.tips,
       reputationGained: totals.reputation,
-      xpGained: totals.xp,
+      shopXpGained: totals.shopXP,
+      xpGained: totals.shopXP,
     }, ...next.recentRewards].slice(0, 12);
   } else {
     next.shop.counterService.lastResult = "Counter Service is waiting for prepared orders and tofu stock.";
@@ -7583,9 +7606,7 @@ function renderDeliveryLog(gameState = loadGameState()) {
   const mission = getDailyDelivery(new Date());
   const progress = levelProgress(state.totalXP);
   const passport = deliveryPassportSummary(state);
-  const recentReward = state.recentRewards && state.recentRewards.length
-    ? state.recentRewards[0]
-    : null;
+  const recentReward = (state.recentRewards || []).find((reward) => reward && reward.type === "delivery") || null;
   if (elements.driverLevel) elements.driverLevel.textContent = `Level ${progress.level}`;
   if (elements.driverLicense) {
     elements.driverLicense.textContent = `Level ${progress.level} · ${getDriverLicense(progress.level)}`;
@@ -7595,9 +7616,9 @@ function renderDeliveryLog(gameState = loadGameState()) {
     elements.dailyGoal.textContent = `${mission.description} ${mission.focus}: ${mission.goal}`;
   }
   if (elements.dailyReward) elements.dailyReward.textContent = mission.reward;
-  if (elements.driverTotalXP) elements.driverTotalXP.textContent = formatShopCount(state.totalXP);
+  if (elements.driverTotalXP) elements.driverTotalXP.textContent = `${formatShopCount(state.totalXP)} Driver XP`;
   if (elements.driverNextXP) {
-    elements.driverNextXP.textContent = `${formatShopCount(progress.currentXP)}/${formatShopCount(progress.nextXP)} XP`;
+    elements.driverNextXP.textContent = `${formatShopCount(progress.currentXP)}/${formatShopCount(progress.nextXP)} Driver XP`;
   }
   if (elements.driverStreak) {
     const current = Number(state.streak.current || 0);
@@ -7619,8 +7640,8 @@ function renderDeliveryLog(gameState = loadGameState()) {
   }
   if (elements.recentReward) {
     elements.recentReward.textContent = recentReward
-      ? `+${formatShopCount(recentReward.xpGained)} XP · ${recentRewardDisplayLabel(recentReward)}`
-      : "No rewards yet";
+      ? `Recent Driver Reward: +${formatShopCount(recentReward.xpGained)} Driver XP · ${recentRewardDisplayLabel(recentReward)}`
+      : "No driver rewards yet";
   }
 }
 
@@ -7971,7 +7992,7 @@ function renderGameDashboard(gameState = loadGameState()) {
   if (elements.gameDriverLicense) {
     elements.gameDriverLicense.textContent = `Level ${progress.level} · ${getDriverLicense(progress.level)}`;
   }
-  if (elements.gameTotalXP) elements.gameTotalXP.textContent = `${formatShopCount(state.totalXP)} XP`;
+  if (elements.gameTotalXP) elements.gameTotalXP.textContent = `${formatShopCount(state.totalXP)} Driver XP`;
   if (elements.gameStreak) {
     const current = Number(state.streak.current || 0);
     elements.gameStreak.textContent = `${current} ${current === 1 ? "day" : "days"}`;
@@ -8007,8 +8028,8 @@ function renderGameDashboard(gameState = loadGameState()) {
   }
   if (elements.gamePassportPreview) {
     const previewIds = reveal.passport
-      ? ["first_shop_order", "first_upgrade_purchased", "first_family_tofu_tray", "first_10_orders", "first_100_tips"]
-      : ["first_shop_order", "first_delivery", "daily_delivery_complete"];
+      ? ["first_delivery", "daily_delivery_complete", "perfect_pour", "nospill_club"]
+      : ["first_delivery", "daily_delivery_complete", "first_shop_order"];
     elements.gamePassportPreview.innerHTML = previewIds
       .map((id) => `<span>${escapeHtml(stampLockLabel(state, id))}</span>`)
       .join("");
@@ -8446,9 +8467,9 @@ function renderShopOrderCard(orderType, gameState, options = {}) {
   const disabledReason = shopOrderDisabledReason(orderType, state, unlocked);
   const canFulfill = unlocked && maxQuantity > 0 && !disabledReason;
   const costCopy = `Uses ${formatShopCost(orderType.tofuRequired)} tofu stock and ${formatShopCount(orderType.deliveryOrdersRequired)} ready order${orderType.deliveryOrdersRequired === 1 ? "" : "s"}.`;
-  const rewardCopy = `Reward: +${formatShopCount(orderType.tips)} Tips, +${formatShopCount(orderType.reputation)} Reputation, +${formatShopCount(orderType.xp)} XP.`;
+  const rewardCopy = `Reward: +${formatShopCount(orderType.tips)} Tips, +${formatShopCount(orderType.reputation)} Reputation, +${formatShopCount(orderType.xp)} Shop XP.`;
   const maxRewardCopy = maxQuantity > 1
-    ? `Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)} · Reward: +${formatShopCount(orderType.tips * maxQuantity)} Tips, +${formatShopCount(orderType.reputation * maxQuantity)} Reputation, +${formatShopCount(orderType.xp * maxQuantity)} XP · Uses: ${formatShopCost(orderType.tofuRequired * maxQuantity)} tofu stock, ${formatShopCount(orderType.deliveryOrdersRequired * maxQuantity)} ready orders`
+    ? `Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)} · Reward: +${formatShopCount(orderType.tips * maxQuantity)} Tips, +${formatShopCount(orderType.reputation * maxQuantity)} Reputation, +${formatShopCount(orderType.xp * maxQuantity)} Shop XP · Uses: ${formatShopCost(orderType.tofuRequired * maxQuantity)} tofu stock, ${formatShopCount(orderType.deliveryOrdersRequired * maxQuantity)} ready orders`
     : "";
   const availability = canFulfill
     ? `<small class="nospill-available-badge">Available</small>`
@@ -8516,6 +8537,38 @@ function renderStoryTeaserCard() {
     title: appState.shopStoryTeaser.title || "Behind the shop",
     status: appState.shopStoryTeaser.status || "Story Teaser",
     copy: appState.shopStoryTeaser.copy || "Behind the shop, an old car waits under a cover.",
+  });
+}
+
+function recentShopReward(gameState) {
+  const state = normalizeGameState(gameState);
+  return (state.recentRewards || []).find((reward) => reward && reward.type === "shop_order") || null;
+}
+
+function renderRecentShopRewardCard(state) {
+  const reward = recentShopReward(state);
+  if (!reward) return "";
+  const shopXp = safeNonNegativeInteger(reward.shopXpGained ?? reward.xpGained, 0, SHOP_MAX_RESOURCE);
+  const detail = reward.tipsGained
+    ? `+${formatShopCount(reward.tipsGained)} Tips · ${recentRewardDisplayLabel(reward)}`
+    : recentRewardDisplayLabel(reward);
+  const xpLine = shopXp > 0 ? ` Shop XP +${formatShopCount(shopXp)}.` : "";
+  return renderIdleCard({
+    title: "Recent Shop Reward",
+    status: "Shop Progress",
+    copy: `${detail}.${xpLine}`.trim(),
+  });
+}
+
+function renderDriverBonusCard(state) {
+  if (appState.running || appState.calibrating) return "";
+  const bonus = driverShopReputationBonus(state);
+  if (bonus.percent < 1) return "";
+  return renderIdleCard({
+    title: "Driver Bonus",
+    status: `Delivery Driver Level ${formatShopCount(bonus.level)}`,
+    copy: `Shop confidence bonus: +${formatShopCount(bonus.percent)}% Reputation from orders. Earn Driver XP from Don't Spill the Cup.`,
+    actions: [actionButton("View Delivery Board", "data-surface-target", "cup-test", false)],
   });
 }
 
@@ -8907,6 +8960,8 @@ function renderOverviewPanel(state) {
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true }) : ""}
       ${renderOverviewImprovementCard(state)}
       ${renderCounterServiceCard(state)}
+      ${renderRecentShopRewardCard(state)}
+      ${renderDriverBonusCard(state)}
       ${renderPassportTeaserCard(state)}
       ${renderStoryTeaserCard()}
       ${renderIdleCard({
@@ -9192,16 +9247,42 @@ function renderRivalsPanel(state) {
   `;
 }
 
+function stampProgressionCategory(stampId) {
+  const shopStamps = new Set([
+    "first_shop_order",
+    "first_upgrade_purchased",
+    "first_family_tofu_tray",
+    "first_10_orders",
+    "first_100_tips",
+    "first_festival_boost",
+  ]);
+  const driverStamps = new Set([
+    "first_delivery",
+    "daily_delivery_complete",
+    "perfect_pour",
+    "nospill_club",
+    "technical_pour",
+  ]);
+  if (shopStamps.has(stampId)) return "Shop Stamp";
+  if (driverStamps.has(stampId)) return "Driver Stamp";
+  return "Story Stamp";
+}
+
 function renderPassportPanel(state) {
   const unlockedStamps = Object.entries(STAMP_LABELS)
-    .filter(([id]) => state.stamps[id]);
+    .filter(([id]) => state.stamps[id])
+    .sort(([a], [b]) => {
+      const categoryRank = { "Shop Stamp": 0, "Driver Stamp": 1, "Story Stamp": 2 };
+      return (categoryRank[stampProgressionCategory(a)] - categoryRank[stampProgressionCategory(b)])
+        || String(a).localeCompare(String(b));
+    });
   const nextStampIds = ["first_upgrade_purchased", "first_family_tofu_tray", "first_10_orders", "first_100_tips"]
     .filter((id) => !state.stamps[id])
     .slice(0, 2);
   const cards = [
     ...unlockedStamps.map(([id, label]) => renderIdleCard({
       title: label,
-      status: "Unlocked",
+      status: `${stampProgressionCategory(id)} · Unlocked`,
       copy: "Stamped in your local passport.",
       locked: false,
     })),
@@ -9214,7 +9295,7 @@ function renderPassportPanel(state) {
   ];
   return `
     <h4>Delivery Passport</h4>
-    <p class="nospill-panel-helper">Stamps appear as discoveries. The full catalog stays hidden until the shop has earned more of it.</p>
+    <p class="nospill-panel-helper">Shop stamps are shown first here. Driver stamps belong to Don't Spill the Cup, and the full catalog stays hidden until earned.</p>
     <div class="nospill-idle-grid">
       ${cards.length ? cards.join("") : renderIdleCard({
         title: "Passport",
@@ -9782,7 +9863,7 @@ function renderDeliverySummary(summary) {
     summaryMetric("Next Focus", coach.nextFocus),
     summaryMetric("Selected Crew", crew ? crew.name : "No crew selected yet"),
     summaryMetric("New Unlock", newUnlockLine),
-    summaryMetric("XP Gained", rewards.xpGained ? `+${formatShopCount(rewards.xpGained)}` : "+0"),
+    summaryMetric("Driver XP Gained", rewards.xpGained ? `+${formatShopCount(rewards.xpGained)}` : "+0"),
     summaryMetric("Skill XP Gained", skillLine),
     summaryMetric("Stamp Earned", stampLine),
     summaryMetric("Shop Rewards", shopRewardLine),
@@ -9883,7 +9964,7 @@ function showStampFanfare(fanfare, gameState = loadGameState()) {
       }),
       stampFanfareRewardMetric("Tips", `+${formatShopCount(rewards.tips || 0)}`),
       stampFanfareRewardMetric("Reputation", `+${formatShopCount(rewards.reputation || 0)}`),
-      stampFanfareRewardMetric("XP", `+${formatShopCount(rewards.xp || 0)}`),
+      stampFanfareRewardMetric("Shop XP", `+${formatShopCount(rewards.shopXp || rewards.xp || 0)}`),
     ].join("");
   }
   if (elements.stampFanfareCard && typeof elements.stampFanfareCard.focus === "function") {
@@ -9999,7 +10080,7 @@ function renderShopOrderResult(result) {
       summaryMetric("Ready Orders Used", `-${formatShopCount(result.deliveryOrdersUsed || result.quantity || 0)}`),
       summaryMetric("Tips Gained", `+${formatShopCount(result.tipsGained)}`),
       summaryMetric("Reputation Gained", `+${formatShopCount(result.reputationGained)}`),
-      summaryMetric("XP Gained", `+${formatShopCount(result.xpGained)}`),
+      summaryMetric("Shop XP Gained", `+${formatShopCount(result.shopXpGained || result.xpGained)}`),
       result.firstShopOrderStampUnlocked
         ? summaryMetric("Stamp Discovered", STAMP_LABELS.first_shop_order, "nospill-is-good")
         : "",
@@ -10037,7 +10118,7 @@ function shopOrderInlineResultMessage(result) {
     : "Shop Order";
   const quantity = safeNonNegativeInteger(result && result.quantity, 1, SHOP_MAX_RESOURCE);
   const quantityText = quantity > 1 ? ` x${formatShopCount(quantity)}` : "";
-  return `${orderName}${quantityText} complete: +${formatShopCount(result.tipsGained || 0)} Tips, +${formatShopCount(result.reputationGained || 0)} Reputation, +${formatShopCount(result.xpGained || 0)} XP`;
+  return `${orderName}${quantityText} complete: +${formatShopCount(result.tipsGained || 0)} Tips, +${formatShopCount(result.reputationGained || 0)} Reputation, +${formatShopCount(result.shopXpGained || result.xpGained || 0)} Shop XP`;
 }
 
 function showShopOrderInlineResult(result) {

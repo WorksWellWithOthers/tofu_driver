@@ -8,7 +8,7 @@ automation-after-mastery before broader systems.
 ## Executive Summary
 
 Tofu Shop now has a working first loop: Tofu Press creates Tofu Stock, Prep Counter prepares
-Delivery Orders, typed shop orders convert stock/orders into Tips/Reputation/XP, and early
+Delivery Orders, typed shop orders convert stock/orders into Tips/Reputation/Shop XP, and early
 fulfillment stays inline. That is enough to understand the loop, but not yet enough to call the
 shop a complete 5 to 10 minute game spine.
 
@@ -26,7 +26,7 @@ right time, creates a meaningful decision, has tests, and fits the progression c
 
 | Mechanic | Status | Evidence | Notes |
 | --- | --- | --- | --- |
-| Simple Tofu Box | Implemented | State changes, inline result, tests | First order consumes stock/order and grants Tips/Reputation/XP. |
+| Simple Tofu Box | Implemented | State changes, inline result, tests | First order consumes stock/order and grants Tips/Reputation/Shop XP. |
 | Prep Counter progress | Implemented | Progress bar, tick tests | Shows ready orders and next-order progress. |
 | Tofu Stock runway | Implemented | Runway helper/copy/tests | Explains stock as ingredient/runway/order-size capacity. |
 | Family Tofu Tray | Implemented | Unlock/reward tests | Makes stock matter after loop understanding. |

@@ -57,6 +57,26 @@ This resolves the older tension between "the shop is the base game" and "the cup
 default page": the Cup Test is the iconic first surface, while Tofu Shop is the base parked
 progression layer.
 
+## Progression Ownership
+
+Delivery Driver progression belongs to Don't Spill the Cup. Driver XP, Driver Level, Driver License
+title, smoothness streaks, Today's Delivery cargo, No-Spill Club gear, Cup Test stamps, and Cup Test
+recent rewards should primarily come from completed Cup Test runs and smoothness/cargo milestones.
+
+Tofu Shop progression is separate shop progression. Tofu Stock, Delivery Orders, Tips, Reputation,
+Shop Level, Shop Spirit, stations, station milestones, Counter Service, shop upgrades, Shop XP, and
+shop stamps come from parked shop production and shop order fulfillment.
+
+Driver Level may influence Tofu Shop only as a small capped status bonus. Current V1 framing is a
+Reputation bonus from shop orders, capped so Cup Test status helps the shop feel known without
+becoming mandatory for ordinary shop progress. Tofu Shop orders and automation must not grant
+Driver XP or inflate Driver Level, and Driver Level must never improve Cup Test scoring,
+qualification, or safety-sensitive behavior.
+
+The full Delivery Board belongs on the Don't Spill the Cup surface and result flow. Tofu Shop may
+show a compact Driver Bonus card when Driver Level has a shop effect, with copy that Driver XP is
+earned from Don't Spill the Cup.
+
 ## Safety And Privacy Contract
 
 These rules are authoritative for all current and future features:
@@ -217,7 +237,7 @@ Current design principles:
 - Tofu Stock is an ingredient/runway resource, not the purchase currency. The UI should explain how
   many orders current stock can support.
 - Larger shop order types can consume more Tofu Stock and ready Delivery Orders for better local
-  Tips/Reputation/XP rewards. This order-size ladder is the intended bridge between stockpiles and
+  Tips/Reputation/Shop XP rewards. This order-size ladder is the intended bridge between stockpiles and
   higher payouts. Raw Tofu Stock should not directly multiply Tips.
 - The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, Festival Bento, and
   Catering Crate. The early stock costs are 6, 24, and 75 Tofu Stock respectively, with Catering
@@ -248,7 +268,7 @@ Current design principles:
   handoffs, the next decisions should be stock supply, service rate, larger orders, or later support
   stations, not more mandatory clicking.
 - Fulfill Shop Order requires at least one ready Delivery Order.
-- Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and XP.
+- Fulfill Shop Order consumes Delivery Orders and grants Tips, Reputation, and Shop XP.
 - Tips buy more production, stations, and upgrades.
 - The early UI must teach that Tips come from fulfilled shop orders.
 - Pack Tofu is a backup/manual Tofu Stock action, not the main money action.

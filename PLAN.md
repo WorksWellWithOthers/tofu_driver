@@ -7,6 +7,11 @@
 - `#/cup-test` shows Don't Spill the Cup, the smooth-driving challenge.
 - `#/shop` shows Tofu Shop, the parked-only idle/incremental game.
 - `#/crew` shows Delivery Crew when collection systems are relevant.
+- Delivery Driver progression is now separated from Tofu Shop progression: Cup Test runs grant
+  Driver XP/Driver Level, while shop orders and Counter Service grant Tips, Reputation, Shop XP,
+  Shop Level progress, stamps, and shop resources.
+- Driver Level can provide only a small capped Reputation bonus to shop orders. Tofu Shop does not
+  level the driver, and Driver Level never changes Cup Test scoring or qualification.
 - Basic Mode uses device motion only and does not request location.
 - Qualified Run Mode is opt-in and may request location only after explicit start.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
@@ -65,13 +70,13 @@
   Passport, and full Ledger stay hidden during the first loop unless earned.
 - Overview has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume meaningful typed Tofu Stock/Delivery Order costs and pay typed
-  Tips/Reputation/XP rewards.
+  Tips/Reputation/Shop XP rewards.
 - `CORE_GAME_SPINE_AUDIT.md` now records what is truly implemented versus scaffolding. Core Game
   Spine V1 adds tested First Upgrade Purchased, First Family Tofu Tray, First 10 Orders, and First
   100 Tips stamp milestones; Delivery Shelf is the first tested throughput support station; Shop
   Sign is the first tested Reputation support station.
 - Fulfill Shop Order is the current core home-loop action: it converts Delivery Orders into Tips,
-  Reputation, and XP.
+  Reputation, and Shop XP.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
   players back to fulfilling shop orders.
 - Next Best Action follows the current bottleneck: ready orders point to fulfillment, low stock
