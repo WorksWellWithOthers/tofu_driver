@@ -1017,7 +1017,9 @@ Early UI rule:
   Garage, Shop Spirit, Rivals, License, or full Passport/Ledger panels by itself.
 - The first Passport stamp should trigger a Stamp Fanfare / Stamp Celebration. The fanfare shows
   the stamp name and order rewards, suppresses repeats through local seen-fanfare state, respects
-  reduced motion and muted audio, and never appears during active driving.
+  reduced motion and muted audio, and never appears during active driving. It uses a single wide
+  reward splash plus compact Tips/Reputation/Shop XP cards; player-facing fanfare UI should not show
+  character-slot labels, asset-status copy, `art pending`, or internal slot names.
 - The first meaningful hidden shop system should trigger a Discovery Fanfare / New System Revealed
   moment. Upgrades are the preferred first reveal when Tidy Packaging, Steady Pressing, or another
   bottleneck-solving upgrade becomes visible. Future systems should use the same pattern only after

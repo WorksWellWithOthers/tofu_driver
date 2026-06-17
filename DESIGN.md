@@ -324,7 +324,9 @@ Current design principles:
   qualification, rewards, route validation, speed, distance, or active-drive behavior.
 - The first Passport stamp should be a Stamp Fanfare moment. The celebration is local-only,
   repeat-suppressed per stamp, accessible, and parked/result-screen only. It must never interrupt an
-  active Cup Test, and it should respect reduced-motion and audio settings.
+  active Cup Test, and it should respect reduced-motion and audio settings. It should feel like a
+  polished reward screen: one wide reward splash, clear stamp title/copy, compact reward cards,
+  `Continue Tofu Shop`, and no character-slot labels, asset-status copy, or debug text.
 - The first hidden shop system should use a Discovery Fanfare. Upgrades are the first system reveal
   when a meaningful bottleneck-solving upgrade appears. System reveals are local-only,
   repeat-suppressed per system id, and should create curiosity without listing the future roadmap.
