@@ -138,7 +138,8 @@ a real mobile browser over HTTPS for full testing.
 Mobile motion troubleshooting:
 
 - iOS Safari may require a user gesture before motion permission can be requested. Tap
-  `Start & Calibrate`; do not expect permission prompts on page load.
+  `Start & Calibrate`; do not expect permission prompts on page load. The app requests motion
+  permission before starting optional audio so the tap gesture is preserved for Safari.
 - Don’t Spill the Cup requires HTTPS for motion sensors, except local development contexts such as
   `localhost`.
 - Permission denied, insecure HTTP, true unsupported browsers, and “permission granted but no

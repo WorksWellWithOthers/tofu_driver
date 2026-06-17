@@ -1217,6 +1217,7 @@ elements = {
   runStatus: makeMotionNode("runStatus"),
   surfaceNavButtons: [],
 };
+globalThis.performance = { now: () => 1000 };
 appState.mode = "basic";
 appState.surface = "cup-test";
 await startRun();
@@ -1236,6 +1237,95 @@ globalThis.noDataUnsupportedHidden = elements.unsupportedView.classListValue;
   assert.strictEqual(startContext.surfaceFromHash('#/cup-test'), 'cup-test');
   assert.strictEqual(startContext.surfaceFromHash('#/garage'), 'shop');
   assert.strictEqual(startContext.surfaceFromHash(''), 'cup-test');
+
+  function AudioSensitiveMotion() {}
+  AudioSensitiveMotion.requestPermission = async () => (
+    startAudioContext.window.audioTouchedBeforeMotion ? 'denied' : 'granted'
+  );
+  const startAudioContext = loadNoSpillContext({
+    document: {
+      addEventListener() {},
+      querySelectorAll(selector) {
+        if (selector === '[data-safety-check]') return [{ checked: true }, { checked: true }, { checked: true }];
+        return [];
+      },
+    },
+    window: {
+      isSecureContext: true,
+      location: { protocol: 'https:', hostname: 'tofudriver.com' },
+      DeviceMotionEvent: AudioSensitiveMotion,
+      audioTouchedBeforeMotion: false,
+      AudioContext: function AudioContext() {
+        startAudioContext.window.audioTouchedBeforeMotion = true;
+        this.state = 'running';
+        this.currentTime = 0;
+        this.destination = {};
+        this.createOscillator = () => ({
+          type: 'sine',
+          frequency: { setValueAtTime() {} },
+          connect() {},
+          start() {},
+        });
+        this.createGain = () => ({
+          gain: {
+            setValueAtTime() {},
+            linearRampToValueAtTime() {},
+          },
+          connect() {},
+        });
+        this.resume = async () => {};
+      },
+      addEventListener(type) {
+        this.addedEventType = type;
+      },
+      removeEventListener(type) {
+        this.removedEventType = type;
+      },
+      setTimeout() {},
+      matchMedia() {
+        return { matches: false };
+      },
+    },
+  });
+  startAudioContext.requestAnimationFrame = (callback) => {
+    if (typeof callback === 'function') callback();
+    return 1;
+  };
+  await vm.runInContext(`(async () => {
+function makeMotionNode(name) {
+  const node = { textContent: '', disabled: false, checked: false, dataset: {}, classListValue: null };
+  node.classList = { add() {}, remove() {}, toggle(_className, hidden) { node.classListValue = Boolean(hidden); }, contains() { return false; } };
+  node.scrollIntoView = function scrollIntoView() {};
+  return node;
+}
+elements = {
+  landingView: makeMotionNode("landing"),
+  runView: makeMotionNode("run"),
+  unsupportedView: makeMotionNode("unsupported"),
+  summaryView: makeMotionNode("summary"),
+  setupFlow: makeMotionNode("setup"),
+  landingStatus: makeMotionNode("status"),
+  unsupportedCopy: makeMotionNode("unsupportedCopy"),
+  startButton: makeMotionNode("start"),
+  audioToggle: { checked: true },
+  audioToggleRunning: { checked: false },
+  runModeLabel: makeMotionNode("runMode"),
+  runStatus: makeMotionNode("runStatus"),
+  surfaceNavButtons: [],
+};
+globalThis.performance = { now: () => 1000 };
+appState.mode = "basic";
+appState.surface = "cup-test";
+await startRun();
+globalThis.audioStartAddedEvent = window.addedEventType;
+globalThis.audioStartCalibrating = appState.calibrating;
+globalThis.audioTouchedAfterMotion = window.audioTouchedBeforeMotion;
+globalThis.audioStartLandingStatus = elements.landingStatus.textContent;
+})()`, startAudioContext);
+  assert.strictEqual(startAudioContext.audioStartAddedEvent, 'devicemotion');
+  assert.strictEqual(startAudioContext.audioStartCalibrating, true);
+  assert.strictEqual(startAudioContext.audioTouchedAfterMotion, true);
+  assert(!startAudioContext.audioStartLandingStatus.includes('Motion permission was denied'));
 }
 
 function testTwoSurfaceRoutingSeparatesShopAndCupTest() {

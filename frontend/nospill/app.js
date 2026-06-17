@@ -11545,7 +11545,6 @@ async function startRun() {
   }
   appState.audioEnabled = elements.audioToggle.checked;
   elements.audioToggleRunning.checked = appState.audioEnabled;
-  if (appState.audioEnabled) await ensureAudioCoach();
 
   const permission = await requestMotionPermission();
   if (!permission.ok) {
@@ -11553,6 +11552,7 @@ async function startRun() {
     showMotionStartFailure(permission);
     return;
   }
+  if (appState.audioEnabled) await ensureAudioCoach();
 
   resetSessionState();
   appState.audioEnabled = elements.audioToggle.checked;
