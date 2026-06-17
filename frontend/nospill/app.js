@@ -10721,7 +10721,39 @@ function setSummaryMode(mode, options = {}) {
 }
 
 function stampFanfareRewardMetric(label, value) {
-  return `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+  return `<div class="nospill-stamp-reward-metric"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`;
+}
+
+function stampFanfareArtAsset(gameState) {
+  const character = defaultCharacterForArt(gameState);
+  const selectedAsset = getCharacterAsset(character.id, "reward_unlock_card_art");
+  if (selectedAsset.src) return selectedAsset;
+  return getCharacterAsset("mika", "reward_unlock_card_art");
+}
+
+function renderStampFanfareArt(gameState = loadGameState()) {
+  const asset = stampFanfareArtAsset(gameState);
+  if (!asset.src) {
+    return `
+      <div class="nospill-stamp-fanfare-art is-placeholder" role="img" aria-label="Stamp celebration image unavailable">
+        <span>Stamp recorded</span>
+      </div>
+    `;
+  }
+  return `
+    <figure class="nospill-stamp-fanfare-art">
+      <img
+        src="${escapeHtml(asset.src)}"
+        alt="${escapeHtml(asset.alt || "Mika celebrating a parked shop stamp unlock.")}"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
+      />
+      <div class="nospill-stamp-fanfare-art-fallback" role="img" aria-label="Stamp celebration image unavailable" hidden>
+        <span>Stamp recorded</span>
+      </div>
+    </figure>
+  `;
 }
 
 function hideStampFanfare() {
@@ -10753,10 +10785,7 @@ function showStampFanfare(fanfare, gameState = loadGameState()) {
   if (elements.stampFanfareRewards) {
     const rewards = fanfare.rewards || {};
     elements.stampFanfareRewards.innerHTML = [
-      renderCharacterCameo("stamp_fanfare_cameo", gameState, {
-        label: "Stamp Cameo",
-        copy: "Reward splash art belongs on parked fanfare moments.",
-      }),
+      renderStampFanfareArt(gameState),
       stampFanfareRewardMetric("Tips", `+${formatShopCount(rewards.tips || 0)}`),
       stampFanfareRewardMetric("Reputation", `+${formatShopCount(rewards.reputation || 0)}`),
       stampFanfareRewardMetric("Shop XP", `+${formatShopCount(rewards.shopXp || rewards.xp || 0)}`),

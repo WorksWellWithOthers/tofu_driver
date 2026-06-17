@@ -38,6 +38,8 @@
 - Tofu Shop Overview now includes Next Milestone Bar V1. It shows one current implemented shop goal
   at a time, pairs with Next Best Action, and can show a small `$1T fictional Net Worth` long-road
   line after an early milestone without implementing a Net Worth counter or valuation system.
+- First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
+  splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Counter Service V1 is the first earned automation layer. It unlocks after First 10 Orders, starts
   paused, auto-fulfills Best Available prepared orders every 10 seconds only while parked and the
   page is open, shows supplied/blocked shop-income status, can be upgraded through Order Bell,

@@ -2792,7 +2792,7 @@ function testFirstStampFanfareCelebratesAndPersists() {
   assert(html.includes('aria-modal="true"'));
   assert(html.includes('First Stamp Earned'));
   assert(html.includes('First Shop Order'));
-  assert(html.includes('Continue Tofu Garage'));
+  assert(html.includes('Continue Tofu Shop'));
   assert(html.includes('View Passport'));
   const localStorage = makeLocalStorage();
   const context = loadNoSpillContext({
@@ -2892,6 +2892,15 @@ globalThis.activeDriveFanfareReason = activeDriveShow.sound.reason;
   assert.strictEqual(context.fanfareTitle, 'First Stamp Earned');
   assert.strictEqual(context.fanfareStampName, 'First Shop Order');
   assert.strictEqual(context.fanfareCopy, 'The passport opens. Your first shop order is recorded.');
+  assert(context.fanfareRewardsHtml.includes('/static/nospill/images/reward_unlock_splash.webp'));
+  assert(context.fanfareRewardsHtml.includes('nospill-stamp-fanfare-art'));
+  assert(!context.fanfareRewardsHtml.includes('nospill-character-cameo'));
+  assert(!context.fanfareRewardsHtml.includes('hidden>M</div>'));
+  assert(!context.fanfareRewardsHtml.includes('Reward splash art belongs'));
+  assert(!context.fanfareRewardsHtml.includes('art pending'));
+  assert(!context.fanfareRewardsHtml.includes('not yet assigned'));
+  assert(!context.fanfareRewardsHtml.includes('Stamp Cameo'));
+  assert(!context.fanfareRewardsHtml.includes('stamp_fanfare_cameo'));
   assert(context.fanfareRewardsHtml.includes('Tips'));
   assert(context.fanfareRewardsHtml.includes('+10'));
   assert(context.fanfareRewardsHtml.includes('Reputation'));

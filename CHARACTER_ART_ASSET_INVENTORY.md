@@ -19,7 +19,7 @@ share-card art.
 | `coach_recap_expression_pleased` | Coach Recap | Post-run Coach Recap card, positive result variant later | Support quietly impressed smooth-control feedback | Optional | Character-specific expression | Expression portrait | 4:5 | 1024x1280 | Match neutral framing so variants can swap without layout shift | Pleased, calm, professional | Show “Coach portrait not yet assigned” placeholder if missing | Mika asset integrated | No active-drive use |
 | `reward_unlock_card_art` | Reward/unlock popup | Future generic unlock card | Reward splash for cosmetics/stamps | Optional | Shared first, character-specific later | Card illustration | 16:9 | 1280x720 | Leave center safe for text if used as background | Cozy shop celebration | Show “Reward art pending” placeholder if missing | Mika asset integrated | Also supplies the current stamp fanfare cameo |
 | `crew_profile_card` | Delivery Crew screen | `#/crew`, character collection cards | Identify each crew character | MVP candidate | Character-specific | Vertical profile portrait | 4:5 | 800x1000 | Face/shoulders centered; safe crop to square if a future card needs it | Character identity portrait | Show “Crew portrait not yet assigned” placeholder if missing | Mika asset integrated | Best slot for character-specific set |
-| `stamp_fanfare_cameo` | Passport Stamp Fanfare | First stamp / future stamp dialog | Make stamp moments feel charming | Optional | Shared first, character-specific later | Reward splash cameo | 4:3 | 1200x900 | Keep character away from reward metrics | Cheerful but restrained | Show “Stamp cameo art pending” placeholder if missing | Mika uses reward splash | Parked/result-screen only |
+| `stamp_fanfare_cameo` | Future optional Passport Stamp cameo | Future stamp dialog variants | Optional cameo if a later fanfare needs portrait treatment | Optional | Shared first, character-specific later | Reward splash cameo | 4:3 | 1200x900 | Keep character away from reward metrics | Cheerful but restrained | Show compact fallback only if a future slot is missing | Mika uses reward splash | Current Stamp Celebration uses `reward_unlock_card_art` as one wide banner instead of this cameo card |
 | `share_card_cameo_optional` | Share-card preview | Result share card, if enabled later | Optional branded/share flavor | Optional, later | Shared first | Small portrait cameo | 1:1 | 768x768 | Must not obscure result text | Simple high-contrast cameo | Show “Share cameo art pending” placeholder if surfaced | Slot documented, art pending | Do not include location/speed/route cues |
 | `passport_stamp_detail_cameo` | Passport detail card | `#/shop`, Passport panel later | Add flavor to stamp details | Optional, later | Shared or stamp-specific | Small avatar/icon | 1:1 | 512x512 | Works beside stamp title | Stamp-office / shop counter tone | Use text-only stamp card until art exists | Documented only | Do not dump full catalog early |
 | `ledger_history_avatar` | Ledger/history card | `#/shop`, Ledger panel later | Identify who reported a local event | Optional, later | Shared or selected crew | Small avatar/icon | 1:1 | 512x512 | Readable at 40-56px | Quiet report avatar | Use no image or placeholder avatar | Documented only | Ledger remains supporting history |
@@ -68,8 +68,10 @@ frontend/nospill/images/
 
 All current Mika MVP image slots are implemented. Mika is the safe default character-art source for
 parked/result surfaces when no player-selected character has assigned art, so Coach Recap, Delivery
-Crew, result cameos, Tofu Shop assistant, and reward splash surfaces use real Mika art instead of
-missing-art copy. Future optional slots such as share-card, Passport-detail, Ledger, and
+Crew, result cameos, Tofu Shop assistant, Stamp Celebration, and reward splash surfaces use real Mika
+art instead of missing-art copy. Stamp Celebration renders `reward_unlock_splash.webp` as one wide
+16:9 fanfare image, not as a character cameo/debug card. Future optional slots such as share-card,
+Passport-detail, Ledger, and
 offline-progress art remain documented only.
 
 Replacement checklist:
