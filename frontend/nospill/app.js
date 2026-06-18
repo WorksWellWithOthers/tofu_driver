@@ -255,6 +255,7 @@ const DREAM_BUILD_NEXT_TARGET_COST = 250000;
 const DREAM_BUILD_EXHAUST_VALUE = 125000;
 const DREAM_BUILD_EXHAUST_SEAL_COST = 375000;
 const DREAM_BUILD_EXHAUST_SEAL_VALUE = 200000;
+const DREAM_BUILD_TOTAL_WORK_STAGES = 30;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -4752,6 +4753,72 @@ function nextDreamBuildExhaustWork(gameState) {
   if (dreamBuildWheelsLevel(state) < 3) return null;
   if (!state.shop.dreamBuild.exhaustPurchased) return dreamBuildExhaustWorkForLevel(0);
   return dreamBuildExhaustWorkForLevel(dreamBuildExhaustLevel(state));
+}
+
+function dreamBuildWheelsStatusLabel(level) {
+  if (level >= 5) return "Collector Finish";
+  if (level >= 4) return "Showpiece Fitment";
+  if (level >= 3) return "Balanced Fitment";
+  if (level >= 2) return "Polished Wheels";
+  if (level >= 1) return "Wheels Installed";
+  return "Not started";
+}
+
+function dreamBuildExhaustStatusLabel(level) {
+  if (level >= 5) return "Showcase Finish";
+  if (level >= 4) return "Heat Wrapped";
+  if (level >= 3) return "Tuned Note";
+  if (level >= 2) return "Sealed Joints";
+  if (level >= 1) return "Exhaust Fitted";
+  return "Not started";
+}
+
+function dreamBuildProgressVisible(gameState) {
+  const state = normalizeGameState(gameState);
+  return dreamBuildWheelsPurchased(state) || (coveredCarTeaserSeen(state) && dreamInvestmentTargetVisible(state));
+}
+
+function dreamBuildProgressSummary(gameState) {
+  const state = normalizeGameState(gameState);
+  const wheelsLevel = dreamBuildWheelsLevel(state);
+  const exhaustLevel = dreamBuildExhaustLevel(state);
+  const completed = clamp(wheelsLevel + exhaustLevel, 0, DREAM_BUILD_TOTAL_WORK_STAGES);
+  return {
+    completed,
+    total: DREAM_BUILD_TOTAL_WORK_STAGES,
+    percent: clampPercent(Math.round((completed / DREAM_BUILD_TOTAL_WORK_STAGES) * 100)),
+    wheelsLevel,
+    wheelsStatus: dreamBuildWheelsStatusLabel(wheelsLevel),
+    exhaustLevel,
+    exhaustStatus: dreamBuildExhaustStatusLabel(exhaustLevel),
+  };
+}
+
+function nextDreamBuildStep(gameState) {
+  const state = normalizeGameState(gameState);
+  const target = dreamInvestmentTargetProgress(state);
+  if (!target.purchased) {
+    return {
+      title: target.ready ? "Buy Wheels" : "Wheels Fund",
+      copy: target.ready
+        ? "Start the dream build with the first real part."
+        : "Save Cash from the shop to start the build.",
+      future: false,
+    };
+  }
+  const wheelsWork = nextDreamBuildWheelsWork(state);
+  if (wheelsWork) {
+    return { title: wheelsWork.title, copy: wheelsWork.copy, future: false };
+  }
+  const exhaustWork = nextDreamBuildExhaustWork(state);
+  if (exhaustWork) {
+    return { title: exhaustWork.buttonLabel, copy: exhaustWork.copy, future: false };
+  }
+  return {
+    title: "Tuned Note",
+    copy: "This step unlocks in a future Dream Garage pass. Keep growing Cash and Net Worth.",
+    future: true,
+  };
 }
 
 function buyDreamBuildWheels(gameState, options = {}) {
@@ -9535,8 +9602,8 @@ function nextBestAction(gameState, options = {}) {
       }
       return {
         type: "dream_investment_target",
-        title: "Next: Grow the shop for Tuned Note",
-        copy: "The next exhaust step comes later.",
+        title: "Next: Grow Cash for Tuned Note",
+        copy: "The next exhaust step comes in a future Dream Garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -10398,6 +10465,39 @@ function renderProjectCarValueCard(gameState) {
   });
 }
 
+function renderDreamBuildProgressCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!dreamBuildProgressVisible(state)) return "";
+  const progress = dreamBuildProgressSummary(state);
+  const nextStep = nextDreamBuildStep(state);
+  const projectValue = projectCarValueV1(state);
+  return renderIdleCard({
+    title: "Dream Build Progress",
+    status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
+    copy: "The project car is built one part at a time. More build tracks unlock later.",
+    extra: `
+      <div class="nospill-afford-progress">
+        <div
+          class="nospill-afford-progress-bar"
+          role="progressbar"
+          aria-label="Dream Build Progress"
+          aria-valuemin="0"
+          aria-valuemax="${progress.total}"
+          aria-valuenow="${progress.completed}"
+        >
+          <span style="width: ${progress.percent}%"></span>
+        </div>
+        <small>Wheels · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
+        <small>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
+        <small>Next Dream Step: ${escapeHtml(nextStep.title)}${nextStep.future ? " · future" : ""}</small>
+        <small>${escapeHtml(nextStep.copy)}</small>
+        <small>Project Car Value: ${escapeHtml(formatCashCount(projectValue))}. Net Worth includes Cash + Tofu Business Value + Project Car Value.</small>
+      </div>
+    `,
+  });
+}
+
 function dreamInvestmentReturningNote(gameState) {
   const state = normalizeGameState(gameState);
   if (!dreamInvestmentTargetVisible(state)) return "";
@@ -10407,6 +10507,12 @@ function dreamInvestmentReturningNote(gameState) {
     if (work && cashBalance(state) >= work.cost) return `Dream Build work is ready: ${work.title}`;
     const exhaustWork = nextDreamBuildExhaustWork(state);
     if (exhaustWork && cashBalance(state) >= exhaustWork.cost) return `Dream Build work is ready: ${exhaustWork.title}`;
+    if (dreamBuildProgressVisible(state)) {
+      const progress = dreamBuildProgressSummary(state);
+      const nextStep = nextDreamBuildStep(state);
+      if (nextStep.future) return `Next Dream Step: ${nextStep.title}, future.`;
+      return `Dream Build: ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages complete.`;
+    }
     return "Wheels are installed";
   }
   if (target.ready) return "The Wheels Fund is ready";
@@ -10780,13 +10886,14 @@ function nextMilestoneForShop(gameState) {
         };
       }
       const nextTarget = dreamBuildNextTargetProgress(state);
+      const buildProgress = dreamBuildProgressSummary(state);
       return {
-        id: "dream_target_tuned_note",
-        name: "Tuned Note",
-        progressText: `${formatCash(nextTarget.current)} / ${formatCash(nextTarget.required)} Cash`,
-        percent: nextTarget.percent,
-        reward: "Next Dream Target preview",
-        guidance: "Exhaust work is complete for now. Tuned Note is target-only; full Dream Garage comes later.",
+        id: "dream_build_progress",
+        name: "Dream Build Progress",
+        progressText: `${formatShopCount(buildProgress.completed)} / ${formatShopCount(buildProgress.total)} work stages`,
+        percent: buildProgress.percent || nextTarget.percent,
+        reward: "First project car path",
+        guidance: "Next Dream Step: Tuned Note. Future Dream Garage work; keep growing Cash.",
       };
     }
     return {
@@ -10945,6 +11052,7 @@ function renderOverviewPanel(state) {
       ${renderCounterServiceCard(state)}
       ${renderCoveredCarTeaserCard(state)}
       ${renderDreamInvestmentTargetCard(state)}
+      ${renderDreamBuildProgressCard(state)}
       ${renderProjectCarValueCard(state)}
       ${renderNetWorthCard(state)}
       ${renderRecentShopRewardCard(state)}

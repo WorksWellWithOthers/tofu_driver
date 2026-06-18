@@ -356,6 +356,9 @@ Examples:
 - Exhaust Purchase + Work Level V1 proves the second part track with Exhaust Fitted and Sealed
   Joints. Future car parts reduce Cash but may increase Car Asset Value and unlock future
   opportunities.
+- Dream Build Progress V1 summarizes current build completion as work stages. The planned V1 build
+  size is 30 stages: six part tracks times five levels. Current implemented stages are Wheels
+  levels 1-3 and Exhaust levels 1-2.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -1438,6 +1441,20 @@ Implemented Exhaust Purchase + Work Level V1:
 | 3 | Tuned Note | future | future | Target-only/future |
 | 4 | Heat Wrapped | future | future | Documented only |
 | 5 | Showcase Finish | future | future | Documented only |
+
+Dream Build Progress V1:
+
+| Progress Input | Implemented Runtime Contribution |
+| --- | --- |
+| Wheels Level | `0-3` current runtime stages |
+| Exhaust Level | `0-2` current runtime stages |
+| Suspension | future locked track |
+| Brakes | future locked track |
+| Turbo Kit | future locked track |
+| Stage Tune | future locked track |
+
+The progress denominator is `30` planned work stages. After Balanced Fitment and Sealed Joints, the
+current implemented maximum is `5 / 30`. Tuned Note remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
 

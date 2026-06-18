@@ -66,6 +66,7 @@ or car assets.
 | First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, and starts `$25K Project Car Value` without a Dream Garage tab or full parts inventory. |
 | Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Project Car Value to `$65K`; Balanced Fitment costs `$150K` and raises Project Car Value to `$150K`; levels 4-5 remain future. |
 | Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Project Car Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note remains future/target-only. |
+| Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level against `30` planned work stages; current maximum is `5 / 30`; future tracks remain locked/deferred. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
 | Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Project Car Value. Full valuation remains future. |
 
@@ -172,6 +173,8 @@ Current code status:
   Car Value totals are `$65K` and `$150K` respectively.
 - Exhaust Purchase + Work Level V1 implements level 1 Exhaust Fitted and level 2 Sealed Joints.
   Combined Project Car Value totals are `$275K` and `$475K` respectively.
+- Dream Build Progress V1 shows the project as `30` planned work stages. Current implemented stages
+  are Wheels levels 1-3 and Exhaust levels 1-2.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 
@@ -199,8 +202,8 @@ budgets, and any Car Asset Value-facing accounting.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
 7. Playtest First Dream Build Investment Purchase V1: verify the `$50K` Wheels purchase and `$25K`
    Project Car Value tradeoff are clear without feeling like full Dream Garage.
-8. Playtest Wheels Work Levels V1 and Exhaust Purchase + Work Level V1 before any broader part
-   system. Parts should be purchased once, then improved through levels.
+8. Playtest Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream Build Progress V1
+   before any broader part system. Parts should be purchased once, then improved through levels.
 9. Keep Tuned Note target-only until Exhaust levels 1-2 prove the second part track.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.

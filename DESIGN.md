@@ -449,6 +449,10 @@ Design rules:
   future.
 - Exhaust V1 implements Exhaust Fitted and Sealed Joints. Tuned Note, Heat Wrapped, and Showcase
   Finish remain future/target-only.
+- Dream Build Progress V1 summarizes the project as `6 parts x 5 levels = 30 work stages`.
+  Current runtime progress is Wheels level plus Exhaust level; the implemented maximum is `5 / 30`
+  after Balanced Fitment and Sealed Joints. Suspension, Brakes, Turbo Kit, Stage Tune, Tuned Note,
+  completed-build events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -512,6 +516,17 @@ Implemented Exhaust V1 values:
 
 Wheels levels 4-5, Exhaust levels 3-5, full Dream Garage, completed-build events, Auction,
 Showcase, and Collector Offer remain future.
+
+Dream Build Progress V1:
+
+```text
+Dream Build Progress = Wheels Level + Exhaust Level + future part levels
+Planned build size = 6 parts x 5 levels = 30 work stages
+```
+
+The progress card may show current Wheels and Exhaust labels, the next dream step, Project Car
+Value, and a compact note that more build tracks unlock later. It must not add future part purchase
+buttons or a Dream Garage tab.
 
 Avoid:
 

@@ -152,6 +152,9 @@
   and adds `$125K Project Car Value`; Seal Joints costs `$375K Cash` and adds another `$200K`.
   Tuned Note remains target-only/future, with no Dream Garage tab, full parts inventory, completed
   build events, or full valuation.
+- Dream Build Progress V1 is implemented as a compact Overview card. It counts current work stages
+  as Wheels Level plus Exhaust Level against a planned `30` stage build, shows current Wheels and
+  Exhaust labels, points to the next dream step, and keeps future tracks locked/deferred.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -214,10 +217,11 @@ Canonical references:
 9. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
-10. Playtest First Dream Build Investment Purchase V1 and Exhaust Purchase + Work Level V1: confirm
-   the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden until Wheels level 3, Buy
-   Exhaust appears only when affordable and stable, Project Car Value totals stay clear, Tuned Note
-   remains target-only, and urgent shop bottlenecks still win.
+10. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream
+   Build Progress V1: confirm the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden
+   until Wheels level 3, Buy Exhaust appears only when affordable and stable, Project Car Value and
+   `5 / 30` progress totals stay clear, Tuned Note remains target-only, and urgent shop bottlenecks
+   still win.
 11. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
@@ -270,11 +274,13 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
-1. Verify Wheels purchase V1, Wheels Work Levels V1, and Exhaust Purchase + Work Level V1:
+1. Verify Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream
+   Build Progress V1:
    `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
-   Fitted, `$375K` Sealed Joints, Project Car Value totals, persistence, and priority rules.
+   Fitted, `$375K` Sealed Joints, `5 / 30` progress, Project Car Value totals, persistence, and
+   priority rules.
 2. Playtest whether the next slice should add Tuned Note or return to Wheels levels 4-5.
-3. Add Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
+3. Refine Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
 4. Refine Project Car Value from part work levels after the first two tracks feel clear.
 5. Design the first completed-build event threshold and event choice requirements.
 6. Later implement Keep / Show / Auction choice only after part progression is proven.
