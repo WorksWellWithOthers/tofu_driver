@@ -360,9 +360,9 @@ Current design principles:
   implementation. Next Milestone may point to it once; after it is seen, normal shop progression
   resumes.
 - After the covered-car teaser is unlocked/seen, the shop may show `First Dream Investment`, a
-  compact Wheels Fund target. V1 target cost is `$50K Cash`. This is only a visible saving target
-  and future bridge: it does not buy wheels, create car-part inventory, add Car Asset Value, change
-  Net Worth V1, or open a Dream Garage tab.
+  compact Wheels Fund target. The first Dream Build purchase is Wheels: it costs `$50K Cash`,
+  subtracts Cash, persists locally, and starts `$25K Project Car Value`. It does not open a Dream
+  Garage tab or create a full car-parts inventory.
 - Detailed tabs are earned. The Orders tab is removed from the first-loop shop because Overview
   owns order cards, Prep Counter progress, reward previews, and fulfillment actions. Production
   should focus on station ownership, and Upgrades should appear only when at least one relevant
@@ -435,11 +435,12 @@ Design rules:
 - Dream Garage is the long-term aspirational layer.
 - The player slowly builds a project car from an old covered car into a dream build.
 - Car parts should cost Cash, not a separate part currency.
-- The first implemented car-related bridge is the Wheels Fund target: save `$50K Cash` after the
-  covered-car teaser to show what the shop is funding. It is not a part purchase yet.
+- The first implemented car-related purchase is Wheels: save `$50K Cash` after the covered-car
+  teaser, then spend it to start the project car with `$25K Project Car Value`. The next target is
+  Exhaust as a future-only preview; no Buy Exhaust action exists yet.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
-  toward the $1T target, but can increase Car Asset Value, unlock higher earning paths, or create
-  later sell/keep decisions.
+  toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
+  earning paths, or create later sell/keep decisions.
 - The car-build layer is fictional game progression.
 - Fictional closed-course events are asynchronous parked game events, not instructions to drive in
   real life.
@@ -496,11 +497,13 @@ Current Net Worth V1 uses a deliberately small model:
 Net Worth V1 =
   Cash
   + Tofu Business Value
+  + Project Car Value
 ```
 
 `Tofu Business Value` is a deterministic local estimate from station ownership, purchased shop
 upgrades, supplier/manager systems, shop level/reputation, and earning power after the shop has
-earned money. It is not a full valuation system and does not include car asset value, garage value,
+earned money. `Project Car Value` is V1-only purchased Dream Build value; currently Wheels add
+`$25K`. This is not a full valuation system and does not include resale, depreciation, garage value,
 future company value, or liabilities yet.
 
 Conceptual accounting model:

@@ -15,9 +15,9 @@
   level the driver, and Driver Level never changes Cup Test scoring or qualification.
 - Cash economy V1 is implemented. Player-facing shop money is Cash; order payouts may still use
   tips as flavor (`+$10 from tips`). The legacy save field remains `shop.tips` for compatibility.
-- Net Worth V1 is implemented as a compact later-game progress model: `Cash + Tofu Business Value`
-  toward `$1T Net Worth`. Full asset valuation, car asset value, garage value, company value, and
-  liabilities remain future.
+- Net Worth V1 is implemented as a compact later-game progress model:
+  `Cash + Tofu Business Value + Project Car Value` toward `$1T Net Worth`. Full asset valuation,
+  garage value, company value, and liabilities remain future.
 - Basic Mode uses device motion only and does not request location.
 - Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
   iOS Safari keeps the `Start & Calibrate` user gesture and avoids false permission-denied states.
@@ -145,16 +145,16 @@
   card. It unlocks after the shop has reached Manager Desk scale with Wholesale Pickup progress,
   not during the first loop, and it does not add a Dream Garage tab, garage inventory, parts,
   events, full asset valuation, or car stats.
-- First Dream Investment Target V1 is implemented as a compact Wheels Fund card after the
-  covered-car teaser or high-progress qualifying saves. The V1 target is `$50K Cash`; it shows
-  progress and readiness only, with no Buy Wheels button, part ownership, Car Asset Value, or Net
-  Worth formula change.
+- First Dream Build Investment Purchase V1 is implemented as a compact Wheels Fund card after the
+  covered-car teaser or high-progress qualifying saves. Wheels cost `$50K Cash`, subtract Cash,
+  persist locally, and start `$25K Project Car Value`. Exhaust is shown only as the next target,
+  with no Buy Exhaust button, Dream Garage tab, full parts inventory, or full valuation.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
-- Ultimate Net Worth has a V1 shop-era progress model: Cash plus Tofu Business Value can appear
-  after later shop milestones. Dream Garage asset value, business/franchise/car-company layers, and
-  aerospace/space layers are still future direction only.
+- Ultimate Net Worth has a V1 progress model: Cash plus Tofu Business Value plus Project Car Value
+  can appear after later shop milestones. Dream Garage full asset value, business/franchise/
+  car-company layers, and aerospace/space layers are still future direction only.
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
@@ -211,9 +211,10 @@ Canonical references:
 9. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
-10. Playtest First Dream Investment Target V1: confirm the `$50K` Wheels Fund is hidden on fresh
-   saves, appears only after the covered-car bridge or qualifying high-progress saves, does not feel
-   instantly complete for normal saves, and yields to urgent shop bottlenecks.
+10. Playtest First Dream Build Investment Purchase V1: confirm the `$50K` Wheels Fund is hidden on
+   fresh saves, appears only after the covered-car bridge or qualifying high-progress saves, Buy
+   Wheels appears only when affordable and stable, `$25K Project Car Value` is clear after purchase,
+   Exhaust remains target-only, and urgent shop bottlenecks still win.
 11. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.

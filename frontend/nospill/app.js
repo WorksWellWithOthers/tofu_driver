@@ -246,6 +246,8 @@ const NET_WORTH_GOAL = 1000000000000;
 const DREAM_INVESTMENT_TARGET_COST = 50000;
 const DREAM_INVESTMENT_TARGET_LABEL = "Wheels";
 const DREAM_INVESTMENT_FUND_LABEL = "Wheels Fund";
+const DREAM_BUILD_WHEELS_VALUE = 25000;
+const DREAM_BUILD_NEXT_TARGET_COST = 250000;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -2699,6 +2701,10 @@ function defaultShopState() {
     coveredCarTeaserUnlocked: false,
     coveredCarTeaserSeen: false,
     coveredCarTeaserFeedbackShown: false,
+    dreamBuild: {
+      wheelsPurchased: false,
+      firstInvestmentPurchasedAt: "",
+    },
     lifetimeReputation: 0,
     lifetimeShopXP: 0,
     lifetimeRoutesCompleted: 0,
@@ -2779,6 +2785,16 @@ function normalizeCounterService(counterService) {
     lastHandoffAt: typeof source.lastHandoffAt === "string" ? source.lastHandoffAt : "",
     lastResult: typeof source.lastResult === "string" ? source.lastResult.slice(0, 180) : "",
     lifetimeHandoffs: safeNonNegativeInteger(source.lifetimeHandoffs, 0, 1000000),
+  };
+}
+
+function normalizeDreamBuild(dreamBuild) {
+  const source = dreamBuild && typeof dreamBuild === "object" ? dreamBuild : {};
+  return {
+    wheelsPurchased: Boolean(source.wheelsPurchased),
+    firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
+      ? source.firstInvestmentPurchasedAt.slice(0, 40)
+      : "",
   };
 }
 
@@ -2886,6 +2902,7 @@ function normalizeShopState(shop) {
     coveredCarTeaserUnlocked: Boolean(source.coveredCarTeaserUnlocked),
     coveredCarTeaserSeen: Boolean(source.coveredCarTeaserSeen),
     coveredCarTeaserFeedbackShown: Boolean(source.coveredCarTeaserFeedbackShown),
+    dreamBuild: normalizeDreamBuild(source.dreamBuild),
     lifetimeReputation: Math.max(
       reputation,
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
@@ -4552,7 +4569,11 @@ function tofuBusinessValue(gameState) {
 
 function netWorthV1(gameState) {
   const state = normalizeGameState(gameState);
-  return safeNonNegativeInteger(cashBalance(state) + tofuBusinessValue(state), 0, SHOP_MAX_RESOURCE);
+  return safeNonNegativeInteger(
+    cashBalance(state) + tofuBusinessValue(state) + projectCarValueV1(state),
+    0,
+    SHOP_MAX_RESOURCE,
+  );
 }
 
 function netWorthProgress(gameState) {
@@ -4571,9 +4592,22 @@ function shouldShowNetWorthV1(gameState) {
     || safeNonNegativeInteger(state.shop.shopLevel, 0, 100000) >= 100;
 }
 
+function dreamBuildWheelsPurchased(gameState) {
+  return Boolean(normalizeGameState(gameState).shop.dreamBuild.wheelsPurchased);
+}
+
+function dreamBuildInvestmentStarted(gameState) {
+  return dreamBuildWheelsPurchased(gameState);
+}
+
+function projectCarValueV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return state.shop.dreamBuild.wheelsPurchased ? DREAM_BUILD_WHEELS_VALUE : 0;
+}
+
 function dreamInvestmentTargetVisible(gameState) {
   const state = normalizeGameState(gameState);
-  return coveredCarTeaserSeen(state) || coveredCarTeaserUnlocked(state);
+  return dreamBuildInvestmentStarted(state) || coveredCarTeaserSeen(state) || coveredCarTeaserUnlocked(state);
 }
 
 function dreamInvestmentTargetProgress(gameState) {
@@ -4587,6 +4621,40 @@ function dreamInvestmentTargetProgress(gameState) {
     required: progress.required,
     percent: progress.percent,
     ready: cashBalance(state) >= DREAM_INVESTMENT_TARGET_COST,
+    purchased: dreamBuildWheelsPurchased(state),
+  };
+}
+
+function dreamBuildNextTargetProgress(gameState) {
+  return nextMilestoneProgress(0, DREAM_BUILD_NEXT_TARGET_COST);
+}
+
+function buyDreamBuildWheels(gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  if (!dreamInvestmentTargetVisible(next) || !coveredCarTeaserSeen(next)) {
+    return { ok: false, reason: "Look behind the shop before starting the Dream Build.", gameState: next };
+  }
+  if (next.shop.dreamBuild.wheelsPurchased) {
+    return { ok: false, reason: "Wheels are already installed.", gameState: next };
+  }
+  if (cashBalance(next) < DREAM_INVESTMENT_TARGET_COST) {
+    return { ok: false, reason: `Need ${formatCash(DREAM_INVESTMENT_TARGET_COST)} Cash for Wheels.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - DREAM_INVESTMENT_TARGET_COST, 0, SHOP_MAX_RESOURCE);
+  next.shop.dreamBuild.wheelsPurchased = true;
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  next.shop.dreamBuild.firstInvestmentPurchasedAt = Number.isFinite(nowMs)
+    ? new Date(nowMs).toISOString()
+    : new Date().toISOString();
+  next.shop.counterService.lastResult = "Dream Build started: Wheels installed.";
+  return {
+    ok: true,
+    reason: "",
+    feedback: "Dream Build started: Wheels installed.",
+    gameState: addLedgerEntry(next, "story", "Dream Build started: Wheels installed."),
   };
 }
 
@@ -9247,13 +9315,22 @@ function nextBestAction(gameState, options = {}) {
   }
   if (shopUnlocked && dreamInvestmentTargetVisible(state) && !urgentShopPriorityBeforeDreamInvestment(state)) {
     const target = dreamInvestmentTargetProgress(state);
+    if (target.purchased) {
+      return {
+        type: "dream_investment_target",
+        title: "Next: Grow the Shop",
+        copy: "Wheels are installed. Exhaust is the next Dream Target, but full Dream Garage comes later.",
+        buttonLabel: "View Dream Target",
+        disabled: false,
+      };
+    }
     return {
-      type: "dream_investment_target",
-      title: target.ready ? "Next: Dream Investment Ready" : "Next: Save for Wheels",
+      type: target.ready ? "buy_dream_wheels" : "dream_investment_target",
+      title: target.ready ? "Next: Buy Wheels" : "Next: Grow Cash for Wheels",
       copy: target.ready
-        ? "The Wheels Fund is ready. Full car building comes in a future update, so keep the shop healthy for now."
-        : `The covered car needs its first real part later. Wheels Fund: ${formatCash(target.current)} / ${formatCash(target.required)} Cash.`,
-      buttonLabel: "View Wheels Fund",
+        ? "Start the dream build with the first real part."
+        : "The shop is funding the first Dream Build investment.",
+      buttonLabel: target.ready ? "Buy Wheels" : "View Wheels Fund",
       disabled: false,
     };
   }
@@ -9945,13 +10022,42 @@ function renderDreamInvestmentTargetCard(gameState) {
   const state = normalizeGameState(gameState);
   if (!dreamInvestmentTargetVisible(state)) return "";
   const target = dreamInvestmentTargetProgress(state);
+  const purchased = target.purchased;
   const percent = clampPercent(target.percent);
   const progressText = `${formatCashCount(target.current)} / ${formatCashCount(target.required)}`;
+  if (purchased) {
+    const nextTarget = dreamBuildNextTargetProgress(state);
+    return renderIdleCard({
+      title: "Wheels Installed",
+      status: "Project Car Value started",
+      copy: "The covered car finally looks like a project. Cash went down, Project Car Value began, and future opportunities unlock later.",
+      extra: `
+        <div class="nospill-afford-progress">
+          <div class="nospill-afford-progress-head">
+            <span>Next Dream Target: Exhaust</span>
+            <strong>${escapeHtml(`${formatCashCount(nextTarget.current)} / ${formatCashCount(nextTarget.required)}`)}</strong>
+          </div>
+          <div
+            class="nospill-afford-progress-bar"
+            role="progressbar"
+            aria-label="Exhaust Fund progress"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            aria-valuenow="${nextTarget.percent}"
+          >
+            <span style="width: ${nextTarget.percent}%"></span>
+          </div>
+          <small>Exhaust Fund · Full Dream Garage comes later.</small>
+        </div>
+      `,
+      actions: [],
+    });
+  }
   return renderIdleCard({
     title: "First Dream Investment",
-    status: target.ready ? "Ready" : target.fundLabel,
+    status: target.ready ? "Wheels Ready" : target.fundLabel,
     copy: target.ready
-      ? "Ready for the first Dream Build investment. Full car building comes in a future update."
+      ? "Cash goes down now. Project Car Value begins. Future opportunities unlock later."
       : "The covered car needs its first real part. Save Cash from the shop to start the build.",
     extra: `
       <div class="nospill-afford-progress">
@@ -9969,11 +10075,24 @@ function renderDreamInvestmentTargetCard(gameState) {
         >
           <span style="width: ${percent}%"></span>
         </div>
-        <small>${formatShopCount(percent)}% · Car parts come later. For now, the shop is building the fund.</small>
-        <small>Cash can be saved, spent, or invested into assets later. Net Worth V1 stays Cash + Tofu Business Value.</small>
+        <small>${formatShopCount(percent)}% · ${target.ready ? "Start the dream build with the first real part." : "Save Cash from the shop to start the build."}</small>
+        <small>Cash can be saved, spent, or invested into assets later. Net Worth V1 includes Cash + Tofu Business Value + Project Car Value.</small>
       </div>
     `,
-    actions: [],
+    actions: target.ready && coveredCarTeaserSeen(state)
+      ? [actionButton("Buy Wheels", "data-dream-build-action", "buy-wheels", false, "nospill-primary")]
+      : [],
+  });
+}
+
+function renderProjectCarValueCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const value = projectCarValueV1(gameState);
+  if (value < 1) return "";
+  return renderIdleCard({
+    title: "Project Car Value",
+    status: formatCashCount(value),
+    copy: "Wheels started the project car. Full Dream Garage and car-part systems come later.",
   });
 }
 
@@ -9981,6 +10100,7 @@ function dreamInvestmentReturningNote(gameState) {
   const state = normalizeGameState(gameState);
   if (!dreamInvestmentTargetVisible(state)) return "";
   const target = dreamInvestmentTargetProgress(state);
+  if (target.purchased) return "Wheels are installed";
   if (target.ready) return "The Wheels Fund is ready";
   return `You are ${formatShopCount(target.percent)}% of the way to the Wheels Fund`;
 }
@@ -9991,11 +10111,12 @@ function renderNetWorthCard(gameState) {
   if (!shouldShowNetWorthV1(state)) return "";
   const progress = netWorthProgress(state);
   const businessValue = tofuBusinessValue(state);
+  const projectValue = projectCarValueV1(state);
   const percent = Math.max(0.01, Math.min(100, progress.percent));
   return renderIdleCard({
     title: "Net Worth",
     status: `${formatCashCount(progress.current)} toward $1T`,
-    copy: `Cash + Tofu Business Value (${formatCashCount(businessValue)}). Cash can be spent now or invested into assets that may grow Net Worth later.`,
+    copy: `Cash + Tofu Business Value (${formatCashCount(businessValue)}) + Project Car Value (${formatCashCount(projectValue)}). Cash can be spent now or invested into assets that may grow Net Worth later.`,
     extra: `
       <div class="nospill-afford-progress">
         <div class="nospill-afford-progress-head">
@@ -10321,16 +10442,27 @@ function nextMilestoneForShop(gameState) {
 
   if (dreamInvestmentTargetVisible(state) && !urgentShopPriorityBeforeDreamInvestment(state)) {
     const target = dreamInvestmentTargetProgress(state);
+    if (target.purchased) {
+      const nextTarget = dreamBuildNextTargetProgress(state);
+      return {
+        id: "dream_target_exhaust",
+        name: "Exhaust Fund",
+        progressText: `${formatCash(nextTarget.current)} / ${formatCash(nextTarget.required)} Cash`,
+        percent: nextTarget.percent,
+        reward: "Next Dream Target preview",
+        guidance: "Wheels are installed. Exhaust is target-only; full Dream Garage comes later.",
+      };
+    }
     return {
-      id: target.ready ? "dream_investment_ready" : "dream_investment_wheels",
-      name: target.ready ? "Dream Investment Ready" : "Save for Wheels",
+      id: target.ready ? "dream_investment_buy_wheels" : "dream_investment_wheels",
+      name: target.ready ? "Buy Wheels" : "Save for Wheels",
       progressText: target.ready
-        ? "The Wheels Fund is ready"
+        ? "Wheels Fund is ready"
         : `${formatCash(target.current)} / ${formatCash(target.required)} Cash`,
       percent: target.percent,
-      reward: "First Dream Build investment target",
+      reward: target.ready ? "First Dream Build investment" : "First Dream Build investment target",
       guidance: target.ready
-        ? "The Wheels Fund is ready. Full car building comes later."
+        ? "Spend Cash on Wheels to start Project Car Value."
         : "Save Cash from the shop for the first visible project-car target.",
     };
   }
@@ -10477,6 +10609,7 @@ function renderOverviewPanel(state) {
       ${renderCounterServiceCard(state)}
       ${renderCoveredCarTeaserCard(state)}
       ${renderDreamInvestmentTargetCard(state)}
+      ${renderProjectCarValueCard(state)}
       ${renderNetWorthCard(state)}
       ${renderRecentShopRewardCard(state)}
       ${renderDriverBonusCard(state)}
@@ -12296,6 +12429,24 @@ function handleCounterServiceAction(action) {
   setSummaryStatusMessage(appState.shopInlineResult);
 }
 
+function handleBuyDreamBuildWheels() {
+  const result = buyDreamBuildWheels(currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShopUpgradeClick(event) {
   const button = event.target && event.target.closest
     ? event.target.closest("[data-shop-upgrade]")
@@ -12358,6 +12509,10 @@ function handleTofuShopPanelClick(event) {
   if (target.dataset.surfaceTarget) {
     setAppSurface(target.dataset.surfaceTarget, { updateHash: true, scroll: true, trackNav: true });
     renderGamePanels(currentGameState());
+    return;
+  }
+  if (target.dataset.dreamBuildAction === "buy-wheels") {
+    handleBuyDreamBuildWheels();
     return;
   }
   if (target.id === "export-progress-button") {
@@ -12846,6 +13001,10 @@ function handleNextBestAction() {
     handleCounterServiceAction("start");
     return;
   }
+  if (actionType === "buy_dream_wheels") {
+    handleBuyDreamBuildWheels();
+    return;
+  }
   if (actionType === "continue_shop" || actionType === "watch_starter_shop") {
     setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
     setSummaryStatusMessage(actionType === "watch_starter_shop"
@@ -12866,7 +13025,7 @@ function handleNextBestAction() {
     setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
     appState.shopTab = "overview";
     renderGamePanels(currentGameState());
-    setSummaryStatusMessage("The Wheels Fund is a target only. Full car building comes later.");
+    setSummaryStatusMessage("Review the Dream Build target. Full Dream Garage comes later.");
     return;
   }
   if (actionType === "active_drive") return;

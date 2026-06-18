@@ -40,7 +40,7 @@ kept out of the primary Tofu Garage loop.
 | Manager Desk | Managed-shop layer | high Reputation and shop level | batch/queue upgrades | turn queue pressure into throughput | after Counter Crew/Catering scale | maxed Counter Service plateau | future franchise only later | meaningful V1 |
 | Wholesale Pickup | Capped managed queue clearing | Manager Desk upgrade | consumes scalar orders/stock | clear full queue without per-order objects | after Hire Shift Manager | order queue cap | Covered Car teaser, future manager economy | meaningful V1 |
 | Covered Car / Dream Build Teaser | Parked story/status carrot | Manager Desk scale and Wholesale Pickup progress | seen/acknowledged state only | understand that the shop funds the dream | after managed shop proves itself | motivation after the first shop layer | future Dream Garage planning | implemented story/status only |
-| First Dream Investment Target | Wheels Fund progress card toward `$50K Cash` | Cash from Tofu Shop orders and shop automation | no spend in V1; future car-part investment later | decide whether to keep saving Cash while maintaining shop bottlenecks | after covered-car teaser or qualifying high-progress save | answers what Cash is for after the teaser | future Dream Garage / first part purchase design | meaningful target only |
+| First Dream Build Investment | Wheels Fund purchase at `$50K Cash` | Cash from Tofu Shop orders and shop automation | subtracts Cash and starts `$25K Project Car Value` | decide whether to buy the first project-car step or keep growing the shop | after covered-car teaser and stable shop state | answers what Cash is for after the teaser | Exhaust target preview, future Dream Garage design | meaningful V1 purchase |
 | Passport Stamps | Local status/milestone layer | shop and Cup Test milestones | collection/progress feedback | pursue short-term proof | first stamp | lack of direction | later achievement layers | meaningful |
 | Driver Bonus | Small capped shop Reputation bonus | Delivery Driver level from Cup Test | order Reputation multiplier | Cup Test status helps shop lightly | driver level threshold | connection between modes | status identity | meaningful, capped |
 | Delivery Crew placeholder | Cosmetic/collection surface | unlocked/selected character art | parked art/cosmetic selection | choose identity later | nav surface | avoids dead nav | future crew stories | placeholder, not gameplay |
@@ -69,21 +69,21 @@ Starter shop -> Counter Service -> Station Milestones -> Supplier Contracts -> M
 Current latest unfold:
 
 ```text
-Covered Car / Dream Build Teaser V1 -> First Dream Investment Target V1.
+Covered Car / Dream Build Teaser V1 -> First Dream Build Investment Purchase V1.
 ```
 
 Later:
 
 ```text
-Dream Garage planning -> first real car-part purchase -> keep/sell decision -> full Net Worth accounting.
+Exhaust target preview -> Dream Garage planning -> broader car-part purchase loop -> keep/sell decision -> full Net Worth accounting.
 ```
 
 Avoid for now:
 
 ```text
-full asset valuation, Car Asset Value, company value, separate dollar balances, shares as the main
-target, Buy Wheels / car-part ownership in V1, routes expansion, crew gameplay, franchise mode,
-social systems, backend sync, multiplayer, payments, service workers, uploads, or network calls.
+full asset valuation, company value, separate dollar balances, shares as the main target, Buy
+Exhaust / full car-part inventory in V1, routes expansion, crew gameplay, franchise mode, social
+systems, backend sync, multiplayer, payments, service workers, uploads, or network calls.
 ```
 
 ## Risks / Anti-Patterns
