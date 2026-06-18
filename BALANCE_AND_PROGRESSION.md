@@ -436,6 +436,14 @@ Design rules:
   or other scalable supply upgrades before manual packing
 - maxed upgrades show `Maxed`, current effect, and no buy button/cost/no-op before-after preview
 - route-related upgrades remain hidden or locked until route systems are meaningful
+- bulk buying is a quality-of-life layer, not progression expansion. `Buy Cheapest` and `Buy All`
+  should buy only visible, unlocked, meaningful, non-maxed station or upgrade items. Bulk buying
+  must ignore hidden/future systems, route scaffolding, and decorative placeholders.
+- affordability progress should show the limiting resource and a compact ETA only when the relevant
+  income rate is positive. If income is blocked, show the blocker instead of a fake timer.
+- offline return summaries may show up to three suggested next actions, prioritizing management
+  decisions such as a useful bulk buy, Counter Service, Supplier Contracts, or queue clearing over
+  Manual Backup.
 
 ### Order Size Ladder
 

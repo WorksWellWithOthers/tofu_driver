@@ -93,6 +93,8 @@ The static app uses hash routing:
 - `TOFU_GARAGE_PERFORMANCE_AUDIT.md`: high-scale idle-game performance audit covering scalar
   resources, compact formatting, coalesced rendering, aggregate offline progress, queue/history
   caps, and the deferred BigNumber/mantissa-exponent strategy
+- `TOFU_GARAGE_UNFOLD_AUDIT.md`: meaningful-unfold audit for current Tofu Garage resources,
+  bulk-buy quality-of-life rules, affordability progress, and deferred/future system boundaries
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /

@@ -140,6 +140,14 @@ globalThis.clearNewlyRevealedTab = clearNewlyRevealedTab;
 globalThis.queueStoryBeatTeaser = queueStoryBeatTeaser;
 globalThis.buyShopStation = buyShopStation;
 globalThis.buyStationUpgrade = buyStationUpgrade;
+globalThis.buyBulkShopItems = buyBulkShopItems;
+globalThis.validBulkUpgradeCandidates = validBulkUpgradeCandidates;
+globalThis.validBulkStationCandidates = validBulkStationCandidates;
+globalThis.affordabilityProgress = affordabilityProgress;
+globalThis.upgradeAffordabilityStatus = upgradeAffordabilityStatus;
+globalThis.stationAffordabilityStatus = stationAffordabilityStatus;
+globalThis.returningPlayerSuggestedActions = returningPlayerSuggestedActions;
+globalThis.shopUpgradeById = shopUpgradeById;
 globalThis.stationUpgradeCostReputation = stationUpgradeCostReputation;
 globalThis.supplierStockPerSecond = supplierStockPerSecond;
 globalThis.nextSupplierUpgrade = nextSupplierUpgrade;
@@ -4546,8 +4554,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260617c'));
-  assert(html.includes('/static/nospill/app.css?v=20260617c'));
+  assert(html.includes('/static/nospill/app.js?v=20260617d'));
+  assert(html.includes('/static/nospill/app.css?v=20260617d'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -4811,6 +4819,139 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert(context.managerUpgradeHtml.includes('Hire Shift Manager'));
   assert(context.managerUpgradeHtml.includes('Tips + 1M Reputation'));
   assert(context.managerUpgradeHtml.includes('Opens Manager Desk scale'));
+}
+
+function testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit() {
+  assert(fs.existsSync(path.join(ROOT, 'TOFU_GARAGE_UNFOLD_AUDIT.md')));
+  const audit = fs.readFileSync(path.join(ROOT, 'TOFU_GARAGE_UNFOLD_AUDIT.md'), 'utf8');
+  ['Tofu Stock', 'Delivery Orders', 'Counter Service', 'Supplier Contracts', 'Manager Desk', 'Wholesale Pickup'].forEach((term) => {
+    assert(audit.includes(term));
+  });
+
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const state = context.defaultGameState();
+  state.shop.tips = 200;
+  state.shop.tofuStock = 100;
+  state.shop.deliveryOrders = 3;
+  state.shop.lifetimeDeliveryOrders = 3;
+  state.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+
+  const cheapestUpgrade = context.buyBulkShopItems(state, 'upgrades', 'cheapest');
+  assert.strictEqual(cheapestUpgrade.ok, true);
+  assert.strictEqual(cheapestUpgrade.names[0], 'Tidy Packaging');
+  assert.strictEqual(cheapestUpgrade.gameState.shop.stationUpgrades.prep_counter_faster, 1);
+  assert.strictEqual(cheapestUpgrade.gameState.shop.stationUpgrades.route_familiarity, 0);
+  assert(cheapestUpgrade.message.includes('Bought cheapest upgrade: Tidy Packaging.'));
+
+  const allUpgrades = context.buyBulkShopItems(state, 'upgrades', 'all');
+  assert.strictEqual(allUpgrades.ok, true);
+  assert(allUpgrades.purchased > 1);
+  assert(allUpgrades.purchased <= 100);
+  assert.strictEqual(allUpgrades.loopCapped, false);
+  assert.strictEqual(allUpgrades.gameState.shop.stationUpgrades.route_familiarity, 0);
+  assert(allUpgrades.gameState.shop.ledger.filter((entry) => entry.type === 'upgrade').length <= 2);
+  assert(allUpgrades.message.includes('Bought'));
+
+  const maxed = JSON.parse(JSON.stringify(state));
+  Object.keys(maxed.shop.stationUpgrades).forEach((id) => {
+    maxed.shop.stationUpgrades[id] = 100;
+  });
+  const noUpgrade = context.buyBulkShopItems(maxed, 'upgrades', 'cheapest');
+  assert.strictEqual(noUpgrade.ok, false);
+  assert(noUpgrade.reason.includes('No affordable upgrades'));
+
+  const stationState = context.defaultGameState();
+  stationState.shop.tips = 80;
+  stationState.shop.prepSlots = 10;
+  const cheapestStation = context.buyBulkShopItems(stationState, 'stations', 'cheapest');
+  assert.strictEqual(cheapestStation.ok, true);
+  assert.strictEqual(cheapestStation.names[0], 'Tofu Press');
+  const allStations = context.buyBulkShopItems(stationState, 'stations', 'all');
+  assert.strictEqual(allStations.ok, true);
+  assert(allStations.purchased > 1);
+  assert(allStations.purchased <= 100);
+  assert.strictEqual(allStations.gameState.shop.stations.regular_customer, 0);
+
+  const progressState = context.defaultGameState();
+  progressState.shop.tips = 10;
+  progressState.shop.deliveryOrders = 1;
+  progressState.shop.tofuStock = 30;
+  progressState.shop.lifetimeDeliveryOrders = 1;
+  progressState.shop.lifetimeTips = 10;
+  progressState.stamps.first_shop_order = { label: 'First Shop Order', date: '2026-06-15T12:00:00.000Z' };
+  const tidyStatus = context.upgradeAffordabilityStatus(
+    context.shopUpgradeById('prep_counter_faster'),
+    progressState,
+  );
+  assert(!tidyStatus || tidyStatus.level === 0);
+
+  const progress = context.affordabilityProgress([
+    { label: 'Tips', current: 10, required: 20, perSecond: 1 },
+    { label: 'Reputation', current: 100, required: 50, perSecond: 0 },
+  ]);
+  assert.strictEqual(progress.label, 'Waiting on Tips');
+  assert(progress.etaText.includes('0:10'));
+  const blockedProgress = context.affordabilityProgress([
+    { label: 'Tips', current: 10, required: 20, perSecond: 0 },
+  ]);
+  assert.strictEqual(blockedProgress.etaText, '');
+  assert(!JSON.stringify(progress).includes('Infinity'));
+  assert(!JSON.stringify(progress).includes('NaN'));
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle() {} };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(progressState)});
+globalThis.bulkUpgradeHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "production";
+renderTofuShop(${JSON.stringify(stationState)});
+globalThis.bulkStationHtml = elements.shopTabPanel.innerHTML;
+const offlineState = ${JSON.stringify(state)};
+offlineState.shop.offlineEarnings = {
+  tofuStock: 100,
+  deliveryOrders: 10,
+  tips: 0,
+  tofuConsumed: 20,
+  counterServicePaused: true,
+  cappedHours: 2,
+};
+renderTofuShop(offlineState);
+globalThis.bulkOfflineText = elements.shopOfflineEarnings.textContent;
+`, context);
+  assert(context.bulkUpgradeHtml.includes('Buy Cheapest Upgrade'));
+  assert(context.bulkUpgradeHtml.includes('Buy All Affordable Upgrades'));
+  assert(context.bulkUpgradeHtml.includes('Waiting on Tips'));
+  assert(context.bulkUpgradeHtml.includes('0:10'));
+  assert(context.bulkStationHtml.includes('Buy Cheapest Station'));
+  assert(context.bulkStationHtml.includes('Buy All Affordable Stations'));
+  assert(context.bulkOfflineText.includes('Suggested next:'));
+  assert(!context.bulkOfflineText.includes('Pack Tofu'));
+  assert(!context.bulkUpgradeHtml.includes('Route Familiarity'));
+  assert(!context.bulkUpgradeHtml.includes('undefined'));
+  assert(!context.bulkUpgradeHtml.includes('Infinity'));
+  assert(!context.bulkUpgradeHtml.includes('NaN'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(source.includes('SHOP_BULK_BUY_LOOP_CAP'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -7839,6 +7980,7 @@ async function run() {
   testTofuGarageHighMidgameSupplyBottleneckBalance();
   testTofuGarageHighScalePerformanceGuardrails();
   testTofuGarageManagerDeskV1();
+  testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

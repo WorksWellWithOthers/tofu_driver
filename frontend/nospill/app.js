@@ -241,6 +241,7 @@ const SHOP_GENERATOR_TICK_MS = 1000;
 const SHOP_GENERATOR_SAVE_MS = 5000;
 const SHOP_RENDER_THROTTLE_MS = 500;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
+const SHOP_BULK_BUY_LOOP_CAP = 100;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -4358,6 +4359,48 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   return "";
 }
 
+function visibleShopStations(gameState) {
+  const state = normalizeGameState(gameState);
+  return SHOP_STATIONS.filter((station) => {
+    if (station.id === "tofu_press" || station.id === "prep_counter") return true;
+    if (station.id === "delivery_shelf") return stationIsUnlocked(station, state);
+    if (station.id === "shop_sign") return stationIsUnlocked(station, state);
+    if (station.id === "regular_customer") return false;
+    if (station.id === "delivery_route") return hasRouteStoryBeat(state) && state.shop.stations.delivery_route > 0;
+    if (station.id === "dispatcher_desk" || station.id === "regional_network") return false;
+    return stationIsUnlocked(station, state) && state.shop.stations[station.id] > 0;
+  });
+}
+
+function stationAffordabilityStatus(station, gameState) {
+  const state = normalizeGameState(gameState);
+  if (!station) return { canBuy: false, cost: 0, progress: null, disabledReason: "Shop station unavailable." };
+  const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
+  const cost = stationCost(station, owned);
+  const unlocked = stationIsUnlocked(station, state);
+  const disabledReason = stationPurchaseDisabledReason(station, state, cost, unlocked);
+  return {
+    canBuy: unlocked && !disabledReason && !appState.running && !appState.calibrating,
+    cost,
+    unlocked,
+    disabledReason,
+    progress: affordabilityProgress([
+      {
+        label: "Tips",
+        current: state.shop.tips,
+        required: cost,
+        perSecond: counterServiceIncomeStatus(state).tipsPerMinute / 60,
+      },
+      {
+        label: "Prep Capacity",
+        current: state.shop.prepSlots,
+        required: safeNonNegativeInteger(station.prepSlotCost, 0, 100),
+        perSecond: getShopGeneratorRates(state).prepSlotPerSecond,
+      },
+    ]),
+  };
+}
+
 function stationUpgradeCostTips(upgrade, level = 0) {
   if (!upgrade || !upgrade.costTips) return 0;
   return Math.ceil(upgrade.costTips * Math.pow(1.32, safeNonNegativeInteger(level, 0, upgrade.maxLevel)));
@@ -4536,6 +4579,125 @@ function visibleRelevantStationUpgrades(gameState) {
       upgradeRelevanceScore(a, state) - upgradeRelevanceScore(b, state)
       || STATION_UPGRADES.indexOf(a) - STATION_UPGRADES.indexOf(b)
     ));
+}
+
+function affordabilityProgress(requirements) {
+  const activeRequirements = requirements
+    .map((requirement) => ({
+      label: requirement.label,
+      current: safeNonNegativeNumber(requirement.current, 0, SHOP_MAX_RESOURCE),
+      required: safeNonNegativeNumber(requirement.required, 0, SHOP_MAX_RESOURCE),
+      perSecond: safeNonNegativeNumber(requirement.perSecond, 0, SHOP_MAX_RESOURCE),
+    }))
+    .filter((requirement) => requirement.required > 0);
+  if (!activeRequirements.length) {
+    return {
+      percent: 100,
+      label: "Ready",
+      text: "Ready",
+      etaText: "",
+      limiting: null,
+    };
+  }
+  const limiting = activeRequirements
+    .filter((requirement) => requirement.current < requirement.required)
+    .sort((a, b) => (
+      (a.current / Math.max(1, a.required)) - (b.current / Math.max(1, b.required))
+    ))[0] || null;
+  const percent = limiting
+    ? clampPercent((limiting.current / Math.max(1, limiting.required)) * 100)
+    : 100;
+  if (!limiting) {
+    return {
+      percent,
+      label: "Ready",
+      text: activeRequirements
+        .map((requirement) => `${requirement.label} ready`)
+        .join(". "),
+      etaText: "",
+      limiting: null,
+    };
+  }
+  const missing = Math.max(0, limiting.required - limiting.current);
+  const etaText = limiting.perSecond > 0
+    ? `about ${formatDuration(Math.ceil(missing / limiting.perSecond))}`
+    : "";
+  const otherText = activeRequirements
+    .filter((requirement) => requirement.label !== limiting.label)
+    .map((requirement) => `${requirement.label} ${requirement.current >= requirement.required ? "ready" : `${formatShopBalance(requirement.current)} / ${formatShopCost(requirement.required)}`}`)
+    .join(". ");
+  return {
+    percent,
+    label: `Waiting on ${limiting.label}`,
+    text: `${formatShopBalance(limiting.current)} / ${formatShopCost(limiting.required)}${otherText ? `. ${otherText}.` : ""}`,
+    etaText,
+    limiting,
+  };
+}
+
+function renderAffordabilityProgress(progress) {
+  if (!progress || progress.percent >= 100) return "";
+  const percent = clampPercent(progress.percent);
+  return `
+    <div class="nospill-afford-progress">
+      <div class="nospill-afford-progress-head">
+        <span>${escapeHtml(progress.label)}</span>
+        <strong>${formatShopCount(percent)}%</strong>
+      </div>
+      <div
+        class="nospill-afford-progress-bar"
+        role="progressbar"
+        aria-label="${escapeHtml(progress.label)} affordability progress"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        aria-valuenow="${percent}"
+      >
+        <span style="width: ${percent}%"></span>
+      </div>
+      <small>${escapeHtml(progress.text)}${progress.etaText ? ` · ${escapeHtml(progress.etaText)}` : ""}</small>
+    </div>
+  `;
+}
+
+function upgradeAffordabilityStatus(upgrade, gameState) {
+  const state = normalizeGameState(gameState);
+  const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+  const costTips = stationUpgradeCostTips(upgrade, level);
+  const costReputation = stationUpgradeCostReputation(upgrade, level);
+  const station = shopStationById(upgrade.stationId);
+  const counterServiceUpgrade = upgrade.stationId === "counter_service";
+  const supplierUpgrade = isSupplierUpgrade(upgrade);
+  const managerUpgrade = isManagerDeskUpgrade(upgrade);
+  const unlocked = Boolean(
+    (counterServiceUpgrade
+      ? isCounterServiceUnlocked(state)
+      : supplierUpgrade || managerUpgrade || (station && stationIsUnlocked(station, state)))
+    && stationUpgradeIsRevealed(upgrade, state),
+  );
+  const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, costTips, level);
+  const rates = getShopGeneratorRates(state);
+  return {
+    level,
+    costTips,
+    costReputation,
+    unlocked,
+    disabledReason,
+    canBuy: unlocked && level < upgrade.maxLevel && !disabledReason && !appState.running && !appState.calibrating,
+    progress: affordabilityProgress([
+      {
+        label: "Tips",
+        current: state.shop.tips,
+        required: supplierUpgrade ? 0 : costTips,
+        perSecond: counterServiceIncomeStatus(state).tipsPerMinute / 60,
+      },
+      {
+        label: "Reputation",
+        current: state.shop.reputation,
+        required: costReputation,
+        perSecond: rates.passiveReputationPerSecond,
+      },
+    ]),
+  };
 }
 
 function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level) {
@@ -5508,6 +5670,127 @@ function buyStationUpgrade(upgradeId, gameState) {
   }
   next = addLedgerEntry(next, "upgrade", `${upgrade.name} upgraded.`);
   return { ok: true, gameState: next, upgrade, level: current + 1, costTips, costReputation, storyTeaser };
+}
+
+function validBulkUpgradeCandidates(gameState, affordableOnly = false) {
+  const state = normalizeGameState(gameState);
+  return visibleRelevantStationUpgrades(state)
+    .map((upgrade) => ({
+      upgrade,
+      status: upgradeAffordabilityStatus(upgrade, state),
+    }))
+    .filter(({ upgrade, status }) => (
+      status.unlocked
+      && status.level < upgrade.maxLevel
+      && (!affordableOnly || status.canBuy)
+      && upgrade.stationId !== "delivery_route"
+      && upgrade.stationId !== "regular_customer"
+      && upgrade.stationId !== "dispatcher_desk"
+      && upgrade.stationId !== "regional_network"
+    ));
+}
+
+function validBulkStationCandidates(gameState, affordableOnly = false) {
+  const state = normalizeGameState(gameState);
+  return visibleShopStations(state)
+    .map((station) => ({
+      station,
+      status: stationAffordabilityStatus(station, state),
+    }))
+    .filter(({ station, status }) => (
+      status.unlocked
+      && (!affordableOnly || status.canBuy)
+      && station.id !== "regular_customer"
+      && station.id !== "delivery_route"
+      && station.id !== "dispatcher_desk"
+      && station.id !== "regional_network"
+    ));
+}
+
+function buyBulkShopItems(gameState, kind, mode) {
+  if (appState.running || appState.calibrating) {
+    return {
+      ok: false,
+      reason: "Shop actions unlock after you finish and park.",
+      gameState: normalizeGameState(gameState),
+      purchased: 0,
+      loopCapped: false,
+    };
+  }
+  let next = normalizeGameState(gameState);
+  const originalLedger = next.shop.ledger.slice();
+  const purchasedNames = [];
+  let loopCapped = false;
+  const buyOne = () => {
+    if (kind === "upgrades") {
+      const candidates = validBulkUpgradeCandidates(next, true)
+        .sort((a, b) => (
+          (a.status.costTips + a.status.costReputation) - (b.status.costTips + b.status.costReputation)
+          || STATION_UPGRADES.indexOf(a.upgrade) - STATION_UPGRADES.indexOf(b.upgrade)
+        ));
+      const candidate = candidates[0];
+      if (!candidate) return false;
+      const result = buyStationUpgrade(candidate.upgrade.id, next);
+      if (!result.ok) return false;
+      next = result.gameState;
+      if (result.storyTeaser) appState.shopStoryTeaser = result.storyTeaser;
+      purchasedNames.push(result.upgrade.name);
+      return true;
+    }
+    const candidates = validBulkStationCandidates(next, true)
+      .sort((a, b) => (
+        a.status.cost - b.status.cost
+        || SHOP_STATIONS.indexOf(a.station) - SHOP_STATIONS.indexOf(b.station)
+      ));
+    const candidate = candidates[0];
+    if (!candidate) return false;
+    const result = buyShopStation(candidate.station.id, next, 1);
+    if (!result.ok) return false;
+    next = result.gameState;
+    purchasedNames.push(result.station.name);
+    return true;
+  };
+
+  if (mode === "cheapest") {
+    buyOne();
+  } else {
+    for (let index = 0; index < SHOP_BULK_BUY_LOOP_CAP; index += 1) {
+      if (!buyOne()) break;
+      if (index === SHOP_BULK_BUY_LOOP_CAP - 1) loopCapped = true;
+    }
+  }
+
+  if (!purchasedNames.length) {
+    return {
+      ok: false,
+      reason: kind === "upgrades" ? "No affordable upgrades right now." : "No affordable stations right now.",
+      gameState: next,
+      purchased: 0,
+      loopCapped,
+    };
+  }
+  const itemLabel = kind === "upgrades" ? "upgrade" : "station";
+  const message = mode === "cheapest"
+    ? `Bought cheapest ${itemLabel}: ${purchasedNames[0]}.`
+    : `Bought ${formatShopCount(purchasedNames.length)} ${itemLabel}${purchasedNames.length === 1 ? "" : "s"}.${loopCapped ? " More affordable items remain." : ""}`;
+  if (mode !== "cheapest") {
+    const preservedNewEntries = next.shop.ledger.filter((entry) => (
+      entry.type !== "purchase"
+      && entry.type !== "upgrade"
+      && !originalLedger.some((existing) => existing.date === entry.date && existing.text === entry.text)
+    ));
+    next.shop.ledger = [...preservedNewEntries, ...originalLedger].slice(0, LEDGER_MAX_ENTRIES);
+    next = addLedgerEntry(next, kind === "upgrades" ? "upgrade" : "purchase", message);
+  }
+  return {
+    ok: true,
+    reason: "",
+    gameState: next,
+    purchased: purchasedNames.length,
+    names: purchasedNames,
+    message,
+    loopCapped,
+  };
 }
 
 function routeIsUnlocked(route, gameState) {
@@ -8991,9 +9274,10 @@ function renderShopGeneratorCard(generatorId, gameState) {
   const generator = state.shop.generators[generatorId] || { unlocked: false, level: 0 };
   const owned = station ? safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000) : 0;
   const unlocked = Boolean(station && stationIsUnlocked(station, state) && generator.unlocked);
-  const cost = station ? stationCost(station, owned) : 0;
-  const disabledReason = stationPurchaseDisabledReason(station, state, cost, unlocked);
-  const canBuy = Boolean(station && unlocked && !activeDrive && !disabledReason);
+  const afford = station ? stationAffordabilityStatus(station, state) : null;
+  const cost = afford ? afford.cost : 0;
+  const disabledReason = afford ? afford.disabledReason : "";
+  const canBuy = Boolean(station && unlocked && !activeDrive && afford && afford.canBuy);
   const label = station ? station.name : generatorId === "tofuPress" ? "Tofu Press" : "Prep Counter";
   const rate = generatorId === "tofuPress"
     ? `+${formatShopRate(rates.tofuPressPerSecond)} tofu/sec`
@@ -9020,6 +9304,7 @@ function renderShopGeneratorCard(generatorId, gameState) {
       <small>${escapeHtml(helper)}</small>
       ${milestoneCopy ? `<small>${escapeHtml(milestoneCopy)}</small>` : ""}
       ${station ? `<small>Next: ${formatShopCost(cost)} Tips${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : ""}</small>` : ""}
+      ${afford && unlocked ? renderAffordabilityProgress(afford.progress) : ""}
       <div class="nospill-idle-actions">
         ${actionButton(`Buy ${label} · ${formatShopCost(cost)} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
         ${actionButton(`Buy Max ${label}`, "data-shop-station-max", stationId, !canBuy, "nospill-secondary", disabledReason)}
@@ -9112,21 +9397,17 @@ function spiritBoostCopy(boost, state) {
 
 function renderStationUpgradeCard(upgrade, gameState) {
   const state = normalizeGameState(gameState);
-  const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
-  const cost = stationUpgradeCostTips(upgrade, level);
-  const reputationCost = stationUpgradeCostReputation(upgrade, level);
+  const afford = upgradeAffordabilityStatus(upgrade, state);
+  const level = afford.level;
+  const cost = afford.costTips;
+  const reputationCost = afford.costReputation;
   const station = shopStationById(upgrade.stationId);
   const counterServiceUpgrade = upgrade.stationId === "counter_service";
   const supplierUpgrade = isSupplierUpgrade(upgrade);
   const managerUpgrade = isManagerDeskUpgrade(upgrade);
-  const unlocked = Boolean(
-    (counterServiceUpgrade
-      ? isCounterServiceUnlocked(state)
-      : supplierUpgrade || managerUpgrade || (station && stationIsUnlocked(station, state)))
-    && stationUpgradeIsRevealed(upgrade, state),
-  );
-  const disabledReason = stationUpgradeDisabledReason(upgrade, state, unlocked, cost, level);
-  const canBuy = unlocked && level < upgrade.maxLevel && !disabledReason;
+  const unlocked = afford.unlocked;
+  const disabledReason = afford.disabledReason;
+  const canBuy = afford.canBuy;
   if (unlocked && level >= upgrade.maxLevel) {
     const maxedCopy = supplierUpgrade
       ? `Current effect is active. Tofu supply is +${formatShopRate(getShopGeneratorRates(state).tofuPressPerSecond)}/sec including Supplier Contracts.`
@@ -9159,6 +9440,7 @@ function renderStationUpgradeCard(upgrade, gameState) {
       ? `${upgrade.effect}. ${stationUpgradePreviewText(upgrade, state)} ${stationUpgradeWhyItMatters(upgrade)}`
       : stationUpgradeRevealReason(upgrade, state),
     locked: !unlocked,
+    extra: unlocked ? renderAffordabilityProgress(afford.progress) : "",
     actions: [actionButton(actionLabel, "data-station-upgrade", upgrade.id, !canBuy, "nospill-secondary", disabledReason)],
   });
 }
@@ -9870,23 +10152,31 @@ function renderOverviewPanel(state) {
 }
 
 function renderProductionPanel(state) {
-  const visibleStations = SHOP_STATIONS.filter((station) => {
-    if (station.id === "tofu_press" || station.id === "prep_counter") return true;
-    if (station.id === "delivery_shelf") return stationIsUnlocked(station, state);
-    if (station.id === "shop_sign") return stationIsUnlocked(station, state);
-    if (station.id === "regular_customer") return false;
-    return stationIsUnlocked(station, state) && state.shop.stations[station.id] > 0;
-  });
+  const visibleStations = visibleShopStations(state);
+  const cheapestStation = validBulkStationCandidates(state, true)
+    .sort((a, b) => (
+      a.status.cost - b.status.cost
+      || SHOP_STATIONS.indexOf(a.station) - SHOP_STATIONS.indexOf(b.station)
+    ))[0];
   return `
     <h4>Production</h4>
     <p class="nospill-panel-helper">Stations use Tips and Prep Capacity. Prep Capacity is the recovering expansion pool for adding more stations.</p>
+    ${renderBulkBuyCard(
+      "Bulk Buy Stations",
+      cheapestStation
+        ? `Cheapest affordable station: ${cheapestStation.station.name} · ${formatShopCost(cheapestStation.status.cost)} Tips.`
+        : "No affordable visible stations right now.",
+      "stations",
+      Boolean(cheapestStation),
+    )}
     <div class="nospill-idle-grid">
       ${visibleStations.map((station) => {
         const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
-        const unlocked = stationIsUnlocked(station, state);
-        const cost = stationCost(station, owned);
-        const canBuy = unlocked && state.shop.tips >= cost && state.shop.prepSlots >= station.prepSlotCost;
-        const reason = stationPurchaseDisabledReason(station, state, cost, unlocked);
+        const afford = stationAffordabilityStatus(station, state);
+        const unlocked = afford.unlocked;
+        const cost = afford.cost;
+        const canBuy = afford.canBuy;
+        const reason = afford.disabledReason;
         return renderIdleCard({
           title: station.name,
           status: unlocked ? `${formatShopCost(cost)} tips · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : "Locked",
@@ -9894,6 +10184,7 @@ function renderProductionPanel(state) {
             ? `Owned: ${formatShopCount(owned)}. ${stationPurposeCopy(station.id, state)} ${stationMilestoneText(station.id, owned)}`
             : station.unlock,
           locked: !unlocked,
+          extra: unlocked ? renderAffordabilityProgress(afford.progress) : "",
           actions: [
             actionButton(`Buy ${station.name} · ${formatShopCost(cost)} Tips`, "data-shop-station", station.id, !canBuy, "nospill-secondary", reason),
             actionButton(`Buy Max ${station.name}`, "data-shop-station-max", station.id, !canBuy, "nospill-secondary", reason),
@@ -9902,6 +10193,51 @@ function renderProductionPanel(state) {
       }).join("")}
     </div>
   `;
+}
+
+function renderBulkBuyCard(title, copy, kind, hasAffordable) {
+  return renderIdleCard({
+    title,
+    status: hasAffordable ? "Affordable" : "Waiting",
+    copy,
+    actions: [
+      actionButton(
+        kind === "upgrades" ? "Buy Cheapest Upgrade" : "Buy Cheapest Station",
+        "data-bulk-buy",
+        `${kind}:cheapest`,
+        !hasAffordable,
+        "nospill-secondary",
+        kind === "upgrades" ? "No affordable upgrades right now." : "No affordable stations right now.",
+      ),
+      actionButton(
+        kind === "upgrades" ? "Buy All Affordable Upgrades" : "Buy All Affordable Stations",
+        "data-bulk-buy",
+        `${kind}:all`,
+        !hasAffordable,
+        "nospill-secondary",
+        kind === "upgrades" ? "No affordable upgrades right now." : "No affordable stations right now.",
+      ),
+    ],
+  });
+}
+
+function returningPlayerSuggestedActions(gameState) {
+  const state = normalizeGameState(gameState);
+  const suggestions = [];
+  const addSuggestion = (label) => {
+    const clean = String(label || "").replace(/^Next:\s*/, "").trim();
+    if (!clean || /pack tofu/i.test(clean)) return;
+    if (!suggestions.includes(clean)) suggestions.push(clean);
+  };
+  const action = nextBestAction(state);
+  addSuggestion(action.title);
+  if (validBulkUpgradeCandidates(state, true).length > 0) addSuggestion("Buy Cheapest Upgrade");
+  if (validBulkStationCandidates(state, true).length > 0) addSuggestion("Buy Cheapest Station");
+  if (isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyDeliveryOrders(state.shop) > 0) {
+    addSuggestion("Start Counter Service");
+  }
+  if (readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity()) addSuggestion("Clear Order Queue");
+  return suggestions.slice(0, 3);
 }
 
 function renderOrderPrepProgress(state) {
@@ -10103,6 +10439,11 @@ function renderSpiritPanel(state) {
 
 function renderExpandedUpgradePanel(state) {
   const upgrades = visibleRelevantStationUpgrades(state);
+  const cheapestUpgrade = validBulkUpgradeCandidates(state, true)
+    .sort((a, b) => (
+      (a.status.costTips + a.status.costReputation) - (b.status.costTips + b.status.costReputation)
+      || STATION_UPGRADES.indexOf(a.upgrade) - STATION_UPGRADES.indexOf(b.upgrade)
+    ))[0];
   const firstUpgradeTeaser = renderIdleCard({
     title: "Station Upgrades",
     status: "Locked",
@@ -10112,6 +10453,14 @@ function renderExpandedUpgradePanel(state) {
   return `
     <h4>Station Upgrades</h4>
     <p class="nospill-panel-helper">Station upgrades are separate modifiers. Stations are bought in Production; upgrades improve what owned stations do.</p>
+    ${renderBulkBuyCard(
+      "Bulk Upgrade Purchases",
+      cheapestUpgrade
+        ? `Cheapest affordable upgrade: ${cheapestUpgrade.upgrade.name}.`
+        : "No affordable visible upgrades right now.",
+      "upgrades",
+      Boolean(cheapestUpgrade),
+    )}
     <div class="nospill-idle-grid">
       ${upgrades.length ? upgrades.map((upgrade) => renderStationUpgradeCard(upgrade, state)).join("") : firstUpgradeTeaser}
     </div>
@@ -10465,10 +10814,13 @@ function renderTofuShop(gameState = loadGameState()) {
     if (shop.offlineEarnings && shop.offlineEarnings.queueFull) {
       offlineNotes.push("order queue reached capacity");
     }
+    const offlineSuggestions = hasOfflineEarnings
+      ? returningPlayerSuggestedActions(state)
+      : [];
     setTextIfChanged(
       elements.shopOfflineEarnings,
       hasOfflineEarnings
-        ? `While you were away: ${offlineParts.join(", ")}.${offlineNotes.length ? ` ${offlineNotes.join(". ")}.` : ""}`
+        ? `While you were away: ${offlineParts.join(", ")}.${offlineNotes.length ? ` ${offlineNotes.join(". ")}.` : ""}${offlineSuggestions.length ? ` Suggested next: ${offlineSuggestions.join("; ")}.` : ""}`
         : "",
     );
   }
@@ -11698,6 +12050,12 @@ function handleTofuShopPanelClick(event) {
         ? `Bought ${formatShopCount(result.quantity)} ${result.station.name}.${result.milestoneFeedback ? ` ${result.milestoneFeedback}.` : ""}`
         : "",
     );
+    return;
+  }
+  if (target.dataset.bulkBuy) {
+    const [kind, mode] = target.dataset.bulkBuy.split(":");
+    const result = buyBulkShopItems(currentGameState(), kind, mode);
+    saveShopActionResult(result, result.ok ? result.message : "");
     return;
   }
   if (target.dataset.fulfillOrders) {

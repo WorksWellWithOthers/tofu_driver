@@ -1,0 +1,102 @@
+# Tofu Garage Meaningful Unfold Audit
+
+This audit checks whether current Tofu Garage resources and systems create understandable idle-game
+decisions. It is inspired by incremental-game usability patterns such as bulk buying, progress to
+afford, offline summaries, and resource chains, but it translates those lessons into Tofu Driver
+language.
+
+## Audit Standard
+
+Each visible resource or system should answer:
+
+- what it is
+- how it is produced
+- how it is spent
+- what decision it creates
+- when it unlocks
+- what bottleneck it solves
+- what later system it supports
+- whether it is meaningful now, decorative, confusing, or deferred
+
+If a system cannot answer those questions, it should be hidden, clearly marked future/deferred, or
+kept out of the primary Tofu Garage loop.
+
+## Current Resource And System Inventory
+
+| Resource / System | What It Is | Produced By | Spent / Used By | Decision Created | Unlock | Bottleneck Solved | Later Support | Status |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Tofu Stock | Ingredient/runway for shop orders | Tofu Press, Supplier Contracts, Rush Stock, offline production | Prep Counter, shop orders, larger order types | improve supply or spend stock on larger payouts | start | stock shortage | Family Tray, Festival Bento, Catering Crate | meaningful |
+| Delivery Orders | Prepared/waiting shop work | Prep Counter, Warm Counter, offline prep | Counter Service, Manual Backup, Wholesale Pickup | improve prep or improve handoff throughput | start | no money opportunities or queue full | Counter Service, Manager Desk | meaningful |
+| Tips | Main early purchase currency | Counter Service, shop orders, Wholesale Pickup | stations, upgrades, Manager Desk | buy the next bottleneck fix | first handoff | cannot afford next improvement | all shop expansion | meaningful |
+| Reputation | Unlock/status currency and midgame supply sink | shop orders, Shop Sign, driver bonus | Supplier Contracts, Manager Desk, unlock gates | spend status to secure supply | first handoff | stock trap with low Tips | Supplier Contracts, Manager Desk | meaningful |
+| Shop Level | Derived progression label from Reputation | Reputation growth | unlock checks | reach phase gates | start | communicates progression tier | Supplier/Manager gates | meaningful, derived |
+| Shop Spirit | Parked emergency/spend resource | Spirit generators | Rush Stock, Warm Counter, timed effects | save Spirit for bottleneck moments | after shop momentum | short-term recovery | future boost economy | meaningful but tune carefully |
+| Prep Capacity | Recovering expansion capacity | timed regen, future License Perks | station purchases | choose when to expand stations | start but mostly felt after purchases | prevents unlimited instant station buying | staffing/license ideas later | meaningful, should stay explained |
+| Shop Reach | Fictional footprint | route cards/scaffolding | route/district unlocks | future route expansion | routes only | not a first-loop decision | route network | deferred/scaffolding |
+| License Stars | Prestige currency | License Exam | License Perks | reset for permanent perk | later prestige | plateau restart | future prestige | deferred for current first-loop tuning |
+| Counter Service | Automatic handoff system | starter system plus upgrades | consumes Tofu Stock and Delivery Orders | start/pause, upgrade interval/batch | start | repeated manual fulfillment | Manager Desk, Wholesale Pickup | meaningful |
+| Supplier Contracts | Reputation-funded stock support | station upgrades | adds Tofu Stock/sec | spend Reputation to solve supply trap | managed-shop stock pressure | high-midgame stock bottleneck | Catering Crate, Manager Desk | meaningful |
+| Catering Crate | Larger order type | order catalog unlock | consumes large stock/orders | choose bigger managed-shop payout | midgame | stock/order stockpiles | Supplier/Manager tuning | meaningful |
+| Manager Desk | Managed-shop layer | high Reputation and shop level | batch/queue upgrades | turn queue pressure into throughput | after Counter Crew/Catering scale | maxed Counter Service plateau | future franchise only later | meaningful V1 |
+| Wholesale Pickup | Capped managed queue clearing | Manager Desk upgrade | consumes scalar orders/stock | clear full queue without per-order objects | after Hire Shift Manager | order queue cap | future manager economy | meaningful V1 |
+| Passport Stamps | Local status/milestone layer | shop and Cup Test milestones | collection/progress feedback | pursue short-term proof | first stamp | lack of direction | later achievement layers | meaningful |
+| Driver Bonus | Small capped shop Reputation bonus | Delivery Driver level from Cup Test | order Reputation multiplier | Cup Test status helps shop lightly | driver level threshold | connection between modes | status identity | meaningful, capped |
+| Delivery Crew placeholder | Cosmetic/collection surface | unlocked/selected character art | parked art/cosmetic selection | choose identity later | nav surface | avoids dead nav | future crew stories | placeholder, not gameplay |
+| Routes tab/cards | Fictional parked route cards | route scaffolding | route rewards | future route choices | hidden until story beat | not a current shop bottleneck | route network | deferred/scaffolding |
+| Shop Spirit actions | Emergency stock/order/timed boosts | Shop Spirit | instant/timed spends | spend only when bottlenecked | Shop Spirit panel | short-term bottleneck relief | later boost tuning | meaningful but must avoid click loops |
+
+## UI Changes From This Audit
+
+- Bulk Buy Stations and Bulk Buy Upgrades belong in existing Production and Upgrades surfaces.
+- Bulk buy actions must only buy visible, unlocked, meaningful, non-maxed items.
+- Route, Regular Customer, Dispatcher Desk, Regional Network, and other future/scaffolded purchases
+  should not be included in bulk buying until their systems are meaningful.
+- Affordability progress should appear on visible non-maxed station and upgrade cards, using the
+  limiting resource and an ETA only when the relevant income rate is positive.
+- Returning-player offline summaries should include at most three useful suggestions and should not
+  point to Manual Backup as the primary midgame action.
+
+## Recommended Unfold Sequence
+
+Current implemented layer:
+
+```text
+Starter shop -> Counter Service -> Station Milestones -> Supplier Contracts -> Manager Desk
+```
+
+Next good unfold:
+
+```text
+Tune covered-car teaser timing and first-session visual pacing.
+```
+
+Later:
+
+```text
+Dream Garage planning -> first project car -> keep/sell decision -> prestige-like shop transition.
+```
+
+Avoid for now:
+
+```text
+Net Worth counters, asset valuation, routes expansion, crew gameplay, franchise mode, social systems,
+backend sync, multiplayer, payments, service workers, uploads, or network calls.
+```
+
+## Risks / Anti-Patterns
+
+- Random counters without a spend decision.
+- Future tabs visible before they solve a current bottleneck.
+- Bulk buy actions that spend into hidden or deferred systems.
+- Progress bars with fake ETAs while income is blocked.
+- Offline summaries that report production without suggesting what to do next.
+- Returning-player screens that push Manual Backup instead of management decisions.
+- Large lists or repeated feedback that reintroduce high-scale lag.
+
+## Follow-Up Recommendations
+
+1. Playtest whether Buy Cheapest is enough for returning players or whether Buy All is used often.
+2. Tune which resources count as reliable ETA income after observing high-midgame saves.
+3. Keep Routes, Regular Customers, License prestige, and Dream Garage future/deferred until the
+   current shop layer is clear after multiple returns.
+4. Add future unfold audits before each large new layer.

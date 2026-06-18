@@ -298,6 +298,10 @@ Current design principles:
 - New active decisions should replace automated chores. When Counter Service removes repeated order
   handoffs, the next decisions should be stock supply, service rate, larger orders, or later support
   stations, not more mandatory clicking.
+- Returning players should recover context quickly. Production and Upgrades can expose compact
+  bulk-buy actions, affordability progress, and time-to-afford hints, but only for visible
+  meaningful shop items. Bulk actions must not spend into hidden, future, route, crew, or decorative
+  systems.
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
   Delivery Order, consumes Delivery Orders, and grants Tips, Reputation, and Shop XP, but it is not
   the primary progression loop.
