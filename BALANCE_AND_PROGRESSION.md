@@ -1411,6 +1411,17 @@ Initial future tracks:
 | Turbo Kit | Not started | Kit Mounted | Piping Routed | Heat Managed | Closed-Course Tuned | Showcase Ready |
 | Stage Tune | Not started | Baseline Tune | Smooth Response | Reliability Map | Closed-Course Map | Showcase Calibration |
 
+Implemented Wheels Work Levels V1:
+
+| Wheels Level | State / Work | Cash Cost | Project Car Value Total | Runtime Status |
+| --- | --- | --- | --- | --- |
+| 0 | Not Purchased | none | `$0` | Implemented as pre-Wheels target state |
+| 1 | Wheels Installed | `$50K` | `$25K` | Implemented |
+| 2 | Polish Wheels | `$75K` | `$65K` | Implemented |
+| 3 | Balanced Fitment | `$150K` | `$150K` | Implemented |
+| 4 | Showpiece Fitment | future | future | Documented only |
+| 5 | Collector Finish | future | future | Documented only |
+
 Each level is an investment, not a direct cash printer.
 
 Possible level effects:

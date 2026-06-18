@@ -267,11 +267,13 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
-1. Verify Wheels purchase V1: `$50K Cash` spend, `$25K Project Car Value`, persistence, and
-   priority rules.
-2. Implement Wheels work levels: Wheels Installed, Polished Wheels, Balanced Fitment, Showpiece
-   Fitment, Collector Finish.
-3. Add Exhaust as the next part track: Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped,
+1. Verify Wheels purchase V1 and Wheels Work Levels V1: `$50K Cash` Wheels Installed, `$75K`
+   Polished Wheels, `$150K` Balanced Fitment, Project Car Value totals, persistence, and priority
+   rules.
+2. Playtest whether Wheels levels 4-5 should be Showpiece Fitment and Collector Finish, or whether
+   the next slice should move to Exhaust first.
+3. Add Exhaust as the next part track only after Wheels work levels feel useful: Exhaust Fitted,
+   Sealed Joints, Tuned Note, Heat Wrapped,
    Showcase Finish.
 4. Add Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
 5. Refine Project Car Value from part work levels after the first two tracks feel clear.

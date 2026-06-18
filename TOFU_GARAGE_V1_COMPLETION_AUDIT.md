@@ -64,6 +64,7 @@ or car assets.
 | Delivery Crew gameplay | Deferred | Current crew surface is cosmetic/placeholder only. |
 | Covered Car / Dream Build Teaser V1 | Implemented | Unlocks after managed-shop scale and Wholesale Pickup progress; no car mechanics are implemented. |
 | First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, starts `$25K Project Car Value`, and previews Exhaust target-only without a Dream Garage tab or full parts inventory. |
+| Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Project Car Value to `$65K`; Balanced Fitment costs `$150K` and raises Project Car Value to `$150K`; levels 4-5 remain future. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
 | Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Project Car Value. Full valuation remains future. |
 
@@ -166,6 +167,8 @@ Current code status:
 - Net Worth V1 is implemented as Cash + Tofu Business Value + Project Car Value.
 - First Dream Build Investment Purchase V1 lets the player buy Wheels for `$50K Cash`; Wheels add
   `$25K Project Car Value`.
+- Wheels Work Levels V1 implements level 2 Polished Wheels and level 3 Balanced Fitment. Project
+  Car Value totals are `$65K` and `$150K` respectively.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 
@@ -192,9 +195,9 @@ budgets, and any Car Asset Value-facing accounting.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
 7. Playtest First Dream Build Investment Purchase V1: verify the `$50K` Wheels purchase and `$25K`
    Project Car Value tradeoff are clear without feeling like full Dream Garage.
-8. Implement Wheels work levels before any repeated part-buying loop. Parts should be purchased
+8. Playtest Wheels Work Levels V1 before any repeated part-buying loop. Parts should be purchased
    once, then improved through levels.
-9. Keep Exhaust as target-only until Wheels work levels prove the part progression model.
+9. Keep Exhaust as target-only until Wheels levels 1-3 prove the part progression model.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
