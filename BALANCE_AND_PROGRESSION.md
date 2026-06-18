@@ -1587,7 +1587,7 @@ Future rules:
 
 | Era | Player Fantasy | Main Systems | Exit Toward Next Era |
 | --- | --- | --- | --- |
-| Shop Worker Era | Work the counter by hand | Simple orders, Tofu Press, Prep Counter | first upgrades and stamps |
+| Starter Shop Era | Watch the tiny counter run itself | Simple orders, Tofu Press, Prep Counter, starter Counter Service | first upgrades and stamps |
 | Shop Owner Era | Improve the shop | stations, upgrades, Delivery Shelf, Shop Sign | stable first-shop income |
 | Manager Era | Hire systems that remove chores | Counter Service, Regular Customers, managers | shop runs while player plans |
 | Franchise Era | Scale Tofu Shop beyond one counter | franchises, delivery network, brand value | strong passive business valuation |

@@ -275,10 +275,13 @@ Deferred until after the First Loop Contract is playtested:
 
 - Fresh Tofu Shop state starts with one ready Delivery Order, one Tofu Press, one Prep Counter, and
   running starter Counter Service.
-- Fresh Tofu Shop state starts with Tofu Stock so the first order can be completed automatically.
+- Fresh Tofu Shop state starts with a 24 Tofu Stock buffer so the first few Simple Tofu Box pickups
+  can complete automatically and reach the first useful upgrade without Pack Tofu.
 - Tofu Stock is an ingredient/runway resource, not the purchase currency.
 - Tips are the early purchase currency.
 - Starter Counter Service is the early money-conversion action.
+- Counter Service blocked copy should identify the actual missing resource and show a Tofu Stock
+  ETA when the press is refilling the next handoff.
 - Don't Spill the Cup is optional for ordinary Tofu Shop progression.
 
 ## Open Questions

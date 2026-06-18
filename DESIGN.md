@@ -234,6 +234,10 @@ Current design principles:
   Tofu Press makes stock, Prep Counter prepares orders, and starter Counter Service handles slow
   Simple Tofu Box pickups. Manual actions are not the core loop; the player clicks decisions,
   upgrades, bottleneck fixes, and strategic spends.
+- The starter shop should not dead-start. Fresh saves begin with enough Tofu Stock buffer for the
+  first few automatic Simple Tofu Box pickups, so Tips can reach the first useful upgrade through
+  idle play. If Counter Service is blocked, the UI should name only the missing input and show a
+  Tofu Stock ETA when stock is recovering.
 - Good player actions include buying upgrades, solving bottlenecks, starting or pausing Counter
   Service, spending Shop Spirit, and later choosing business direction, car-build direction, or a
   prestige reset. Bad repeated labor includes clicking hundreds of times to make tofu, manually

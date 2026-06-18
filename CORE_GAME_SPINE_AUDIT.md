@@ -7,15 +7,16 @@ automation-after-mastery before broader systems.
 
 ## Executive Summary
 
-Tofu Shop now has a working first loop: Tofu Press creates Tofu Stock, Prep Counter prepares
-Delivery Orders, typed shop orders convert stock/orders into Tips/Reputation/Shop XP, and early
-fulfillment stays inline. That is enough to understand the loop, but not yet enough to call the
-shop a complete 5 to 10 minute game spine.
+Tofu Shop now has a working idle-first loop: Tofu Press creates Tofu Stock, Prep Counter prepares
+Delivery Orders, starter Counter Service converts stock/orders into Tips/Reputation/Shop XP, and
+early fulfillment stays inline or automated. The original V1 gaps below have largely been
+implemented; this file now exists to preserve why first-loop tuning, milestone pacing, and
+automation-after-mastery stay ahead of broader systems.
 
-The missing spine pieces are not broad systems. The gaps are small, concrete progression beats:
-core milestone stamps beyond the first order, a visible second-stage upgrade path, and the first
-support stations becoming meaningful at the right time. Routes, Crew, Shop Spirit, Rivals, License
-prestige, full Dream Garage, and dopewars-inspired demand systems should remain deferred.
+Remaining work is tuning, not broad expansion: verify fresh-session timing, make sure the first
+upgrade arrives through idle play, and keep support stations meaningful at the right time. Routes,
+Crew, Shop Spirit expansion, Rivals, License prestige, full Dream Garage, and dopewars-inspired
+demand systems should remain deferred.
 
 ## Status Rule
 
