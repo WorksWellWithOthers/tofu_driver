@@ -306,6 +306,10 @@ Current design principles:
   current verdict is that Tofu Garage V1 is close enough for a parked Covered Car / Dream Build
   teaser after final first-session and high-progress responsiveness checks, but not full car
   building.
+- Covered Car / Dream Build Teaser V1 is implemented as a parked story/status card after the shop
+  reaches managed scale: Counter Crew, Manager Desk, Wholesale Pickup progress, and sustained shop
+  growth. It says the shop funds the dream, but it does not add Dream Garage mechanics, car parts,
+  Net Worth, asset valuation, Cash migration, or any driving effect.
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
   Delivery Order, consumes Delivery Orders, and grants Tips, Reputation, and Shop XP, but it is not
   the primary progression loop.
@@ -351,9 +355,10 @@ Current design principles:
 - The first hidden shop system should use a Discovery Fanfare. Upgrades are the first system reveal
   when a meaningful bottleneck-solving upgrade appears. System reveals are local-only,
   repeat-suppressed per system id, and should create curiosity without listing the future roadmap.
-- After an early meaningful milestone, the shop may show one restrained covered-car story teaser:
+- After managed-shop progress, the shop may show one restrained covered-car story/status teaser:
   `Behind the shop, an old car waits under a cover.` This is a purpose hint only, not Dream Garage
-  implementation.
+  implementation. Next Milestone may point to it once; after it is seen, normal shop progression
+  resumes.
 - Detailed tabs are earned. The Orders tab is removed from the first-loop shop because Overview
   owns order cards, Prep Counter progress, reward previews, and fulfillment actions. Production
   should focus on station ownership, and Upgrades should appear only when at least one relevant

@@ -468,7 +468,7 @@ Transcript-derived tuning notes:
 is that Tofu Garage V1 is close enough to move toward a parked Covered Car / Dream Build teaser,
 but not full car building.
 
-Before implementing that teaser, verify:
+Covered Car / Dream Build Teaser V1 is now implemented. It should still be playtested against:
 
 - fresh 3-minute flow works without manual Pack Tofu or manual fulfillment
 - first upgrade is reachable through idle play
@@ -478,10 +478,10 @@ Before implementing that teaser, verify:
 - Shop Spirit is either useful as emergency utility or de-emphasized
 - hidden route, crew, garage, Net Worth, and valuation systems do not appear as active mechanics
 
-The teaser transition should happen after the shop feels managed: Counter Service has scaled,
-Supplier Contracts have solved a stock bottleneck, and Manager Desk or Wholesale Pickup has made a
-full order queue feel like a business problem. The teaser is story and aspiration only; car parts,
-Cash migration, Net Worth, asset valuation, and garage events remain separate future slices.
+The implemented teaser transition happens after the shop feels managed: Counter Crew exists, Manager
+Desk has been reached, Wholesale Pickup progress exists, and sustained shop growth has happened. The
+teaser is story and aspiration only; car parts, Cash migration, Net Worth, asset valuation, and
+garage events remain separate future slices.
 
 Current station-milestone scope:
 
@@ -1152,7 +1152,7 @@ Early UI rule:
 | Routes | first 10 minutes | after Reputation/Shop Sign begins to matter | after a route story beat or route-ready station milestone |
 | Crew | first hour | after first route progress or repeated chores | after the first automation slice |
 | Garage | first hour | after route cards need fictional stability/flavor | after route loop exists |
-| Dream Garage | first shop loop | after First Upgrade Purchased, First 100 Tips, or Shop Level 2 as covered-car story teaser | future only, after first-loop and first-shop pacing are tuned |
+| Dream Garage | first shop loop and first-shop phase | after managed-shop scale as Covered Car / Dream Build Teaser V1 | future only; no full tab, parts, valuation, or events yet |
 | Shop Spirit | first hour and first route phase | after stable production or event/festival hook | after boost economy has a real sink/source |
 | Rivals | early and mid first-loop play | after route network/festival systems exist | later, as friendly parked challenges |
 | License | first hour | when requirements become plausible | at plateau near 4 to 6 hours |
@@ -1327,9 +1327,10 @@ the next dream car stronger
 
 Suggested reveal:
 
-- teaser after First 100 Tips or Shop Level 2
-- full Dream Garage after 10 fulfilled orders or first larger order type
-- first part purchase after stable Cash income exists
+- Covered Car / Dream Build Teaser V1 after managed-shop scale: Counter Crew, Manager Desk,
+  Wholesale Pickup progress, and sustained shop growth.
+- full Dream Garage only after the teaser proves players understand the shop-to-dream bridge.
+- first part purchase after stable Cash income exists and Cash/Tips naming is resolved.
 
 Example decision points:
 
@@ -1582,8 +1583,8 @@ emotionally connected to a larger dream.
 | Moment | Visibility |
 | --- | --- |
 | Before first shop loop | garage hidden |
-| After established shop plus First 100 Tips, First Upgrade Purchased, 25+ orders, or Second Register | covered car teaser |
-| Later first-session or follow-up session milestone | Dream Garage active |
+| After managed-shop scale plus Wholesale Pickup progress | covered car teaser |
+| Later follow-up phase after Cash bridge is clear | Dream Garage active |
 | After Stage 0 complete | first closed-course event teaser |
 | After Stage 1 basics | events active |
 | After Stage 3 | sell/complete build prestige visible |

@@ -156,6 +156,10 @@ globalThis.managerDeskUnlocked = managerDeskUnlocked;
 globalThis.nextManagerDeskUpgrade = nextManagerDeskUpgrade;
 globalThis.wholesalePickupUnlocked = wholesalePickupUnlocked;
 globalThis.wholesalePickupQuantity = wholesalePickupQuantity;
+globalThis.coveredCarTeaserUnlocked = coveredCarTeaserUnlocked;
+globalThis.coveredCarTeaserSeen = coveredCarTeaserSeen;
+globalThis.acknowledgeCoveredCarTeaser = acknowledgeCoveredCarTeaser;
+globalThis.renderCoveredCarTeaserCard = renderCoveredCarTeaserCard;
 globalThis.completeFictionalRoute = completeFictionalRoute;
 globalThis.runTrainingDrill = runTrainingDrill;
 globalThis.buyGarageUpgrade = buyGarageUpgrade;
@@ -3209,49 +3213,121 @@ elements = {
 appState.running = false;
 appState.calibrating = false;
 appState.surface = "shop";
-let state = defaultGameState();
-state = fulfillShopOrders(state, 1, {
-  activeDrive: false,
-  orderTypeId: "simple_tofu_box",
-}).gameState;
-state.shop.tips = 25;
-const upgrade = buyStationUpgrade("prep_counter_faster", state);
-globalThis.storyUpgradeOk = upgrade.ok;
-globalThis.storyTeaserTitle = upgrade.storyTeaser && upgrade.storyTeaser.title;
-globalThis.storyTeaserCopy = upgrade.storyTeaser && upgrade.storyTeaser.copy;
-globalThis.storySeenIds = upgrade.gameState.seenStoryBeatIds.slice();
-upgrade.gameState.shop.lifetimeDeliveryOrders = 25;
-appState.shopStoryTeaser = upgrade.storyTeaser;
+
+function managedShopState() {
+  const state = defaultGameState();
+  state.shop.tips = 0;
+  state.shop.reputation = 0;
+  state.shop.lifetimeReputation = 2000000;
+  state.shop.shopLevel = 100;
+  state.shop.lifetimeTips = 2000000;
+  state.shop.lifetimeDeliveryOrders = 1200;
+  state.shop.deliveryOrders = 500;
+  state.shop.tofuStock = 10000000;
+  state.shop.stations.delivery_shelf = 5;
+  state.shop.stations.shop_sign = 5;
+  state.stamps.first_shop_order = { label: "First Shop Order" };
+  state.stamps.first_10_orders = { label: "First 10 Orders" };
+  state.stamps.first_family_tofu_tray = { label: "First Family Tofu Tray" };
+  state.stamps.first_100_tips = { label: "First 100 Tips" };
+  state.shop.stationUpgrades.counter_service_crew = 1;
+  state.shop.stationUpgrades.manager_shift_manager = 1;
+  state.shop.stationUpgrades.manager_wholesale_pickup = 1;
+  STATION_UPGRADES.forEach((upgrade) => {
+    if (
+      upgrade.stationId === "counter_service"
+      || upgrade.stationId === "supplier_contract"
+      || upgrade.stationId === "manager_desk"
+      || upgrade.stationId === "tofu_press"
+      || upgrade.stationId === "prep_counter"
+      || upgrade.stationId === "delivery_shelf"
+      || upgrade.stationId === "shop_sign"
+    ) {
+      state.shop.stationUpgrades[upgrade.id] = upgrade.maxLevel;
+    }
+  });
+  state.shop.wholesalePickupsCompleted = 1;
+  return state;
+}
+
+const fresh = defaultGameState();
+globalThis.freshCoveredUnlocked = coveredCarTeaserUnlocked(fresh);
+globalThis.freshCoveredCard = renderCoveredCarTeaserCard(fresh);
+const early = defaultGameState();
+early.shop.stationUpgrades.prep_counter_faster = 1;
+early.stamps.first_upgrade_purchased = { label: "First Upgrade Purchased" };
+globalThis.earlyCoveredUnlocked = coveredCarTeaserUnlocked(early);
+globalThis.earlyScene = getTofuShopSceneState(early).sceneId;
+
+const highProgress = managedShopState();
+const urgentQueue = managedShopState();
+urgentQueue.shop.deliveryOrders = 1000000;
+globalThis.highCoveredUnlocked = coveredCarTeaserUnlocked(highProgress);
+globalThis.highCoveredSeen = coveredCarTeaserSeen(highProgress);
+globalThis.highMilestone = nextMilestoneForShop(highProgress);
+globalThis.highAction = nextBestAction(highProgress);
+globalThis.urgentQueueAction = nextBestAction(urgentQueue);
+globalThis.highCardHtml = renderCoveredCarTeaserCard(highProgress);
 appState.shopTab = "overview";
-renderTofuShop(upgrade.gameState);
+renderTofuShop(highProgress);
 globalThis.storyOverviewHtml = elements.shopTabPanel.innerHTML;
 globalThis.storyTabsHtml = elements.shopTabList.innerHTML;
-saveGameState(upgrade.gameState);
-let reloaded = loadGameState();
-reloaded.shop.tips = 25;
-const secondUpgrade = buyStationUpgrade("tofu_press_faster", reloaded);
-globalThis.secondStoryTeaser = secondUpgrade.storyTeaser;
-appState.shopStoryTeaser = null;
+globalThis.highSceneId = getTofuShopSceneState(highProgress).sceneId;
+globalThis.highSceneHtml = renderTofuShopLivingScene(highProgress);
+
+const acknowledged = acknowledgeCoveredCarTeaser(highProgress);
+globalThis.acknowledgedOk = acknowledged.ok;
+globalThis.acknowledgedFeedback = acknowledged.feedback;
+globalThis.acknowledgedSeen = coveredCarTeaserSeen(acknowledged.gameState);
+globalThis.acknowledgedIds = acknowledged.gameState.seenStoryBeatIds.slice();
+globalThis.acknowledgedMilestone = nextMilestoneForShop(acknowledged.gameState);
+globalThis.acknowledgedAction = nextBestAction(acknowledged.gameState);
+const secondAcknowledge = acknowledgeCoveredCarTeaser(acknowledged.gameState);
+globalThis.secondAcknowledgeFeedback = secondAcknowledge.feedback;
+globalThis.storyLedgerCount = secondAcknowledge.gameState.shop.ledger.filter((entry) => entry.type === "story").length;
+
+saveGameState(acknowledged.gameState);
 renderTofuShop(loadGameState());
 globalThis.reloadedOverviewHtml = elements.shopTabPanel.innerHTML;
 appState.running = true;
-appState.shopStoryTeaser = upgrade.storyTeaser;
 appState.shopTab = "overview";
-renderTofuShop(upgrade.gameState);
+renderTofuShop(highProgress);
 globalThis.activeStoryOverviewHtml = elements.shopTabPanel.innerHTML;
 `, context);
 
-  assert.strictEqual(context.storyUpgradeOk, true);
-  assert.strictEqual(context.storyTeaserTitle, 'Behind the shop');
-  assert(context.storyTeaserCopy.includes('old car waits under a cover'));
-  assert(context.storyTeaserCopy.includes("One day, you'll build it"));
-  assert.strictEqual(context.storySeenIds.join(','), 'covered_car_teaser');
+  assert.strictEqual(context.freshCoveredUnlocked, false);
+  assert.strictEqual(context.freshCoveredCard, '');
+  assert.strictEqual(context.earlyCoveredUnlocked, false);
+  assert.strictEqual(context.earlyScene, 'scene_tiny_shop_upgraded');
+  assert.strictEqual(context.highCoveredUnlocked, true);
+  assert.strictEqual(context.highCoveredSeen, false);
+  assert.strictEqual(context.highMilestone.id, 'covered_car_teaser');
+  assert.strictEqual(context.highMilestone.name, 'Look Behind the Shop');
+  assert.strictEqual(context.highAction.type, 'covered_car_teaser');
+  assert.strictEqual(context.highAction.buttonLabel, 'Look Behind the Shop');
+  assert.notStrictEqual(context.urgentQueueAction.type, 'covered_car_teaser');
+  assert(context.urgentQueueAction.title.includes('Clear the Order Queue') || context.urgentQueueAction.copy.includes('queue is full'));
+  assert(context.highCardHtml.includes('Behind the Shop'));
+  assert(context.highCardHtml.includes('Dream Build: Not ready yet'));
+  assert(context.highCardHtml.includes('The Tofu Shop is not the destination'));
   assert(context.storyOverviewHtml.includes('Behind the shop'));
   assert(context.storyOverviewHtml.includes('old car waits under a cover'));
   assert(!context.storyTabsHtml.includes('Dream Garage'));
-  assert.strictEqual(context.secondStoryTeaser, null);
+  assert(!context.storyOverviewHtml.includes('Buy Car Part'));
+  assert(!context.storyOverviewHtml.includes('Current Net Worth'));
+  assert(!context.storyOverviewHtml.includes('Business Value'));
+  assert.strictEqual(context.highSceneId, 'scene_busy_shop_with_covered_car');
+  assert(context.highSceneHtml.includes('/static/nospill/images/scene_busy_shop_with_covered_car.webp'));
+  assert.strictEqual(context.acknowledgedOk, true);
+  assert(context.acknowledgedFeedback.includes('Story beat unlocked'));
+  assert.strictEqual(context.acknowledgedSeen, true);
+  assert(context.acknowledgedIds.includes('dream_build_teaser_v1'));
+  assert.notStrictEqual(context.acknowledgedMilestone.id, 'covered_car_teaser');
+  assert.notStrictEqual(context.acknowledgedAction.type, 'covered_car_teaser');
+  assert(context.secondAcknowledgeFeedback.includes('covered car waits'));
+  assert.strictEqual(context.storyLedgerCount, 1);
   assert(context.reloadedOverviewHtml.includes('old car waits under a cover'));
-  assert(!context.reloadedOverviewHtml.includes("One day, you&#39;ll build it"));
+  assert(!context.reloadedOverviewHtml.includes('Look Behind the Shop</button>'));
   assert(!context.activeStoryOverviewHtml.includes('old car waits under a cover'));
 
   const css = fs.readFileSync(path.join(NOSPILL_DIR, 'app.css'), 'utf8');
@@ -4554,8 +4630,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260617d'));
-  assert(html.includes('/static/nospill/app.css?v=20260617d'));
+  assert(html.includes('/static/nospill/app.js?v=20260617e'));
+  assert(html.includes('/static/nospill/app.css?v=20260617e'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -6279,6 +6355,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-spirit-generator',
     'data-spirit-boost',
     'data-festival-boost',
+    'data-covered-car-teaser',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',
@@ -6912,6 +6989,17 @@ function testTofuShopLivingSceneV1Groundwork() {
 
   const coveredCar = JSON.parse(JSON.stringify(advanced));
   coveredCar.stamps.first_upgrade_purchased = true;
+  coveredCar.shop.reputation = 2000000;
+  coveredCar.shop.lifetimeReputation = 2000000;
+  coveredCar.shop.shopLevel = context.getShopLevel(coveredCar.shop.reputation);
+  coveredCar.shop.lifetimeTips = 2000000;
+  coveredCar.shop.lifetimeDeliveryOrders = 1200;
+  coveredCar.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray' };
+  coveredCar.stamps.first_100_tips = { label: 'First 100 Tips' };
+  coveredCar.shop.stationUpgrades.counter_service_crew = 1;
+  coveredCar.shop.stationUpgrades.manager_shift_manager = 1;
+  coveredCar.shop.stationUpgrades.manager_wholesale_pickup = 1;
+  coveredCar.shop.wholesalePickupsCompleted = 1;
   assert.strictEqual(context.getTofuShopSceneState(coveredCar).sceneId, 'scene_busy_shop_with_covered_car');
 
   const sceneHtml = context.renderTofuShopLivingScene(coveredCar);

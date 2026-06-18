@@ -27,8 +27,8 @@ Top blockers before a Dream Build teaser:
 5. Keep Cash/Tips as documented future direction; do not migrate naming in the same slice as the
    teaser.
 
-Safest next implementation: **Covered Car / Dream Build Teaser V1**. It should be a small
-parked-only story/fanfare or scene/state moment, not a garage tab with parts, valuation, events, or
+Safest next implementation: **Covered Car / Dream Build Teaser V1**. Implemented as a small
+parked-only story/status card and scene state, not a garage tab with parts, valuation, events, or
 Net Worth.
 
 ## 2. Implemented Mechanics Inventory
@@ -62,7 +62,8 @@ Net Worth.
 | Living Scene | Implemented / Decorative | One cohesive parked scene panel with real art, milestone pacing, and pointer-inert decorative behavior. |
 | Routes | Deferred / scaffolding | Route-related concepts remain hidden/deferred until meaningful. |
 | Delivery Crew gameplay | Deferred | Current crew surface is cosmetic/placeholder only. |
-| Dream Garage / car parts | Documented only | Covered-car story beat exists; no car mechanics are implemented. |
+| Covered Car / Dream Build Teaser V1 | Implemented | Unlocks after managed-shop scale and Wholesale Pickup progress; no car mechanics are implemented. |
+| Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
 | Net Worth | Documented only | No counter, valuation, or accounting system is implemented. |
 
 ## 3. Missing Or Weak Tofu Garage Mechanics
@@ -184,7 +185,7 @@ Net Worth-facing accounting.
    bulk buy, and returning-player suggestions.
 4. Tune Shop Spirit only if it is visible and still feels useless or clicky.
 5. Keep route, crew gameplay, license prestige, and full garage systems hidden/deferred.
-6. Implement Covered Car / Dream Build Teaser V1 as a parked-only story transition.
+6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
 7. Design the Cash/Tips migration before any car-part costs are added.
 8. Implement the first car investment only after the teaser and Cash bridge are clear.
 9. Add Net Worth visibility only after Cash, Business Value, and Car Asset Value have a coherent
@@ -223,7 +224,7 @@ High-value future regression tests:
 - no duplicate render/timer/listener regression after route changes and tab switches
 - no repeated offline summary or Counter Service feedback on rerender
 - no hidden/future route/crew/garage system appears as an active purchase target
-- Covered Car teaser unlocks only after the chosen transition condition
+- Covered Car teaser unlocks only after managed-shop scale and Wholesale Pickup progress
 - Covered Car teaser does not create Dream Garage mechanics, car parts, valuation, or Net Worth
 - Cash/Tips migration preserves saves and does not create separate spendable balances
 

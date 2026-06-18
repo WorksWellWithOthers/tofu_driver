@@ -38,7 +38,8 @@ kept out of the primary Tofu Garage loop.
 | Supplier Contracts | Reputation-funded stock support | station upgrades | adds Tofu Stock/sec | spend Reputation to solve supply trap | managed-shop stock pressure | high-midgame stock bottleneck | Catering Crate, Manager Desk | meaningful |
 | Catering Crate | Larger order type | order catalog unlock | consumes large stock/orders | choose bigger managed-shop payout | midgame | stock/order stockpiles | Supplier/Manager tuning | meaningful |
 | Manager Desk | Managed-shop layer | high Reputation and shop level | batch/queue upgrades | turn queue pressure into throughput | after Counter Crew/Catering scale | maxed Counter Service plateau | future franchise only later | meaningful V1 |
-| Wholesale Pickup | Capped managed queue clearing | Manager Desk upgrade | consumes scalar orders/stock | clear full queue without per-order objects | after Hire Shift Manager | order queue cap | future manager economy | meaningful V1 |
+| Wholesale Pickup | Capped managed queue clearing | Manager Desk upgrade | consumes scalar orders/stock | clear full queue without per-order objects | after Hire Shift Manager | order queue cap | Covered Car teaser, future manager economy | meaningful V1 |
+| Covered Car / Dream Build Teaser | Parked story/status carrot | Manager Desk scale and Wholesale Pickup progress | seen/acknowledged state only | understand that the shop funds the dream | after managed shop proves itself | motivation after the first shop layer | future Dream Garage planning | implemented story/status only |
 | Passport Stamps | Local status/milestone layer | shop and Cup Test milestones | collection/progress feedback | pursue short-term proof | first stamp | lack of direction | later achievement layers | meaningful |
 | Driver Bonus | Small capped shop Reputation bonus | Delivery Driver level from Cup Test | order Reputation multiplier | Cup Test status helps shop lightly | driver level threshold | connection between modes | status identity | meaningful, capped |
 | Delivery Crew placeholder | Cosmetic/collection surface | unlocked/selected character art | parked art/cosmetic selection | choose identity later | nav surface | avoids dead nav | future crew stories | placeholder, not gameplay |
@@ -64,16 +65,16 @@ Current implemented layer:
 Starter shop -> Counter Service -> Station Milestones -> Supplier Contracts -> Manager Desk
 ```
 
-Next good unfold:
+Current latest unfold:
 
 ```text
-Tune covered-car teaser timing and first-session visual pacing.
+Covered Car / Dream Build Teaser V1 after managed-shop scale.
 ```
 
 Later:
 
 ```text
-Dream Garage planning -> first Cash-funded project car -> keep/sell decision -> Net Worth accounting.
+Dream Garage planning -> Cash/Tips migration -> first Cash-funded project car -> keep/sell decision -> Net Worth accounting.
 ```
 
 Avoid for now:

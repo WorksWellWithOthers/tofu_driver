@@ -733,6 +733,8 @@ const TOFU_SHOP_SCENE_THRESHOLDS = {
   coveredCarOrders: 25,
 };
 
+const COVERED_CAR_TEASER_ID = "dream_build_teaser_v1";
+
 const SOUND_PACK_CATALOG = [
   {
     id: "default",
@@ -2627,7 +2629,13 @@ function storyBeatDefinition(storyBeatId) {
       id: "covered_car_teaser",
       title: "Behind the shop",
       status: "Story Teaser",
-      copy: "Behind the shop, an old car waits under a cover. Keep the shop running. One day, you'll build it.",
+      copy: "Behind the shop, an old car waits under a cover. The Tofu Shop is not the destination. It is how the dream starts.",
+    },
+    [COVERED_CAR_TEASER_ID]: {
+      id: COVERED_CAR_TEASER_ID,
+      title: "Behind the Shop",
+      status: "Dream Build: Not ready yet",
+      copy: "An old car waits under a cover. The Tofu Shop is not the destination. It is how the dream starts.",
     },
   };
   return definitions[storyBeatId] || null;
@@ -2683,6 +2691,10 @@ function defaultShopState() {
     lifetimeTips: 0,
     lifetimeTofuPacked: 0,
     starterStockBufferApplied: true,
+    wholesalePickupsCompleted: 0,
+    coveredCarTeaserUnlocked: false,
+    coveredCarTeaserSeen: false,
+    coveredCarTeaserFeedbackShown: false,
     lifetimeReputation: 0,
     lifetimeShopXP: 0,
     lifetimeRoutesCompleted: 0,
@@ -2866,6 +2878,10 @@ function normalizeShopState(shop) {
     lifetimeTips: sourceLifetimeTips,
     lifetimeTofuPacked: sourceLifetimeTofuPacked,
     starterStockBufferApplied: starterStockBufferApplied || shouldTopUpStarterStock || tofuStock >= STARTER_TOFU_STOCK,
+    wholesalePickupsCompleted: safeNonNegativeInteger(source.wholesalePickupsCompleted, defaults.wholesalePickupsCompleted),
+    coveredCarTeaserUnlocked: Boolean(source.coveredCarTeaserUnlocked),
+    coveredCarTeaserSeen: Boolean(source.coveredCarTeaserSeen),
+    coveredCarTeaserFeedbackShown: Boolean(source.coveredCarTeaserFeedbackShown),
     lifetimeReputation: Math.max(
       reputation,
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
@@ -4427,6 +4443,71 @@ function managerDeskUnlocked(gameState) {
     && state.shop.reputation >= 1000000;
 }
 
+function coveredCarTeaserUnlockCriteria(state) {
+  const upgrades = state && state.shop && state.shop.stationUpgrades
+    ? state.shop.stationUpgrades
+    : {};
+  const fulfilled = fulfilledShopOrderCount(state);
+  const hasCounterCrew = safeNonNegativeInteger(upgrades.counter_service_crew, 0, 1) > 0;
+  const hasShiftManager = safeNonNegativeInteger(upgrades.manager_shift_manager, 0, 1) > 0;
+  const hasWholesalePickup = safeNonNegativeInteger(upgrades.manager_wholesale_pickup, 0, 1) > 0
+    || safeNonNegativeInteger(state.shop && state.shop.wholesalePickupsCompleted, 0, 1000000) > 0;
+  const hasManagedScale = safeNonNegativeInteger(state.shop && state.shop.shopLevel, 0, 100000) >= 100
+    || safeNonNegativeInteger(state.shop && state.shop.lifetimeReputation, 0, SHOP_MAX_RESOURCE) >= 1000000;
+  const hasCoreShopDiscovered = fulfilled >= 100
+    && safeNonNegativeInteger(state.shop && state.shop.lifetimeTips, 0, SHOP_MAX_RESOURCE) >= 100
+    && (
+      Boolean(state.stamps && state.stamps.first_family_tofu_tray)
+      || fulfilled >= 100
+    );
+  return hasCounterCrew
+    && hasShiftManager
+    && hasWholesalePickup
+    && hasManagedScale
+    && hasCoreShopDiscovered;
+}
+
+function coveredCarTeaserUnlocked(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.shop.coveredCarTeaserUnlocked)
+    || coveredCarTeaserUnlockCriteria(state);
+}
+
+function coveredCarTeaserSeen(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.shop.coveredCarTeaserSeen)
+    || state.seenStoryBeatIds.includes(COVERED_CAR_TEASER_ID);
+}
+
+function acknowledgeCoveredCarTeaser(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!coveredCarTeaserUnlocked(state)) {
+    return { ok: false, reason: "The covered car is not ready to reveal yet.", gameState: state };
+  }
+  const wasSeen = coveredCarTeaserSeen(state);
+  state.shop.coveredCarTeaserUnlocked = true;
+  state.shop.coveredCarTeaserSeen = true;
+  if (!state.seenStoryBeatIds.includes(COVERED_CAR_TEASER_ID)) {
+    state.seenStoryBeatIds = [...state.seenStoryBeatIds, COVERED_CAR_TEASER_ID].slice(0, 100);
+  }
+  if (!wasSeen && !state.shop.coveredCarTeaserFeedbackShown) {
+    state.shop.coveredCarTeaserFeedbackShown = true;
+    state.shop.counterService.lastResult = "Story beat unlocked: something waits behind the shop.";
+    return {
+      ok: true,
+      reason: "",
+      feedback: "Story beat unlocked: something waits behind the shop.",
+      gameState: addLedgerEntry(state, "story", "Story beat unlocked: something waits behind the shop."),
+    };
+  }
+  return {
+    ok: true,
+    reason: "",
+    feedback: "Behind the shop, the covered car waits.",
+    gameState: state,
+  };
+}
+
 function supplierStockPerSecond(gameState) {
   const state = normalizeGameState(gameState);
   return STATION_UPGRADES.reduce((total, upgrade) => (
@@ -5280,6 +5361,11 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     next.shop.lifetimeDeliveryOrders = safeNonNegativeInteger(
       next.shop.lifetimeDeliveryOrders + wholesaleQuantity,
     );
+    next.shop.wholesalePickupsCompleted = safeNonNegativeInteger(
+      next.shop.wholesalePickupsCompleted + 1,
+      0,
+      1000000,
+    );
     totals.completed += wholesaleQuantity;
     totals.wholesaleCompleted = wholesaleQuantity;
     totals.tips += tipsGained;
@@ -5657,19 +5743,11 @@ function buyStationUpgrade(upgradeId, gameState) {
     next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   }
   next.shop.stationUpgrades[upgrade.id] = current + 1;
-  let firstUpgradePurchased = false;
   if (!next.stamps.first_upgrade_purchased) {
     next = awardShopStamp(next, "first_upgrade_purchased").gameState;
-    firstUpgradePurchased = true;
-  }
-  let storyTeaser = null;
-  if (firstUpgradePurchased) {
-    const queued = queueStoryBeatTeaser(next, "covered_car_teaser");
-    next = queued.gameState;
-    storyTeaser = queued.storyTeaser;
   }
   next = addLedgerEntry(next, "upgrade", `${upgrade.name} upgraded.`);
-  return { ok: true, gameState: next, upgrade, level: current + 1, costTips, costReputation, storyTeaser };
+  return { ok: true, gameState: next, upgrade, level: current + 1, costTips, costReputation, storyTeaser: null };
 }
 
 function validBulkUpgradeCandidates(gameState, affordableOnly = false) {
@@ -6435,17 +6513,7 @@ function hasEstablishedShopForScene(state) {
 }
 
 function hasEarnedCoveredCarTeaserForScene(state) {
-  if (!hasEstablishedShopForScene(state)) return false;
-  return Boolean(state.seenStoryBeatIds.includes("covered_car_teaser"))
-    || safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0
-    || (
-      sceneCounterServiceUnlocked(state)
-      && (
-        Boolean(state.stamps.first_upgrade_purchased)
-        || Boolean(state.stamps.first_100_tips)
-        || sceneFulfilledOrderCount(state) >= TOFU_SHOP_SCENE_THRESHOLDS.coveredCarOrders
-      )
-    );
+  return coveredCarTeaserUnlocked(state);
 }
 
 function getTofuShopSceneState(gameState = loadGameState()) {
@@ -8956,6 +9024,25 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  if (
+    shopUnlocked
+    && coveredCarTeaserUnlocked(state)
+    && !coveredCarTeaserSeen(state)
+    && !lowTofuStock
+    && !upgrade
+    && !tofuPressStation
+    && !prepCounterStation
+    && !deliveryShelfStation
+    && !shopSignStation
+  ) {
+    return {
+      type: "covered_car_teaser",
+      title: "Next: Look Behind the Shop",
+      copy: "The shop is steady enough to reveal what it has been funding. The first build comes later.",
+      buttonLabel: "Look Behind the Shop",
+      disabled: false,
+    };
+  }
   if (shopUnlocked && prep.ready > 0 && bestOrder && state.shop.counterService.running) {
     return {
       type: "wait_counter_service",
@@ -9701,6 +9788,21 @@ function renderStoryTeaserCard() {
   });
 }
 
+function renderCoveredCarTeaserCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!coveredCarTeaserUnlocked(state)) return "";
+  const seen = coveredCarTeaserSeen(state);
+  return renderIdleCard({
+    title: "Behind the Shop",
+    status: "Dream Build: Not ready yet",
+    copy: "An old car waits under a cover. The Tofu Shop is not the destination. It is how the dream starts. Keep growing the garage. The first build comes later.",
+    actions: seen
+      ? []
+      : [actionButton("Look Behind the Shop", "data-covered-car-teaser", "seen", false)],
+  });
+}
+
 function recentShopReward(gameState) {
   const state = normalizeGameState(gameState);
   return (state.recentRewards || []).find((reward) => reward && reward.type === "shop_order") || null;
@@ -9992,6 +10094,17 @@ function nextMilestoneForShop(gameState) {
     };
   }
 
+  if (coveredCarTeaserUnlocked(state) && !coveredCarTeaserSeen(state)) {
+    return {
+      id: "covered_car_teaser",
+      name: "Look Behind the Shop",
+      progressText: "Managed shop ready",
+      percent: 100,
+      reward: "A dream build teaser",
+      guidance: "The Tofu Shop is steady enough to reveal the covered car without starting full car building yet.",
+    };
+  }
+
   const closeStationMilestone = nextVisibleStationMilestone(state);
   if (closeStationMilestone && (closeStationMilestone.close || closeStationMilestone.affordable)) {
     return {
@@ -10137,6 +10250,7 @@ function renderOverviewPanel(state) {
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
       ${renderOverviewImprovementCard(state)}
       ${renderCounterServiceCard(state)}
+      ${renderCoveredCarTeaserCard(state)}
       ${renderRecentShopRewardCard(state)}
       ${renderDriverBonusCard(state)}
       ${renderPassportTeaserCard(state)}
@@ -12058,6 +12172,18 @@ function handleTofuShopPanelClick(event) {
     saveShopActionResult(result, result.ok ? result.message : "");
     return;
   }
+  if (target.dataset.coveredCarTeaser) {
+    const result = acknowledgeCoveredCarTeaser(currentGameState());
+    if (!result.ok) {
+      setSummaryStatusMessage(result.reason);
+      renderTofuShop(result.gameState);
+      return;
+    }
+    saveGameState(result.gameState);
+    renderGamePanels(result.gameState);
+    setSummaryStatusMessage(result.feedback || "Behind the shop, the covered car waits.");
+    return;
+  }
   if (target.dataset.fulfillOrders) {
     const result = fulfillShopOrders(currentGameState(), target.dataset.fulfillOrders, {
       activeDrive: false,
@@ -12497,6 +12623,15 @@ function handleNextBestAction() {
     setSummaryStatusMessage(actionType === "watch_starter_shop"
       ? "Watch the starter shop run, then buy the first useful upgrade."
       : "Review the Tofu Shop while parked.");
+    return;
+  }
+  if (actionType === "covered_car_teaser") {
+    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+    appState.shopTab = "overview";
+    const result = acknowledgeCoveredCarTeaser(currentGameState());
+    saveGameState(result.gameState);
+    renderGamePanels(result.gameState);
+    setSummaryStatusMessage(result.feedback || "Behind the shop, the covered car waits.");
     return;
   }
   if (actionType === "active_drive") return;
