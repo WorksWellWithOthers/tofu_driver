@@ -9245,6 +9245,18 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  if (shopUnlocked && dreamInvestmentTargetVisible(state) && !urgentShopPriorityBeforeDreamInvestment(state)) {
+    const target = dreamInvestmentTargetProgress(state);
+    return {
+      type: "dream_investment_target",
+      title: target.ready ? "Next: Dream Investment Ready" : "Next: Save for Wheels",
+      copy: target.ready
+        ? "The Wheels Fund is ready. Full car building comes in a future update, so keep the shop healthy for now."
+        : `The covered car needs its first real part later. Wheels Fund: ${formatCash(target.current)} / ${formatCash(target.required)} Cash.`,
+      buttonLabel: "View Wheels Fund",
+      disabled: false,
+    };
+  }
   if (shopUnlocked && prep.ready < 1 && prep.running && Number(state.shop.tofuStock || 0) >= PREP_COUNTER_CONSUME_PER_ORDER) {
     const prepEta = prep.etaSeconds !== null ? ` About ${prep.etaSeconds} seconds remaining.` : "";
     const tidyNeeded = tidyPackaging && stationUpgradeIsRevealed(tidyPackaging, state) && tidyLevel < tidyPackaging.maxLevel
@@ -9276,18 +9288,6 @@ function nextBestAction(gameState, options = {}) {
       copy: "Tofu Stock is low. Buy Tofu Press or supplier support when available; manual packing is only a backup.",
       buttonLabel: "View Production",
       stationId: "tofu_press",
-      disabled: false,
-    };
-  }
-  if (shopUnlocked && dreamInvestmentTargetVisible(state) && !urgentShopPriorityBeforeDreamInvestment(state)) {
-    const target = dreamInvestmentTargetProgress(state);
-    return {
-      type: "dream_investment_target",
-      title: target.ready ? "Next: Dream Investment Ready" : "Next: Save for Wheels",
-      copy: target.ready
-        ? "The Wheels Fund is ready. Full car building comes in a future update, so keep the shop healthy for now."
-        : `The covered car needs its first real part later. Wheels Fund: ${formatCash(target.current)} / ${formatCash(target.required)} Cash.`,
-      buttonLabel: "View Wheels Fund",
       disabled: false,
     };
   }
