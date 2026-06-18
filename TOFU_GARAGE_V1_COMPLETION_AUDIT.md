@@ -192,9 +192,13 @@ budgets, and any Car Asset Value-facing accounting.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
 7. Playtest First Dream Build Investment Purchase V1: verify the `$50K` Wheels purchase and `$25K`
    Project Car Value tradeoff are clear without feeling like full Dream Garage.
-8. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
-9. Keep Exhaust as target-only until the next Dream Garage slice is scoped.
-10. Keep Net Worth V1 as Cash + Tofu Business Value + Project Car Value until full valuation has a
+8. Implement Wheels work levels before any repeated part-buying loop. Parts should be purchased
+   once, then improved through levels.
+9. Keep Exhaust as target-only until Wheels work levels prove the part progression model.
+10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
+   Exhibition, Auction, or Collector Offer outcomes.
+11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
+12. Keep Net Worth V1 as Cash + Tofu Business Value + Project Car Value until full valuation has a
    coherent accounting model.
 
 ## 8. Deferred Systems
@@ -205,6 +209,8 @@ Keep these deferred:
 - car parts
 - project-car inventory
 - Buy Exhaust or any broader car-part purchase effect
+- duplicate part-buying loops such as `Buy Wheels x10`
+- completed-build events, Auction, Collector Offer, Showcase, or Closed-Course Exhibition outcomes
 - full Net Worth accounting
 - Car Asset Value and Garage Value
 - routes and route expansion

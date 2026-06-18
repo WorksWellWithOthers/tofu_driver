@@ -75,7 +75,8 @@ Covered Car / Dream Build Teaser V1 -> First Dream Build Investment Purchase V1.
 Later:
 
 ```text
-Exhaust target preview -> Dream Garage planning -> broader car-part purchase loop -> keep/sell decision -> full Net Worth accounting.
+Exhaust target preview -> Wheels work levels -> Exhaust part track -> Dream Build progress ->
+completed-build event design -> Keep / Show / Auction choice -> full Net Worth accounting.
 ```
 
 Avoid for now:
@@ -85,6 +86,12 @@ full asset valuation, company value, separate dollar balances, shares as the mai
 Exhaust / full car-part inventory in V1, routes expansion, crew gameplay, franchise mode, social
 systems, backend sync, multiplayer, payments, service workers, uploads, or network calls.
 ```
+
+Dream Build progression should buy each part once, then improve that part through work levels.
+Avoid duplicate part-buying loops such as `Buy Wheels x10`. Future work should use verbs like
+Polish, Fit, Balance, Tune, Refine, Wrap, Detail, Finish, and Showcase. Completed-build events
+remain future and should use Keep, Showcase, Closed-Course Exhibition, Auction, or Collector Offer
+choices only after part-level progression is proven.
 
 ## Risks / Anti-Patterns
 

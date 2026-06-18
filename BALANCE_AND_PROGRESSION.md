@@ -1387,6 +1387,52 @@ Open question:
 - Does the first garage slice need a visible budget meter for anticipation, or is direct Cash
   spending clear enough?
 
+### Dream Build Part Progression
+
+Dream Build should not become duplicate part buying. The future structure is:
+
+```text
+Buy the part once.
+Then improve that same part through work levels.
+```
+
+Player-facing verbs should be about care and craft: Install, Polish, Fit, Balance, Tune, Refine,
+Restore, Wrap, Detail, Finish, Showcase. Avoid `Buy Wheels x10`, `Buy Exhaust x5`, `Produce more
+turbos`, or any public-road performance framing.
+
+Initial future tracks:
+
+| Part Track | Level 0 | Level 1 | Level 2 | Level 3 | Level 4 | Level 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Wheels | Missing / stock | Wheels Installed | Polished Wheels | Balanced Fitment | Showpiece Fitment | Collector Finish |
+| Exhaust | Stock | Exhaust Fitted | Sealed Joints | Tuned Note | Heat Wrapped | Showcase Finish |
+| Suspension | Stock | Suspension Refreshed | Ride Height Set | Alignment Dialed | Corner Balance | Showcase Stance |
+| Brakes | Stock | Brake Refresh | Better Pads | Fluid and Lines | Balanced Stopping | Confidence Setup |
+| Turbo Kit | Not started | Kit Mounted | Piping Routed | Heat Managed | Closed-Course Tuned | Showcase Ready |
+| Stage Tune | Not started | Baseline Tune | Smooth Response | Reliability Map | Closed-Course Map | Showcase Calibration |
+
+Each level is an investment, not a direct cash printer.
+
+Possible level effects:
+
+- Cash decreases.
+- Project Car Value increases.
+- Dream Build progress increases.
+- Garage Reputation increases.
+- Showcase Readiness increases.
+- future events unlock.
+- future business paths unlock.
+
+Core tradeoff:
+
+```text
+Cash spent on the car delays liquid progress toward $1T,
+but increases asset value and unlocks higher-value opportunities later.
+```
+
+Do not give every part level a direct Cash payout. Cash rewards should mainly come from later
+events, sales, collector offers, or business paths.
+
 ### Project Car Stages
 
 | Stage | Name | Fantasy | Unlock | Main Costs | Main Rewards | Exit Condition |
@@ -1536,6 +1582,42 @@ public-road competition or speed-optimization wording.
 
 Once the car reaches enough Project Car Value or clears a major event, the player can choose to keep
 and showcase it or complete/sell the build.
+
+### Completed Build Events
+
+Completed-car decisions are future prestige-like choices. They should arrive only after Dream Build
+part levels and completion thresholds are proven.
+
+| Event Choice | Effect | Rewards | Tradeoff |
+| --- | --- | --- | --- |
+| Keep the Car | The car remains in the collection. | Higher Project Car Value, long-term status, garage identity, future showcase eligibility. | No immediate Cash payout. |
+| Enter Showcase | The car is shown publicly in-fiction. | Garage Reputation, sponsor interest, status, possible cosmetic unlocks. | No real driving and no speed incentives. |
+| Closed-Course Exhibition | Fictional non-real-world event. | Trophy, story beat, sponsor interest. | No Cup Test scoring, real driving, speed, G-force, or public-road behavior effect. |
+| Auction the Car | Sell the car for Cash. | Large Cash payout that can fund the next build or next business. | Lose the car from active collection and lose some status/collection value. |
+| Collector Offer | Rare offer to buy the car. | Possibly better Cash than auction, story/status beat, future collector network. | Lose the car unless the player declines. |
+
+Prestige-like role:
+
+```text
+Sell the build
+-> get Cash
+-> fund the next business
+-> unlock better project cars
+-> previous shop loop becomes more automated
+```
+
+or:
+
+```text
+Keep the build
+-> grow status
+-> unlock showcase/sponsor paths
+-> slower Cash now, higher brand value later
+```
+
+Completed build events bridge Tofu Garage to later business scaling. They should not become the
+next immediate implementation slice after Wheels; first prove part work levels and completion
+progress.
 
 Preferred prestige currency:
 

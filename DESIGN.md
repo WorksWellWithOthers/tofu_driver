@@ -438,6 +438,10 @@ Design rules:
 - The first implemented car-related purchase is Wheels: save `$50K Cash` after the covered-car
   teaser, then spend it to start the project car with `$25K Project Car Value`. The next target is
   Exhaust as a future-only preview; no Buy Exhaust action exists yet.
+- Parts are purchased once, then improved through work levels. The player should not buy duplicate
+  wheels, exhausts, turbos, or other repeated copies of the same part. Future actions should use
+  verbs such as Install, Polish, Fit, Balance, Tune, Refine, Restore, Wrap, Detail, Finish, and
+  Showcase.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -449,6 +453,89 @@ Design rules:
 - Car parts must not improve real-world Cup Test scoring, qualification, route validation, speed,
   or safety-sensitive behavior.
 - Selling or completing a car can become a future prestige loop only after the garage loop is fun.
+
+### Dream Build Part Progression
+
+Dream Build parts should use a one-part, many-work-levels model:
+
+```text
+Tofu Garage earns Cash
+-> Cash funds project car parts
+-> each part has improvement levels
+-> completed car unlocks event choices
+-> event choices create Cash, status, business, or prestige outcomes
+```
+
+Core rule:
+
+```text
+Buy the part once.
+Then work on that part through levels.
+```
+
+Future part tracks:
+
+| Part | Level 0 | Level 1 | Level 2 | Level 3 | Level 4 | Level 5 |
+| --- | --- | --- | --- | --- | --- | --- |
+| Wheels | Missing / stock | Wheels Installed | Polished Wheels | Balanced Fitment | Showpiece Fitment | Collector Finish |
+| Exhaust | Stock | Exhaust Fitted | Sealed Joints | Tuned Note | Heat Wrapped | Showcase Finish |
+| Suspension | Stock | Suspension Refreshed | Ride Height Set | Alignment Dialed | Corner Balance | Showcase Stance |
+| Brakes | Stock | Brake Refresh | Better Pads | Fluid and Lines | Balanced Stopping | Confidence Setup |
+| Turbo Kit | Not started | Kit Mounted | Piping Routed | Heat Managed | Closed-Course Tuned | Showcase Ready |
+| Stage Tune | Not started | Baseline Tune | Smooth Response | Reliability Map | Closed-Course Map | Showcase Calibration |
+
+Part-level investments may reduce Cash, increase Project Car Value, increase Dream Build progress,
+increase Garage Reputation, improve Showcase Readiness, unlock future events, or unlock future
+business paths. They should not produce direct Cash at every level.
+
+Avoid:
+
+- `Buy Wheels x10`
+- `Buy Exhaust x5`
+- `Produce more turbos`
+- public-road performance copy
+
+Core tradeoff:
+
+```text
+Cash spent on the car delays liquid progress toward $1T,
+but increases asset value and unlocks higher-value opportunities later.
+```
+
+### Completed Build Events
+
+When a project car reaches a completion threshold, future Dream Garage should offer clear choices
+instead of forcing one outcome.
+
+| Event Choice | Effect | Rewards | Tradeoff / Safety |
+| --- | --- | --- | --- |
+| Keep the Car | The car remains in the collection. | Higher Project Car Value, long-term status, garage identity, future showcase eligibility. | No immediate Cash payout. |
+| Enter Showcase | The car is shown publicly in-fiction. | Garage Reputation, sponsor interest, status, possible cosmetic unlocks. | No real driving and no speed incentives. |
+| Closed-Course Exhibition | Fictional non-real-world event. | Trophy, story beat, sponsor interest. | Must never affect Cup Test scoring, real driving, speed, G-force, or public-road behavior. |
+| Auction the Car | Sell the car for Cash. | Large Cash payout to fund the next build or next business. | Lose the car from active collection and lose some collection value/status. |
+| Collector Offer | Rare offer to buy the car. | Possibly better Cash than auction, story/status beat, future collector network. | Lose the car unless the player declines. |
+
+Completed-car choices are a future prestige-like bridge:
+
+```text
+Sell the build
+-> get Cash
+-> fund the next business
+-> unlock better project cars
+-> previous shop loop becomes more automated
+```
+
+or:
+
+```text
+Keep the build
+-> grow status
+-> unlock showcase/sponsor paths
+-> slower Cash now, higher brand value later
+```
+
+This layer should bridge Tofu Garage into later business scaling only after the shop loop and first
+Dream Build work levels are proven.
 
 Safe language:
 
@@ -463,7 +550,10 @@ Safe language:
 - event readiness
 
 Avoid copy that implies public-road competition, speed optimization, aggressive road behavior, or
-real-world vehicle modification advice.
+real-world vehicle modification advice. Dream Build must never reward street racing, public-road
+competition, speed, high-G bragging, Cup Test scoring advantage, Cup Test qualification advantage,
+or real-world driving performance. Use closed-course, showcase, garage, smoothness, reliability,
+and fictional status wording only.
 
 ## Ultimate Net Worth Endgame
 

@@ -267,15 +267,21 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
-1. Review Dream Garage design.
-2. Playtest and tune First Loop Contract.
-3. Tune first 10 minutes.
-4. Playtest Covered Car / Dream Build Teaser V1.
-5. Use the implemented Cash V1 bridge when designing car-part costs.
-6. Implement Stage 0 garage restoration only after the teaser and Cash bridge feel clear.
-7. Implement Stage 1 daily build.
-8. Implement the first fictional closed-course event.
-9. Design project car completion/sale prestige after the garage loop is fun.
+1. Verify Wheels purchase V1: `$50K Cash` spend, `$25K Project Car Value`, persistence, and
+   priority rules.
+2. Implement Wheels work levels: Wheels Installed, Polished Wheels, Balanced Fitment, Showpiece
+   Fitment, Collector Finish.
+3. Add Exhaust as the next part track: Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped,
+   Showcase Finish.
+4. Add Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
+5. Refine Project Car Value from part work levels after the first two tracks feel clear.
+6. Design the first completed-build event threshold and event choice requirements.
+7. Later implement Keep / Show / Auction choice only after part progression is proven.
+8. Much later connect completed builds to business expansion, collector networks, and scalable
+   garage/company paths.
+
+Completed-car events are not immediate scope. Keep Showcase, Closed-Course Exhibition, Auction,
+Collector Offer, and business expansion documented until the Dream Build part-level loop is fun.
 
 Future endgame/business sequence:
 
