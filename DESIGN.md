@@ -302,6 +302,10 @@ Current design principles:
   bulk-buy actions, affordability progress, and time-to-afford hints, but only for visible
   meaningful shop items. Bulk actions must not spend into hidden, future, route, crew, or decorative
   systems.
+- `TOFU_GARAGE_V1_COMPLETION_AUDIT.md` is the readiness gate for leaving the first shop phase. Its
+  current verdict is that Tofu Garage V1 is close enough for a parked Covered Car / Dream Build
+  teaser after final first-session and high-progress responsiveness checks, but not full car
+  building.
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
   Delivery Order, consumes Delivery Orders, and grants Tips, Reputation, and Shop XP, but it is not
   the primary progression loop.

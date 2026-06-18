@@ -6,7 +6,7 @@ Tofu Driver is a static browser app with two connected experiences:
 - `Tofu Garage`: a parked-only idle/incremental game mode whose first business is the Tofu Shop.
 
 The Cup Test can provide optional certified smooth-delivery boosts for the shop, but ordinary Tofu
-Tofu Garage progression is playable at home without sensors or location.
+Garage progression is playable at home without sensors or location.
 
 Cup-first visitors can reach Tofu Garage from the landing page and from parked Cup Test results.
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
@@ -95,6 +95,8 @@ The static app uses hash routing:
   caps, and the deferred BigNumber/mantissa-exponent strategy
 - `TOFU_GARAGE_UNFOLD_AUDIT.md`: meaningful-unfold audit for current Tofu Garage resources,
   bulk-buy quality-of-life rules, affordability progress, and deferred/future system boundaries
+- `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: readiness audit for whether Tofu Garage V1 can move toward
+  the parked Covered Car / Dream Build teaser
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /
