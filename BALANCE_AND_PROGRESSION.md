@@ -346,6 +346,9 @@ But spending Cash on assets can unlock higher earning paths.
 Examples:
 
 - Shop upgrades reduce Cash but increase Business Value and income.
+- First Dream Investment Target V1 shows a `$50K Cash` Wheels Fund after the covered-car teaser.
+  It is a visible saving target only; it does not spend Cash, create wheels, add car-part inventory,
+  add Car Asset Value, change Net Worth V1, or create liabilities.
 - Car parts reduce Cash but increase Car Asset Value and unlock future opportunities.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
@@ -419,6 +422,9 @@ Rules:
   clickable advanced tabs during the first loop
 - the optional Net Worth V1 line may appear only after later shop milestones such as Manager Desk,
   Shop Level 100, or the Covered Car teaser
+- after the Covered Car teaser is seen or a high-progress save qualifies for it, the bar may point
+  to `Save for Wheels` when no urgent shop bottleneck or useful shop purchase is more important.
+  If Cash is already at `$50K`, it may show `Dream Investment Ready`.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1341,6 +1347,9 @@ Suggested reveal:
 
 - Covered Car / Dream Build Teaser V1 after managed-shop scale: Counter Crew, Manager Desk,
   Wholesale Pickup progress, and sustained shop growth.
+- First Dream Investment Target V1 after the covered-car teaser: a `$50K Cash` Wheels Fund progress
+  card. It answers what the shop is saving for without adding a Buy Wheels button, part ownership,
+  Dream Garage mechanics, Car Asset Value, or full valuation.
 - full Dream Garage only after the teaser proves players understand the shop-to-dream bridge.
 - first part purchase after stable Cash income exists and project-budget rules are resolved.
 
@@ -1357,6 +1366,8 @@ Resolved direction:
 - Cash is the actual spend currency for garage parts.
 - `Dream Jar`, `Project Budget`, or a similar label can be a goal/progress meter showing Cash saved
   toward the next car part.
+- Current V1 implementation uses `Wheels Fund` as the first such target at `$50K Cash`; it is a
+  progress card only and does not earmark, subtract, or spend Cash.
 - A project budget should not become a separate currency.
 - Direct Cash spending is the default first garage implementation.
 - Later, the game may add `Builder Reputation` or `Builder Stars`, but not as early spend
@@ -1904,6 +1915,7 @@ progression contract.
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
 | Dream Garage concept | Documented only | Dream Garage / Project Car Progression section | future emotional arc is specified | implement only after first loop and order pacing are stable |
+| First Dream Investment Target V1 | Implemented | `dreamInvestmentTargetProgress`, `renderDreamInvestmentTargetCard`, Next Milestone/Next Best Action handling | shows a `$50K Cash` Wheels Fund after the covered-car teaser or high-progress qualifying state | tune target cost and timing after managed-shop playtests |
 | Project car stages | Documented only | Stage 0 through Stage 3 tables/lists | covered car, daily build, closed-course build, dream build are defined | no runtime state/UI yet |
 | Fictional closed-course events | Documented only | event table and safety rules | future event names/rewards are specified | no event queues/results yet |
 | Project car completion/sale prestige | Documented only | Builder Stars design | future prestige direction is specified | no Builder Stars state yet |

@@ -145,6 +145,10 @@
   card. It unlocks after the shop has reached Manager Desk scale with Wholesale Pickup progress,
   not during the first loop, and it does not add a Dream Garage tab, garage inventory, parts,
   events, full asset valuation, or car stats.
+- First Dream Investment Target V1 is implemented as a compact Wheels Fund card after the
+  covered-car teaser or high-progress qualifying saves. The V1 target is `$50K Cash`; it shows
+  progress and readiness only, with no Buy Wheels button, part ownership, Car Asset Value, or Net
+  Worth formula change.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -207,40 +211,43 @@ Canonical references:
 9. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
-10. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
+10. Playtest First Dream Investment Target V1: confirm the `$50K` Wheels Fund is hidden on fresh
+   saves, appears only after the covered-car bridge or qualifying high-progress saves, does not feel
+   instantly complete for normal saves, and yields to urgent shop bottlenecks.
+11. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
-11. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
+12. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
    behavior before adding higher station thresholds.
-12. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
+13. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
    Worth systems until the local shop loop keeps a player engaged.
-13. Expand balance tests only where playtesting reveals gaps:
+14. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-14. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
+15. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
    Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
    distance, route difficulty, racing technique, or public-road competition.
-15. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
+16. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
    midgame needs a clearer visual step beyond the upgraded-shop scene.
-16. Keep testing the polished single-image Living Scene on phone and desktop: verify one-click shop
+17. Keep testing the polished single-image Living Scene on phone and desktop: verify one-click shop
    controls, tab switches, nav buttons, image flicker, oversized empty panels, debug/pending copy,
    or controls being pushed too far down.
-17. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
+18. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
    reduced-motion fallback.
-18. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
+19. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
    timing. Later, design the first actual garage reveal scene without activating full Dream Garage
    mechanics.
-19. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
+20. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
    such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
-20. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
+21. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
    muted, including first load, `#/cup-test` reload, permission-needed, permission-denied, and
    no-motion-data cases.
-21. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+22. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-22. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-23. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+23. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+24. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 

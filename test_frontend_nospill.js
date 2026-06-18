@@ -122,6 +122,10 @@ globalThis.netWorthV1 = netWorthV1;
 globalThis.netWorthProgress = netWorthProgress;
 globalThis.shouldShowNetWorthV1 = shouldShowNetWorthV1;
 globalThis.renderNetWorthCard = renderNetWorthCard;
+globalThis.dreamInvestmentTargetVisible = dreamInvestmentTargetVisible;
+globalThis.dreamInvestmentTargetProgress = dreamInvestmentTargetProgress;
+globalThis.renderDreamInvestmentTargetCard = renderDreamInvestmentTargetCard;
+globalThis.dreamInvestmentReturningNote = dreamInvestmentReturningNote;
 globalThis.addLedgerEntry = addLedgerEntry;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
@@ -3218,6 +3222,7 @@ function makeNode() {
 elements = {
   shopTabList: makeNode(),
   shopTabPanel: makeNode(),
+  shopOfflineEarnings: makeNode(),
 };
 appState.running = false;
 appState.calibrating = false;
@@ -3271,12 +3276,25 @@ globalThis.earlyScene = getTofuShopSceneState(early).sceneId;
 const highProgress = managedShopState();
 const urgentQueue = managedShopState();
 urgentQueue.shop.deliveryOrders = 1000000;
+const affordableWheels = managedShopState();
+affordableWheels.shop.tips = 75000;
+const partialWheels = managedShopState();
+partialWheels.shop.tips = 32000;
 globalThis.highCoveredUnlocked = coveredCarTeaserUnlocked(highProgress);
 globalThis.highCoveredSeen = coveredCarTeaserSeen(highProgress);
+globalThis.freshDreamVisible = dreamInvestmentTargetVisible(fresh);
+globalThis.highDreamVisible = dreamInvestmentTargetVisible(highProgress);
+globalThis.highDreamProgress = dreamInvestmentTargetProgress(highProgress);
 globalThis.highMilestone = nextMilestoneForShop(highProgress);
 globalThis.highAction = nextBestAction(highProgress);
 globalThis.urgentQueueAction = nextBestAction(urgentQueue);
+globalThis.urgentQueueMilestone = nextMilestoneForShop(urgentQueue);
 globalThis.highCardHtml = renderCoveredCarTeaserCard(highProgress);
+globalThis.highDreamCardHtml = renderDreamInvestmentTargetCard(highProgress);
+globalThis.affordableDreamCardHtml = renderDreamInvestmentTargetCard(affordableWheels);
+globalThis.affordableDreamProgress = dreamInvestmentTargetProgress(affordableWheels);
+globalThis.partialDreamCardHtml = renderDreamInvestmentTargetCard(partialWheels);
+globalThis.partialDreamProgress = dreamInvestmentTargetProgress(partialWheels);
 appState.shopTab = "overview";
 renderTofuShop(highProgress);
 globalThis.storyOverviewHtml = elements.shopTabPanel.innerHTML;
@@ -3291,6 +3309,11 @@ globalThis.acknowledgedSeen = coveredCarTeaserSeen(acknowledged.gameState);
 globalThis.acknowledgedIds = acknowledged.gameState.seenStoryBeatIds.slice();
 globalThis.acknowledgedMilestone = nextMilestoneForShop(acknowledged.gameState);
 globalThis.acknowledgedAction = nextBestAction(acknowledged.gameState);
+globalThis.acknowledgedDreamVisible = dreamInvestmentTargetVisible(acknowledged.gameState);
+globalThis.acknowledgedDreamCardHtml = renderDreamInvestmentTargetCard(acknowledged.gameState);
+globalThis.acknowledgedDreamNote = dreamInvestmentReturningNote(acknowledged.gameState);
+globalThis.acknowledgedNetWorth = netWorthV1(acknowledged.gameState);
+globalThis.acknowledgedFormulaNetWorth = cashBalance(acknowledged.gameState) + tofuBusinessValue(acknowledged.gameState);
 const secondAcknowledge = acknowledgeCoveredCarTeaser(acknowledged.gameState);
 globalThis.secondAcknowledgeFeedback = secondAcknowledge.feedback;
 globalThis.storyLedgerCount = secondAcknowledge.gameState.shop.ledger.filter((entry) => entry.type === "story").length;
@@ -3298,23 +3321,57 @@ globalThis.storyLedgerCount = secondAcknowledge.gameState.shop.ledger.filter((en
 saveGameState(acknowledged.gameState);
 renderTofuShop(loadGameState());
 globalThis.reloadedOverviewHtml = elements.shopTabPanel.innerHTML;
+const offlineDream = JSON.parse(JSON.stringify(acknowledged.gameState));
+offlineDream.shop.offlineEarnings = {
+  tofuStock: 2500,
+  deliveryOrders: 25,
+  tips: 4000,
+  tofuConsumed: 50,
+  cappedHours: 2,
+  counterServicePaused: true,
+};
+renderTofuShop(offlineDream);
+globalThis.offlineDreamSummary = elements.shopOfflineEarnings.textContent;
+globalThis.offlineDreamMentions = (elements.shopOfflineEarnings.textContent.match(/Wheels Fund/g) || []).length;
 appState.running = true;
 appState.shopTab = "overview";
 renderTofuShop(highProgress);
 globalThis.activeStoryOverviewHtml = elements.shopTabPanel.innerHTML;
+globalThis.activeDreamCardHtml = renderDreamInvestmentTargetCard(highProgress);
 `, context);
 
   assert.strictEqual(context.freshCoveredUnlocked, false);
   assert.strictEqual(context.freshCoveredCard, '');
+  assert.strictEqual(context.freshDreamVisible, false);
   assert.strictEqual(context.earlyCoveredUnlocked, false);
   assert.strictEqual(context.earlyScene, 'scene_tiny_shop_upgraded');
   assert.strictEqual(context.highCoveredUnlocked, true);
   assert.strictEqual(context.highCoveredSeen, false);
+  assert.strictEqual(context.highDreamVisible, true);
+  assert.strictEqual(context.highDreamProgress.required, 50000);
+  assert.strictEqual(context.highDreamProgress.ready, false);
+  assert(context.highDreamCardHtml.includes('First Dream Investment'));
+  assert(context.highDreamCardHtml.includes('Wheels Fund'));
+  assert(context.highDreamCardHtml.includes('$0 / $50K'));
+  assert(context.highDreamCardHtml.includes('Cash from the shop'));
+  assert(!context.highDreamCardHtml.includes('Tips'));
+  assert(context.highDreamCardHtml.includes('Car parts come later'));
+  assert(!context.highDreamCardHtml.includes('Buy Wheels'));
+  assert.strictEqual(context.partialDreamProgress.current, 32000);
+  assert.strictEqual(context.partialDreamProgress.required, 50000);
+  assert.strictEqual(context.partialDreamProgress.percent, 64);
+  assert(context.partialDreamCardHtml.includes('$32K / $50K'));
+  assert(context.partialDreamCardHtml.includes('64%'));
+  assert.strictEqual(context.affordableDreamProgress.ready, true);
+  assert(context.affordableDreamCardHtml.includes('Ready for the first Dream Build investment'));
+  assert(context.affordableDreamCardHtml.includes('Full car building comes in a future update'));
   assert.strictEqual(context.highMilestone.id, 'covered_car_teaser');
   assert.strictEqual(context.highMilestone.name, 'Look Behind the Shop');
   assert.strictEqual(context.highAction.type, 'covered_car_teaser');
   assert.strictEqual(context.highAction.buttonLabel, 'Look Behind the Shop');
   assert.notStrictEqual(context.urgentQueueAction.type, 'covered_car_teaser');
+  assert.notStrictEqual(context.urgentQueueAction.type, 'dream_investment_target');
+  assert.notStrictEqual(context.urgentQueueMilestone.id, 'dream_investment_wheels');
   assert(context.urgentQueueAction.title.includes('Clear the Order Queue') || context.urgentQueueAction.copy.includes('queue is full'));
   assert(context.highCardHtml.includes('Behind the Shop'));
   assert(context.highCardHtml.includes('Dream Build: Not ready yet'));
@@ -3332,13 +3389,28 @@ globalThis.activeStoryOverviewHtml = elements.shopTabPanel.innerHTML;
   assert(context.acknowledgedFeedback.includes('Story beat unlocked'));
   assert.strictEqual(context.acknowledgedSeen, true);
   assert(context.acknowledgedIds.includes('dream_build_teaser_v1'));
-  assert.notStrictEqual(context.acknowledgedMilestone.id, 'covered_car_teaser');
-  assert.notStrictEqual(context.acknowledgedAction.type, 'covered_car_teaser');
+  assert.strictEqual(context.acknowledgedDreamVisible, true);
+  assert(context.acknowledgedDreamCardHtml.includes('Wheels Fund'));
+  assert(context.acknowledgedDreamNote.includes('Wheels Fund'));
+  assert.strictEqual(context.acknowledgedMilestone.id, 'dream_investment_wheels');
+  assert.strictEqual(context.acknowledgedMilestone.name, 'Save for Wheels');
+  assert.strictEqual(context.acknowledgedAction.type, 'dream_investment_target');
+  assert.strictEqual(context.acknowledgedAction.buttonLabel, 'View Wheels Fund');
+  assert.strictEqual(context.acknowledgedNetWorth, context.acknowledgedFormulaNetWorth);
   assert(context.secondAcknowledgeFeedback.includes('covered car waits'));
   assert.strictEqual(context.storyLedgerCount, 1);
   assert(context.reloadedOverviewHtml.includes('old car waits under a cover'));
+  assert(context.reloadedOverviewHtml.includes('First Dream Investment'));
+  assert(context.offlineDreamSummary.includes('Wheels Fund'));
+  assert.strictEqual(context.offlineDreamMentions, 1);
   assert(!context.reloadedOverviewHtml.includes('Look Behind the Shop</button>'));
   assert(!context.activeStoryOverviewHtml.includes('old car waits under a cover'));
+  assert(!context.activeStoryOverviewHtml.includes('First Dream Investment'));
+  assert.strictEqual(context.activeDreamCardHtml, '');
+  assert(!context.storyOverviewHtml.includes('Dream Garage'));
+  assert(!context.storyOverviewHtml.includes('Buy Wheels'));
+  assert(!context.storyOverviewHtml.includes('wheelsOwned'));
+  assert(!context.storyOverviewHtml.includes('Driver XP'));
 
   const css = fs.readFileSync(path.join(NOSPILL_DIR, 'app.css'), 'utf8');
   assert(css.includes('.nospill-shop-tab-list button:focus-visible'));

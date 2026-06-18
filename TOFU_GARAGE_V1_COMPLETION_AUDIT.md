@@ -63,6 +63,7 @@ or car assets.
 | Routes | Deferred / scaffolding | Route-related concepts remain hidden/deferred until meaningful. |
 | Delivery Crew gameplay | Deferred | Current crew surface is cosmetic/placeholder only. |
 | Covered Car / Dream Build Teaser V1 | Implemented | Unlocks after managed-shop scale and Wholesale Pickup progress; no car mechanics are implemented. |
+| First Dream Investment Target V1 | Implemented | Shows a `$50K Cash` Wheels Fund after the covered-car bridge or qualifying high-progress saves; no Buy Wheels button, car-part ownership, Dream Garage tab, or Car Asset Value is implemented. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
 | Net Worth V1 | Implemented V1 | Compact shop-era line can appear after later milestones; formula is Cash + Tofu Business Value. Full valuation remains future. |
 
@@ -163,6 +164,7 @@ Current code status:
 - Cash is the implemented player-facing currency.
 - `shop.tips` is still the legacy internal field for save compatibility.
 - Net Worth V1 is implemented as Cash + Tofu Business Value.
+- First Dream Investment Target V1 uses Cash progress only: Wheels Fund is `$50K Cash`.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 
@@ -171,6 +173,8 @@ Recommendation:
 - Keep tips as flavor copy for order income, such as `+$10 from tips`.
 - Do not introduce both Tips and `$` as separate spendable balances.
 - Design Car Asset Value and project budgets before real car parts.
+- Treat the Wheels Fund as a target-only bridge. Do not subtract Cash, add Car Asset Value, create
+  part ownership, or treat the fund as a new currency in V1.
 
 Cash is no longer a blocker for a teaser. Full valuation is still a blocker for car parts, project
 budgets, and any Car Asset Value-facing accounting.
@@ -185,9 +189,11 @@ budgets, and any Car Asset Value-facing accounting.
 4. Tune Shop Spirit only if it is visible and still feels useless or clicky.
 5. Keep route, crew gameplay, license prestige, and full garage systems hidden/deferred.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
-7. Design Car Asset Value and project-budget rules before any car-part costs are added.
-8. Implement the first car investment only after the teaser and Cash bridge are clear.
-9. Keep Net Worth V1 as Cash + Tofu Business Value until Car Asset Value has a coherent accounting
+7. Playtest First Dream Investment Target V1: verify the `$50K` Wheels Fund gives a clear Cash
+   carrot without feeling like incomplete car mechanics.
+8. Design Car Asset Value and project-budget rules before any car-part costs are added.
+9. Implement the first real car investment only after the teaser and Cash bridge are clear.
+10. Keep Net Worth V1 as Cash + Tofu Business Value until Car Asset Value has a coherent accounting
    model.
 
 ## 8. Deferred Systems
@@ -197,6 +203,7 @@ Keep these deferred:
 - full Dream Garage
 - car parts
 - project-car inventory
+- Buy Wheels or any car-part purchase effect
 - full Net Worth accounting
 - Car Asset Value and Garage Value
 - routes and route expansion

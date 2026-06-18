@@ -359,6 +359,10 @@ Current design principles:
   `Behind the shop, an old car waits under a cover.` This is a purpose hint only, not Dream Garage
   implementation. Next Milestone may point to it once; after it is seen, normal shop progression
   resumes.
+- After the covered-car teaser is unlocked/seen, the shop may show `First Dream Investment`, a
+  compact Wheels Fund target. V1 target cost is `$50K Cash`. This is only a visible saving target
+  and future bridge: it does not buy wheels, create car-part inventory, add Car Asset Value, change
+  Net Worth V1, or open a Dream Garage tab.
 - Detailed tabs are earned. The Orders tab is removed from the first-loop shop because Overview
   owns order cards, Prep Counter progress, reward previews, and fulfillment actions. Production
   should focus on station ownership, and Upgrades should appear only when at least one relevant
@@ -431,6 +435,8 @@ Design rules:
 - Dream Garage is the long-term aspirational layer.
 - The player slowly builds a project car from an old covered car into a dream build.
 - Car parts should cost Cash, not a separate part currency.
+- The first implemented car-related bridge is the Wheels Fund target: save `$50K Cash` after the
+  covered-car teaser to show what the shop is funding. It is not a part purchase yet.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Car Asset Value, unlock higher earning paths, or create
   later sell/keep decisions.
