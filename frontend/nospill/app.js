@@ -242,6 +242,7 @@ const SHOP_GENERATOR_SAVE_MS = 5000;
 const SHOP_RENDER_THROTTLE_MS = 500;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
 const SHOP_BULK_BUY_LOOP_CAP = 100;
+const NET_WORTH_GOAL = 1000000000000;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -392,12 +393,12 @@ const SHOP_STATIONS = [
   {
     id: "regular_customer",
     name: "Regular Customer",
-    description: "Steady counter friends who bring tips when orders are ready.",
+    description: "Steady counter friends who bring Cash from tips when orders are ready.",
     baseCostTips: 240,
     growthRate: 1.2,
     prepSlotCost: 1,
     unlock: "Shop Sign 1",
-    production: "Tips over time",
+    production: "Cash over time",
   },
   {
     id: "delivery_route",
@@ -521,7 +522,7 @@ const SPIRIT_GENERATORS = [
 const SHOP_SPIRIT_BOOSTS = [
   { id: "rush_prep", name: "Rush Stock", costSpirit: 10, type: "instant_tofu", seconds: 30, description: "Adds 30 seconds of Tofu Stock production. Useful when Counter Service is waiting for Tofu Stock." },
   { id: "warm_counter", name: "Warm Counter", costSpirit: 15, type: "instant_orders", seconds: 30, description: "Adds 30 seconds of order prep. Useful when Counter Service is waiting for ready orders." },
-  { id: "busy_lunch", name: "Busy Lunch Hour", costSpirit: 20, type: "tips_multiplier", multiplier: 1.5, durationSeconds: 900, description: "Temporary shop tips boost." },
+  { id: "busy_lunch", name: "Busy Lunch Hour", costSpirit: 20, type: "tips_multiplier", multiplier: 1.5, durationSeconds: 900, description: "Temporary shop Cash boost." },
   { id: "double_batch", name: "Double Batch", costSpirit: 24, type: "press_multiplier", multiplier: 1.6, durationSeconds: 900, description: "Temporary Tofu Press boost." },
   { id: "calm_focus", name: "Calm Shop Focus", costSpirit: 18, type: "route_multiplier", multiplier: 1.4, durationSeconds: 900, description: "Temporary fictional route reward boost." },
 ];
@@ -930,7 +931,7 @@ const STAMP_LABELS = {
   first_tofu_press: "First Tofu Press",
   first_prep_counter: "First Prep Counter",
   first_10_orders: "First 10 Orders",
-  first_100_tips: "First 100 Tips",
+  first_100_tips: "First $100 Cash",
   first_upgrade_purchased: "First Upgrade Purchased",
   first_family_tofu_tray: "First Family Tofu Tray",
   shop_street_complete: "Shop Street Complete",
@@ -3901,6 +3902,22 @@ function formatShopBalance(value, carry = 0) {
   return formatCompactNumber(total);
 }
 
+function formatCash(value) {
+  return `$${formatShopCost(value)}`;
+}
+
+function formatCashCount(value) {
+  return `$${formatShopCount(value)}`;
+}
+
+function formatCashBalance(value, carry = 0) {
+  return `$${formatShopBalance(value, carry)}`;
+}
+
+function formatCashRate(value) {
+  return `$${formatShopRate(value)}`;
+}
+
 function setTextIfChanged(node, text) {
   if (!node) return false;
   const nextText = String(text ?? "");
@@ -4060,7 +4077,7 @@ function tofuStockRunway(gameState) {
     label = "Enough";
     message = orderType.id === "simple_tofu_box"
       ? `Enough tofu for ${remainingLabel} more orders. Tofu Stock feeds Prep Counter, but it is not the bottleneck right now.`
-      : `Enough tofu for ${remainingLabel} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}. Bigger orders use more tofu and pay more Tips.`;
+      : `Enough tofu for ${remainingLabel} ${orderType.name}${ordersRemaining === 1 ? "" : "s"}. Bigger orders use more tofu and pay more Cash.`;
   } else if (ordersRemaining >= 3) {
     label = "Watch";
     message = orderType.id === "simple_tofu_box"
@@ -4369,7 +4386,7 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
   if (!unlocked) return station.unlock || "Locked.";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  if (tipsNeeded > 0) return `Need ${formatShopCost(tipsNeeded)} more Tips. Let Counter Service earn Tips.`;
+  if (tipsNeeded > 0) return `Need ${formatCash(tipsNeeded)} more. Let Counter Service earn Cash from tips.`;
   const prepNeeded = Math.max(0, Math.ceil(safeNonNegativeInteger(station.prepSlotCost, 0, 100) - state.shop.prepSlots));
   if (prepNeeded > 0) return `Need ${formatShopCount(prepNeeded)} more Prep Capacity`;
   return "";
@@ -4402,7 +4419,7 @@ function stationAffordabilityStatus(station, gameState) {
     disabledReason,
     progress: affordabilityProgress([
       {
-        label: "Tips",
+        label: "Cash",
         current: state.shop.tips,
         required: cost,
         perSecond: counterServiceIncomeStatus(state).tipsPerMinute / 60,
@@ -4479,6 +4496,78 @@ function coveredCarTeaserSeen(gameState) {
     || state.seenStoryBeatIds.includes(COVERED_CAR_TEASER_ID);
 }
 
+function cashBalance(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(state.shop.tips, 0, SHOP_MAX_RESOURCE);
+}
+
+function stationPortfolioValue(gameState) {
+  const state = normalizeGameState(gameState);
+  return SHOP_STATIONS.reduce((total, station) => {
+    const owned = safeNonNegativeInteger(state.shop.stations[station.id], 0, 100000);
+    if (owned <= 0) return total;
+    const visibleOwned = Math.min(owned, 50);
+    const currentCostProxy = station.baseCostTips * Math.pow(station.growthRate, visibleOwned);
+    return total + currentCostProxy * Math.max(1, owned) * 0.35;
+  }, 0);
+}
+
+function upgradePortfolioValue(gameState) {
+  const state = normalizeGameState(gameState);
+  return STATION_UPGRADES.reduce((total, upgrade) => {
+    const level = safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel);
+    if (level <= 0 || !upgrade.costTips) return total;
+    const levelCostProxy = upgrade.costTips * Math.pow(1.32, Math.max(0, level - 1));
+    return total + levelCostProxy * level;
+  }, 0);
+}
+
+function tofuBusinessValue(gameState) {
+  const state = normalizeGameState(gameState);
+  const rates = getShopGeneratorRates(state);
+  const counterIncome = counterServiceIncomeStatus(state);
+  const stationValue = stationPortfolioValue(state);
+  const upgradeValue = upgradePortfolioValue(state);
+  const supplierValue = supplierStockPerSecond(state) * 300;
+  const reputationValue = Math.sqrt(safeNonNegativeNumber(state.shop.lifetimeReputation, 0, SHOP_MAX_RESOURCE)) * 25;
+  const levelValue = safeNonNegativeInteger(state.shop.shopLevel, 0, 100000) * 150;
+  const hasShopEarnings = safeNonNegativeInteger(state.shop.lifetimeTips, 0, SHOP_MAX_RESOURCE) > 0
+    || fulfilledShopOrderCount(state) > 0;
+  const throughputValue = hasShopEarnings
+    ? (
+        rates.tofuPressPerSecond * 120
+        + rates.prepOrdersPerSecond * 900
+        + safeNonNegativeNumber(counterIncome.tipsPerMinute, 0, SHOP_MAX_RESOURCE) * 20
+      )
+    : 0;
+  return safeNonNegativeInteger(
+    Math.round(stationValue + upgradeValue + supplierValue + reputationValue + levelValue + throughputValue),
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+}
+
+function netWorthV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(cashBalance(state) + tofuBusinessValue(state), 0, SHOP_MAX_RESOURCE);
+}
+
+function netWorthProgress(gameState) {
+  const current = netWorthV1(gameState);
+  return {
+    current,
+    goal: NET_WORTH_GOAL,
+    percent: Math.max(0, Math.min(100, (current / NET_WORTH_GOAL) * 100)),
+  };
+}
+
+function shouldShowNetWorthV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return coveredCarTeaserUnlocked(state)
+    || managerDeskUnlocked(state)
+    || safeNonNegativeInteger(state.shop.shopLevel, 0, 100000) >= 100;
+}
+
 function acknowledgeCoveredCarTeaser(gameState) {
   const state = normalizeGameState(gameState);
   if (!coveredCarTeaserUnlocked(state)) {
@@ -4540,7 +4629,7 @@ function shopUpgradeById(upgradeId) {
 function stationUpgradeRevealReason(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
-  if (upgrade.id === "counter_service_bell") return "Unlocks after First 10 Orders or First 100 Tips";
+  if (upgrade.id === "counter_service_bell") return "Unlocks after First 10 Orders or First $100 Cash";
   if (upgrade.id === "counter_service_wide") return "Unlocks after Order Bell and 20 fulfilled orders";
   if (upgrade.id === "counter_service_routine") return "Unlocks after Wider Counter and First Family Tofu Tray";
   if (upgrade.id === "counter_service_register") return "Unlocks after Pickup Routine and 25 fulfilled orders";
@@ -4766,7 +4855,7 @@ function upgradeAffordabilityStatus(upgrade, gameState) {
     canBuy: unlocked && level < upgrade.maxLevel && !disabledReason && !appState.running && !appState.calibrating,
     progress: affordabilityProgress([
       {
-        label: "Tips",
+        label: "Cash",
         current: state.shop.tips,
         required: supplierUpgrade ? 0 : costTips,
         perSecond: counterServiceIncomeStatus(state).tipsPerMinute / 60,
@@ -4795,12 +4884,12 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
     const tipsNeeded = Math.max(0, stationUpgradeCostTips(upgrade, level) - state.shop.tips);
     const reputationNeeded = Math.max(0, stationUpgradeCostReputation(upgrade, level) - state.shop.reputation);
     const missing = [];
-    if (tipsNeeded > 0) missing.push(`${formatShopCost(tipsNeeded)} more Tips`);
+    if (tipsNeeded > 0) missing.push(`${formatCash(tipsNeeded)} more`);
     if (reputationNeeded > 0) missing.push(`${formatShopCost(reputationNeeded)} more Reputation`);
     return missing.length ? `Need ${missing.join(" and ")}.` : "";
   }
   const tipsNeeded = Math.max(0, safeNonNegativeInteger(cost, 0, 1000000000) - state.shop.tips);
-  return tipsNeeded > 0 ? `Need ${formatShopCost(tipsNeeded)} more Tips. Let Counter Service earn Tips.` : "";
+  return tipsNeeded > 0 ? `Need ${formatCash(tipsNeeded)} more. Let Counter Service earn Cash from tips.` : "";
 }
 
 function stationUpgradePreviewText(upgrade, gameState) {
@@ -4868,7 +4957,7 @@ function stationUpgradeWhyItMatters(upgrade) {
   if (upgrade.id === "counter_service_wide") return "Keeps larger order queues from piling up.";
   if (upgrade.id === "counter_service_routine") return "Makes automatic pickups feel smooth after Family Trays.";
   if (upgrade.id === "counter_service_register") return "Processes two prepared orders per handoff when supplied.";
-  if (upgrade.id === "counter_service_window") return "Turns a growing Ready Orders pile into useful Tips faster.";
+  if (upgrade.id === "counter_service_window") return "Turns a growing Ready Orders pile into useful Cash faster.";
   if (upgrade.id === "counter_service_crew") return "Starts the managed counter phase with larger automatic batches.";
   if (upgrade.id === "prep_counter_faster") return "Makes the next order arrive faster.";
   if (upgrade.id === "prep_counter_double") return "Turns extra counters into a bigger throughput jump.";
@@ -4904,14 +4993,14 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
     return { ok: false, reason: station.unlock, gameState: next };
   }
   const quantity = buyQuantityFromRequest(next, station, requestedQuantity);
-  if (quantity < 1) return { ok: false, reason: "Not enough Tips or Prep Capacity.", gameState: next };
+  if (quantity < 1) return { ok: false, reason: "Not enough Cash or Prep Capacity.", gameState: next };
   const owned = safeNonNegativeInteger(next.shop.stations[station.id], 0, 100000);
   const costTips = Array.from({ length: quantity }).reduce(
     (sum, _, index) => sum + stationCost(station, owned + index),
     0,
   );
   const prepCost = safeNonNegativeInteger(station.prepSlotCost, 0, 100) * quantity;
-  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   if (next.shop.prepSlots < prepCost) return { ok: false, reason: "Prep Capacity is recovering.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.prepSlots = safeNonNegativeNumber(next.shop.prepSlots - prepCost);
@@ -5187,7 +5276,7 @@ function counterServiceStockEtaDetail(gameState, orderType) {
   const stockPerSecond = safeNonNegativeNumber(rates.tofuPressPerSecond, 0, SHOP_MAX_RESOURCE);
   if (stockPerSecond <= 0) {
     return {
-      detail: "Tofu Stock is not catching up. Buy Tofu Press when Tips are available.",
+      detail: "Tofu Stock is not catching up. Buy Tofu Press when Cash is available.",
       stockEtaSeconds: null,
     };
   }
@@ -5383,10 +5472,10 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
     const message = totals.wholesaleCompleted > 0
       ? `Wholesale Pickup cleared ${formatShopCount(totals.wholesaleCompleted)} waiting orders.`
       : totals.completed === 1 && totals.lastOrderType
-        ? `Counter Service: ${totals.lastOrderType.name} complete · +${formatShopCount(totals.tips)} Tips`
+      ? `Counter Service: ${totals.lastOrderType.name} complete · +${formatCashCount(totals.tips)} from tips`
         : `Counter Service completed ${formatShopCount(totals.completed)} orders.`;
     next.shop.counterService.lastResult = message;
-    next = addLedgerEntry(next, "automation", `${message} +${formatShopCount(totals.tips)} Tips, +${formatShopCount(totals.reputation)} Reputation, +${formatShopCount(totals.shopXP)} Shop XP.`);
+    next = addLedgerEntry(next, "automation", `${message} +${formatCashCount(totals.tips)} Cash, +${formatShopCount(totals.reputation)} Reputation, +${formatShopCount(totals.shopXP)} Shop XP.`);
     next.recentRewards = [{
       date: nowIso,
       type: "shop_order",
@@ -5475,7 +5564,7 @@ function counterServiceIncomeStatus(gameState) {
   const tipsPerMinute = (preview.tips * 60) / interval;
   return {
     active: true,
-    text: `Counter Service: +${formatShopRate(tipsPerMinute)} Tips/min when supplied · batch ${formatShopCount(preview.quantity)}`,
+    text: `Counter Service: +${formatCashRate(tipsPerMinute)}/min when supplied · batch ${formatShopCount(preview.quantity)}`,
     status: "running",
     tipsPerMinute,
     orderType: preview.lastOrderType,
@@ -5733,13 +5822,13 @@ function buyStationUpgrade(upgradeId, gameState) {
     next.shop.reputation = safeNonNegativeInteger(next.shop.reputation - costReputation);
     next.shop.shopLevel = getShopLevel(next.shop.reputation);
   } else if (managerUpgrade) {
-    if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+    if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
     if (next.shop.reputation < costReputation) return { ok: false, reason: "Not enough reputation.", gameState: next };
     next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
     next.shop.reputation = safeNonNegativeInteger(next.shop.reputation - costReputation);
     next.shop.shopLevel = getShopLevel(next.shop.reputation);
   } else {
-    if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+    if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
     next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   }
   next.shop.stationUpgrades[upgrade.id] = current + 1;
@@ -5921,7 +6010,7 @@ function runTrainingDrill(drillId, gameState) {
   let next = normalizeGameState(gameState);
   const drill = TRAINING_DRILLS.find((item) => item.id === drillId);
   if (!drill) return { ok: false, reason: "Training drill unavailable.", gameState: next };
-  if (next.shop.tips < drill.costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  if (next.shop.tips < drill.costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - drill.costTips);
   next.shop.cupStabilityXP = safeNonNegativeInteger(next.shop.cupStabilityXP + drill.cupStabilityXP);
   next.skillXP[drill.skill] = safeNonNegativeInteger((next.skillXP[drill.skill] || 0) + drill.cupStabilityXP);
@@ -5936,7 +6025,7 @@ function buyGarageUpgrade(upgradeId, gameState) {
   const current = safeNonNegativeInteger(next.shop.garage[upgrade.id], 0, upgrade.maxLevel);
   if (current >= upgrade.maxLevel) return { ok: false, reason: "Garage upgrade is maxed.", gameState: next };
   const costTips = Math.ceil(upgrade.costTips * Math.pow(1.25, current));
-  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.garage[upgrade.id] = current + 1;
   next = addLedgerEntry(next, "garage", `${upgrade.name} upgraded for fictional shop routes.`);
@@ -5949,7 +6038,7 @@ function hireCrewRole(roleId, gameState) {
   if (!role) return { ok: false, reason: "Crew role unavailable.", gameState: next };
   const current = safeNonNegativeInteger(next.shop.crew[role.id], 0, 1000);
   const costTips = Math.ceil(role.costTips * Math.pow(1.35, current));
-  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.crew[role.id] = current + 1;
   if (role.id === "apprentice_driver" && !next.stamps.first_apprentice) {
@@ -5965,7 +6054,7 @@ function buySpiritGenerator(generatorId, gameState) {
   if (!generator) return { ok: false, reason: "Shop Spirit station unavailable.", gameState: next };
   const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, 1000);
   const costTips = Math.ceil(generator.costTips * Math.pow(1.22, current));
-  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough tips.", gameState: next };
+  if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
   next.shop.spiritGenerators[generator.id] = current + 1;
   next = addLedgerEntry(next, "spirit", `${generator.name} added to the shop.`);
@@ -8746,7 +8835,7 @@ function nextShopStep(gameState) {
     return `${nextUpgrade.name}: ${formatShopCost(cost)} Reputation`;
   }
   const cost = stationUpgradeCostTips(nextUpgrade, currentLevel);
-  return `${nextUpgrade.name}: ${formatShopCost(cost)} Tips`;
+  return `${nextUpgrade.name}: ${formatCash(cost)}`;
 }
 
 function nextSupplierUpgrade(gameState, requireAffordable = false) {
@@ -8871,7 +8960,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "wait_counter_stock",
         title: "Next: Wait for Tofu Stock",
-        copy: `${counterIncome.detail} Buy Tofu Press or Steady Pressing when Tips are available.`,
+        copy: `${counterIncome.detail} Buy Tofu Press or Steady Pressing when Cash is available.`,
         buttonLabel: "Stock Recovering",
         disabled: true,
       };
@@ -8953,7 +9042,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "buy_station",
         title: "Next: Buy Tofu Press",
-        copy: "The starter counter is already handling orders. Add press output when Tips arrive so the shop stays supplied.",
+        copy: "The starter counter is already handling orders. Add press output when Cash arrives so the shop stays supplied.",
         buttonLabel: "View Production",
         stationId: "tofu_press",
         disabled: false,
@@ -8991,7 +9080,7 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "queue_full",
       title: "Next: Clear the Order Queue",
-      copy: "The order queue is full. Upgrade or start Counter Service so prepared orders become Tips before the shop makes more.",
+      copy: "The order queue is full. Upgrade or start Counter Service so prepared orders become Cash before the shop makes more.",
       buttonLabel: isCounterServiceUnlocked(state) ? "View Counter Service" : "View Upgrades",
       disabled: false,
     };
@@ -9047,7 +9136,7 @@ function nextBestAction(gameState, options = {}) {
     return {
       type: "wait_counter_service",
       title: "Next: Let Counter Service work",
-      copy: "Prepared orders are ready. Counter Service will hand them off automatically; buy upgrades when Tips arrive.",
+      copy: "Prepared orders are ready. Counter Service will hand them off automatically; buy upgrades when Cash arrives.",
       buttonLabel: "Counter Service Running",
       disabled: true,
     };
@@ -9129,7 +9218,7 @@ function nextBestAction(gameState, options = {}) {
       type: "wait_prep_counter",
       title: "Next: Wait for Prep Counter",
       copy: tidyNeeded > 0
-        ? `Your Prep Counter is turning Tofu Stock into the next prepared order.${prepEta} Need ${formatShopCost(tidyNeeded)} more Tips for Tidy Packaging.`
+        ? `Your Prep Counter is turning Tofu Stock into the next prepared order.${prepEta} Need ${formatCash(tidyNeeded)} more for Tidy Packaging.`
         : `Your Prep Counter is turning Tofu Stock into the next prepared order.${prepEta}`,
       buttonLabel: "Preparing Order",
       disabled: true,
@@ -9390,10 +9479,10 @@ function renderShopGeneratorCard(generatorId, gameState) {
       <small>${escapeHtml(rate)}</small>
       <small>${escapeHtml(helper)}</small>
       ${milestoneCopy ? `<small>${escapeHtml(milestoneCopy)}</small>` : ""}
-      ${station ? `<small>Next: ${formatShopCost(cost)} Tips${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : ""}</small>` : ""}
+      ${station ? `<small>Next: ${formatCash(cost)}${station.prepSlotCost ? ` · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : ""}</small>` : ""}
       ${afford && unlocked ? renderAffordabilityProgress(afford.progress) : ""}
       <div class="nospill-idle-actions">
-        ${actionButton(`Buy ${label} · ${formatShopCost(cost)} Tips`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
+        ${actionButton(`Buy ${label} · ${formatCash(cost)}`, "data-shop-station", stationId, !canBuy, "nospill-secondary", disabledReason)}
         ${actionButton(`Buy Max ${label}`, "data-shop-station-max", stationId, !canBuy, "nospill-secondary", disabledReason)}
       </div>
     </div>
@@ -9412,7 +9501,7 @@ function activeTimedEffectFor(state, boostId) {
 function spiritGeneratorDisabledReason(generator, state, cost) {
   const missing = Math.max(0, cost - state.shop.tips);
   return missing > 0
-    ? `Need ${formatShopCost(missing)} Tips · You have ${formatShopBalance(state.shop.tips)}`
+    ? `Need ${formatCash(missing)} · You have ${formatCashBalance(state.shop.tips)}`
     : "";
 }
 
@@ -9513,13 +9602,13 @@ function renderStationUpgradeCard(upgrade, gameState) {
   const status = supplierUpgrade
     ? `${formatShopCost(reputationCost)} Reputation`
     : managerUpgrade
-    ? `${formatShopCost(cost)} Tips · ${formatShopCost(reputationCost)} Reputation`
-    : `${formatShopCost(cost)} Tips`;
+    ? `${formatCash(cost)} · ${formatShopCost(reputationCost)} Reputation`
+    : `${formatCash(cost)}`;
   const actionLabel = supplierUpgrade
     ? `Buy ${upgrade.name} · ${formatShopCost(reputationCost)} Reputation`
     : managerUpgrade
-    ? `Buy ${upgrade.name} · ${formatShopCost(cost)} Tips + ${formatShopCost(reputationCost)} Reputation`
-    : `Buy ${upgrade.name} · ${formatShopCost(cost)} Tips`;
+    ? `Buy ${upgrade.name} · ${formatCash(cost)} + ${formatShopCost(reputationCost)} Reputation`
+    : `Buy ${upgrade.name} · ${formatCash(cost)}`;
   return renderIdleCard({
     title: `${upgrade.name} Lv ${level}`,
     status,
@@ -9602,8 +9691,8 @@ function activeShopTabForState(state) {
 function shopTabLockedCopy(tab) {
   const copy = {
     routes: "Fictional route cards unlock after the shop gains reach or reputation.",
-    training: "Training Lot unlocks after the first few tips.",
-    garage: "Garage upgrades unlock after the shop has enough tips.",
+    training: "Training Lot unlocks after the first few Cash payouts.",
+    garage: "Garage upgrades unlock after the shop has enough Cash.",
     crew: "Delivery Crew automation unlocks after the shop reaches new districts.",
     spirit: "Shop Spirit unlocks when reputation starts to spread.",
     rivals: "Rival Shop Challenges unlock after the shop has a little reputation.",
@@ -9712,9 +9801,9 @@ function renderShopOrderCard(orderType, gameState, options = {}) {
   const disabledReason = shopOrderDisabledReason(orderType, state, unlocked);
   const canFulfill = unlocked && maxQuantity > 0 && !disabledReason;
   const costCopy = `Uses ${formatShopCost(orderType.tofuRequired)} tofu stock and ${formatShopCount(orderType.deliveryOrdersRequired)} ready order${orderType.deliveryOrdersRequired === 1 ? "" : "s"}.`;
-  const rewardCopy = `Reward: +${formatShopCount(orderType.tips)} Tips, +${formatShopCount(orderType.reputation)} Reputation, +${formatShopCount(orderType.xp)} Shop XP.`;
+  const rewardCopy = `Reward: +${formatCashCount(orderType.tips)} from tips, +${formatShopCount(orderType.reputation)} Reputation, +${formatShopCount(orderType.xp)} Shop XP.`;
   const maxRewardCopy = maxQuantity > 1
-    ? `Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)} · Reward: +${formatShopCount(orderType.tips * maxQuantity)} Tips, +${formatShopCount(orderType.reputation * maxQuantity)} Reputation, +${formatShopCount(orderType.xp * maxQuantity)} Shop XP · Uses: ${formatShopCost(orderType.tofuRequired * maxQuantity)} tofu stock, ${formatShopCount(orderType.deliveryOrdersRequired * maxQuantity)} ready orders`
+    ? `Fulfill Max ${orderType.name} x${formatShopCount(maxQuantity)} · Reward: +${formatCashCount(orderType.tips * maxQuantity)} from tips, +${formatShopCount(orderType.reputation * maxQuantity)} Reputation, +${formatShopCount(orderType.xp * maxQuantity)} Shop XP · Uses: ${formatShopCost(orderType.tofuRequired * maxQuantity)} tofu stock, ${formatShopCount(orderType.deliveryOrdersRequired * maxQuantity)} ready orders`
     : "";
   const availability = canFulfill
     ? `<small class="nospill-available-badge">Available</small>`
@@ -9803,6 +9892,38 @@ function renderCoveredCarTeaserCard(gameState) {
   });
 }
 
+function renderNetWorthCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!shouldShowNetWorthV1(state)) return "";
+  const progress = netWorthProgress(state);
+  const businessValue = tofuBusinessValue(state);
+  const percent = Math.max(0.01, Math.min(100, progress.percent));
+  return renderIdleCard({
+    title: "Net Worth",
+    status: `${formatCashCount(progress.current)} toward $1T`,
+    copy: `Cash + Tofu Business Value (${formatCashCount(businessValue)}). Cash can be spent now or invested into assets that may grow Net Worth later.`,
+    extra: `
+      <div class="nospill-afford-progress">
+        <div class="nospill-afford-progress-head">
+          <span>Current era: Tofu Garage</span>
+          <strong>${escapeHtml(`${roundTo(percent, percent < 1 ? 3 : 1)}%`)}</strong>
+        </div>
+        <div
+          class="nospill-afford-progress-bar"
+          role="progressbar"
+          aria-label="Progress toward $1T Net Worth"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="${escapeHtml(String(roundTo(percent, 3)))}"
+        >
+          <span style="width: ${percent}%"></span>
+        </div>
+      </div>
+    `,
+  });
+}
+
 function recentShopReward(gameState) {
   const state = normalizeGameState(gameState);
   return (state.recentRewards || []).find((reward) => reward && reward.type === "shop_order") || null;
@@ -9813,7 +9934,7 @@ function renderRecentShopRewardCard(state) {
   if (!reward) return "";
   const shopXp = safeNonNegativeInteger(reward.shopXpGained ?? reward.xpGained, 0, SHOP_MAX_RESOURCE);
   const detail = reward.tipsGained
-    ? `+${formatShopCount(reward.tipsGained)} Tips · ${recentRewardDisplayLabel(reward)}`
+    ? `+${formatCashCount(reward.tipsGained)} · ${recentRewardDisplayLabel(reward)}`
     : recentRewardDisplayLabel(reward);
   const xpLine = shopXp > 0 ? ` Shop XP +${formatShopCount(shopXp)}.` : "";
   return renderIdleCard({
@@ -9935,7 +10056,7 @@ function stationUnlockProgressFor(stationId, gameState) {
           }
         : {
             ...tipProgress,
-            text: `${formatShopCost(tipProgress.current)} / ${formatShopCost(tipProgress.required)} lifetime Tips`,
+            text: `${formatCash(tipProgress.current)} / ${formatCash(tipProgress.required)} lifetime Cash`,
           };
     return stationProgress;
   }
@@ -9982,8 +10103,8 @@ function nextMilestoneForShop(gameState) {
     const progress = nextMilestoneProgress(state.shop.lifetimeTips, targetTips);
     return {
       id: "first_tips_earned",
-      name: "First Tips Earned",
-      progressText: `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} lifetime Tips`,
+      name: "First Cash Earned",
+      progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} lifetime Cash`,
       percent: progress.percent,
       reward: "First shop payout",
       guidance: "The starter shop runs by itself. Watch Counter Service complete the first Simple Tofu Box.",
@@ -10022,7 +10143,7 @@ function nextMilestoneForShop(gameState) {
       progressText: `${formatShopCount(progress.current)} / ${formatShopCount(progress.required)} orders fulfilled`,
       percent: progress.percent,
       reward: "New shop support",
-      guidance: "Keep converting prepared orders into Tips.",
+      guidance: "Keep converting prepared orders into Cash from tips.",
     };
   }
 
@@ -10054,8 +10175,8 @@ function nextMilestoneForShop(gameState) {
     const progress = nextMilestoneProgress(state.shop.lifetimeTips, 100);
     return {
       id: "first_100_tips",
-      name: "First 100 Tips",
-      progressText: `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} lifetime Tips`,
+      name: "First $100 Cash",
+      progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} lifetime Cash`,
       percent: progress.percent,
       reward: "Long-road story beat",
       guidance: "Fulfill orders and buy upgrades that improve the counter.",
@@ -10090,7 +10211,7 @@ function nextMilestoneForShop(gameState) {
       reward: "Reputation support",
       guidance: unlocked
         ? "Buy Shop Sign when reputation starts to matter."
-        : "Earn Reputation or lifetime Tips to make the shop known.",
+        : "Earn Reputation or lifetime Cash to make the shop known.",
     };
   }
 
@@ -10128,7 +10249,7 @@ function nextMilestoneForShop(gameState) {
     return {
       id: counterUpgrade.id,
       name: counterUpgrade.name,
-      progressText: `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} Tips`,
+      progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)}`,
       percent: progress.percent,
       reward: counterUpgrade.effect,
       guidance: stationUpgradeIsRevealed(counterUpgrade, state)
@@ -10168,7 +10289,7 @@ function nextMilestoneForShop(gameState) {
       id: managerUpgrade.id,
       name: managerUpgrade.name,
       progressText: progress === tipsProgress
-        ? `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} Tips`
+        ? `${formatCash(progress.current)} / ${formatCash(progress.required)}`
         : `${formatShopCost(progress.current)} / ${formatShopCost(progress.required)} Reputation`,
       percent: progress.percent,
       reward: managerUpgrade.effect,
@@ -10198,11 +10319,6 @@ function nextMilestoneForShop(gameState) {
   };
 }
 
-function shouldShowNetWorthHorizon(gameState) {
-  const state = normalizeGameState(gameState);
-  return Boolean(state.stamps.first_100_tips || state.stamps.first_family_tofu_tray);
-}
-
 function renderNextMilestoneCard(state) {
   if (appState.running || appState.calibrating) return "";
   const milestone = nextMilestoneForShop(state);
@@ -10229,7 +10345,7 @@ function renderNextMilestoneCard(state) {
       </div>
       <p><strong>Reward:</strong> ${escapeHtml(milestone.reward)}</p>
       <p>${escapeHtml(milestone.guidance)}</p>
-      ${shouldShowNetWorthHorizon(state) ? `<p class="nospill-long-road">Long road: $1T fictional Net Worth · Current era: Tofu Shop</p>` : ""}
+      ${shouldShowNetWorthV1(state) ? `<p class="nospill-long-road">Net Worth: ${formatCashCount(netWorthV1(state))} / $1T · Current era: Tofu Garage</p>` : ""}
     </section>
   `;
 }
@@ -10243,14 +10359,15 @@ function renderOverviewPanel(state) {
     ${renderNextMilestoneCard(state)}
     ${renderTofuShopLivingScene(state)}
     <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
-    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.</p>
-    <p class="nospill-panel-helper">Tips buy upgrades. ${escapeHtml(runway.message)}</p>
+    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.</p>
+    <p class="nospill-panel-helper">Cash buys upgrades. ${escapeHtml(runway.message)}</p>
     <div class="nospill-idle-grid">
       ${renderPreparingOrderCard(state)}
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
       ${renderOverviewImprovementCard(state)}
       ${renderCounterServiceCard(state)}
       ${renderCoveredCarTeaserCard(state)}
+      ${renderNetWorthCard(state)}
       ${renderRecentShopRewardCard(state)}
       ${renderDriverBonusCard(state)}
       ${renderPassportTeaserCard(state)}
@@ -10274,11 +10391,11 @@ function renderProductionPanel(state) {
     ))[0];
   return `
     <h4>Production</h4>
-    <p class="nospill-panel-helper">Stations use Tips and Prep Capacity. Prep Capacity is the recovering expansion pool for adding more stations.</p>
+    <p class="nospill-panel-helper">Stations use Cash and Prep Capacity. Prep Capacity is the recovering expansion pool for adding more stations.</p>
     ${renderBulkBuyCard(
       "Bulk Buy Stations",
       cheapestStation
-        ? `Cheapest affordable station: ${cheapestStation.station.name} · ${formatShopCost(cheapestStation.status.cost)} Tips.`
+        ? `Cheapest affordable station: ${cheapestStation.station.name} · ${formatCash(cheapestStation.status.cost)}.`
         : "No affordable visible stations right now.",
       "stations",
       Boolean(cheapestStation),
@@ -10293,14 +10410,14 @@ function renderProductionPanel(state) {
         const reason = afford.disabledReason;
         return renderIdleCard({
           title: station.name,
-          status: unlocked ? `${formatShopCost(cost)} tips · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : "Locked",
+          status: unlocked ? `${formatCash(cost)} · ${formatShopCount(station.prepSlotCost)} Prep Capacity` : "Locked",
           copy: unlocked
             ? `Owned: ${formatShopCount(owned)}. ${stationPurposeCopy(station.id, state)} ${stationMilestoneText(station.id, owned)}`
             : station.unlock,
           locked: !unlocked,
           extra: unlocked ? renderAffordabilityProgress(afford.progress) : "",
           actions: [
-            actionButton(`Buy ${station.name} · ${formatShopCost(cost)} Tips`, "data-shop-station", station.id, !canBuy, "nospill-secondary", reason),
+            actionButton(`Buy ${station.name} · ${formatCash(cost)}`, "data-shop-station", station.id, !canBuy, "nospill-secondary", reason),
             actionButton(`Buy Max ${station.name}`, "data-shop-station-max", station.id, !canBuy, "nospill-secondary", reason),
           ],
         });
@@ -10404,11 +10521,11 @@ function renderOrdersPanel(state) {
     .map((orderType) => renderShopOrderCard(orderType, state));
   return `
     <h4>Orders</h4>
-    <p class="nospill-panel-helper">Tofu Stock becomes Delivery Orders. Counter Service normally turns Delivery Orders into Tips.</p>
+    <p class="nospill-panel-helper">Tofu Stock becomes Delivery Orders. Counter Service normally turns Delivery Orders into Cash from tips.</p>
     <p class="nospill-panel-helper">Uses: Prep Counter + larger orders. Tofu Stock is inventory, not money.</p>
     <p class="nospill-panel-helper">Prep Counter uses ${formatShopCost(PREP_COUNTER_CONSUME_PER_ORDER)} tofu stock to prepare 1 delivery order.</p>
-    <p class="nospill-panel-helper">Tofu Stock prepares orders. Bigger orders use more tofu and pay more Tips.</p>
-    <p class="nospill-panel-helper">Manual fulfillment is a parked backup, not the main progression loop. Tips buy stations and upgrades.</p>
+    <p class="nospill-panel-helper">Tofu Stock prepares orders. Bigger orders use more tofu and pay more Cash.</p>
+    <p class="nospill-panel-helper">Manual fulfillment is a parked backup, not the main progression loop. Cash buys stations and upgrades.</p>
     <div class="nospill-idle-grid">
       ${orderCards.join("")}
       ${renderPreparingOrderCard(state)}
@@ -10446,7 +10563,7 @@ function renderTrainingPanel(state) {
     <div class="nospill-idle-grid">
       ${TRAINING_DRILLS.map((drill) => renderIdleCard({
         title: drill.name,
-        status: `${formatShopCost(drill.costTips)} tips`,
+        status: `${formatCash(drill.costTips)}`,
         copy: `Grants ${formatShopCount(drill.cupStabilityXP)} Cup Stability XP to ${SKILL_LABELS[drill.skill]}.`,
         actions: [actionButton("Run Drill", "data-training-drill", drill.id, state.shop.tips < drill.costTips)],
       })).join("")}
@@ -10464,7 +10581,7 @@ function renderGaragePanel(state) {
         const cost = Math.ceil(upgrade.costTips * Math.pow(1.25, level));
         return renderIdleCard({
           title: `${upgrade.name} Lv ${level}`,
-          status: level >= upgrade.maxLevel ? "Maxed" : `${formatShopCost(cost)} tips`,
+          status: level >= upgrade.maxLevel ? "Maxed" : `${formatCash(cost)}`,
           copy: `${upgrade.effect}.`,
           actions: [actionButton("Upgrade Garage", "data-garage-upgrade", upgrade.id, level >= upgrade.maxLevel || state.shop.tips < cost)],
         });
@@ -10483,7 +10600,7 @@ function renderCrewPanel(state) {
         const cost = Math.ceil(role.costTips * Math.pow(1.35, owned));
         return renderIdleCard({
           title: `${role.name} x${formatShopCount(owned)}`,
-          status: `${formatShopCost(cost)} tips`,
+          status: `${formatCash(cost)}`,
           copy: `${role.effect} Unlock: ${role.unlock}.`,
           actions: [actionButton("Hire", "data-crew-role", role.id, state.shop.tips < cost)],
         });
@@ -10504,7 +10621,7 @@ function renderSpiritPanel(state) {
     <h4>Shop Spirit</h4>
     <p class="nospill-panel-helper">Shop Spirit is a parked-only boost resource. It never affects real driving score.</p>
     <div class="nospill-spirit-wallet" aria-label="Shop Spirit wallet">
-      <div><span>Tips</span><strong>${formatShopBalance(state.shop.tips)}</strong></div>
+      <div><span>Cash</span><strong>${formatCashBalance(state.shop.tips)}</strong></div>
       <div><span>Shop Spirit</span><strong>${formatShopBalance(state.shop.shopSpirit)} / ${formatShopBalance(getShopSpiritMax(state.shop))}</strong></div>
       <div><span>Spirit/sec</span><strong>+${formatShopRate(spiritRates.shopSpiritPerSecond)}/sec</strong></div>
       <div><span>Buy Multiplier</span><strong>${state.shop.purchaseMultiplier === "max" ? "Max" : `x${state.shop.purchaseMultiplier}`}</strong></div>
@@ -10516,7 +10633,7 @@ function renderSpiritPanel(state) {
         const disabledReason = spiritGeneratorDisabledReason(generator, state, cost);
         return renderIdleCard({
           title: `${generator.name} x${formatShopCount(owned)}`,
-          status: `${formatShopCost(cost)} Tips`,
+          status: `${formatCash(cost)}`,
           copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
           actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost, "nospill-secondary", disabledReason)],
         });
@@ -10595,7 +10712,7 @@ function renderRivalsPanel(state) {
           title: rival.name,
           status: unlocked ? `${formatShopCount(rival.orderCost)} orders · ${formatShopCost(rival.spiritCost)} spirit` : "Locked",
           copy: unlocked
-            ? `Friendly showcase reward: ${formatShopCount(rival.tipsReward)} tips and ${formatShopCount(rival.reputationReward)} reputation.`
+            ? `Friendly showcase reward: ${formatCashCount(rival.tipsReward)} from tips and ${formatShopCount(rival.reputationReward)} reputation.`
             : rival.unlock,
           locked: !unlocked,
           actions: [actionButton("Start Rival Shop Challenge", "data-rival-challenge", rival.id, !unlocked || !affordable)],
@@ -10745,8 +10862,8 @@ function currentBottleneck(gameState) {
   const upgrade = affordableShopUpgrade(state);
   const prepCounterStation = affordableShopStation(state, "prep_counter");
   if (prep.ready > 0 && !bestOrder) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Supplier support; manual packing is backup only." };
-  if (prep.ready > 0 && state.shop.tips < 1) return { id: "tips", label: "Need Tips", action: "Counter Service will turn prepared orders into Tips." };
-  if (prep.ready > 0) return { id: "orders_ready", label: "Orders ready", action: bestOrder && bestOrder.id !== "simple_tofu_box" ? `Counter Service can use ${bestOrder.name} for a bigger payout.` : "Counter Service converts ready orders into Tips." };
+  if (prep.ready > 0 && state.shop.tips < 1) return { id: "cash", label: "Need Cash", action: "Counter Service will turn prepared orders into Cash from tips." };
+  if (prep.ready > 0) return { id: "orders_ready", label: "Orders ready", action: bestOrder && bestOrder.id !== "simple_tofu_box" ? `Counter Service can use ${bestOrder.name} for a bigger payout.` : "Counter Service converts ready orders into Cash." };
   if (prep.ready < 1 && runway.isLow) return { id: "tofu", label: "Low Tofu Stock", action: "Buy Tofu Press or Supplier support; manual packing is backup only." };
   if (prep.ready < 1 && prep.running && runway.isHealthy && upgrade && upgrade.stationId === "prep_counter") {
     return { id: "prep_upgrade", label: "Prep Counter upgrade available", action: `Buy ${upgrade.name} to prepare orders faster.` };
@@ -10788,7 +10905,7 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopTips) {
     setTextIfChanged(elements.shopTips, reveal.shop
-      ? formatShopBalance(shop.tips, shop.generatorCarry && shop.generatorCarry.tips)
+      ? formatCashBalance(shop.tips, shop.generatorCarry && shop.generatorCarry.tips)
       : "Locked");
   }
   if (elements.shopReputation) {
@@ -10816,7 +10933,7 @@ function renderTofuShop(gameState = loadGameState()) {
     const counterIncome = counterServiceIncomeStatus(state);
     setTextIfChanged(elements.shopTipsRate, reveal.shop
       ? counterIncome.status === "locked"
-        ? `+${formatShopRate(generatorRates.customerTipsPerSecond)}/sec passive`
+        ? `+${formatCashRate(generatorRates.customerTipsPerSecond)}/sec passive`
         : counterIncome.text
       : "Locked");
   }
@@ -10917,7 +11034,7 @@ function renderTofuShop(gameState = loadGameState()) {
     const offlineParts = [];
     if (offlineTofu > 0.005) offlineParts.push(`+${formatShopCount(offlineTofu)} tofu stock`);
     if (offlineOrders > 0.005) offlineParts.push(`+${formatShopCount(offlineOrders)} waiting orders`);
-    if (offlineTips > 0.005) offlineParts.push(`+${formatShopCount(offlineTips)} tips`);
+    if (offlineTips > 0.005) offlineParts.push(`+${formatCashCount(offlineTips)} Cash from tips`);
     const offlineNotes = [];
     if (offlineTofuConsumed > 0.005 && offlineOrders > 0.005) {
       offlineNotes.push("tofu supply was consumed preparing orders");
@@ -11208,12 +11325,12 @@ function renderDeliverySummary(summary) {
       : "Take a normal qualified delivery when parked and ready.";
   const certifiedBoost = shop.certifiedBoost || { applied: false };
   const certifiedBoostLine = certifiedBoost.applied
-    ? `+${formatShopCount(certifiedBoost.reputationGained)} reputation · +${formatShopCount(certifiedBoost.tofuStockGained)} tofu · +${formatShopCount(certifiedBoost.tipsGained)} tips · Tofu Press +${certifiedBoost.pressBoostPercent}%`
+    ? `+${formatShopCount(certifiedBoost.reputationGained)} reputation · +${formatShopCount(certifiedBoost.tofuStockGained)} tofu · +${formatCashCount(certifiedBoost.tipsGained)} Cash from tips · Tofu Press +${certifiedBoost.pressBoostPercent}%`
     : qualified
       ? "No certified boost earned"
       : "Practice only - no certified boost";
   const shopRewardLine = (shop.tofuStockGained || shop.tipsGained || shop.reputationGained)
-    ? `+${formatShopCount(shop.tofuStockGained || 0)} tofu · +${formatShopCount(shop.tipsGained || 0)} tips · +${formatShopCount(shop.reputationGained || 0)} reputation`
+    ? `+${formatShopCount(shop.tofuStockGained || 0)} tofu · +${formatCashCount(shop.tipsGained || 0)} Cash from tips · +${formatShopCount(shop.reputationGained || 0)} reputation`
     : "No shop rewards from this practice";
   if (elements.summaryCharacterCameo) {
     elements.summaryCharacterCameo.innerHTML = renderCharacterCameo(
@@ -11377,7 +11494,7 @@ function showStampFanfare(fanfare, gameState = loadGameState()) {
     const rewards = fanfare.rewards || {};
     elements.stampFanfareRewards.innerHTML = [
       renderStampFanfareArt(gameState),
-      stampFanfareRewardMetric("Tips", `+${formatShopCount(rewards.tips || 0)}`),
+      stampFanfareRewardMetric("Cash", `+${formatCashCount(rewards.tips || 0)}`),
       stampFanfareRewardMetric("Reputation", `+${formatShopCount(rewards.reputation || 0)}`),
       stampFanfareRewardMetric("Shop XP", `+${formatShopCount(rewards.shopXp || rewards.xp || 0)}`),
     ].join("");
@@ -11471,7 +11588,7 @@ function renderShopOrderResult(result) {
     elements.summaryTitle.textContent = "Shop Order Complete";
   }
   if (elements.summaryWater) {
-    elements.summaryWater.textContent = `+${formatShopCount(result.tipsGained)} Tips`;
+    elements.summaryWater.textContent = `+${formatCashCount(result.tipsGained)}`;
   }
   if (elements.returnDashboardButton) {
     elements.returnDashboardButton.textContent = canFulfillAnother
@@ -11493,7 +11610,7 @@ function renderShopOrderResult(result) {
       summaryMetric("Order", result.orderType ? `${result.orderType.name}. Packed and handed off from the counter.` : "Packed and handed off from the counter.", "nospill-is-good"),
       summaryMetric("Tofu Used", `-${formatShopCount(result.tofuUsed || 0)}`),
       summaryMetric("Ready Orders Used", `-${formatShopCount(result.deliveryOrdersUsed || result.quantity || 0)}`),
-      summaryMetric("Tips Gained", `+${formatShopCount(result.tipsGained)}`),
+      summaryMetric("Cash Gained", `+${formatCashCount(result.tipsGained)}`),
       summaryMetric("Reputation Gained", `+${formatShopCount(result.reputationGained)}`),
       summaryMetric("Shop XP Gained", `+${formatShopCount(result.shopXpGained || result.xpGained)}`),
       result.firstShopOrderStampUnlocked
@@ -11533,7 +11650,7 @@ function shopOrderInlineResultMessage(result) {
     : "Shop Order";
   const quantity = safeNonNegativeInteger(result && result.quantity, 1, SHOP_MAX_RESOURCE);
   const quantityText = quantity > 1 ? ` x${formatShopCount(quantity)}` : "";
-  return `${orderName}${quantityText} complete: +${formatShopCount(result.tipsGained || 0)} Tips, +${formatShopCount(result.reputationGained || 0)} Reputation, +${formatShopCount(result.shopXpGained || result.xpGained || 0)} Shop XP`;
+  return `${orderName}${quantityText} complete: +${formatCashCount(result.tipsGained || 0)} from tips, +${formatShopCount(result.reputationGained || 0)} Reputation, +${formatShopCount(result.shopXpGained || result.xpGained || 0)} Shop XP`;
 }
 
 function showShopOrderInlineResult(result) {

@@ -2,7 +2,7 @@
 
 This audit checks whether the current Tofu Garage / Tofu Shop implementation is complete enough to
 move toward the Dream Build car phase. It is a readiness audit only. It does not authorize full
-Dream Garage, car parts, Net Worth, Cash/Tips migration, routes, crew gameplay, backend, accounts,
+Dream Garage, car parts, full Net Worth valuation, routes, crew gameplay, backend, accounts,
 analytics, service workers, uploads, multiplayer, or network calls.
 
 ## 1. Executive Answer
@@ -24,12 +24,12 @@ Top blockers before a Dream Build teaser:
 2. Confirm high-progress saves remain responsive after recent performance fixes.
 3. Tune or de-emphasize Shop Spirit if playtests still make it feel like a weak manual side loop.
 4. Confirm Manager Desk / Wholesale Pickup gives a clear goal after maxed Counter Service.
-5. Keep Cash/Tips as documented future direction; do not migrate naming in the same slice as the
+5. Keep Cash as the single liquid currency and avoid adding full valuation in the same slice as the
    teaser.
 
 Safest next implementation: **Covered Car / Dream Build Teaser V1**. Implemented as a small
-parked-only story/status card and scene state, not a garage tab with parts, valuation, events, or
-Net Worth.
+parked-only story/status card and scene state, not a garage tab with parts, full valuation, events,
+or car assets.
 
 ## 2. Implemented Mechanics Inventory
 
@@ -39,7 +39,7 @@ Net Worth.
 | Tofu Press | Implemented | Produces Tofu Stock through generator tick and station purchases. |
 | Prep Counter | Implemented | Consumes Tofu Stock and prepares Delivery Orders with fractional progress display. |
 | Delivery Orders | Implemented | Scalar ready-order queue with capped backlog and prep progress. |
-| Tips / Cash | Partial | `Tips` is implemented as the current local spend balance. Cash is documented future naming/model. |
+| Cash | Implemented V1 | Player-facing spend balance is Cash; legacy `shop.tips` remains the internal save field. |
 | Reputation | Implemented | Earned from orders, boosted by Shop Sign/Driver Bonus, spent by Supplier and Manager layers. |
 | Shop Level / Shop XP | Implemented | Shop XP and derived Shop Level gate later shop features. |
 | Shop Spirit | Partial | Generators/actions exist and terminology is clearer; usefulness still needs tuning. |
@@ -64,7 +64,7 @@ Net Worth.
 | Delivery Crew gameplay | Deferred | Current crew surface is cosmetic/placeholder only. |
 | Covered Car / Dream Build Teaser V1 | Implemented | Unlocks after managed-shop scale and Wholesale Pickup progress; no car mechanics are implemented. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
-| Net Worth | Documented only | No counter, valuation, or accounting system is implemented. |
+| Net Worth V1 | Implemented V1 | Compact shop-era line can appear after later milestones; formula is Cash + Tofu Business Value. Full valuation remains future. |
 
 ## 3. Missing Or Weak Tofu Garage Mechanics
 
@@ -75,7 +75,7 @@ Net Worth.
 | Returning-player summary actions | Done | Implemented; tune suggestion priority with real saves. |
 | Meaningful unfold audit | Done | `TOFU_GARAGE_UNFOLD_AUDIT.md` exists and should be rerun before major new layers. |
 | Hiding meaningless tabs/counters | Nice before Dream Build teaser | Mostly solved through progressive reveal, but Shop Reach/License-related scaffolding should stay out of prominent early UI. |
-| Cash/Tips naming clarity | Can defer | Current code uses Tips; docs define future Cash. Rename before car parts, not before the teaser. |
+| Cash naming clarity | Done | Player-facing shop economy uses Cash; tips remain order-income flavor and `shop.tips` remains legacy state. |
 | First 3-minute onboarding | Must fix before full Dream Build; nice before teaser | Core loop is implemented, but needs final real-device timing confirmation. |
 | High-midgame goals | Mostly done | Supplier Contracts, Manager Desk, Wholesale Pickup, bulk buy, and affordability helpers provide goals. Tune if playtests show a dead end. |
 | Manager Desk usefulness | Nice before Dream Build teaser | Implemented; needs playtest confirmation at Shop Level 100-500 saves. |
@@ -125,8 +125,8 @@ Why teaser first:
 
 - Tofu Garage V1 already has enough mechanics to make the shop feel like it can fund a dream.
 - A teaser creates aspiration without adding a new economy.
-- Full car building would require Cash naming, part costs, project budget clarity, asset value
-  semantics, and new tests.
+- Full car building would require part costs, project budget clarity, Car Asset Value semantics, and
+  new tests.
 - A teaser can be parked-only, decorative/story-driven, and safe.
 
 Do not implement the first car mechanic yet unless the teaser proves players understand why the car
@@ -146,7 +146,7 @@ Acceptable lighter condition if playtesting shows the above is too late:
 ```text
 Counter Crew reached
 AND Catering Crate unlocked
-AND First 100 Tips/Cash milestone reached
+AND First $100 Cash milestone reached
 AND first meaningful shop plateau observed
 ```
 
@@ -156,25 +156,24 @@ The player has automated the counter, solved at least one stock bottleneck with 
 seen the order queue become a management problem, and used or unlocked Manager Desk. At that point
 the shop is no longer just a counter; it is a business capable of funding the covered car.
 
-## 6. Cash/Tips Transition
+## 6. Cash And Net Worth Transition
 
 Current code status:
 
-- Tips is still the implemented currency (`shop.tips`).
-- Cash is documented future economy direction.
-- Net Worth is documented future direction.
-- No Cash balance, Net Worth counter, Business Value, Car Asset Value, or valuation formula is
+- Cash is the implemented player-facing currency.
+- `shop.tips` is still the legacy internal field for save compatibility.
+- Net Worth V1 is implemented as Cash + Tofu Business Value.
+- Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 
 Recommendation:
 
-- Do not rename Tips to Cash before the Covered Car teaser.
-- Do rename/reframe Tips as Cash before real car parts.
-- Keep `tips` as flavor copy for order income, such as `+$10 Cash from tips`.
-- Avoid introducing both Tips and `$` as separate spendable balances.
+- Keep tips as flavor copy for order income, such as `+$10 from tips`.
+- Do not introduce both Tips and `$` as separate spendable balances.
+- Design Car Asset Value and project budgets before real car parts.
 
-Cash/Tips is not a blocker for a teaser. It is a blocker for car parts, project budgets, and any
-Net Worth-facing accounting.
+Cash is no longer a blocker for a teaser. Full valuation is still a blocker for car parts, project
+budgets, and any Car Asset Value-facing accounting.
 
 ## 7. Recommended Next Implementation Sequence
 
@@ -186,10 +185,10 @@ Net Worth-facing accounting.
 4. Tune Shop Spirit only if it is visible and still feels useless or clicky.
 5. Keep route, crew gameplay, license prestige, and full garage systems hidden/deferred.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
-7. Design the Cash/Tips migration before any car-part costs are added.
+7. Design Car Asset Value and project-budget rules before any car-part costs are added.
 8. Implement the first car investment only after the teaser and Cash bridge are clear.
-9. Add Net Worth visibility only after Cash, Business Value, and Car Asset Value have a coherent
-   accounting model.
+9. Keep Net Worth V1 as Cash + Tofu Business Value until Car Asset Value has a coherent accounting
+   model.
 
 ## 8. Deferred Systems
 
@@ -198,8 +197,8 @@ Keep these deferred:
 - full Dream Garage
 - car parts
 - project-car inventory
-- Cash/Net Worth implementation
-- Business Value and Car Asset Value
+- full Net Worth accounting
+- Car Asset Value and Garage Value
 - routes and route expansion
 - Delivery Crew gameplay
 - franchise mode
@@ -225,12 +224,12 @@ High-value future regression tests:
 - no repeated offline summary or Counter Service feedback on rerender
 - no hidden/future route/crew/garage system appears as an active purchase target
 - Covered Car teaser unlocks only after managed-shop scale and Wholesale Pickup progress
-- Covered Car teaser does not create Dream Garage mechanics, car parts, valuation, or Net Worth
-- Cash/Tips migration preserves saves and does not create separate spendable balances
+- Covered Car teaser does not create Dream Garage mechanics, car parts, or full valuation
+- Cash save compatibility preserves `shop.tips` and does not create separate spendable balances
 
 ## Final Readiness Call
 
 Tofu Garage V1 is not missing a large core mechanic. It is missing final confidence from playtesting
 and a clean bridge into the next phase. The right next move is a small, story-driven Covered Car /
 Dream Build teaser after final responsiveness and first-session checks, followed by a separate
-Cash/Tips migration design before any real car-part economy.
+Car Asset Value and project-budget design before any real car-part economy.

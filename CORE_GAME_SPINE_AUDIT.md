@@ -8,7 +8,7 @@ automation-after-mastery before broader systems.
 ## Executive Summary
 
 Tofu Shop now has a working idle-first loop: Tofu Press creates Tofu Stock, Prep Counter prepares
-Delivery Orders, starter Counter Service converts stock/orders into Tips/Reputation/Shop XP, and
+Delivery Orders, starter Counter Service converts stock/orders into Cash/Reputation/Shop XP, and
 early fulfillment stays inline or automated. The original V1 gaps below have largely been
 implemented; this file now exists to preserve why first-loop tuning, milestone pacing, and
 automation-after-mastery stay ahead of broader systems.
@@ -27,7 +27,7 @@ right time, creates a meaningful decision, has tests, and fits the progression c
 
 | Mechanic | Status | Evidence | Notes |
 | --- | --- | --- | --- |
-| Simple Tofu Box | Implemented | State changes, inline result, tests | First order consumes stock/order and grants Tips/Reputation/Shop XP. |
+| Simple Tofu Box | Implemented | State changes, inline result, tests | First order consumes stock/order and grants Cash/Reputation/Shop XP. |
 | Prep Counter progress | Implemented | Progress bar, tick tests | Shows ready orders and next-order progress. |
 | Tofu Stock runway | Implemented | Runway helper/copy/tests | Explains stock as ingredient/runway/order-size capacity. |
 | Family Tofu Tray | Implemented | Unlock/reward tests | Makes stock matter after loop understanding. |
@@ -42,7 +42,7 @@ right time, creates a meaningful decision, has tests, and fits the progression c
 | Mechanic | Status | Evidence | Why It Is Not Complete |
 | --- | --- | --- | --- |
 | First 10 Orders stamp | Partial | Stamp can unlock | Needs clearer spine test/feedback confirmation. |
-| First 100 Tips stamp | Partial | Stamp can unlock | Needs clearer spine test/feedback confirmation. |
+| First $100 Cash stamp | Partial | Stamp can unlock | Needs clearer spine test/feedback confirmation. |
 | First Family Tofu Tray stamp | Not implemented | No stamp id before this pass | Missing important order-size milestone. |
 | First Upgrade Purchased stamp | Not implemented | No station-upgrade stamp before this pass | Missing first-upgrade milestone. |
 | Double Mold / Double Labels | Partial | Upgrade definitions exist | Needs stage tests and clear second-stage reveal. |
@@ -68,7 +68,7 @@ right time, creates a meaningful decision, has tests, and fits the progression c
 
 | Issue | Evidence | Why It Hurts | Recommended Fix | Priority |
 | --- | --- | --- | --- | --- |
-| Core milestone ladder is thin | Only first order has strong fanfare | The player lacks short-term goals after the first order | Add First Upgrade, First Family Tray, First 10 Orders, First 100 Tips stamps/ledger feedback | P0 |
+| Core milestone ladder is thin | Only first order has strong fanfare | The player lacks short-term goals after the first order | Add First Upgrade, First Family Tray, First 10 Orders, First $100 Cash stamps/ledger feedback | P0 |
 | Delivery Shelf is not clearly earned | Station exists but reveal is broad | The first expansion can feel like another card | Reveal after 10 orders, Family Tray, or upgrade + level milestone; test Prep Counter boost | P1 |
 | Shop Sign does not strongly affect order rewards | Existing effect is mostly passive/scaffolded | Reputation station lacks a visible purpose | Add a small per-owned order Reputation multiplier and keep Routes hidden | P1 |
 | Second-stage upgrade path needs proof | Double Mold/Labels exist | Player needs a visible next bump after first upgrade | Test reveal and before/after previews for Double Mold or Double Labels | P1 |
@@ -79,13 +79,13 @@ right time, creates a meaningful decision, has tests, and fits the progression c
 
 V1 should include:
 
-1. First Tips Earned is the first visible shop milestone.
+1. First Cash Earned is the first visible shop milestone.
 2. First Shop Order remains the first stamp/fanfare and can be earned by starter Counter Service.
 3. First Upgrade Purchased stamp and ledger feedback.
 4. First Family Tofu Tray stamp and ledger feedback.
-5. First 10 Orders and First 100 Tips stamps verified by tests.
+5. First 10 Orders and First $100 Cash stamps verified by tests.
 6. Delivery Shelf reveal tied to meaningful shop milestones and a tested Prep Counter boost.
-7. Shop Sign reveal tied to Reputation/100 Tips/Delivery Shelf and a tested order Reputation boost.
+7. Shop Sign reveal tied to Reputation/$100 Cash/Delivery Shelf and a tested order Reputation boost.
 8. Double Mold or Double Labels visible after the related station/order bottleneck.
 9. Next Best Action continues to prioritize Counter Service, bottlenecks, and useful purchases over Cup Test.
 
@@ -99,7 +99,7 @@ out of scope for this implementation slice.
 
 - Core audit file exists.
 - First loop is playable from Overview.
-- First Shop Order, First Upgrade Purchased, First 10 Orders, First 100 Tips, and First Family Tofu
+- First Shop Order, First Upgrade Purchased, First 10 Orders, First $100 Cash, and First Family Tofu
   Tray stamps unlock under deterministic conditions.
 - Tidy Packaging improves Prep Counter rate.
 - Steady Pressing is not recommended while stock runway is healthy.

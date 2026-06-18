@@ -9,13 +9,15 @@
   Tofu Shop. `#/garage` aliases to the same surface while `#/shop` remains supported.
 - `#/crew` shows the Delivery Crew parked placeholder/collection surface.
 - Delivery Driver progression is now separated from Tofu Shop progression: Cup Test runs grant
-  Driver XP/Driver Level, while shop orders and Counter Service grant Tips, Reputation, Shop XP,
+  Driver XP/Driver Level, while shop orders and Counter Service grant Cash, Reputation, Shop XP,
   Shop Level progress, stamps, and shop resources.
 - Driver Level can provide only a small capped Reputation bonus to shop orders. Tofu Shop does not
   level the driver, and Driver Level never changes Cup Test scoring or qualification.
-- Tips/Cash consolidation is documented future direction: current runtime still uses the `Tips`
-  balance, but the coherent economy should treat tips as flavor for Cash, with Cash contributing to
-  future Net Worth.
+- Cash economy V1 is implemented. Player-facing shop money is Cash; order payouts may still use
+  tips as flavor (`+$10 from tips`). The legacy save field remains `shop.tips` for compatibility.
+- Net Worth V1 is implemented as a compact later-game progress model: `Cash + Tofu Business Value`
+  toward `$1T Net Worth`. Full asset valuation, car asset value, garage value, company value, and
+  liabilities remain future.
 - Basic Mode uses device motion only and does not request location.
 - Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
   iOS Safari keeps the `Start & Calibrate` user gesture and avoids false permission-denied states.
@@ -39,8 +41,8 @@
   progress, the best available order card, and the relevant next station/upgrade so the first loop
   is playable without opening Orders.
 - Tofu Shop Overview now includes Next Milestone Bar V1. It shows one current implemented shop goal
-  at a time, pairs with Next Best Action, and can show a small `$1T fictional Net Worth` long-road
-  line after an early milestone without implementing a Net Worth counter or valuation system.
+  at a time, pairs with Next Best Action, and can show a compact Net Worth V1 line after later shop
+  milestones without implementing full valuation.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Counter Service V1 is the starter automation layer. It is available from the first session, runs
@@ -110,15 +112,15 @@
   Passport, and full Ledger stay hidden during the first loop unless earned.
 - Overview has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume meaningful typed Tofu Stock/Delivery Order costs and pay typed
-  Tips/Reputation/Shop XP rewards.
+  Cash/Reputation/Shop XP rewards.
 - `CORE_GAME_SPINE_AUDIT.md` now records what is truly implemented versus scaffolding. Core Game
   Spine V1 adds tested First Upgrade Purchased, First Family Tofu Tray, First 10 Orders, and First
-  100 Tips stamp milestones; Delivery Shelf is the first tested throughput support station; Shop
+  $100 Cash stamp milestones; Delivery Shelf is the first tested throughput support station; Shop
   Sign is the first tested Reputation support station.
 - Tofu Garage now starts idle-first: a 24-stock starter buffer, Tofu Press, Prep Counter, and
   starter Counter Service move the first Simple Tofu Boxes without repeated player labor.
-- Tips are the current early purchase balance for stations and upgrades; future copy should reframe
-  this as Cash earned from tips rather than adding a separate dollar currency.
+- Cash is the current player-facing purchase balance for stations and upgrades; `shop.tips` remains
+  the legacy internal save field and tips remain order-income flavor.
 - Next Best Action follows the current bottleneck: fresh saves point to watching the starter shop,
   ready orders point to Counter Service, early low stock points to Tofu Press, high-midgame stock
   blocks point to Supplier Contracts or stock upgrades, and healthy stock with slow orders points
@@ -133,7 +135,7 @@
 - `TOFU_GARAGE_V1_COMPLETION_AUDIT.md` rates Tofu Garage V1 at about 85% ready and recommends the
   next phase be a parked Covered Car / Dream Build teaser, not full car building.
 - Pack Tofu and manual fulfillment are collapsed Manual Backup actions. Don't Spill the Cup is an
-  optional certified boost rather than the normal shop bottleneck during order prep, Tip shortages,
+  optional certified boost rather than the normal shop bottleneck during order prep, Cash shortages,
   or managed-shop supply shortages.
 - Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
   crew, Shop Spirit, License, rivals, Passport, and Ledger.
@@ -142,14 +144,13 @@
 - Covered Car / Dream Build Teaser V1 is implemented as a parked-only managed-shop story/status
   card. It unlocks after the shop has reached Manager Desk scale with Wholesale Pickup progress,
   not during the first loop, and it does not add a Dream Garage tab, garage inventory, parts,
-  events, Net Worth, Cash migration, or car stats.
+  events, full asset valuation, or car stats.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
-- Ultimate Net Worth is documented as future endgame direction: Tofu Shop becomes the first
-  business engine, Cash is the liquid money, Dream Garage becomes an asset/status layer, later
-  business/franchise/car-company layers may lead toward a fictional `$1 trillion net worth` target,
-  and aerospace/space layers are absurd late-game direction only.
+- Ultimate Net Worth has a V1 shop-era progress model: Cash plus Tofu Business Value can appear
+  after later shop milestones. Dream Garage asset value, business/franchise/car-company layers, and
+  aerospace/space layers are still future direction only.
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
@@ -262,23 +263,23 @@ Future Dream Garage milestone sequence:
 2. Playtest and tune First Loop Contract.
 3. Tune first 10 minutes.
 4. Playtest Covered Car / Dream Build Teaser V1.
-5. Design Cash/Tips migration before car-part costs.
-6. Implement Stage 0 garage restoration only after the teaser and Cash bridge are clear.
+5. Use the implemented Cash V1 bridge when designing car-part costs.
+6. Implement Stage 0 garage restoration only after the teaser and Cash bridge feel clear.
 7. Implement Stage 1 daily build.
 8. Implement the first fictional closed-course event.
 9. Design project car completion/sale prestige after the garage loop is fun.
 
 Future endgame/business sequence:
 
-1. Keep the $1T Net Worth target as design direction only.
+1. Keep the $1T Net Worth target stable; tune the V1 shop-era progress display only after playtest.
 2. Stabilize and tune the First Loop Contract.
 3. Tune Next Milestone Bar V1, Supplier Contracts, Counter Service/Managed Shop V1, and Station
    Milestone Boosts V1 before adding more station thresholds.
-4. Rename or reframe `Tips` as Cash in a later implementation pass, while keeping `tips` as flavor
-   copy for order rewards.
-5. Add Net Worth as a visible long-term score later; the $1T goal does not increase, only progress
-   toward `$1T Net Worth` increases.
-6. Add Business Value only after Manager Desk / managed shop is stable.
+4. Keep `tips` as flavor copy for order rewards while Cash remains the only player-facing liquid
+   money balance.
+5. Tune Net Worth V1 reveal timing; the $1T goal does not increase, only progress toward
+   `$1T Net Worth` increases.
+6. Keep Tofu Business Value as the only implemented value estimate until car systems exist.
 7. Add covered-car teaser pacing and Dream Garage Stage 0 before any asset valuation system.
 8. Add the first car part as a Cash investment.
 9. Add sell/keep project car decisions later.
@@ -310,8 +311,7 @@ Deferred until after the First Loop Contract is playtested:
 - Fresh Tofu Shop state starts with a 24 Tofu Stock buffer so the first few Simple Tofu Box pickups
   can complete automatically and reach the first useful upgrade without Pack Tofu.
 - Tofu Stock is an ingredient/runway resource, not the purchase currency.
-- Tips are the current early purchase balance; future economy direction is Cash as the single
-  liquid currency, with tips as flavor.
+- Cash is the current player-facing liquid currency, with tips as flavor for order income.
 - Starter Counter Service is the early money-conversion action.
 - Counter Service blocked copy should identify the actual missing resource and show a Tofu Stock
   ETA when the press is refilling the next handoff.
@@ -321,7 +321,7 @@ Deferred until after the First Loop Contract is playtested:
 
 - Is 1 order every 40 seconds the right early Prep Counter pace?
 - Should the first meaningful purchase usually be Prep Counter, Tofu Press, or Steady Pressing?
-- Should Steady Pressing cost 20 Tips, or should the first upgrade happen after exactly two
+- Should Steady Pressing cost $20, or should the first upgrade happen after exactly two
   fulfilled orders?
 - When should Passport become a visible tab instead of a teaser?
 - How many active buttons should be visible before minute 10?

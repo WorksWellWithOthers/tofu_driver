@@ -112,7 +112,16 @@ globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
 globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
 globalThis.formatCompactNumber = formatCompactNumber;
+globalThis.formatCash = formatCash;
+globalThis.formatCashCount = formatCashCount;
+globalThis.formatCashBalance = formatCashBalance;
 globalThis.formatShopBalance = formatShopBalance;
+globalThis.cashBalance = cashBalance;
+globalThis.tofuBusinessValue = tofuBusinessValue;
+globalThis.netWorthV1 = netWorthV1;
+globalThis.netWorthProgress = netWorthProgress;
+globalThis.shouldShowNetWorthV1 = shouldShowNetWorthV1;
+globalThis.renderNetWorthCard = renderNetWorthCard;
 globalThis.addLedgerEntry = addLedgerEntry;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
@@ -1014,7 +1023,7 @@ function testFirstTimeGameDashboardIsVisibleBeforeSetup() {
   assert(!firstRunMain.includes('Reset Progress'));
   assert(html.includes('nospill-game-primary-cta'));
   assert(html.includes('View Counter Service'));
-  assert(html.includes('Tips'));
+  assert(html.includes('Cash'));
   assert(html.indexOf('id="game-daily-goal"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-daily-reward"') < html.indexOf('id="game-cta-button"'));
   assert(html.indexOf('id="game-cta-button"') < html.indexOf('id="game-driver-license"'));
@@ -1902,7 +1911,7 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert(context.freshProductionHtml.includes('Production'));
   assert(context.freshProductionHtml.includes('Buy Tofu Press'));
   assert(context.freshProductionHtml.includes('Buy Max Tofu Press'));
-  assert(context.freshProductionHtml.includes('Tips'));
+  assert(context.freshProductionHtml.includes('Cash'));
   assert(!context.freshProductionHtml.includes('>Upgrade<'));
   assert(!context.freshProductionHtml.includes('data-shop-upgrade'));
   assert(context.freshProductionHtml.includes('Need '));
@@ -2090,7 +2099,7 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert.strictEqual(context.funnelAction.type, 'wait_counter_service');
   assert.strictEqual(context.funnelAction.title, 'Next: Let Counter Service work');
   assert.strictEqual(context.funnelAction.buttonLabel, 'Counter Service Running');
-  assert.strictEqual(context.funnelBottleneck.label, 'Need Tips');
+  assert.strictEqual(context.funnelBottleneck.label, 'Need Cash');
   assert(!context.funnelBottleneck.label.includes('Certified boost available'));
   assert(context.funnelBottleneck.action.includes('Counter Service'));
   assert.strictEqual(context.funnelTopTitle, 'Next: Let Counter Service work');
@@ -2100,23 +2109,23 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert.strictEqual(context.funnelPackText, 'Pack Tofu');
   assert(context.funnelPackHelper.includes('Manual packing is a backup'));
   assert(context.funnelFulfillHelper.includes('Counter Service is the normal handoff path'));
-  assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Tips'));
-  assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
-  assert(context.funnelOverviewHtml.includes('Tips buy upgrades.'));
+  assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Cash'));
+  assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.'));
+  assert(context.funnelOverviewHtml.includes('Cash buys upgrades.'));
   assert(context.funnelOverviewHtml.includes('Preparing Next Order'));
   assert(context.funnelOverviewHtml.includes('role="progressbar"'));
   assert(context.funnelOverviewHtml.includes('Simple Tofu Box'));
-  assert(context.funnelOverviewHtml.includes('Reward: +10 Tips, +1 Reputation, +8 Shop XP.'));
+  assert(context.funnelOverviewHtml.includes('Reward: +$10 from tips, +1 Reputation, +8 Shop XP.'));
   assert(!context.funnelOverviewHtml.includes('Fulfill Max Simple Tofu Box x83'));
   assert(context.funnelOverviewHtml.includes('Optional Certified Boost'));
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
   assert.strictEqual(context.funnelOrdersFallbackTab, 'overview');
   assert(context.funnelOrdersFallbackHtml.includes('Overview'));
-  assert(context.funnelOrdersFallbackHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
-  assert(context.funnelOrdersFallbackHtml.includes('Reward: +10 Tips, +1 Reputation, +8 Shop XP.'));
+  assert(context.funnelOrdersFallbackHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.'));
+  assert(context.funnelOrdersFallbackHtml.includes('Reward: +$10 from tips, +1 Reputation, +8 Shop XP.'));
   assert(context.funnelOrdersFallbackHtml.includes('Counter Service'));
   assert(!context.funnelOrdersFallbackHtml.includes('Fulfill Max Simple Tofu Box x83'));
-  assert(context.funnelProductionHtml.includes('Let Counter Service earn Tips.'));
+  assert(context.funnelProductionHtml.includes('Let Counter Service earn Cash from tips.'));
   assert.strictEqual(context.funnelFulfilledOk, true);
   assert.strictEqual(context.funnelFulfilledQuantity, 83);
   assert.strictEqual(context.funnelTipsAfterMax, 830);
@@ -2283,7 +2292,7 @@ globalThis.highReadyOrdersHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(context.waitingTopTitle, 'Next: Wait for Prep Counter');
   assert.strictEqual(context.waitingTopButton, 'Preparing Order');
   assert.strictEqual(context.waitingTopDisabled, true);
-  assert(context.waitingTopCopy.includes('Need 10 more Tips for Tidy Packaging.'));
+  assert(context.waitingTopCopy.includes('Need $10 more for Tidy Packaging.'));
   assert.strictEqual(context.waitingCertifiedHidden, false);
   assert.strictEqual(context.waitingOrdersText, '0 ready');
   assert(!context.waitingOrdersText.includes('0.3'));
@@ -2463,7 +2472,7 @@ globalThis.lowTickNonNegative = ticked.gameState.shop.tofuStock >= 0 && ticked.g
   assert(context.highUpgradePanelHtml.includes('Tidy Packaging Lv 0'));
   assert(context.highUpgradePanelHtml.includes('Prep Counter output x1.5'));
   assert(context.highUpgradePanelHtml.includes('Prep Counter: 1 order / 40 sec -&gt; 1 order / 27 sec.'));
-  assert(context.highOrdersHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
+  assert(context.highOrdersHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.'));
   assert(context.highOrdersHtml.includes('Enough tofu for 18 more orders.'));
   assert(context.highOrdersHtml.includes('Uses 6 tofu stock and 1 ready order.'));
   assert(context.highOrdersHtml.includes('Prep Counter tofu per prepared order: 2.'));
@@ -2595,7 +2604,7 @@ globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
 
   assert.strictEqual(context.compactTofuStockText, '2.4M');
   assert.strictEqual(context.compactOrdersText, '12.8K ready');
-  assert.strictEqual(context.compactTipsText, '1B');
+  assert.strictEqual(context.compactTipsText, '$1B');
   assert.strictEqual(context.compactReputationText, '1B');
   assert(/[KMB]/.test(context.compactLevelProgressText));
   assert(context.compactPrepSlotsText.includes('available'));
@@ -2606,7 +2615,7 @@ globalThis.compactUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(context.compactStateTips, 1000000000);
   assert.strictEqual(context.compactStateStock, 2400000);
   assert(context.compactOrdersHtml.includes('Ready Orders') || context.compactOrdersHtml.includes('Delivery Orders'));
-  assert(context.compactProductionHtml.includes('K Tips'));
+  assert(context.compactProductionHtml.includes('$'));
   assert(context.compactProductionHtml.includes('Need 1 more Prep Capacity'));
   assert(context.compactUpgradeHtml.includes('Station Upgrades') || context.compactUpgradeHtml.includes('Maxed'));
   assert(!context.compactUpgradeHtml.includes(' -&gt; 1 order / 1 sec'));
@@ -2908,8 +2917,8 @@ globalThis.activeDriveFanfareReason = activeDriveShow.sound.reason;
   assert(!context.fanfareRewardsHtml.includes('not yet assigned'));
   assert(!context.fanfareRewardsHtml.includes('Stamp Cameo'));
   assert(!context.fanfareRewardsHtml.includes('stamp_fanfare_cameo'));
-  assert(context.fanfareRewardsHtml.includes('Tips'));
-  assert(context.fanfareRewardsHtml.includes('+10'));
+  assert(context.fanfareRewardsHtml.includes('Cash'));
+  assert(context.fanfareRewardsHtml.includes('+$10'));
   assert(context.fanfareRewardsHtml.includes('Reputation'));
   assert(context.fanfareRewardsHtml.includes('+1'));
   assert(context.fanfareRewardsHtml.includes('Shop XP'));
@@ -3314,8 +3323,9 @@ globalThis.activeStoryOverviewHtml = elements.shopTabPanel.innerHTML;
   assert(context.storyOverviewHtml.includes('old car waits under a cover'));
   assert(!context.storyTabsHtml.includes('Dream Garage'));
   assert(!context.storyOverviewHtml.includes('Buy Car Part'));
-  assert(!context.storyOverviewHtml.includes('Current Net Worth'));
-  assert(!context.storyOverviewHtml.includes('Business Value'));
+  assert(context.storyOverviewHtml.includes('Net Worth'));
+  assert(context.storyOverviewHtml.includes('Cash + Tofu Business Value'));
+  assert(!context.storyOverviewHtml.includes('Car Asset Value'));
   assert.strictEqual(context.highSceneId, 'scene_busy_shop_with_covered_car');
   assert(context.highSceneHtml.includes('/static/nospill/images/scene_busy_shop_with_covered_car.webp'));
   assert.strictEqual(context.acknowledgedOk, true);
@@ -3581,10 +3591,10 @@ globalThis.orderTypeTabsHtml = elements.shopTabList.innerHTML;
   assert(!context.freshOrderTypePanelHtml.includes('Family Tofu Tray'));
   assert(!context.freshOrderTypePanelHtml.includes('Festival Bento'));
   assert(!context.freshOrderTypePanelHtml.includes('Catering Crate'));
-  assert(context.orderTypePanelHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Tips.'));
+  assert(context.orderTypePanelHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.'));
   assert(context.orderTypePanelHtml.includes('Family Tofu Tray'));
   assert(context.orderTypePanelHtml.includes('Uses 24 tofu stock and 1 ready order.'));
-  assert(context.orderTypePanelHtml.includes('Reward: +45 Tips, +3 Reputation, +24 Shop XP.'));
+  assert(context.orderTypePanelHtml.includes('Reward: +$45 from tips, +3 Reputation, +24 Shop XP.'));
   assert(!context.orderTypePanelHtml.includes('Fulfill Max Family Tofu Tray x4'));
   assert(!context.orderTypePanelHtml.includes('Catering Crate'));
   assert(!context.orderTypePanelHtml.includes('Production'));
@@ -3749,9 +3759,9 @@ function testTofuShopNextMilestoneBarGuidesImplementedSpine() {
 
   const fresh = context.defaultGameState();
   assert.strictEqual(context.nextMilestoneForShop(fresh).id, 'first_tips_earned');
-  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('First Tips Earned'), true);
+  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('First Cash Earned'), true);
   assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('Reward:'), true);
-  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('$1T fictional Net Worth'), false);
+  assert.strictEqual(context.renderNextMilestoneCard(fresh).includes('Net Worth:'), false);
 
   const afterFirst = context.fulfillShopOrders(fresh, 1, {
     activeDrive: false,
@@ -3779,11 +3789,11 @@ function testTofuShopNextMilestoneBarGuidesImplementedSpine() {
   afterFamily.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray', date: '2026-06-15T12:00:00.000Z' };
   afterFamily.shop.lifetimeTips = 60;
   assert.strictEqual(context.nextMilestoneForShop(afterFamily).id, 'first_100_tips');
-  assert(context.renderNextMilestoneCard(afterFamily).includes('$1T fictional Net Worth'));
+  assert.strictEqual(context.renderNextMilestoneCard(afterFamily).includes('Net Worth:'), false);
 
   const afterHundred = JSON.parse(JSON.stringify(afterFamily));
   afterHundred.shop.lifetimeTips = 100;
-  afterHundred.stamps.first_100_tips = { label: 'First 100 Tips', date: '2026-06-15T12:00:00.000Z' };
+  afterHundred.stamps.first_100_tips = { label: 'First $100 Cash', date: '2026-06-15T12:00:00.000Z' };
   assert.strictEqual(context.nextMilestoneForShop(afterHundred).id, 'delivery_shelf_unlock');
 
   const afterShelf = JSON.parse(JSON.stringify(afterHundred));
@@ -3824,17 +3834,16 @@ appState.running = false;
 `, context);
 
   assert(context.nextMilestoneFreshHtml.includes('Next Milestone'));
-  assert(context.nextMilestoneFreshHtml.includes('First Tips Earned'));
+  assert(context.nextMilestoneFreshHtml.includes('First Cash Earned'));
   assert(context.nextMilestoneFreshHtml.includes('Simple Tofu Box'));
   assert(context.nextMilestoneFreshHtml.includes('Ready Orders'));
   assert(context.nextMilestoneFreshHtml.includes('Preparing next delivery order'));
-  assert(context.nextMilestoneFreshHtml.includes('Reward: +10 Tips, +1 Reputation, +8 Shop XP.'));
+  assert(context.nextMilestoneFreshHtml.includes('Reward: +$10 from tips, +1 Reputation, +8 Shop XP.'));
   assert(context.nextMilestoneFreshHtml.includes('nospill-available-badge'));
   assert(context.nextMilestoneFreshHtml.includes('Available'));
   assert(!context.nextMilestoneFreshHtml.includes('Fulfill Simple Tofu Box'));
   assert(context.nextMilestoneFreshHtml.includes('Current Bottleneck'));
-  assert(!context.nextMilestoneFreshHtml.includes('$1T fictional Net Worth'));
-  assert(context.nextMilestoneLongRoadHtml.includes('Long road: $1T fictional Net Worth'));
+  assert(!context.nextMilestoneFreshHtml.includes('Net Worth:'));
   assert(!context.nextMilestoneLongRoadHtml.includes('Net Worth:'));
   assert(!context.nextMilestoneLongRoadHtml.includes('Company Value'));
   assert(context.nextMilestoneMissingOrderHtml.includes('Need 24 Tofu Stock and 1 ready order'));
@@ -3853,7 +3862,8 @@ appState.running = false;
   assert(!source.includes('fetch('));
   assert(!source.includes('XMLHttpRequest'));
   assert(!source.includes('sendBeacon'));
-  assert(!source.includes('netWorth'));
+  assert(source.includes('netWorthV1'));
+  assert(!source.includes('carAssetValue'));
   assert(!source.includes('enterpriseValue'));
 }
 
@@ -4250,7 +4260,7 @@ function testCounterServicePolishStatsUpgradesAndSpiritPanel() {
   state.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased', date: '2026-06-15T12:00:00.000Z' };
   assert.strictEqual(context.counterServiceIntervalSeconds(state), 10);
   assert(context.counterServiceIncomeStatus(state).text.includes('Counter Service: +'));
-  assert(context.counterServiceIncomeStatus(state).text.includes('Tips/min when supplied'));
+  assert(context.counterServiceIncomeStatus(state).text.includes('/min when supplied'));
 
   const stockBlocked = JSON.parse(JSON.stringify(state));
   stockBlocked.shop.tofuStock = 0;
@@ -4314,7 +4324,7 @@ renderTofuShop(${JSON.stringify(state)});
 globalThis.counterUpgradeHtml = elements.shopTabPanel.innerHTML;
 `, context);
   assert(context.counterIncomeText.includes('Counter Service: +'));
-  assert(context.counterIncomeText.includes('Tips/min when supplied'));
+  assert(context.counterIncomeText.includes('/min when supplied'));
   assert.strictEqual(context.counterStockBlockedText, 'Counter Service waiting for Tofu Stock');
   assert.strictEqual(context.counterOrderBlockedText, 'Counter Service waiting for ready orders');
   assert(context.counterUpgradeHtml.includes('Order Bell'));
@@ -4434,7 +4444,7 @@ renderTofuShop(${JSON.stringify(spirit)});
 globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
 `, context);
   assert(context.spiritPanelHtml.includes('Shop Spirit wallet'));
-  assert(context.spiritPanelHtml.includes('Tips'));
+  assert(context.spiritPanelHtml.includes('Cash'));
   assert(context.spiritPanelHtml.includes('41.9K'));
   assert(context.spiritPanelHtml.includes('Shop Spirit'));
   assert(context.spiritPanelHtml.includes('12 /'));
@@ -4630,8 +4640,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260617e'));
-  assert(html.includes('/static/nospill/app.css?v=20260617e'));
+  assert(html.includes('/static/nospill/app.js?v=20260617f'));
+  assert(html.includes('/static/nospill/app.css?v=20260617f'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -4893,7 +4903,7 @@ renderTofuShop(${JSON.stringify(state)});
 globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
 `, context);
   assert(context.managerUpgradeHtml.includes('Hire Shift Manager'));
-  assert(context.managerUpgradeHtml.includes('Tips + 1M Reputation'));
+  assert(context.managerUpgradeHtml.includes('$75K + 1M Reputation'));
   assert(context.managerUpgradeHtml.includes('Opens Manager Desk scale'));
 }
 
@@ -4964,13 +4974,13 @@ function testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit() {
   assert(!tidyStatus || tidyStatus.level === 0);
 
   const progress = context.affordabilityProgress([
-    { label: 'Tips', current: 10, required: 20, perSecond: 1 },
+    { label: 'Cash', current: 10, required: 20, perSecond: 1 },
     { label: 'Reputation', current: 100, required: 50, perSecond: 0 },
   ]);
-  assert.strictEqual(progress.label, 'Waiting on Tips');
+  assert.strictEqual(progress.label, 'Waiting on Cash');
   assert(progress.etaText.includes('0:10'));
   const blockedProgress = context.affordabilityProgress([
-    { label: 'Tips', current: 10, required: 20, perSecond: 0 },
+    { label: 'Cash', current: 10, required: 20, perSecond: 0 },
   ]);
   assert.strictEqual(blockedProgress.etaText, '');
   assert(!JSON.stringify(progress).includes('Infinity'));
@@ -5012,7 +5022,7 @@ globalThis.bulkOfflineText = elements.shopOfflineEarnings.textContent;
 `, context);
   assert(context.bulkUpgradeHtml.includes('Buy Cheapest Upgrade'));
   assert(context.bulkUpgradeHtml.includes('Buy All Affordable Upgrades'));
-  assert(context.bulkUpgradeHtml.includes('Waiting on Tips'));
+  assert(context.bulkUpgradeHtml.includes('Waiting on Cash'));
   assert(context.bulkUpgradeHtml.includes('0:10'));
   assert(context.bulkStationHtml.includes('Buy Cheapest Station'));
   assert(context.bulkStationHtml.includes('Buy All Affordable Stations'));
@@ -5028,6 +5038,115 @@ globalThis.bulkOfflineText = elements.shopOfflineEarnings.textContent;
   assert(!source.includes('fetch('));
   assert(!source.includes('XMLHttpRequest'));
   assert(!source.includes('sendBeacon'));
+}
+
+function testTofuGarageCashAndNetWorthV1() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('<span>Cash</span>'));
+  assert(!html.includes('<span>Tips</span>'));
+  assert(!html.includes('1 trillion shares'));
+
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  const fresh = context.defaultGameState();
+  assert.strictEqual(context.cashBalance(fresh), 0);
+  assert.strictEqual(context.shouldShowNetWorthV1(fresh), false);
+  assert.strictEqual(context.renderNetWorthCard(fresh), '');
+
+  const oldSave = context.normalizeGameState({
+    shop: {
+      tips: 1234,
+      lifetimeTips: 1234,
+    },
+  });
+  assert.strictEqual(context.cashBalance(oldSave), 1234);
+  assert.strictEqual(context.formatCashBalance(oldSave.shop.tips), '$1.23K');
+
+  const netWorthBeforeEarn = context.netWorthV1(fresh);
+  const earned = context.fulfillShopOrders(fresh, 1, {
+    activeDrive: false,
+    orderTypeId: 'simple_tofu_box',
+    suppressFanfare: true,
+  }).gameState;
+  assert.strictEqual(earned.shop.tips, 10);
+  assert.strictEqual(context.cashBalance(earned), 10);
+  assert(context.netWorthV1(earned) > netWorthBeforeEarn);
+
+  const upgradeReady = JSON.parse(JSON.stringify(earned));
+  upgradeReady.shop.tips = 100;
+  upgradeReady.shop.lifetimeTips = 100;
+  upgradeReady.shop.deliveryOrders = 1;
+  upgradeReady.shop.tofuStock = 30;
+  const businessBefore = context.tofuBusinessValue(upgradeReady);
+  const bought = context.buyStationUpgrade('prep_counter_faster', upgradeReady);
+  assert.strictEqual(bought.ok, true);
+  assert(bought.gameState.shop.tips < upgradeReady.shop.tips);
+  assert(context.tofuBusinessValue(bought.gameState) > businessBefore);
+
+  const revealed = JSON.parse(JSON.stringify(bought.gameState));
+  revealed.shop.coveredCarTeaserUnlocked = true;
+  assert.strictEqual(context.shouldShowNetWorthV1(revealed), true);
+  const netWorthHtml = context.renderNetWorthCard(revealed);
+  assert(netWorthHtml.includes('Net Worth'));
+  assert(netWorthHtml.includes('toward $1T'));
+  assert(netWorthHtml.includes('Cash + Tofu Business Value'));
+  assert(netWorthHtml.includes('Cash can be spent now or invested into assets'));
+  assert(!netWorthHtml.includes('shares'));
+
+  vm.runInContext(`
+function makeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle() {} };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopLevelBadge: makeNode(),
+  shopTofuStock: makeNode(),
+  shopDeliveryOrders: makeNode(),
+  shopTips: makeNode(),
+  shopReputation: makeNode(),
+  shopLevelProgress: makeNode(),
+  shopIdleRate: makeNode(),
+  shopOrderRate: makeNode(),
+  shopTipsRate: makeNode(),
+  shopReputationRate: makeNode(),
+  shopSpiritRate: makeNode(),
+  shopPrepStatus: makeNode(),
+  shopPrepSlots: makeNode(),
+  shopReach: makeNode(),
+  shopSpirit: makeNode(),
+  shopLicenseStars: makeNode(),
+  shopBuyMultiplier: makeNode(),
+  packTofuButton: makeNode(),
+  fulfillShopOrderButton: makeNode(),
+  packTofuHelper: makeNode(),
+  fulfillShopOrderHelper: makeNode(),
+  shopTabList: makeNode(),
+  shopTabPanel: makeNode(),
+  shopInlineResult: makeNode(),
+  shopOfflineEarnings: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+renderTofuShop(${JSON.stringify(fresh)});
+globalThis.cashFreshCounter = elements.shopTips.textContent;
+globalThis.cashFreshOverview = elements.shopTabPanel.innerHTML;
+renderTofuShop(${JSON.stringify(revealed)});
+globalThis.cashRevealedCounter = elements.shopTips.textContent;
+globalThis.cashRevealedOverview = elements.shopTabPanel.innerHTML;
+`, context);
+  assert.strictEqual(context.cashFreshCounter, '$0');
+  assert(!context.cashFreshOverview.includes('Net Worth'));
+  assert(context.cashRevealedCounter.startsWith('$'));
+  assert(context.cashRevealedOverview.includes('Net Worth'));
+  assert(context.cashRevealedOverview.includes('Cash + Tofu Business Value'));
+  assert(!context.cashRevealedOverview.includes('Tips buy upgrades'));
+  assert(!context.cashRevealedOverview.includes('Tips/min'));
 }
 
 function testNextBestActionHierarchyStaysSinglePrimary() {
@@ -7614,14 +7733,14 @@ globalThis.inlineStampHiddenAfterMax = elements.stampFanfare.classes.has("is-hid
   assert.strictEqual(context.inlineSummaryMode, '');
   assert(context.inlinePanelAfterFirst.includes('Overview'));
   assert(context.inlinePanelAfterFirst.includes('Simple Tofu Box'));
-  assert(context.inlineMessageAfterFirst.includes('Simple Tofu Box complete: +10 Tips, +1 Reputation, +8 Shop XP'));
+  assert(context.inlineMessageAfterFirst.includes('Simple Tofu Box complete: +$10 from tips, +1 Reputation, +8 Shop XP'));
   assert.strictEqual(context.inlineStampShown, true);
   assert.strictEqual(context.inlineStampTitle, 'First Stamp Earned');
   assert.strictEqual(context.inlineStampName, 'First Shop Order');
   assert.strictEqual(context.inlineTipsAfterMax, 195);
   assert.strictEqual(context.inlineTabAfterMax, 'overview');
   assert.strictEqual(context.inlineSummaryAfterMax, '');
-  assert(context.inlineMessageAfterMax.includes('Family Tofu Tray x4 complete: +180 Tips, +12 Reputation, +96 Shop XP'));
+  assert(context.inlineMessageAfterMax.includes('Family Tofu Tray x4 complete: +$180 from tips, +12 Reputation, +96 Shop XP'));
   assert.strictEqual(context.inlineStampHiddenAfterMax, true);
 }
 
@@ -8069,6 +8188,7 @@ async function run() {
   testTofuGarageHighScalePerformanceGuardrails();
   testTofuGarageManagerDeskV1();
   testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit();
+  testTofuGarageCashAndNetWorthV1();
   testNextBestActionHierarchyStaysSinglePrimary();
   testTofuDriverArtworkIsIsolatedAndAccessible();
   testSuperCuteCollectiblesLandingAndMerchCopy();

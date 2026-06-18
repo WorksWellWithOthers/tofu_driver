@@ -27,8 +27,8 @@ kept out of the primary Tofu Garage loop.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Stock | Ingredient/runway for shop orders | Tofu Press, Supplier Contracts, Rush Stock, offline production | Prep Counter, shop orders, larger order types | improve supply or spend stock on larger payouts | start | stock shortage | Family Tray, Festival Bento, Catering Crate | meaningful |
 | Delivery Orders | Prepared/waiting shop work | Prep Counter, Warm Counter, offline prep | Counter Service, Manual Backup, Wholesale Pickup | improve prep or improve handoff throughput | start | no money opportunities or queue full | Counter Service, Manager Desk | meaningful |
-| Tips / Cash | Current UI balance says Tips; future economy treats tips as Cash, the liquid spend currency | Counter Service, shop orders, Wholesale Pickup | stations, upgrades, Manager Desk, future car parts/businesses | buy the next bottleneck fix or later invest in assets | first handoff | cannot afford next improvement | all shop expansion, Net Worth | meaningful now; rename/reframe future |
-| Reputation | Unlock/status currency and midgame supply sink | shop orders, Shop Sign, driver bonus | Supplier Contracts, Manager Desk, unlock gates | spend status to secure supply | first handoff | stock trap with low Tips | Supplier Contracts, Manager Desk | meaningful |
+| Cash | Player-facing liquid currency earned from tips; stored in legacy `shop.tips` internally | Counter Service, shop orders, Wholesale Pickup | stations, upgrades, Manager Desk, future car parts/businesses | buy the next bottleneck fix or later invest in assets | first handoff | cannot afford next improvement | all shop expansion, Net Worth V1 | meaningful |
+| Reputation | Unlock/status currency and midgame supply sink | shop orders, Shop Sign, driver bonus | Supplier Contracts, Manager Desk, unlock gates | spend status to secure supply | first handoff | stock trap with low Cash | Supplier Contracts, Manager Desk | meaningful |
 | Shop Level | Derived progression label from Reputation | Reputation growth | unlock checks | reach phase gates | start | communicates progression tier | Supplier/Manager gates | meaningful, derived |
 | Shop Spirit | Parked emergency/spend resource | Spirit generators | Rush Stock, Warm Counter, timed effects | save Spirit for bottleneck moments | after shop momentum | short-term recovery | future boost economy | meaningful but tune carefully |
 | Prep Capacity | Recovering expansion capacity | timed regen, future License Perks | station purchases | choose when to expand stations | start but mostly felt after purchases | prevents unlimited instant station buying | staffing/license ideas later | meaningful, should stay explained |
@@ -74,15 +74,15 @@ Covered Car / Dream Build Teaser V1 after managed-shop scale.
 Later:
 
 ```text
-Dream Garage planning -> Cash/Tips migration -> first Cash-funded project car -> keep/sell decision -> Net Worth accounting.
+Dream Garage planning -> first Cash-funded project car -> keep/sell decision -> full Net Worth accounting.
 ```
 
 Avoid for now:
 
 ```text
-Net Worth counters, asset valuation, separate dollar balances, shares as the main target, routes
-expansion, crew gameplay, franchise mode, social systems, backend sync, multiplayer, payments,
-service workers, uploads, or network calls.
+full asset valuation, Car Asset Value, company value, separate dollar balances, shares as the main
+target, routes expansion, crew gameplay, franchise mode, social systems, backend sync, multiplayer,
+payments, service workers, uploads, or network calls.
 ```
 
 ## Risks / Anti-Patterns

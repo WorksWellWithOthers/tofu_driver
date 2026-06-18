@@ -23,7 +23,7 @@ Tofu Garage resources are scalar JavaScript numbers in local game state:
 
 - `shop.tofuStock`
 - `shop.deliveryOrders`
-- `shop.tips`
+- `shop.tips` as the legacy internal Cash field
 - `shop.reputation`
 - `shop.shopXP`
 - station counts, upgrade levels, and lifetime counters
@@ -65,7 +65,7 @@ Player-facing shop values use compact formatting:
 
 ```text
 1M
-+7.8K Tips/min
++$7.8K/min
 +250/sec
 ```
 
@@ -154,7 +154,7 @@ High-midgame reproduction fixture:
 - Delivery Orders at the 1M queue cap
 - Counter Service running with Counter Crew purchased
 - Supplier Contracts purchased
-- high Reputation, low-to-mid Tips
+- high Reputation, low-to-mid Cash
 - Upgrades tab or Overview visible while the live shop tick runs
 
 ## Living Scene Interaction Regression: 2026-06

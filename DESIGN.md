@@ -68,9 +68,10 @@ Delivery Driver progression belongs to Don't Spill the Cup. Driver XP, Driver Le
 title, smoothness streaks, Today's Delivery cargo, No-Spill Club gear, Cup Test stamps, and Cup Test
 recent rewards should primarily come from completed Cup Test runs and smoothness/cargo milestones.
 
-Tofu Shop progression is separate shop progression. Tofu Stock, Delivery Orders, Tips, Reputation,
+Tofu Shop progression is separate shop progression. Tofu Stock, Delivery Orders, Cash, Reputation,
 Shop Level, Shop Spirit, stations, station milestones, Counter Service, shop upgrades, Shop XP, and
-shop stamps come from parked shop production and shop order fulfillment.
+shop stamps come from parked shop production and shop order fulfillment. The legacy save field is
+still `shop.tips`, but player-facing copy treats it as Cash earned from order tips.
 
 Driver Level may influence Tofu Shop only as a small capped status bonus. Current V1 framing is a
 Reputation bonus from shop orders, capped so Cup Test status helps the shop feel known without
@@ -207,7 +208,7 @@ Design stance:
 Current core loop target:
 
 ```text
-Tofu Press -> Prep Counter -> Starter Counter Service -> Tips -> Upgrade -> First Stamp
+Tofu Press -> Prep Counter -> Starter Counter Service -> Cash -> Upgrade -> First Stamp
 ```
 
 The loop should become fun before deeper systems are expanded.
@@ -235,7 +236,7 @@ Current design principles:
   Simple Tofu Box pickups. Manual actions are not the core loop; the player clicks decisions,
   upgrades, bottleneck fixes, and strategic spends.
 - The starter shop should not dead-start. Fresh saves begin with enough Tofu Stock buffer for the
-  first few automatic Simple Tofu Box pickups, so Tips can reach the first useful upgrade through
+  first few automatic Simple Tofu Box pickups, so Cash can reach the first useful upgrade through
   idle play. If Counter Service is blocked, the UI should name only the missing input and show a
   Tofu Stock ETA when stock is recovering.
 - Good player actions include buying upgrades, solving bottlenecks, starting or pausing Counter
@@ -266,12 +267,12 @@ Current design principles:
 - Tofu Stock is an ingredient/runway resource, not the purchase currency. The UI should explain how
   many orders current stock can support.
 - Larger shop order types can consume more Tofu Stock and ready Delivery Orders for better local
-  Tips/Reputation/Shop XP rewards. This order-size ladder is the intended bridge between stockpiles and
-  higher payouts. Raw Tofu Stock should not directly multiply Tips.
+  Cash/Reputation/Shop XP rewards. This order-size ladder is the intended bridge between stockpiles
+  and higher payouts. Raw Tofu Stock should not directly multiply Cash.
 - The current implemented order ladder is Simple Tofu Box, Family Tofu Tray, Festival Bento, and
   Catering Crate. The early stock costs are 6, 24, and 75 Tofu Stock respectively, with Catering
   Crate acting as a later managed-shop stock/Ready Order sink.
-- Core Game Spine V1 now starts with automatic First Tips Earned and the First Shop Order stamp,
+- Core Game Spine V1 now starts with automatic First Cash Earned and the First Shop Order stamp,
   followed by First Upgrade Purchased, First 10 Orders, First Family Tofu Tray, and First 100 Tips.
   Delivery Shelf is the first throughput support station, and Shop Sign is the first Reputation
   support station.
@@ -286,7 +287,7 @@ Current design principles:
   upgrades: Second Register, Pickup Window, and Counter Crew. This is still local Tofu Shop
   automation, not franchise mode or Dream Garage.
 - Counter Service should display its useful rate or blocked state honestly. If it is supplied and
-  running, shop income can include a `Tips/min when supplied` line; if it lacks stock or ready
+  running, shop income can include a `Cash/min when supplied` line; if it lacks stock or ready
   orders, the UI should say what is missing rather than showing a misleading zero.
 - Shop Spirit actions should use action-specific language: generators use `Buy`, instant actions use
   `Spend Spirit`, timed effects use `Start Effect` or a specific effect name, and tokens use
@@ -309,13 +310,12 @@ Current design principles:
 - Covered Car / Dream Build Teaser V1 is implemented as a parked story/status card after the shop
   reaches managed scale: Counter Crew, Manager Desk, Wholesale Pickup progress, and sustained shop
   growth. It says the shop funds the dream, but it does not add Dream Garage mechanics, car parts,
-  Net Worth, asset valuation, Cash migration, or any driving effect.
+  full asset valuation, or any driving effect.
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
-  Delivery Order, consumes Delivery Orders, and grants Tips, Reputation, and Shop XP, but it is not
+  Delivery Order, consumes Delivery Orders, and grants Cash, Reputation, and Shop XP, but it is not
   the primary progression loop.
-- Tips are early flavor for order income. The future coherent economy should treat those earnings
-  as Cash, the single liquid spend currency for shop upgrades, car parts, and later business
-  investments.
+- Tips are early flavor for order income. The current coherent economy treats those earnings as
+  Cash, the single liquid spend currency for shop upgrades and later car/business investments.
 - The early UI must teach that automatic Counter Service handoffs create spendable money.
 - Pack Tofu is a backup/manual Tofu Stock action, not the main money action.
 - Recommendations should follow the current bottleneck: promote Tofu Press when stock is low, but
@@ -326,7 +326,7 @@ Current design principles:
   bottleneck. Steady Pressing is a stock-runway upgrade and should not be recommended while stock is
   already healthy.
 - Early upgrade cards should show before/after impact, such as a better order-prep cadence or
-  higher stock/sec, before asking the player to spend Tips.
+  higher stock/sec, before asking the player to spend Cash.
 - Overview is the main first-loop play surface. It should include the current bottleneck, the next
   best action, ready orders, Prep Counter progress, the best available order card, and one relevant
   station or upgrade. A new player should not need to open Orders to understand or play the first
@@ -368,7 +368,7 @@ Current design principles:
 - Normal parked shop-order fulfillment is inline and non-interrupting. Full result screens are for
   Cup Test runs and major fanfare moments such as the first Passport stamp.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
-  bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Tips
+  bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Cash
   are needed.
 - Reputation opens new shop systems.
 - XP/levels provide visible progress.
@@ -460,7 +460,8 @@ real-world vehicle modification advice.
 
 ## Ultimate Net Worth Endgame
 
-Ultimate net worth is future direction only. It is not current MVP behavior.
+Ultimate net worth is the long-term direction. V1 is implemented as a small, local Tofu Garage
+progress line after later shop milestones; full valuation remains future.
 
 Long-arc framing:
 
@@ -475,13 +476,26 @@ The goal is $1 trillion net worth.
 `Net Worth` is a fictional game abstraction, not financial advice. The $1T goal does not increase;
 the player's progress toward $1T Net Worth increases.
 
-Cash is the future name for the player's spendable money. Early-game flavor may still call order
-income `tips`, but those tips should mechanically be Cash. Tofu orders earn Cash, shop upgrades
-spend Cash, future car parts spend Cash, and Cash contributes directly to Net Worth.
+Cash is the player's spendable money. Early-game flavor may still call order income `tips`, but
+those tips mechanically become Cash. Tofu orders earn Cash, shop upgrades spend Cash, future car
+parts spend Cash, and Cash contributes directly to Net Worth.
 
 Avoid creating separate `Tips` and `$` balances. Use copy such as `+$10 Cash from tips` or
-`Counter Service: Simple Tofu Box complete · +$10` when implementation catches up. Shares are not
-the main endgame target; they can remain a much later fictional company/founder mechanic if needed.
+`Counter Service: Simple Tofu Box complete · +$10`. Shares are not the main endgame target; they
+can remain a much later fictional company/founder mechanic if needed.
+
+Current Net Worth V1 uses a deliberately small model:
+
+```text
+Net Worth V1 =
+  Cash
+  + Tofu Business Value
+```
+
+`Tofu Business Value` is a deterministic local estimate from station ownership, purchased shop
+upgrades, supplier/manager systems, shop level/reputation, and earning power after the shop has
+earned money. It is not a full valuation system and does not include car asset value, garage value,
+future company value, or liabilities yet.
 
 Conceptual accounting model:
 
@@ -547,7 +561,7 @@ Don't Spill the Cup is always available. It must not require:
 
 - Tofu Stock
 - Delivery Orders
-- Tips
+- Cash
 - upgrades
 - routes
 - accounts
@@ -557,7 +571,7 @@ Cup Test results can affect Tofu Shop as optional certified boosts:
 
 - bonus Reputation
 - bonus Tofu Stock
-- bonus Tips
+- bonus Cash
 - temporary shop production boost
 - certified stamps
 - certified merch progress
