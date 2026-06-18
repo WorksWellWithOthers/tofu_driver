@@ -321,8 +321,9 @@ Net Worth V1 =
 `Tofu Business Value` is a simple deterministic shop estimate based on owned stations, purchased
 upgrades, supplier/manager systems, shop level/reputation, and earning power after the shop has
 earned money. It exists to make Cash spending feel like investment, not like lost progress.
-`Project Car Value` is the value of purchased Dream Build investments. In V1, only Wheels
-contribute, at `$25K`.
+`Project Car Value` is the value of purchased Dream Build investments. In V1, Wheels can raise it
+to `$150K`, Exhaust Fitted raises the combined project to `$275K`, and Sealed Joints raises it to
+`$475K`.
 
 Future full accounting:
 
@@ -352,7 +353,9 @@ Examples:
 - First Dream Build Investment Purchase V1 lets the player buy Wheels for `$50K Cash` after the
   covered-car teaser. It subtracts Cash and starts `$25K Project Car Value`; it does not create a
   full car-part inventory, Dream Garage tab, resale, depreciation, or liabilities.
-- Future car parts reduce Cash but may increase Car Asset Value and unlock future opportunities.
+- Exhaust Purchase + Work Level V1 proves the second part track with Exhaust Fitted and Sealed
+  Joints. Future car parts reduce Cash but may increase Car Asset Value and unlock future
+  opportunities.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -428,7 +431,9 @@ Rules:
 - after the Covered Car teaser is seen or a high-progress save qualifies for it, the bar may point
   to `Save for Wheels` when no urgent shop bottleneck or useful shop purchase is more important.
   If Cash is already at `$50K`, it may show `Buy Wheels`. After Wheels are purchased, it may show
-  the future-only Exhaust Fund target when no urgent shop goal is more useful.
+  Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`, or
+  `Seal Joints` when no urgent shop goal is more useful. After Exhaust level 2, Tuned Note remains
+  target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1356,8 +1361,9 @@ Suggested reveal:
   progress card that becomes a Buy Wheels action when affordable. Buying Wheels subtracts `$50K`
   Cash and starts `$25K Project Car Value` without adding a Dream Garage tab, full part inventory,
   resale, depreciation, liabilities, events, or full valuation.
-- After Wheels, the next visible target is Exhaust Fund at `$250K` as a future-only preview; there
-  is no Buy Exhaust action in this slice.
+- After Wheels level 3, Exhaust Purchase + Work Level V1 starts the second part track. Buy Exhaust
+  costs `$250K Cash` and adds `$125K Project Car Value`; Seal Joints costs `$375K Cash` and adds
+  another `$200K Project Car Value`. Tuned Note remains future/target-only.
 - full Dream Garage only after the teaser proves players understand the shop-to-dream bridge.
 - first part purchase after stable Cash income exists and project-budget rules are resolved.
 
@@ -1421,6 +1427,17 @@ Implemented Wheels Work Levels V1:
 | 3 | Balanced Fitment | `$150K` | `$150K` | Implemented |
 | 4 | Showpiece Fitment | future | future | Documented only |
 | 5 | Collector Finish | future | future | Documented only |
+
+Implemented Exhaust Purchase + Work Level V1:
+
+| Exhaust Level | State / Work | Cash Cost | Project Car Value Total | Runtime Status |
+| --- | --- | --- | --- | --- |
+| 0 | Not Started | none | `$150K` with Wheels level 3 | Implemented as post-Wheels target state |
+| 1 | Exhaust Fitted | `$250K` | `$275K` with Wheels level 3 | Implemented |
+| 2 | Sealed Joints | `$375K` | `$475K` with Wheels level 3 | Implemented |
+| 3 | Tuned Note | future | future | Target-only/future |
+| 4 | Heat Wrapped | future | future | Documented only |
+| 5 | Showcase Finish | future | future | Documented only |
 
 Each level is an investment, not a direct cash printer.
 

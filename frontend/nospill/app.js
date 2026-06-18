@@ -252,6 +252,9 @@ const DREAM_BUILD_WHEELS_POLISH_VALUE = 40000;
 const DREAM_BUILD_WHEELS_FITMENT_COST = 150000;
 const DREAM_BUILD_WHEELS_FITMENT_VALUE = 85000;
 const DREAM_BUILD_NEXT_TARGET_COST = 250000;
+const DREAM_BUILD_EXHAUST_VALUE = 125000;
+const DREAM_BUILD_EXHAUST_SEAL_COST = 375000;
+const DREAM_BUILD_EXHAUST_SEAL_VALUE = 200000;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -2708,6 +2711,8 @@ function defaultShopState() {
     dreamBuild: {
       wheelsPurchased: false,
       wheelsLevel: 0,
+      exhaustPurchased: false,
+      exhaustLevel: 0,
       firstInvestmentPurchasedAt: "",
     },
     lifetimeReputation: 0,
@@ -2795,11 +2800,16 @@ function normalizeCounterService(counterService) {
 
 function normalizeDreamBuild(dreamBuild) {
   const source = dreamBuild && typeof dreamBuild === "object" ? dreamBuild : {};
-  const rawLevel = safeNonNegativeInteger(source.wheelsLevel, 0, 5);
-  const wheelsPurchased = Boolean(source.wheelsPurchased) || rawLevel > 0;
+  const rawWheelsLevel = safeNonNegativeInteger(source.wheelsLevel, 0, 5);
+  const wheelsPurchased = Boolean(source.wheelsPurchased) || rawWheelsLevel > 0;
+  const wheelsLevel = wheelsPurchased ? clamp(rawWheelsLevel || 1, 1, 5) : 0;
+  const rawExhaustLevel = safeNonNegativeInteger(source.exhaustLevel, 0, 5);
+  const exhaustPurchased = Boolean(source.exhaustPurchased) || rawExhaustLevel > 0;
   return {
     wheelsPurchased,
-    wheelsLevel: wheelsPurchased ? clamp(rawLevel || 1, 1, 5) : 0,
+    wheelsLevel,
+    exhaustPurchased: wheelsLevel >= 3 && exhaustPurchased,
+    exhaustLevel: wheelsLevel >= 3 && exhaustPurchased ? clamp(rawExhaustLevel || 1, 1, 5) : 0,
     firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
       ? source.firstInvestmentPurchasedAt.slice(0, 40)
       : "",
@@ -4608,6 +4618,14 @@ function dreamBuildWheelsLevel(gameState) {
   return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.wheelsLevel, 0, 5);
 }
 
+function dreamBuildExhaustPurchased(gameState) {
+  return Boolean(normalizeGameState(gameState).shop.dreamBuild.exhaustPurchased);
+}
+
+function dreamBuildExhaustLevel(gameState) {
+  return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.exhaustLevel, 0, 5);
+}
+
 function dreamBuildInvestmentStarted(gameState) {
   return dreamBuildWheelsPurchased(gameState);
 }
@@ -4615,13 +4633,21 @@ function dreamBuildInvestmentStarted(gameState) {
 function projectCarValueV1(gameState) {
   const state = normalizeGameState(gameState);
   const wheelsLevel = dreamBuildWheelsLevel(state);
+  const exhaustLevel = dreamBuildExhaustLevel(state);
+  let value = 0;
   if (wheelsLevel >= 3) {
-    return DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
+    value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
+  } else if (wheelsLevel >= 2) {
+    value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE;
+  } else if (wheelsLevel >= 1) {
+    value += DREAM_BUILD_WHEELS_VALUE;
   }
-  if (wheelsLevel >= 2) {
-    return DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE;
+  if (exhaustLevel >= 2) {
+    value += DREAM_BUILD_EXHAUST_VALUE + DREAM_BUILD_EXHAUST_SEAL_VALUE;
+  } else if (exhaustLevel >= 1) {
+    value += DREAM_BUILD_EXHAUST_VALUE;
   }
-  return wheelsLevel >= 1 ? DREAM_BUILD_WHEELS_VALUE : 0;
+  return value;
 }
 
 function dreamInvestmentTargetVisible(gameState) {
@@ -4642,11 +4668,13 @@ function dreamInvestmentTargetProgress(gameState) {
     ready: cashBalance(state) >= DREAM_INVESTMENT_TARGET_COST,
     purchased: dreamBuildWheelsPurchased(state),
     wheelsLevel: dreamBuildWheelsLevel(state),
+    exhaustPurchased: dreamBuildExhaustPurchased(state),
+    exhaustLevel: dreamBuildExhaustLevel(state),
   };
 }
 
 function dreamBuildNextTargetProgress(gameState) {
-  return nextMilestoneProgress(0, DREAM_BUILD_NEXT_TARGET_COST);
+  return nextMilestoneProgress(cashBalance(gameState), DREAM_BUILD_NEXT_TARGET_COST);
 }
 
 function dreamBuildWheelsWorkForLevel(level) {
@@ -4685,6 +4713,45 @@ function nextDreamBuildWheelsWork(gameState) {
   const state = normalizeGameState(gameState);
   if (!state.shop.dreamBuild.wheelsPurchased) return null;
   return dreamBuildWheelsWorkForLevel(dreamBuildWheelsLevel(state));
+}
+
+function dreamBuildExhaustWorkForLevel(level) {
+  if (level === 0) {
+    return {
+      action: "buy-exhaust",
+      nextLevel: 1,
+      title: "Exhaust Fitted",
+      completeTitle: "Exhaust Fitted",
+      buttonLabel: "Buy Exhaust",
+      cost: DREAM_BUILD_NEXT_TARGET_COST,
+      valueAdded: DREAM_BUILD_EXHAUST_VALUE,
+      copy: "Fit the first exhaust system and make the project feel real.",
+      completeCopy: "The project finally has a voice, even if it still needs work.",
+      feedback: "Dream Build: Exhaust fitted.",
+    };
+  }
+  if (level === 1) {
+    return {
+      action: "seal-joints",
+      nextLevel: 2,
+      title: "Sealed Joints",
+      completeTitle: "Sealed Joints",
+      buttonLabel: "Seal Joints",
+      cost: DREAM_BUILD_EXHAUST_SEAL_COST,
+      valueAdded: DREAM_BUILD_EXHAUST_SEAL_VALUE,
+      copy: "Clean up the install so the exhaust feels intentional.",
+      completeCopy: "The exhaust is fitted cleanly now.",
+      feedback: "Dream Build: Exhaust joints sealed.",
+    };
+  }
+  return null;
+}
+
+function nextDreamBuildExhaustWork(gameState) {
+  const state = normalizeGameState(gameState);
+  if (dreamBuildWheelsLevel(state) < 3) return null;
+  if (!state.shop.dreamBuild.exhaustPurchased) return dreamBuildExhaustWorkForLevel(0);
+  return dreamBuildExhaustWorkForLevel(dreamBuildExhaustLevel(state));
 }
 
 function buyDreamBuildWheels(gameState, options = {}) {
@@ -4734,6 +4801,36 @@ function buyDreamBuildWheelsWork(action, gameState, options = {}) {
   }
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
   next.shop.dreamBuild.wheelsLevel = work.nextLevel;
+  next.shop.counterService.lastResult = work.feedback;
+  return {
+    ok: true,
+    reason: "",
+    feedback: work.feedback,
+    work,
+    gameState: addLedgerEntry(next, "story", work.feedback),
+  };
+}
+
+function buyDreamBuildExhaust(action, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  if (dreamBuildWheelsLevel(next) < 3) {
+    return { ok: false, reason: "Finish the current Wheels work before starting Exhaust.", gameState: next };
+  }
+  const work = nextDreamBuildExhaustWork(next);
+  if (!work || work.action !== action) {
+    return { ok: false, reason: "That Exhaust work is not available yet.", gameState: next };
+  }
+  if (cashBalance(next) < work.cost) {
+    return { ok: false, reason: `Need ${formatCash(work.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
+  if (action === "buy-exhaust") {
+    next.shop.dreamBuild.exhaustPurchased = true;
+  }
+  next.shop.dreamBuild.exhaustLevel = work.nextLevel;
   next.shop.counterService.lastResult = work.feedback;
   return {
     ok: true,
@@ -9414,10 +9511,32 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const exhaustWork = nextDreamBuildExhaustWork(state);
+      if (exhaustWork) {
+        if (exhaustWork.action === "buy-exhaust") {
+          const ready = cashBalance(state) >= exhaustWork.cost;
+          return {
+            type: ready ? "buy_dream_exhaust" : "dream_investment_target",
+            title: ready ? "Next: Buy Exhaust" : "Next: Grow Cash for Exhaust",
+            copy: ready
+              ? "Add the next real part to the project car."
+              : "The shop is funding the next Dream Build part.",
+            buttonLabel: ready ? "Buy Exhaust" : "View Exhaust Fund",
+            disabled: false,
+          };
+        }
+        return {
+          type: "buy_dream_exhaust_work",
+          title: "Next: Seal Joints",
+          copy: "Refine the exhaust install.",
+          buttonLabel: exhaustWork.buttonLabel,
+          disabled: false,
+        };
+      }
       return {
         type: "dream_investment_target",
-        title: "Next: Grow the shop for Exhaust",
-        copy: "The next Dream Build part comes later.",
+        title: "Next: Grow the shop for Tuned Note",
+        copy: "The next exhaust step comes later.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -10160,6 +10279,65 @@ function renderDreamInvestmentTargetCard(gameState) {
         ],
       });
     }
+    const exhaustLevel = dreamBuildExhaustLevel(state);
+    const exhaustWork = nextDreamBuildExhaustWork(state);
+    if (exhaustWork) {
+      const canAffordExhaustWork = cashBalance(state) >= exhaustWork.cost;
+      const missing = Math.max(0, exhaustWork.cost - cashBalance(state));
+      const isPurchase = exhaustWork.action === "buy-exhaust";
+      const cardTitle = isPurchase ? "Dream Build" : "Exhaust Fitted";
+      const status = isPurchase
+        ? "Balanced Fitment · Wheels Level 3 / 5"
+        : `Exhaust Fitted · Exhaust Level ${formatShopCount(exhaustLevel)} / 5`;
+      const copy = isPurchase
+        ? "The project needs its first real sound. Cash goes down now. Project Car Value goes up. Future opportunities unlock later."
+        : "The project finally has a voice, even if it still needs work. Cash goes down now. Project Car Value goes up. Future opportunities unlock later.";
+      return renderIdleCard({
+        title: cardTitle,
+        status,
+        copy,
+        extra: `
+          <div class="nospill-afford-progress">
+            <div class="nospill-afford-progress-head">
+              <span>Project Car Value</span>
+              <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+            </div>
+            <small>${isPurchase ? "Next Dream Part" : "Next Work"}: ${escapeHtml(exhaustWork.title)}</small>
+            <small>Cost: ${escapeHtml(formatCash(exhaustWork.cost))} Cash · Value added: +${escapeHtml(formatCashCount(exhaustWork.valueAdded))}</small>
+            <small>${escapeHtml(exhaustWork.copy)}</small>
+            ${isPurchase && !canAffordExhaustWork ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
+          </div>
+        `,
+        actions: isPurchase && !canAffordExhaustWork ? [] : [
+          actionButton(
+            exhaustWork.buttonLabel,
+            "data-dream-build-action",
+            exhaustWork.action,
+            !canAffordExhaustWork,
+            "nospill-primary",
+            `Need ${formatCash(missing)} more Cash.`,
+          ),
+        ],
+      });
+    }
+    if (exhaustLevel >= 2) {
+      return renderIdleCard({
+        title: "Sealed Joints",
+        status: "Exhaust Level 2 / 5",
+        copy: "The exhaust is fitted cleanly now. Exhaust work is complete for now.",
+        extra: `
+          <div class="nospill-afford-progress">
+            <div class="nospill-afford-progress-head">
+              <span>Project Car Value</span>
+              <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+            </div>
+            <small>Next Exhaust Work: Tuned Note</small>
+            <small>Full Dream Garage comes later.</small>
+          </div>
+        `,
+        actions: [],
+      });
+    }
     return renderIdleCard({
       title: "Balanced Fitment",
       status: "Level 3 / 5",
@@ -10216,7 +10394,7 @@ function renderProjectCarValueCard(gameState) {
   return renderIdleCard({
     title: "Project Car Value",
     status: formatCashCount(value),
-    copy: "Wheels started the project car. Full Dream Garage and car-part systems come later.",
+    copy: "Dream Build work started the project car. Full Dream Garage and car-part systems come later.",
   });
 }
 
@@ -10227,6 +10405,8 @@ function dreamInvestmentReturningNote(gameState) {
   if (target.purchased) {
     const work = nextDreamBuildWheelsWork(state);
     if (work && cashBalance(state) >= work.cost) return `Dream Build work is ready: ${work.title}`;
+    const exhaustWork = nextDreamBuildExhaustWork(state);
+    if (exhaustWork && cashBalance(state) >= exhaustWork.cost) return `Dream Build work is ready: ${exhaustWork.title}`;
     return "Wheels are installed";
   }
   if (target.ready) return "The Wheels Fund is ready";
@@ -10583,14 +10763,30 @@ function nextMilestoneForShop(gameState) {
           guidance: work.copy,
         };
       }
+      const exhaustWork = nextDreamBuildExhaustWork(state);
+      if (exhaustWork) {
+        const progress = nextMilestoneProgress(cashBalance(state), exhaustWork.cost);
+        return {
+          id: exhaustWork.action === "buy-exhaust" ? "dream_investment_buy_exhaust" : exhaustWork.action,
+          name: exhaustWork.action === "buy-exhaust"
+            ? (progress.current >= progress.required ? "Buy Exhaust" : "Save for Exhaust")
+            : exhaustWork.title,
+          progressText: exhaustWork.action === "buy-exhaust" && progress.current >= progress.required
+            ? "Exhaust Fund is ready"
+            : `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
+          percent: progress.percent,
+          reward: `Project Car Value +${formatCashCount(exhaustWork.valueAdded)}`,
+          guidance: exhaustWork.copy,
+        };
+      }
       const nextTarget = dreamBuildNextTargetProgress(state);
       return {
-        id: "dream_target_exhaust",
-        name: "Exhaust Fund",
+        id: "dream_target_tuned_note",
+        name: "Tuned Note",
         progressText: `${formatCash(nextTarget.current)} / ${formatCash(nextTarget.required)} Cash`,
         percent: nextTarget.percent,
         reward: "Next Dream Target preview",
-        guidance: "Wheels are installed. Exhaust is target-only; full Dream Garage comes later.",
+        guidance: "Exhaust work is complete for now. Tuned Note is target-only; full Dream Garage comes later.",
       };
     }
     return {
@@ -12605,6 +12801,24 @@ function handleDreamBuildWheelsWork(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleDreamBuildExhaust(action) {
+  const result = buyDreamBuildExhaust(action, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShopUpgradeClick(event) {
   const button = event.target && event.target.closest
     ? event.target.closest("[data-shop-upgrade]")
@@ -12672,6 +12886,8 @@ function handleTofuShopPanelClick(event) {
   if (target.dataset.dreamBuildAction) {
     if (target.dataset.dreamBuildAction === "buy-wheels") {
       handleBuyDreamBuildWheels();
+    } else if (target.dataset.dreamBuildAction === "buy-exhaust" || target.dataset.dreamBuildAction === "seal-joints") {
+      handleDreamBuildExhaust(target.dataset.dreamBuildAction);
     } else {
       handleDreamBuildWheelsWork(target.dataset.dreamBuildAction);
     }
@@ -13173,6 +13389,15 @@ function handleNextBestAction() {
       handleDreamBuildWheelsWork(work.action);
     } else {
       setSummaryStatusMessage("Wheels work is complete for now.");
+    }
+    return;
+  }
+  if (actionType === "buy_dream_exhaust" || actionType === "buy_dream_exhaust_work") {
+    const work = nextDreamBuildExhaustWork(currentGameState());
+    if (work) {
+      handleDreamBuildExhaust(work.action);
+    } else {
+      setSummaryStatusMessage("Exhaust work is complete for now.");
     }
     return;
   }

@@ -436,8 +436,10 @@ Design rules:
 - The player slowly builds a project car from an old covered car into a dream build.
 - Car parts should cost Cash, not a separate part currency.
 - The first implemented car-related purchase is Wheels: save `$50K Cash` after the covered-car
-  teaser, then spend it to start the project car with `$25K Project Car Value`. The next target is
-  Exhaust as a future-only preview; no Buy Exhaust action exists yet.
+  teaser, then spend it to start the project car with `$25K Project Car Value`.
+- Exhaust Purchase + Work Level V1 is implemented after Wheels reaches level 3. Exhaust costs
+  `$250K Cash`, adds `$125K Project Car Value`, and its first work level Seal Joints costs `$375K`
+  Cash and adds another `$200K Project Car Value`.
 - Parts are purchased once, then improved through work levels. The player should not buy duplicate
   wheels, exhausts, turbos, or other repeated copies of the same part. Future actions should use
   verbs such as Install, Polish, Fit, Balance, Tune, Refine, Restore, Wrap, Detail, Finish, and
@@ -445,6 +447,8 @@ Design rules:
 - Wheels Work Levels V1 implements the first three Wheels levels: Wheels Installed, Polished
   Wheels, and Balanced Fitment. Level 4 Showpiece Fitment and Level 5 Collector Finish remain
   future.
+- Exhaust V1 implements Exhaust Fitted and Sealed Joints. Tuned Note, Heat Wrapped, and Showcase
+  Finish remain future/target-only.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -499,8 +503,15 @@ Implemented Wheels V1 values:
 | 2 | Polish Wheels | `$75K` | `$65K` total |
 | 3 | Balanced Fitment | `$150K` | `$150K` total |
 
-Wheels levels 4-5, Exhaust purchase, full Dream Garage, completed-build events, Auction, Showcase,
-and Collector Offer remain future.
+Implemented Exhaust V1 values:
+
+| Exhaust Level | Work | Cash Cost | Project Car Value |
+| --- | --- | --- | --- |
+| 1 | Exhaust Fitted | `$250K` | `+$125K` (`$275K` with Wheels level 3) |
+| 2 | Sealed Joints | `$375K` | `+$200K` (`$475K` with Wheels level 3) |
+
+Wheels levels 4-5, Exhaust levels 3-5, full Dream Garage, completed-build events, Auction,
+Showcase, and Collector Offer remain future.
 
 Avoid:
 

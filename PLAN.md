@@ -147,8 +147,11 @@
   events, full asset valuation, or car stats.
 - First Dream Build Investment Purchase V1 is implemented as a compact Wheels Fund card after the
   covered-car teaser or high-progress qualifying saves. Wheels cost `$50K Cash`, subtract Cash,
-  persist locally, and start `$25K Project Car Value`. Exhaust is shown only as the next target,
-  with no Buy Exhaust button, Dream Garage tab, full parts inventory, or full valuation.
+  persist locally, and start `$25K Project Car Value`.
+- Exhaust Purchase + Work Level V1 is implemented after Wheels level 3. Exhaust costs `$250K Cash`
+  and adds `$125K Project Car Value`; Seal Joints costs `$375K Cash` and adds another `$200K`.
+  Tuned Note remains target-only/future, with no Dream Garage tab, full parts inventory, completed
+  build events, or full valuation.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -211,10 +214,10 @@ Canonical references:
 9. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
-10. Playtest First Dream Build Investment Purchase V1: confirm the `$50K` Wheels Fund is hidden on
-   fresh saves, appears only after the covered-car bridge or qualifying high-progress saves, Buy
-   Wheels appears only when affordable and stable, `$25K Project Car Value` is clear after purchase,
-   Exhaust remains target-only, and urgent shop bottlenecks still win.
+10. Playtest First Dream Build Investment Purchase V1 and Exhaust Purchase + Work Level V1: confirm
+   the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden until Wheels level 3, Buy
+   Exhaust appears only when affordable and stable, Project Car Value totals stay clear, Tuned Note
+   remains target-only, and urgent shop bottlenecks still win.
 11. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
@@ -267,19 +270,15 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
-1. Verify Wheels purchase V1 and Wheels Work Levels V1: `$50K Cash` Wheels Installed, `$75K`
-   Polished Wheels, `$150K` Balanced Fitment, Project Car Value totals, persistence, and priority
-   rules.
-2. Playtest whether Wheels levels 4-5 should be Showpiece Fitment and Collector Finish, or whether
-   the next slice should move to Exhaust first.
-3. Add Exhaust as the next part track only after Wheels work levels feel useful: Exhaust Fitted,
-   Sealed Joints, Tuned Note, Heat Wrapped,
-   Showcase Finish.
-4. Add Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
-5. Refine Project Car Value from part work levels after the first two tracks feel clear.
-6. Design the first completed-build event threshold and event choice requirements.
-7. Later implement Keep / Show / Auction choice only after part progression is proven.
-8. Much later connect completed builds to business expansion, collector networks, and scalable
+1. Verify Wheels purchase V1, Wheels Work Levels V1, and Exhaust Purchase + Work Level V1:
+   `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
+   Fitted, `$375K` Sealed Joints, Project Car Value totals, persistence, and priority rules.
+2. Playtest whether the next slice should add Tuned Note or return to Wheels levels 4-5.
+3. Add Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
+4. Refine Project Car Value from part work levels after the first two tracks feel clear.
+5. Design the first completed-build event threshold and event choice requirements.
+6. Later implement Keep / Show / Auction choice only after part progression is proven.
+7. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car events are not immediate scope. Keep Showcase, Closed-Course Exhibition, Auction,
