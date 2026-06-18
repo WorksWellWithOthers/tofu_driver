@@ -111,6 +111,8 @@ globalThis.shopOrderTypeUnlocked = shopOrderTypeUnlocked;
 globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
 globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
+globalThis.applyOfflineShopEarnings = applyOfflineShopEarnings;
+globalThis.offlineProgressCapHours = offlineProgressCapHours;
 globalThis.formatCompactNumber = formatCompactNumber;
 globalThis.formatCash = formatCash;
 globalThis.formatCashCount = formatCashCount;
@@ -5067,8 +5069,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618b'));
-  assert(html.includes('/static/nospill/app.css?v=20260618b'));
+  assert(html.includes('/static/nospill/app.js?v=20260618c'));
+  assert(html.includes('/static/nospill/app.css?v=20260618c'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -5183,6 +5185,141 @@ globalThis.deferredHashCup = surfaceFromHash("#/cup-test");
   assert.strictEqual(context.deferredHashCup, 'cup-test');
 }
 
+function testTofuGarageGenerousOfflineProgressV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(source.includes('SHOP_OFFLINE_BASE_CAP_HOURS = 24'));
+  assert(source.includes('SHOP_OFFLINE_MANAGED_CAP_HOURS = 72'));
+  assert(source.includes('calculateShopGeneratorEarnings(gameState, now'));
+  assert(!/for\s*\([^)]*elapsedSeconds/i.test(source));
+
+  const fresh = context.defaultGameState();
+  const freshOffline = context.applyOfflineShopEarnings(
+    fresh,
+    new Date('2026-06-15T12:00:00.000Z'),
+  );
+  assert.strictEqual(freshOffline.earnings.cappedHours, 0);
+  assert.strictEqual(freshOffline.gameState.shop.offlineEarnings.tofuStock, 0);
+  assert.strictEqual(freshOffline.gameState.shop.offlineEarnings.deliveryOrders, 0);
+
+  function offlineSource() {
+    const state = context.defaultGameState();
+    state.shop.tofuStock = 100;
+    state.shop.deliveryOrders = 0;
+    state.shop.reputation = 160;
+    state.shop.stations.tofu_press = 5;
+    state.shop.stations.prep_counter = 3;
+    state.shop.lastGeneratorTickAt = '2026-06-15T00:00:00.000Z';
+    state.shop.lastShopTickAt = '2026-06-15T00:00:00.000Z';
+    return state;
+  }
+
+  const oneHour = context.calculateOfflineShopEarnings(
+    offlineSource(),
+    new Date('2026-06-15T01:00:00.000Z'),
+  );
+  assert.strictEqual(oneHour.cappedHours, 1);
+  assert.strictEqual(oneHour.excessHours, 0);
+  assert.strictEqual(oneHour.capped, false);
+  assert(oneHour.tofuStock >= 0);
+
+  const twentyThreeHours = context.calculateOfflineShopEarnings(
+    offlineSource(),
+    new Date('2026-06-15T23:00:00.000Z'),
+  );
+  assert.strictEqual(twentyThreeHours.cappedHours, 23);
+  assert.strictEqual(twentyThreeHours.excessHours, 0);
+  assert.strictEqual(twentyThreeHours.capped, false);
+
+  const thirtyHours = context.calculateOfflineShopEarnings(
+    offlineSource(),
+    new Date('2026-06-16T06:00:00.000Z'),
+  );
+  assert.strictEqual(thirtyHours.cappedHours, 24);
+  assert.strictEqual(thirtyHours.excessHours, 6);
+  assert.strictEqual(thirtyHours.capHours, 24);
+  assert.strictEqual(thirtyHours.capped, true);
+
+  const managed = offlineSource();
+  managed.shop.shopLevel = 150;
+  managed.shop.reputation = 2000000;
+  managed.shop.stationUpgrades.counter_service_crew = 1;
+  managed.shop.stationUpgrades.manager_shift_manager = 1;
+  assert.strictEqual(context.offlineProgressCapHours(managed), 72);
+  const managedOffline = context.calculateOfflineShopEarnings(
+    managed,
+    new Date('2026-06-18T08:00:00.000Z'),
+  );
+  assert.strictEqual(managedOffline.cappedHours, 72);
+  assert.strictEqual(managedOffline.excessHours, 8);
+  assert.strictEqual(managedOffline.capHours, 72);
+  assert.strictEqual(managedOffline.capped, true);
+
+  const tenYears = context.applyOfflineShopEarnings(
+    offlineSource(),
+    new Date('2036-06-15T00:00:00.000Z'),
+  );
+  assert.strictEqual(tenYears.earnings.cappedHours, 24);
+  assert(tenYears.earnings.excessHours > 80000);
+  assert.strictEqual(tenYears.gameState.shop.offlineEarnings.capped, true);
+  assert.strictEqual(tenYears.gameState.shop.offlineEarnings.capHours, 24);
+  assert(Number.isFinite(tenYears.gameState.shop.tofuStock));
+  assert(Number.isFinite(tenYears.gameState.shop.deliveryOrders));
+  assert(tenYears.gameState.shop.deliveryOrders <= context.deliveryOrderQueueCapacity());
+
+  const futureClock = offlineSource();
+  futureClock.shop.lastGeneratorTickAt = '2026-06-16T00:00:00.000Z';
+  const negativeDelta = context.calculateOfflineShopEarnings(
+    futureClock,
+    new Date('2026-06-15T00:00:00.000Z'),
+  );
+  assert.strictEqual(negativeDelta.cappedHours, 0);
+  assert.strictEqual(negativeDelta.tofuStock, 0);
+  assert.strictEqual(negativeDelta.deliveryOrders, 0);
+
+  vm.runInContext(`
+function offlineMakeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+const offlineElements = {
+  shopTabList: offlineMakeNode(),
+  shopTabPanel: offlineMakeNode(),
+  shopInlineResult: offlineMakeNode(),
+  shopOfflineEarnings: offlineMakeNode(),
+  gameShopStats: offlineMakeNode(),
+  gameShopHelper: offlineMakeNode(),
+  gameShopUnlocks: offlineMakeNode(),
+  gameShopMilestones: offlineMakeNode(),
+  gamePackTofuButton: offlineMakeNode(),
+};
+elements = { ...elements, ...offlineElements };
+const offlineLong = ${JSON.stringify(tenYears.gameState)};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "overview";
+renderTofuShop(offlineLong);
+globalThis.generousOfflineSummaryFirst = offlineElements.shopOfflineEarnings.textContent;
+renderTofuShop(offlineLong);
+globalThis.generousOfflineSummarySecond = offlineElements.shopOfflineEarnings.textContent;
+`, context);
+  assert(context.generousOfflineSummaryFirst.includes('While you were away:'));
+  assert(context.generousOfflineSummaryFirst.includes('longer absences are capped at 24 hours'));
+  assert(context.generousOfflineSummaryFirst.includes('Suggested next:'));
+  assert.strictEqual(context.generousOfflineSummaryFirst, context.generousOfflineSummarySecond);
+  assert(!context.generousOfflineSummaryFirst.includes('Pack Tofu'));
+  assert(!context.generousOfflineSummaryFirst.includes('undefined'));
+  assert(!context.generousOfflineSummaryFirst.includes('NaN'));
+  assert(!context.generousOfflineSummaryFirst.includes('Infinity'));
+  const suggestions = context.generousOfflineSummaryFirst.split('Suggested next: ')[1].split('.')[0].split('; ');
+  assert(suggestions.length <= 3);
+}
+
 function testTofuGarageHighScalePerformanceGuardrails() {
   const intervalCalls = [];
   const context = loadNoSpillContext({
@@ -5239,7 +5376,7 @@ function testTofuGarageHighScalePerformanceGuardrails() {
   cappedSource.shop.lastGeneratorTickAt = '2026-06-15T00:00:00.000Z';
   const offline = context.calculateOfflineShopEarnings(cappedSource, new Date('2026-06-16T00:00:00.000Z'));
   assert(offline.deliveryOrders <= 2);
-  assert.strictEqual(offline.cappedHours, 8);
+  assert.strictEqual(offline.cappedHours, 24);
   assert.strictEqual(offline.queueFull, false);
 
   let ledgerState = context.defaultGameState();
@@ -6767,13 +6904,13 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
     productionState,
     new Date('2026-06-14T10:00:00.000Z'),
   );
-  assert.strictEqual(offline.cappedHours, 8);
+  assert.strictEqual(offline.cappedHours, 10);
   assert(offline.tofuStock >= 0);
   assert(offline.deliveryOrders > 0);
   const offlineApplied = context.applyShopGeneratorTick(
     productionState,
     new Date('2026-06-14T10:00:00.000Z'),
-    { maxSeconds: 8 * 3600 },
+    { maxSeconds: 10 * 3600 },
   );
   assert(offlineApplied.gameState.shop.tofuStock >= 0);
   assert.strictEqual(offlineApplied.gameState.shop.deliveryOrders, productionState.shop.deliveryOrders + offline.deliveryOrders);
@@ -8756,6 +8893,7 @@ async function run() {
   testCounterServicePolishStatsUpgradesAndSpiritPanel();
   testTofuGarageHighMidgameSupplyBottleneckBalance();
   testTofuGarageRoutesSurfaceIsDeferred();
+  testTofuGarageGenerousOfflineProgressV1();
   testTofuGarageHighScalePerformanceGuardrails();
   testTofuGarageManagerDeskV1();
   testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit();

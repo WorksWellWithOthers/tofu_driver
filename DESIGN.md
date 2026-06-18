@@ -255,7 +255,9 @@ Current design principles:
   Supplier Contracts are the intended Tofu Stock supply answer.
 - Delivery Orders mean prepared/waiting shop work, not Driver XP or real-world deliveries. Counter
   Service may consume these orders while the page is open, but offline progress does not auto-fulfill
-  them yet.
+  them yet. Offline progress is AFK-equivalent within a generous direct cap: 24 hours by default
+  and 72 hours once Manager Desk/Shift Manager coverage exists. Long absences are summarized rather
+  than simulated second-by-second, and existing Cash balances are not capped.
 - Tofu Garage high-scale performance should be solved first with compact formatting, bounded
   queues/history, aggregate offline math, and throttled visible rendering. Current `$1T`-scale
   planning does not require a BigNumber rewrite; mantissa/exponent amounts remain a future endgame
@@ -387,7 +389,8 @@ Current design principles:
   are needed.
 - Reputation opens new shop systems.
 - XP/levels provide visible progress.
-- Offline progress is capped and summarized.
+- Offline progress is capped for pacing/performance and summarized once on return. Rested Shop Time
+  is deferred until it can be added without making normal shop speed feel bad.
 - Production is displayed per second.
 - Large player-facing shop values use compact incremental formatting; internal resource values
   remain exact.

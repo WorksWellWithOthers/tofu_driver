@@ -236,7 +236,10 @@ const DRIVER_LICENSES = [
 
 const SHOP_MAX_RESOURCE = 1000000000;
 const SHOP_DELIVERY_ORDER_QUEUE_CAP = 1000000;
-const SHOP_OFFLINE_CAP_HOURS = 8;
+const SHOP_OFFLINE_BASE_CAP_HOURS = 24;
+const SHOP_OFFLINE_MANAGED_CAP_HOURS = 72;
+const SHOP_OFFLINE_CAP_HOURS = SHOP_OFFLINE_BASE_CAP_HOURS;
+const SHOP_MAX_OFFLINE_CAP_HOURS = SHOP_OFFLINE_MANAGED_CAP_HOURS;
 const SHOP_GENERATOR_TICK_MS = 1000;
 const SHOP_GENERATOR_SAVE_MS = 5000;
 const SHOP_RENDER_THROTTLE_MS = 500;
@@ -551,7 +554,6 @@ const FESTIVAL_BOOSTS = [
 const LICENSE_PERKS = [
   { id: "starter_press", name: "Start with extra Tofu Press level", costStars: 1, effect: "Future exams restart with +1 Tofu Press." },
   { id: "starter_counter", name: "Start with one Prep Counter", costStars: 1, effect: "Future exams keep Prep Counter unlocked." },
-  { id: "offline_cap", name: "Higher offline cap", costStars: 1, effect: "Offline cap +1 hour." },
   { id: "prep_slot_regen", name: "Extra Prep Capacity recovery", costStars: 2, effect: "Prep Capacity recovers more often." },
   { id: "shop_multiplier", name: "Small shop production multiplier", costStars: 2, effect: "All shop production +10%." },
 ];
@@ -2995,8 +2997,25 @@ function normalizeShopState(shop) {
       cappedHours: safeNonNegativeNumber(
         source.offlineEarnings && source.offlineEarnings.cappedHours,
         0,
-        SHOP_OFFLINE_CAP_HOURS,
+        SHOP_MAX_OFFLINE_CAP_HOURS,
       ),
+      elapsedHours: safeNonNegativeNumber(
+        source.offlineEarnings && source.offlineEarnings.elapsedHours,
+        0,
+        1000000,
+      ),
+      excessHours: safeNonNegativeNumber(
+        source.offlineEarnings && source.offlineEarnings.excessHours,
+        0,
+        1000000,
+      ),
+      capHours: safeNonNegativeNumber(
+        source.offlineEarnings && source.offlineEarnings.capHours,
+        SHOP_OFFLINE_BASE_CAP_HOURS,
+        SHOP_MAX_OFFLINE_CAP_HOURS,
+      ),
+      capped: Boolean(source.offlineEarnings && source.offlineEarnings.capped),
+      managedCap: Boolean(source.offlineEarnings && source.offlineEarnings.managedCap),
       queueFull: Boolean(source.offlineEarnings && source.offlineEarnings.queueFull),
     },
   };
@@ -3201,7 +3220,16 @@ function validateImportedShopState(shop) {
     if (!isValidImportedShopNumber(shop.offlineEarnings.tips)) return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.shopSpirit)) return false;
     if (!isValidImportedShopNumber(shop.offlineEarnings.tofuConsumed)) return false;
-    if (!isValidImportedShopNumber(shop.offlineEarnings.cappedHours, SHOP_OFFLINE_CAP_HOURS)) {
+    if (!isValidImportedShopNumber(shop.offlineEarnings.cappedHours, SHOP_MAX_OFFLINE_CAP_HOURS)) {
+      return false;
+    }
+    if (!isValidImportedShopNumber(shop.offlineEarnings.elapsedHours, 1000000)) {
+      return false;
+    }
+    if (!isValidImportedShopNumber(shop.offlineEarnings.excessHours, 1000000)) {
+      return false;
+    }
+    if (!isValidImportedShopNumber(shop.offlineEarnings.capHours, SHOP_MAX_OFFLINE_CAP_HOURS)) {
       return false;
     }
   }
@@ -4068,6 +4096,18 @@ function bestUnlockedShopOrderType(gameState) {
     .sort((a, b) => b.tofuRequired - a.tofuRequired)[0] || SHOP_ORDER_TYPES[0];
 }
 
+function offlineProgressCapHours(gameState) {
+  const shop = gameState && gameState.shop ? gameState.shop : {};
+  const shiftManagerPurchased = safeNonNegativeInteger(
+    shop.stationUpgrades && shop.stationUpgrades.manager_shift_manager,
+    0,
+    1,
+  ) > 0;
+  return shiftManagerPurchased || managerDeskUnlocked(gameState)
+    ? SHOP_OFFLINE_MANAGED_CAP_HOURS
+    : SHOP_OFFLINE_BASE_CAP_HOURS;
+}
+
 function orderPrepProgress(gameState) {
   const state = normalizeGameState(gameState);
   const rates = getShopGeneratorRates(state);
@@ -4169,6 +4209,9 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
       tofuConsumed: 0,
       cappedHours: 0,
       elapsedHours: 0,
+      excessHours: 0,
+      capHours: 0,
+      capped: false,
       elapsedSeconds: 0,
       carry: {
         tofuStock: safeNonNegativeNumber(existingCarry.tofuStock, 0, 1000),
@@ -4183,7 +4226,8 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
   const maxSeconds = Number.isFinite(Number(options.maxSeconds))
     ? Math.max(0, Number(options.maxSeconds))
     : SHOP_OPEN_TICK_MAX_SECONDS;
-  const elapsedSeconds = Math.min(maxSeconds, Math.max(0, (nowMs - lastMs) / 1000));
+  const actualElapsedSeconds = Math.max(0, (nowMs - lastMs) / 1000);
+  const elapsedSeconds = Math.min(maxSeconds, actualElapsedSeconds);
   const carry = shop.generatorCarry || {};
   const useCarry = options.useCarry !== false;
   const tofuTotal = rates.tofuPressPerSecond * elapsedSeconds + (useCarry ? Number(carry.tofuStock || 0) : 0);
@@ -4232,7 +4276,10 @@ function calculateShopGeneratorEarnings(gameState, now = new Date(), options = {
       reputation: Math.max(0, reputationTotal - reputation),
     },
     cappedHours: roundTo(elapsedSeconds / 3600, 2),
-    elapsedHours: roundTo((nowMs - lastMs) / 3600000, 2),
+    elapsedHours: roundTo(actualElapsedSeconds / 3600, 2),
+    excessHours: roundTo(Math.max(0, actualElapsedSeconds - elapsedSeconds) / 3600, 2),
+    capHours: roundTo(maxSeconds / 3600, 2),
+    capped: actualElapsedSeconds > elapsedSeconds + 0.001,
     elapsedSeconds: roundTo(elapsedSeconds, 2),
     prepStatus,
     queueFull,
@@ -4304,8 +4351,9 @@ function applyShopGeneratorTick(gameState, now = new Date(), options = {}) {
 }
 
 function calculateOfflineShopEarnings(gameState, now = new Date()) {
+  const capHours = offlineProgressCapHours(gameState);
   return calculateShopGeneratorEarnings(gameState, now, {
-    maxSeconds: SHOP_OFFLINE_CAP_HOURS * 3600,
+    maxSeconds: capHours * 3600,
   });
 }
 
@@ -5998,8 +6046,9 @@ function applyOfflineShopEarnings(gameState, now = new Date()) {
   let next = normalizeGameState(gameState);
   const nowIso = now instanceof Date ? now.toISOString() : new Date(now).toISOString();
   const hadTick = Boolean(next.shop.lastGeneratorTickAt || next.shop.lastShopTickAt);
+  const capHours = offlineProgressCapHours(next);
   const result = applyShopGeneratorTick(next, now, {
-    maxSeconds: SHOP_OFFLINE_CAP_HOURS * 3600,
+    maxSeconds: capHours * 3600,
   });
   next = result.gameState;
   const earnings = result.earnings;
@@ -6010,6 +6059,11 @@ function applyOfflineShopEarnings(gameState, now = new Date()) {
     tofuConsumed: earnings.tofuConsumed,
     counterServicePaused: Boolean(isCounterServiceUnlocked(next) && next.shop.counterService.running),
     cappedHours: earnings.cappedHours,
+    elapsedHours: earnings.elapsedHours,
+    excessHours: earnings.excessHours,
+    capHours: earnings.capHours || capHours,
+    capped: Boolean(earnings.capped),
+    managedCap: capHours >= SHOP_OFFLINE_MANAGED_CAP_HOURS,
     queueFull: Boolean(earnings.queueFull),
   };
   next.shop.lastShopTickAt = nowIso;
@@ -11774,19 +11828,32 @@ function renderTofuShop(gameState = loadGameState()) {
     const offlineTips = Number(shop.offlineEarnings && shop.offlineEarnings.tips || 0);
     const offlineTofuConsumed = Number(shop.offlineEarnings && shop.offlineEarnings.tofuConsumed || 0);
     const offlineCounterPaused = Boolean(shop.offlineEarnings && shop.offlineEarnings.counterServicePaused);
-    const hasOfflineEarnings = reveal.shop && (offlineTofu > 0.005 || offlineOrders > 0.005 || offlineTips > 0.005);
     const offlineHours = Number(shop.offlineEarnings && shop.offlineEarnings.cappedHours || 0);
+    const offlineCapHours = Number(shop.offlineEarnings && shop.offlineEarnings.capHours || SHOP_OFFLINE_BASE_CAP_HOURS);
+    const offlineExcessHours = Number(shop.offlineEarnings && shop.offlineEarnings.excessHours || 0);
+    const offlineCapped = Boolean(shop.offlineEarnings && shop.offlineEarnings.capped);
+    const offlineManagedCap = Boolean(shop.offlineEarnings && shop.offlineEarnings.managedCap);
+    const hasOfflineEarnings = reveal.shop
+      && (
+        offlineTofu > 0.005
+        || offlineOrders > 0.005
+        || offlineTips > 0.005
+        || offlineHours > 0.01
+        || offlineCapped
+      );
     const offlineKey = hasOfflineEarnings
-      ? `${formatShopCount(offlineTofu)}:${formatShopCount(offlineOrders)}:${formatShopCount(offlineTips)}:${formatShopCount(offlineTofuConsumed)}:${offlineCounterPaused ? "paused" : "open"}:${formatShopCount(offlineHours)}`
+      ? `${formatShopCount(offlineTofu)}:${formatShopCount(offlineOrders)}:${formatShopCount(offlineTips)}:${formatShopCount(offlineTofuConsumed)}:${offlineCounterPaused ? "paused" : "open"}:${formatShopCount(offlineHours)}:${formatShopCount(offlineExcessHours)}`
       : "";
     if (hasOfflineEarnings && appState.offlineProgressAnalyticsKey !== offlineKey) {
       trackEvent("tofu_driver_offline_progress_seen", {
-        capped: offlineHours >= SHOP_OFFLINE_CAP_HOURS,
-        duration_bucket: offlineHours >= 8
-          ? "8h_plus"
-          : offlineHours >= 1
-            ? "1h_8h"
-            : "under_1h",
+        capped: offlineCapped,
+        duration_bucket: offlineHours >= 72
+          ? "72h_plus"
+          : offlineHours >= 24
+            ? "24h_72h"
+            : offlineHours >= 1
+              ? "1h_24h"
+              : "under_1h",
       });
       appState.offlineProgressAnalyticsKey = offlineKey;
     }
@@ -11794,7 +11861,13 @@ function renderTofuShop(gameState = loadGameState()) {
     if (offlineTofu > 0.005) offlineParts.push(`+${formatShopCount(offlineTofu)} tofu stock`);
     if (offlineOrders > 0.005) offlineParts.push(`+${formatShopCount(offlineOrders)} waiting orders`);
     if (offlineTips > 0.005) offlineParts.push(`+${formatCashCount(offlineTips)} Cash from tips`);
+    if (!offlineParts.length && offlineHours > 0.01) {
+      offlineParts.push(`${offlineManagedCap ? "Shift Manager saved" : "shop saved"} ${formatShopCount(offlineHours)} hours of idle progress`);
+    }
     const offlineNotes = [];
+    if (offlineCapped || offlineExcessHours > 0.01) {
+      offlineNotes.push(`longer absences are capped at ${formatShopCount(offlineCapHours)} hours to preserve pacing`);
+    }
     if (offlineTofuConsumed > 0.005 && offlineOrders > 0.005) {
       offlineNotes.push("tofu supply was consumed preparing orders");
     }

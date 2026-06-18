@@ -736,7 +736,7 @@ First-day target:
 | 2. First Shop | 10 to 60 minutes | The counter becomes a shop | Delivery Shelf, Shop Sign, Passport, Ledger light | Overview, Orders, Production, Upgrades, Passport, Ledger | Cash, Reputation, Delivery Orders | Upgrade Counter Service, Buy Delivery Shelf, Buy Shop Sign, View Passport | Tidy Packaging, Double Labels, Better Boxes, Shop Sign | First route teaser, fuller Passport | 5 to 15 minutes | Reputation and shop systems need expansion |
 | 3. First Automation | 1 to 6 hours | The shop starts helping itself | Regular Customers, Shop Street, Apprentice preview | Routes, simple Crew preview, Production, Passport | Cash, Reputation, Shop Reach, Route Knowledge | Start Shop Street, Hire Apprentice Driver, Assign Crew preview | Regular Smile, Delivery Shelf upgrades | First route stamp, first apprentice teaser | 10 to 20 minutes | Manual orders feel repetitive and automation is earned |
 | 4. First License | 4 to 6 hours | A plateau becomes a choice | License Exam preview, requirements, first perks | License, Passport, Routes, Ledger | Reputation, Stamps, Route Knowledge, fulfilled orders | View License Exam, Take License Exam, Confirm/Cancel | Final pre-exam convenience upgrades | Local Delivery License | 10 to 30 minutes | Requirements met and player chooses prestige |
-| 5. Post-License Rebuild | After first License Exam | The early shop rebuilds faster | License Perks, faster starting stations, deeper early flow | Overview, Orders, Production, License, Passport | License Stars, Cash, Tofu Stock, Orders | Buy License Perk, rebuild stations, Fulfill Max | Morning Prep, Labeled Bins, Bigger Thermos | Permanent perk identity | 5 to 15 minutes | Player reaches old plateau faster |
+| 5. Post-License Rebuild | After first License Exam | The early shop rebuilds faster | License Perks, faster starting stations, deeper early flow | Overview, Orders, Production, License, Passport | License Stars, Cash, Tofu Stock, Orders | Buy License Perk, rebuild stations, Fulfill Max | Morning Prep, Labeled Bins, Familiar Counter | Permanent perk identity | 5 to 15 minutes | Player reaches old plateau faster |
 | 6. Route Network | Later / deferred | The fictional delivery world opens | More route cards, route mastery, Route Knowledge | Routes, Training, Garage, Passport | Shop Reach, Route Knowledge, Cash | Start Route Card, View Route Details, Buy Route Notebook | Route Familiarity, Careful Notes | District/route stamps | 10 to 30 minutes | Route mastery motivates automation |
 | 7. Festival / Spirit Layer | Later | The shop has special rushes | Shop Spirit, Festival Boosts, token inventory | Shop Spirit, Events, Ledger | Shop Spirit, Festival tokens | Buy Tea Kettle, Use Shop Spirit Boost, Use Festival Token | Warmer Kettle, Festival Lanterns | Festival stamps/cosmetics | Short burst sessions | Boost timing becomes meaningful |
 | 8. Regional Tofu Network | Late game | A local shop becomes a network | Regional Tofu Network, Dispatcher Desk, broader automation | Network, Crew, License, Routes | Cash, Reputation, Shop Reach, License Stars | Buy Dispatcher Desk, Buy Regional Network, Assign Crew | Network multipliers, crew routines | Late-game route/status rewards | Longer idle sessions | Next prestige or final arc |
@@ -1280,7 +1280,6 @@ the formula.
 | --- | ---: | --- | --- |
 | Morning Prep | 1 Star | Start each new shop run with +1 Tofu Press | Shop only |
 | Labeled Bins | 1 Star | Prep Counter output +15% | Shop only |
-| Bigger Thermos | 1 Star | Offline cap +1 hour | Shop only |
 | Familiar Counter | 1 Star | First 10 orders give +25% Cash | Shop only |
 | Extra Hands | 2 Stars | Prep Capacity recovers more often | Shop only |
 | Calm Opening | 2 Stars | Start with 1 Delivery Order after exam | Shop only |
@@ -2142,11 +2141,19 @@ Safety/privacy:
 
 Offline:
 
-- offline production respects the configured cap
+- offline production respects a generous direct cap: 24 hours by default, or 72 hours once Manager
+  Desk / Shift Manager coverage exists
 - offline progress applies once on return
+- offline progress is AFK-equivalent within the cap and uses aggregate elapsed-time math, not
+  per-second simulation
+- existing Cash balances are never capped directly; only newly accrued offline production is capped
 - zero-value offline summaries are hidden
 - offline summaries should say `waiting orders` and explain when tofu supply was consumed preparing
   orders; Counter Service remains active-page-only and does not fulfill offline in V1
+- long absences show the saved direct progress window and explain that excess time is capped for
+  pacing rather than treating the absence as lost time
+- Rested Shop Time is deferred; future larger caps can come from later franchise/corporate
+  management systems
 - ledger summarizes meaningful offline gains
 
 Prestige:
@@ -2172,5 +2179,5 @@ These should remain unresolved until playtesting or simulation provides evidence
 - Is the first License Exam better at 4 hours, 6 hours, or later?
 - Should first License Exam reset XP, or only shop resources/stations?
 - How generous should certified Cup Test boosts be without making driving feel required?
-- Should offline cap start at 1 hour for balance, even if runtime currently supports a larger cap?
+- After playtesting, should later management systems extend the 72-hour cap or add Rested Shop Time?
 - Should Delivery Shelf be a station, an upgrade, or a capacity rule?

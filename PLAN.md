@@ -134,6 +134,9 @@
   to Tidy Packaging, Prep Counter, or order prep rather than Tofu Press.
 - Counter Service blocked copy now identifies only the missing resource and shows a Tofu Stock ETA
   when the press is actively refilling the next pickup.
+- Offline Progress V1 is generous but bounded: the base shop saves 24 hours of AFK-equivalent
+  progress, Manager Desk / Shift Manager coverage saves 72 hours, long absences are summarized, and
+  Rested Shop Time remains deferred.
 - Tofu Garage now has idle-game quality-of-life helpers: Buy Cheapest/Buy All for visible stations
   and upgrades, affordability progress/ETA on non-maxed cards, and returning-player suggested
   actions after offline summaries.
@@ -216,8 +219,9 @@ Canonical references:
    without becoming infinite, Wholesale Pickup clears capped queues without becoming passive
    offline income, and active-page-only automation does not skip pacing.
 7. Profile/playtest high-midgame Tofu Garage after the performance guardrails: verify the order
-   queue cap feels like a useful Counter Service/Manager Desk bottleneck, offline summaries stay
-   compact, no hidden sections are rebuilt during shop ticks, and live counters remain responsive on
+   queue cap feels like a useful Counter Service/Manager Desk bottleneck, 24-hour/72-hour offline
+   caps feel fair after a sleep/workday or a few missed days, offline summaries stay compact, no
+   hidden sections are rebuilt during shop ticks, and live counters remain responsive on
    mobile/desktop.
 8. Playtest bulk-buy and affordability progress after a multi-day return: verify suggested actions
    are useful, no hidden/future systems are purchased, and the progress bars do not make fake ETA

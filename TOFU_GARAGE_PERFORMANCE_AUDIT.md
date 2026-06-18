@@ -79,10 +79,19 @@ It does not simulate every second and does not create per-order objects.
 
 Current V1 behavior:
 
-- offline progress is capped by `SHOP_OFFLINE_CAP_HOURS`
+- `shop.lastGeneratorTickAt` / `shop.lastShopTickAt` store the local timestamp used for catch-up
+- actual elapsed time is split into direct capped time and excess time with aggregate math
+- direct offline progress is capped at 24 hours for the base shop
+- Manager Desk / Shift Manager coverage raises the direct cap to 72 hours
+- Tofu Stock, Delivery Orders, Shop Spirit, and passive shop rates accrue as they would while AFK,
+  subject to current V1 limits
 - generated waiting orders respect the order queue cap
 - Counter Service remains active-page-only and does not auto-fulfill offline
-- offline summaries are compact and mention when Counter Service did not fulfill offline
+- offline summaries are compact, appear once per returned progress window, mention excess time when
+  capped, and mention when Counter Service did not fulfill offline
+- extreme absences such as months or years are capped and summarized; they do not produce NaN,
+  Infinity, per-second loops, per-order loops, or whole-game skips
+- Rested Shop Time is deferred until it can be added without making normal shop speed feel punitive
 
 ## Backlog And History Bounds
 
