@@ -19,8 +19,8 @@
 - Cash economy V1 is implemented. Player-facing shop money is Cash; order payouts may still use
   tips as flavor (`+$10 from tips`). The legacy save field remains `shop.tips` for compatibility.
 - Net Worth V1 is implemented as a compact later-game progress model:
-  `Cash + Tofu Business Value + Project Car Value` toward `$1T Net Worth`. Full asset valuation,
-  garage value, company value, and liabilities remain future.
+  `Cash + Tofu Business Value + Project Car Value + Brand Value` toward `$1T Net Worth`. Full asset
+  valuation, garage value, company value, and liabilities remain future.
 - Basic Mode uses device motion only and does not request location.
 - Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
   iOS Safari keeps the `Start & Calibrate` user gesture and avoids false permission-denied states.
@@ -177,7 +177,11 @@
   Interest after early Dream Build progress.
 - Showcase Interest / Showcase Prep V1 is implemented as the first proof that car investment can
   unlock higher-value opportunities. `Prepare Showcase Display` costs `$500K Cash`, adds `$300K`
-  Project Car Value, persists locally, and leaves Sponsor Inquiry/completed-car events future-only.
+  Project Car Value, persists locally, and unlocks Sponsor Inquiry.
+- Sponsor Inquiry V1 is implemented as a one-time parked opportunity after Showcase Prep, early Dream
+  Build progress, and first `$1M Net Worth`: accepting it grants `$250K Cash` and `$500K Brand Value`.
+  Recurring sponsor packages, completed-car events, auctions, racing/routes, and full Dream Garage
+  remain future.
 - Frontend tests now fail fast with per-test progress output, optional `TEST_GREP` filtering,
   `TEST_TRACE_CONTEXT=1` diagnostics, and cached VM compilation. The Net Worth/Showcase test path
   was optimized from minute-scale recommendation churn to a targeted run of roughly two seconds.
@@ -246,9 +250,9 @@ Canonical references:
    until Wheels level 3, Buy Exhaust appears only when affordable and stable, Project Car Value and
    `5 / 30` progress totals stay clear, Tuned Note remains target-only, and urgent shop bottlenecks
    still win.
-12. Playtest Net Worth Milestone Ladder V1 and Showcase Prep V1: verify first `$1M` timing,
-   Showcase Prep affordability, Project Car Value increase, one-time milestone feedback, and that
-   urgent shop bottlenecks still override distant Net Worth goals.
+12. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
+   `$1M` timing, Showcase Prep affordability, Sponsor reward pacing, one-time feedback, Brand Value
+   visibility, and that urgent shop bottlenecks still override distant Net Worth goals.
 13. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.

@@ -303,7 +303,7 @@ Definitions:
 - Tofu orders, Counter Service, Catering Crate, and later shop/business payouts earn Cash.
 - Shop upgrades, Supplier/Manager decisions, future car parts, and future businesses spend Cash.
 - Net Worth is the long-term score toward the `$1T Net Worth` goal.
-- Net Worth V1 is `Cash + Tofu Business Value + Project Car Value`.
+- Net Worth V1 is `Cash + Tofu Business Value + Project Car Value + Brand Value`.
 
 Preferred future reward copy:
 
@@ -325,6 +325,7 @@ Net Worth V1 =
   Cash
   + Tofu Business Value
   + Project Car Value
+  + Brand Value
 ```
 
 `Tofu Business Value` is a simple deterministic shop estimate based on owned stations, purchased
@@ -1798,6 +1799,7 @@ Net Worth V1 =
   Cash
   + Tofu Business Value
   + Project Car Value
+  + Brand Value
 ```
 
 Net Worth Milestone Ladder V1:
@@ -1812,8 +1814,9 @@ Net Worth Milestone Ladder V1:
 
 Showcase Interest V1 unlocks only after early Dream Build progress and the first `$1M Net Worth`.
 `Prepare Showcase Display` is a parked `$500K Cash` investment that adds `$300K Project Car Value`.
-It is a proof of car-investment value, not a completed-car event, sponsor system, route system,
-auction, racing mode, or full Dream Garage.
+Sponsor Inquiry V1 then unlocks as a one-time parked opportunity: accepting it grants `$250K Cash`
+and `$500K Brand Value`. It is a proof of car-investment value, not a completed-car event, recurring
+sponsor system, route system, auction, racing mode, or full Dream Garage.
 
 Future full formula:
 
@@ -2077,7 +2080,8 @@ progression contract.
 | Dream Garage concept | Documented only | Dream Garage / Project Car Progression section | future emotional arc is specified | implement only after first loop and order pacing are stable |
 | First Dream Build Investment Purchase V1 | Implemented | `buyDreamBuildWheels`, `projectCarValueV1`, `renderDreamInvestmentTargetCard`, Next Milestone/Next Best Action handling | lets the player buy Wheels for `$50K Cash`, starts `$25K Project Car Value`, and previews Exhaust as target-only | tune target cost/value and timing after managed-shop playtests |
 | Net Worth Milestone Ladder V1 | Implemented | milestone helpers and Overview card | shows `$1M`, `$10M`, `$100M`, `$1B`, and `$1T` stepping stones after Net Worth is visible | tune reward copy after playtest |
-| Showcase Interest / Showcase Prep V1 | Implemented | `showcaseInterestUnlocked`, `buyShowcasePrep`, Showcase card | unlocks after Dream Build progress and first `$1M`; spends `$500K Cash` for `$300K Project Car Value` | keep Sponsor Inquiry and completed events future |
+| Showcase Interest / Showcase Prep V1 | Implemented | `showcaseInterestUnlocked`, `buyShowcasePrep`, Showcase card | unlocks after Dream Build progress and first `$1M`; spends `$500K Cash` for `$300K Project Car Value` | tune first display pacing after playtest |
+| Sponsor Inquiry V1 | Implemented | `sponsorInquiryUnlocked`, `acceptSponsorInquiry`, Sponsor card, Brand Value breakdown | one-time post-Showcase Prep opportunity; grants `$250K Cash` and `$500K Brand Value` | keep recurring sponsor packages and completed events future |
 | Project car stages | Documented only | Stage 0 through Stage 3 tables/lists | covered car, daily build, closed-course build, dream build are defined | no runtime state/UI yet |
 | Fictional closed-course events | Documented only | event table and safety rules | future event names/rewards are specified | no event queues/results yet |
 | Project car completion/sale prestige | Documented only | Builder Stars design | future prestige direction is specified | no Builder Stars state yet |

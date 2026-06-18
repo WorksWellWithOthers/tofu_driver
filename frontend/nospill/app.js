@@ -268,6 +268,8 @@ const DREAM_BUILD_EXHAUST_SEAL_VALUE = 200000;
 const DREAM_BUILD_TOTAL_WORK_STAGES = 30;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
+const SPONSOR_INQUIRY_CASH_REWARD = 250000;
+const SPONSOR_INQUIRY_BRAND_VALUE = 500000;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -2734,6 +2736,11 @@ function defaultShopState() {
       showcaseDisplayPrepared: false,
       showcaseDisplayPreparedAt: "",
       netWorthMilestonesReached: [],
+      sponsor: {
+        inquiryAccepted: false,
+        inquiryAcceptedAt: "",
+        brandValue: 0,
+      },
     },
     lifetimeReputation: 0,
     lifetimeShopXP: 0,
@@ -2831,6 +2838,8 @@ function normalizeDreamBuild(dreamBuild) {
         .filter((id) => typeof id === "string" && knownMilestoneIds.has(id))
         .slice(0, NET_WORTH_MILESTONES.length)
     : [];
+  const sponsor = source.sponsor && typeof source.sponsor === "object" ? source.sponsor : {};
+  const inquiryAccepted = Boolean(sponsor.inquiryAccepted);
   return {
     wheelsPurchased,
     wheelsLevel,
@@ -2844,6 +2853,18 @@ function normalizeDreamBuild(dreamBuild) {
       ? source.showcaseDisplayPreparedAt.slice(0, 40)
       : "",
     netWorthMilestonesReached,
+    sponsor: {
+      inquiryAccepted,
+      inquiryAcceptedAt: typeof sponsor.inquiryAcceptedAt === "string"
+        ? sponsor.inquiryAcceptedAt.slice(0, 40)
+        : "",
+      brandValue: inquiryAccepted
+        ? Math.max(
+            SPONSOR_INQUIRY_BRAND_VALUE,
+            safeNonNegativeInteger(sponsor.brandValue, SPONSOR_INQUIRY_BRAND_VALUE, SHOP_MAX_RESOURCE),
+          )
+        : 0,
+    },
   };
 }
 
@@ -4688,7 +4709,7 @@ function tofuBusinessValue(gameState) {
 function netWorthV1(gameState) {
   const state = normalizeGameState(gameState);
   return safeNonNegativeInteger(
-    cashBalance(state) + tofuBusinessValue(state) + projectCarValueV1(state),
+    cashBalance(state) + tofuBusinessValue(state) + projectCarValueV1(state) + brandValueV1(state),
     0,
     SHOP_MAX_RESOURCE,
   );
@@ -4813,6 +4834,38 @@ function showcasePrepStatus(gameState) {
     valueAdded: SHOWCASE_PREP_VALUE,
     affordable: cashBalance(state) >= SHOWCASE_PREP_COST,
     missingCash: Math.max(0, SHOWCASE_PREP_COST - cashBalance(state)),
+  };
+}
+
+function sponsorInquiryUnlocked(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.shop.dreamBuild.showcaseDisplayPrepared)
+    && dreamBuildProgressSummary(state).completed >= 5
+    && netWorthMilestoneReached(state, "net_worth_1m");
+}
+
+function sponsorInquiryAccepted(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.shop.dreamBuild.sponsor && state.shop.dreamBuild.sponsor.inquiryAccepted);
+}
+
+function brandValueV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(
+    state.shop.dreamBuild.sponsor && state.shop.dreamBuild.sponsor.brandValue,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+}
+
+function sponsorInquiryStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  return {
+    unlocked: sponsorInquiryUnlocked(state),
+    accepted: sponsorInquiryAccepted(state),
+    cashReward: SPONSOR_INQUIRY_CASH_REWARD,
+    brandValue: brandValueV1(state),
+    brandValueReward: SPONSOR_INQUIRY_BRAND_VALUE,
   };
 }
 
@@ -5102,6 +5155,45 @@ function buyShowcasePrep(gameState, options = {}) {
     reason: "",
     feedback: message,
     valueAdded: SHOWCASE_PREP_VALUE,
+    gameState: next,
+  };
+}
+
+function acceptSponsorInquiry(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Sponsor Inquiry unlocks after you finish and park.", gameState: next };
+  }
+  if (!sponsorInquiryUnlocked(next)) {
+    return { ok: false, reason: "Sponsor Inquiry needs Showcase Prep, Dream Build progress, and the first Net Worth milestone.", gameState: next };
+  }
+  if (sponsorInquiryAccepted(next)) {
+    return { ok: false, reason: "Sponsor Inquiry is already accepted.", gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + SPONSOR_INQUIRY_CASH_REWARD, 0, SHOP_MAX_RESOURCE);
+  next.shop.lifetimeTips = safeNonNegativeInteger(next.shop.lifetimeTips + SPONSOR_INQUIRY_CASH_REWARD, 0, SHOP_MAX_RESOURCE);
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  next.shop.dreamBuild.sponsor = {
+    inquiryAccepted: true,
+    inquiryAcceptedAt: Number.isFinite(nowMs)
+      ? new Date(nowMs).toISOString()
+      : new Date().toISOString(),
+    brandValue: SPONSOR_INQUIRY_BRAND_VALUE,
+  };
+  const message = "Sponsor Inquiry accepted.";
+  next.shop.counterService.lastResult = message;
+  next = addLedgerEntry(
+    next,
+    "story",
+    `${message} +${formatCashCount(SPONSOR_INQUIRY_CASH_REWARD)} Cash, +${formatCashCount(SPONSOR_INQUIRY_BRAND_VALUE)} Brand Value.`,
+  );
+  next = syncNetWorthMilestones(next).gameState;
+  return {
+    ok: true,
+    reason: "",
+    feedback: message,
+    cashReward: SPONSOR_INQUIRY_CASH_REWARD,
+    brandValue: SPONSOR_INQUIRY_BRAND_VALUE,
     gameState: next,
   };
 }
@@ -9790,6 +9882,23 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  const sponsorAction = sponsorInquiryStatus(state);
+  if (
+    shopUnlocked
+    && sponsorAction.unlocked
+    && !sponsorAction.accepted
+    && counterIncome.status !== "waiting_stock"
+    && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
+    && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
+  ) {
+    return {
+      type: "accept_sponsor_inquiry",
+      title: "Next: Accept Sponsor Inquiry",
+      copy: "The first display build is starting to attract business.",
+      buttonLabel: "Accept Sponsor Inquiry",
+      disabled: false,
+    };
+  }
   if (shopUnlocked && prep.ready > 0 && bestOrder && state.shop.counterService.running) {
     return {
       type: "wait_counter_service",
@@ -9917,12 +10026,22 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const sponsor = sponsorInquiryStatus(state);
+      if (sponsor.unlocked && !sponsor.accepted && !urgentShopBottleneckBeforeShowcase(state)) {
+        return {
+          type: "accept_sponsor_inquiry",
+          title: "Next: Accept Sponsor Inquiry",
+          copy: "The first display build is starting to attract business.",
+          buttonLabel: "Accept Sponsor Inquiry",
+          disabled: false,
+        };
+      }
       const netWorthMilestone = nextNetWorthMilestone(state);
       if (netWorthMilestone && netWorthV1(state) < netWorthMilestone.amount) {
         return {
           type: "net_worth_milestone",
           title: `Next: Grow Net Worth to ${netWorthMilestone.label.replace(" Net Worth", "")}`,
-          copy: "Keep improving Cash, business value, and the project car.",
+          copy: `Keep improving Cash, business value, project car value${brandValueV1(state) > 0 ? ", and Brand Value" : ""}.`,
           buttonLabel: "View Net Worth",
           disabled: false,
         };
@@ -10776,7 +10895,7 @@ function renderDreamInvestmentTargetCard(gameState) {
           <span style="width: ${percent}%"></span>
         </div>
         <small>${formatShopCount(percent)}% · ${target.ready ? "Start the dream build with the first real part." : "Save Cash from the shop to start the build."}</small>
-        <small>Cash can be saved, spent, or invested into assets later. Net Worth V1 includes Cash + Tofu Business Value + Project Car Value.</small>
+        <small>Cash can be saved, spent, or invested into assets later. Net Worth V1 includes Cash + Tofu Business Value + Project Car Value${brandValueV1(state) > 0 ? " + Brand Value" : ""}.</small>
       </div>
     `,
     actions: target.ready && coveredCarTeaserSeen(state)
@@ -10823,7 +10942,7 @@ function renderDreamBuildProgressCard(gameState) {
         <small>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
         <small>Next Dream Step: ${escapeHtml(nextStep.title)}${nextStep.future ? " · future" : ""}</small>
         <small>${escapeHtml(nextStep.copy)}</small>
-        <small>Project Car Value: ${escapeHtml(formatCashCount(projectValue))}. Net Worth includes Cash + Tofu Business Value + Project Car Value.</small>
+        <small>Project Car Value: ${escapeHtml(formatCashCount(projectValue))}. Net Worth includes Cash + Tofu Business Value + Project Car Value${brandValueV1(state) > 0 ? " + Brand Value" : ""}.</small>
       </div>
     `,
   });
@@ -10831,6 +10950,8 @@ function renderDreamBuildProgressCard(gameState) {
 
 function dreamInvestmentReturningNote(gameState) {
   const state = normalizeGameState(gameState);
+  const sponsor = sponsorInquiryStatus(state);
+  if (sponsor.unlocked && !sponsor.accepted) return "Sponsor Inquiry available";
   const showcase = showcasePrepStatus(state);
   if (showcase.unlocked && !showcase.prepared && showcase.affordable) return "Showcase Prep is affordable";
   if (!dreamInvestmentTargetVisible(state)) return "";
@@ -10875,8 +10996,17 @@ function renderNetWorthCard(gameState) {
   const progress = netWorthProgress(state);
   const businessValue = tofuBusinessValue(state);
   const projectValue = projectCarValueV1(state);
+  const brandValue = brandValueV1(state);
   const cash = cashBalance(state);
   const percent = Math.max(0.01, Math.min(100, progress.percent));
+  const brandValueRow = brandValue > 0
+    ? `
+        <div class="nospill-afford-progress-head">
+          <span>Brand Value</span>
+          <strong>${escapeHtml(formatCashCount(brandValue))}</strong>
+        </div>
+      `
+    : "";
   return renderIdleCard({
     title: "Net Worth",
     status: `${formatCashCount(progress.current)} toward $1T`,
@@ -10895,7 +11025,8 @@ function renderNetWorthCard(gameState) {
           <span>Project Car Value</span>
           <strong>${escapeHtml(formatCashCount(projectValue))}</strong>
         </div>
-        <small>Formula: Cash + Tofu Business Value + Project Car Value.</small>
+        ${brandValueRow}
+        <small>Formula: Cash + Tofu Business Value + Project Car Value${brandValue > 0 ? " + Brand Value" : ""}.</small>
         <div class="nospill-afford-progress-head">
           <span>Current era: Tofu Garage</span>
           <strong>${escapeHtml(`${roundTo(percent, percent < 1 ? 3 : 1)}%`)}</strong>
@@ -10973,10 +11104,16 @@ function renderShowcaseInterestCard(gameState) {
   const showcase = showcasePrepStatus(state);
   if (!showcase.unlocked) return "";
   if (showcase.prepared) {
+    const sponsor = sponsorInquiryStatus(state);
+    const sponsorLine = sponsor.accepted
+      ? "Sponsor Inquiry accepted."
+      : sponsor.unlocked
+        ? "Sponsor Inquiry is available."
+        : "Sponsor Inquiry unlocks with enough Net Worth and Dream Build progress.";
     return renderIdleCard({
       title: "Showcase Display Prepared",
       status: "First presentation setup",
-      copy: "The car has its first real presentation setup. Sponsor Inquiry remains future.",
+      copy: "The car has its first real presentation setup.",
       extra: `
         <div class="nospill-afford-progress">
           <div class="nospill-afford-progress-head">
@@ -10984,7 +11121,7 @@ function renderShowcaseInterestCard(gameState) {
             <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
           </div>
           <small>Showcase Display contribution: +${escapeHtml(formatCashCount(SHOWCASE_PREP_VALUE))}</small>
-          <small>Sponsor Inquiry: future target only.</small>
+          <small>${escapeHtml(sponsorLine)}</small>
         </div>
       `,
     });
@@ -11000,7 +11137,7 @@ function renderShowcaseInterestCard(gameState) {
           <strong>${escapeHtml(formatCash(SHOWCASE_PREP_COST))}</strong>
         </div>
         <small>Effect: Project Car Value +${escapeHtml(formatCashCount(SHOWCASE_PREP_VALUE))}</small>
-        <small>Unlocks: Sponsor Inquiry target, future only.</small>
+        <small>Unlocks: Sponsor Inquiry after the first Net Worth milestone.</small>
         ${showcase.affordable ? "" : `<small>Need ${escapeHtml(formatCash(showcase.missingCash))} more Cash.</small>`}
       </div>
     `,
@@ -11012,6 +11149,53 @@ function renderShowcaseInterestCard(gameState) {
         !showcase.affordable,
         "nospill-primary",
         `Need ${formatCash(showcase.missingCash)} more Cash.`,
+      ),
+    ],
+  });
+}
+
+function renderSponsorInquiryCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  const sponsor = sponsorInquiryStatus(state);
+  if (!sponsor.unlocked) return "";
+  if (sponsor.accepted) {
+    return renderIdleCard({
+      title: "Sponsor Interest",
+      status: "Local sponsor onboarded",
+      copy: "The car has its first business attention. Sponsor packages come later.",
+      extra: `
+        <div class="nospill-afford-progress">
+          <div class="nospill-afford-progress-head">
+            <span>Brand Value</span>
+            <strong>${escapeHtml(formatCashCount(sponsor.brandValue))}</strong>
+          </div>
+          <small>One-time Sponsor Inquiry accepted. No recurring sponsor income yet.</small>
+        </div>
+      `,
+    });
+  }
+  return renderIdleCard({
+    title: "Sponsor Inquiry",
+    status: "Local parts sponsor",
+    copy: "A local parts sponsor noticed the project car. They want their name near the first display build.",
+    extra: `
+      <div class="nospill-afford-progress">
+        <div class="nospill-afford-progress-head">
+          <span>Reward</span>
+          <strong>+${escapeHtml(formatCashCount(sponsor.cashReward))} Cash</strong>
+        </div>
+        <small>Brand Value +${escapeHtml(formatCashCount(sponsor.brandValueReward))}</small>
+        <small>One-time V1 opportunity. Sponsor packages remain future.</small>
+      </div>
+    `,
+    actions: [
+      actionButton(
+        "Accept Sponsor Inquiry",
+        "data-dream-build-action",
+        "accept-sponsor-inquiry",
+        false,
+        "nospill-primary",
       ),
     ],
   });
@@ -11384,6 +11568,17 @@ function nextMilestoneForShop(gameState) {
           guidance: "The project is getting attention. Prepare it for its first display.",
         };
       }
+      const sponsor = sponsorInquiryStatus(state);
+      if (sponsor.unlocked && !sponsor.accepted && !urgentShopBottleneckBeforeShowcase(state)) {
+        return {
+          id: "accept_sponsor_inquiry",
+          name: "Sponsor Inquiry",
+          progressText: "Ready",
+          percent: 100,
+          reward: `+${formatCashCount(sponsor.cashReward)} Cash and +${formatCashCount(sponsor.brandValueReward)} Brand Value`,
+          guidance: "The first display build is starting to attract business.",
+        };
+      }
       const netWorthMilestone = nextNetWorthMilestone(state);
       if (netWorthMilestone && netWorthV1(state) < netWorthMilestone.amount) {
         const progress = nextMilestoneProgress(netWorthV1(state), netWorthMilestone.amount);
@@ -11393,7 +11588,7 @@ function nextMilestoneForShop(gameState) {
           progressText: `${formatCashCount(progress.current)} / ${formatCashCount(progress.required)}`,
           percent: progress.percent,
           reward: netWorthMilestone.reward,
-          guidance: "Keep improving Cash, business value, and the project car.",
+          guidance: `Keep improving Cash, business value, project car value${brandValueV1(state) > 0 ? ", and Brand Value" : ""}.`,
         };
       }
       const nextTarget = dreamBuildNextTargetProgress(state);
@@ -11449,6 +11644,17 @@ function nextMilestoneForShop(gameState) {
       guidance: "The project is getting attention. Prepare it for its first display.",
     };
   }
+  const sponsorPriority = sponsorInquiryStatus(state);
+  if (sponsorPriority.unlocked && !sponsorPriority.accepted && !urgentShopBottleneckBeforeShowcase(state)) {
+    return {
+      id: "accept_sponsor_inquiry",
+      name: "Sponsor Inquiry",
+      progressText: "Ready",
+      percent: 100,
+      reward: `+${formatCashCount(sponsorPriority.cashReward)} Cash and +${formatCashCount(sponsorPriority.brandValueReward)} Brand Value`,
+      guidance: "The first display build is starting to attract business.",
+    };
+  }
   if (shouldShowNetWorthV1(state) && !(showcasePriority.unlocked && !showcasePriority.prepared)) {
     const netWorthMilestone = nextNetWorthMilestone(state);
     if (netWorthMilestone && netWorthV1(state) < netWorthMilestone.amount) {
@@ -11459,7 +11665,7 @@ function nextMilestoneForShop(gameState) {
         progressText: `${formatCashCount(progress.current)} / ${formatCashCount(progress.required)}`,
         percent: progress.percent,
         reward: netWorthMilestone.reward,
-        guidance: "Keep improving Cash, business value, and the project car.",
+        guidance: `Keep improving Cash, business value, project car value${brandValueV1(state) > 0 ? ", and Brand Value" : ""}.`,
       };
     }
   }
@@ -11590,6 +11796,7 @@ function renderOverviewPanel(state) {
       ${renderDreamInvestmentTargetCard(state)}
       ${renderDreamBuildProgressCard(state)}
       ${renderShowcaseInterestCard(state)}
+      ${renderSponsorInquiryCard(state)}
       ${renderProjectCarValueCard(state)}
       ${renderNetWorthCard(state)}
       ${renderNetWorthMilestoneCard(state)}
@@ -13507,6 +13714,24 @@ function handleShowcasePrep() {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleSponsorInquiry() {
+  const result = acceptSponsorInquiry(currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(`${result.feedback} +${formatCashCount(result.cashReward)} Cash, +${formatCashCount(result.brandValue)} Brand Value.`);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShopUpgradeClick(event) {
   const button = event.target && event.target.closest
     ? event.target.closest("[data-shop-upgrade]")
@@ -13578,6 +13803,8 @@ function handleTofuShopPanelClick(event) {
       handleDreamBuildExhaust(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
+    } else if (target.dataset.dreamBuildAction === "accept-sponsor-inquiry") {
+      handleSponsorInquiry();
     } else {
       handleDreamBuildWheelsWork(target.dataset.dreamBuildAction);
     }
@@ -14095,6 +14322,10 @@ function handleNextBestAction() {
     handleShowcasePrep();
     return;
   }
+  if (actionType === "accept_sponsor_inquiry") {
+    handleSponsorInquiry();
+    return;
+  }
   if (actionType === "continue_shop" || actionType === "watch_starter_shop") {
     setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
     setSummaryStatusMessage(actionType === "watch_starter_shop"
@@ -14123,7 +14354,7 @@ function handleNextBestAction() {
     appState.shopTab = "overview";
     renderGamePanels(currentGameState());
     setSummaryStatusMessage(actionType === "showcase_prep_target"
-      ? "Review Showcase Prep. Sponsor Inquiry remains future."
+      ? "Review Showcase Prep. Sponsor Inquiry follows the first display setup."
       : "Review Net Worth progress toward the next milestone.");
     return;
   }

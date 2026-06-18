@@ -324,8 +324,9 @@ Current design principles:
 - Net Worth Milestones V1 gives the later shop/Dream Build bridge concrete stepping stones:
   `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth`. The first `$1M` can unlock Local Showcase
   Interest after early Dream Build progress, and Showcase Prep is a parked Cash investment that
-  raises Project Car Value. It is not a completed-car event, race, route, sponsor system, or full
-  Dream Garage.
+  raises Project Car Value. Sponsor Inquiry V1 is a one-time parked opportunity after Showcase Prep:
+  it grants Cash and Brand Value, but it is not a recurring sponsor system, completed-car event,
+  race, route, or full Dream Garage.
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
   Delivery Order, consumes Delivery Orders, and grants Cash, Reputation, and Shop XP, but it is not
   the primary progression loop.
@@ -649,13 +650,15 @@ Net Worth V1 =
   Cash
   + Tofu Business Value
   + Project Car Value
+  + Brand Value
 ```
 
 `Tofu Business Value` is a deterministic local estimate from station ownership, purchased shop
 upgrades, supplier/manager systems, shop level/reputation, and earning power after the shop has
-earned money. `Project Car Value` is V1-only purchased Dream Build value; currently Wheels add
-`$25K`. This is not a full valuation system and does not include resale, depreciation, garage value,
-future company value, or liabilities yet.
+earned money. `Project Car Value` is V1-only purchased Dream Build value from Wheels, Exhaust, and
+Showcase Prep. `Brand Value` is zero until the one-time Sponsor Inquiry is accepted. This is not a
+full valuation system and does not include resale, depreciation, garage value, future company value,
+or liabilities yet.
 
 Conceptual accounting model:
 

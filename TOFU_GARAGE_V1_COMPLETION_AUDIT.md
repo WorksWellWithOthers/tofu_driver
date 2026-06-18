@@ -68,9 +68,10 @@ or car assets.
 | Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Project Car Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note remains future/target-only. |
 | Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level against `30` planned work stages; current maximum is `5 / 30`; future tracks remain locked/deferred. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
-| Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Project Car Value`; Sponsor Inquiry remains future-only. |
+| Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Project Car Value`. |
+| Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
-| Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Project Car Value. Full valuation remains future. |
+| Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Project Car Value + Brand Value. Full valuation remains future. |
 
 ## 3. Missing Or Weak Tofu Garage Mechanics
 
@@ -168,11 +169,11 @@ Current code status:
 
 - Cash is the implemented player-facing currency.
 - `shop.tips` is still the legacy internal field for save compatibility.
-- Net Worth V1 is implemented as Cash + Tofu Business Value + Project Car Value.
+- Net Worth V1 is implemented as Cash + Tofu Business Value + Project Car Value + Brand Value.
 - Net Worth Milestone Ladder V1 is implemented as a compact stepping-stone display toward `$1T`.
-- Showcase Interest / Showcase Prep V1 is implemented as the first value unlock after early Dream
-  Build progress and first `$1M Net Worth`; it does not implement completed events, sponsors,
-  routes, racing, or full Dream Garage.
+- Showcase Interest / Showcase Prep V1 and Sponsor Inquiry V1 are implemented as the first value
+  unlocks after early Dream Build progress and first `$1M Net Worth`; they do not implement
+  completed events, recurring sponsor packages, routes, racing, or full Dream Garage.
 - First Dream Build Investment Purchase V1 lets the player buy Wheels for `$50K Cash`; Wheels add
   `$25K Project Car Value`.
 - Wheels Work Levels V1 implements level 2 Polished Wheels and level 3 Balanced Fitment. Project
@@ -214,8 +215,8 @@ budgets, and any Car Asset Value-facing accounting.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
-12. Keep Net Worth V1 as Cash + Tofu Business Value + Project Car Value until full valuation has a
-   coherent accounting model.
+12. Keep Net Worth V1 as Cash + Tofu Business Value + Project Car Value + Brand Value until full
+   valuation has a coherent accounting model.
 
 ## 8. Deferred Systems
 
