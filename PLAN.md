@@ -8,6 +8,9 @@
 - `#/shop` shows Tofu Garage, the parked-only idle/incremental mode whose first business is the
   Tofu Shop. `#/garage` aliases to the same surface while `#/shop` remains supported.
 - `#/crew` shows the Delivery Crew parked placeholder/collection surface.
+- Gameplay Routes inside Tofu Garage are hidden/deferred for now. The app hash routes above remain
+  unchanged, but the Tofu Garage tab row does not show `Routes`, and route-related stations,
+  upgrades, Spirit actions, training, and old route-garage actions are not purchasable.
 - Delivery Driver progression is now separated from Tofu Shop progression: Cup Test runs grant
   Driver XP/Driver Level, while shop orders and Counter Service grant Cash, Reputation, Shop XP,
   Shop Level progress, stamps, and shop resources.
@@ -110,8 +113,10 @@
   when a meaningful upgrade appears, the Upgrades tab gets an explicit `New` badge, and the badge
   clears after the player views Upgrades.
 - Tofu Shop tabs are progressively revealed by meaningful milestones and story beats rather than
-  raw idle accumulation. Routes, Training, Garage, Crew, Shop Spirit, Rivals, License, full
-  Passport, and full Ledger stay hidden during the first loop unless earned.
+  raw idle accumulation. Gameplay Routes, Training, old route-garage panels, Crew automation,
+  Rivals, License, full Passport, and full Ledger stay hidden during the first loop unless earned.
+  Routes currently remain deferred even for high-progress saves until the route system has a clear
+  implemented shop purpose.
 - Overview has a small order-size ladder: Simple Tofu Box, Family Tofu Tray, and Festival
   Bento consume meaningful typed Tofu Stock/Delivery Order costs and pay typed
   Cash/Reputation/Shop XP rewards.
@@ -139,8 +144,9 @@
 - Pack Tofu and manual fulfillment are collapsed Manual Backup actions. Don't Spill the Cup is an
   optional certified boost rather than the normal shop bottleneck during order prep, Cash shortages,
   or managed-shop supply shortages.
-- Broad shop systems exist as scaffolding or partial implementations: routes, training, garage,
-  crew, Shop Spirit, License, rivals, Passport, and Ledger.
+- Broad shop systems exist as scaffolding or partial implementations: routes, training, old
+  route-garage panels, crew automation, Shop Spirit, License, rivals, Passport, and Ledger.
+  Gameplay Routes are currently hidden/deferred and direct route-related actions are rejected.
 - Regular Customers remain deferred until Counter Service V1 has been playtested. Dream Garage
   remains documented future direction only.
 - Covered Car / Dream Build Teaser V1 is implemented as a parked-only managed-shop story/status
@@ -216,7 +222,10 @@ Canonical references:
 8. Playtest bulk-buy and affordability progress after a multi-day return: verify suggested actions
    are useful, no hidden/future systems are purchased, and the progress bars do not make fake ETA
    promises while income is blocked.
-9. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
+9. Keep gameplay Routes deferred until they have a specific safe, fictional, parked-only purpose
+   that fits the shop/Dream Build loop. Do not reintroduce a Routes tab, Route Familiarity/Careful
+   Notes purchases, route Spirit actions, or route recommendations until that design is implemented.
+10. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
 10. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream

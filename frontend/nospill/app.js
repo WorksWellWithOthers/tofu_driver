@@ -556,6 +556,11 @@ const LICENSE_PERKS = [
   { id: "shop_multiplier", name: "Small shop production multiplier", costStars: 2, effect: "All shop production +10%." },
 ];
 
+const TOFU_GARAGE_ROUTES_ENABLED = false;
+const DEFERRED_ROUTE_STATION_IDS = new Set(["delivery_route", "dispatcher_desk", "regional_network"]);
+const DEFERRED_ROUTE_UPGRADE_STATION_IDS = new Set(["delivery_route", "dispatcher_desk", "regional_network"]);
+const DEFERRED_ROUTE_CREW_ROLE_IDS = new Set(["apprentice_driver", "dispatcher", "route_scout", "night_driver"]);
+
 const RIVAL_CHALLENGES = [
   { id: "quiet_counter", name: "The Quiet Counter", unlock: "Reputation 10", orderCost: 2, spiritCost: 5, tipsReward: 80, reputationReward: 5, stampId: "quiet_counter_showcase" },
   { id: "lantern_bento", name: "Lantern Bridge Bento", unlock: "Lantern Bridge complete", orderCost: 3, spiritCost: 8, tipsReward: 130, reputationReward: 8, stampId: "lantern_bento_showcase" },
@@ -4380,10 +4385,31 @@ function shopStationById(stationId) {
   return SHOP_STATIONS.find((station) => station.id === stationId) || null;
 }
 
+function routeGameplayEnabled() {
+  return TOFU_GARAGE_ROUTES_ENABLED;
+}
+
+function isDeferredRouteStationId(stationId) {
+  return !routeGameplayEnabled() && DEFERRED_ROUTE_STATION_IDS.has(stationId);
+}
+
+function isDeferredRouteUpgrade(upgrade) {
+  return Boolean(
+    upgrade
+      && !routeGameplayEnabled()
+      && DEFERRED_ROUTE_UPGRADE_STATION_IDS.has(upgrade.stationId),
+  );
+}
+
+function routeGameplayDeferredReason() {
+  return "Routes are deferred until they have a clear shop purpose.";
+}
+
 function stationIsUnlocked(station, gameState) {
   const state = normalizeGameState(gameState);
   const shop = state.shop;
   if (!station) return false;
+  if (isDeferredRouteStationId(station.id)) return false;
   if (station.id === "tofu_press") return true;
   if (station.id === "prep_counter") return shop.shopLevel >= 2 || shop.tofuStock >= 10 || shop.stations.prep_counter > 0;
   if (station.id === "delivery_shelf") {
@@ -4434,6 +4460,7 @@ function stationPurchaseDisabledReason(station, gameState, cost, unlocked) {
 function visibleShopStations(gameState) {
   const state = normalizeGameState(gameState);
   return SHOP_STATIONS.filter((station) => {
+    if (isDeferredRouteStationId(station.id)) return false;
     if (station.id === "tofu_press" || station.id === "prep_counter") return true;
     if (station.id === "delivery_shelf") return stationIsUnlocked(station, state);
     if (station.id === "shop_sign") return stationIsUnlocked(station, state);
@@ -4983,6 +5010,7 @@ function shopUpgradeById(upgradeId) {
 function stationUpgradeRevealReason(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
+  if (isDeferredRouteUpgrade(upgrade)) return routeGameplayDeferredReason();
   if (upgrade.id === "counter_service_bell") return "Unlocks after First 10 Orders or First $100 Cash";
   if (upgrade.id === "counter_service_wide") return "Unlocks after Order Bell and 20 fulfilled orders";
   if (upgrade.id === "counter_service_routine") return "Unlocks after Wider Counter and First Family Tofu Tray";
@@ -5010,6 +5038,7 @@ function stationUpgradeRevealReason(upgrade, gameState) {
 function stationUpgradeIsRevealed(upgrade, gameState) {
   const state = normalizeGameState(gameState);
   const orders = fulfilledShopOrderCount(state);
+  if (isDeferredRouteUpgrade(upgrade)) return false;
   if (upgrade.id === "counter_service_bell") {
     return Boolean(state.stamps.first_10_orders || state.stamps.first_100_tips)
       || fulfilledShopOrderCount(state) >= 10
@@ -5343,6 +5372,9 @@ function buyShopStation(stationId, gameState, requestedQuantity = 1) {
   let next = normalizeGameState(gameState);
   const station = shopStationById(stationId);
   if (!station) return { ok: false, reason: "Shop station unavailable.", gameState: next };
+  if (isDeferredRouteStationId(station.id)) {
+    return { ok: false, reason: routeGameplayDeferredReason(), gameState: next };
+  }
   if (!stationIsUnlocked(station, next)) {
     return { ok: false, reason: station.unlock, gameState: next };
   }
@@ -6157,6 +6189,9 @@ function buyStationUpgrade(upgradeId, gameState) {
   let next = normalizeGameState(gameState);
   const upgrade = STATION_UPGRADES.find((item) => item.id === upgradeId);
   if (!upgrade) return { ok: false, reason: "Station upgrade unavailable.", gameState: next };
+  if (isDeferredRouteUpgrade(upgrade)) {
+    return { ok: false, reason: routeGameplayDeferredReason(), gameState: next };
+  }
   const station = shopStationById(upgrade.stationId);
   const counterServiceUpgrade = upgrade.stationId === "counter_service";
   const supplierUpgrade = isSupplierUpgrade(upgrade);
@@ -6316,6 +6351,7 @@ function buyBulkShopItems(gameState, kind, mode) {
 
 function routeIsUnlocked(route, gameState) {
   const state = normalizeGameState(gameState);
+  if (!routeGameplayEnabled()) return false;
   if (route.id === "shop_street") return true;
   if (route.id === "old_hill_road") return state.shop.shopReach >= 2;
   if (route.id === "lantern_bridge") return state.shop.reputation >= 25;
@@ -6328,6 +6364,9 @@ function completeFictionalRoute(routeId, gameState) {
   let next = normalizeGameState(gameState);
   const route = SHOP_ROUTE_CATALOG.find((item) => item.id === routeId);
   if (!route) return { ok: false, reason: "Route card unavailable.", gameState: next };
+  if (!routeGameplayEnabled()) {
+    return { ok: false, reason: routeGameplayDeferredReason(), gameState: next };
+  }
   if (!routeIsUnlocked(route, next)) return { ok: false, reason: route.unlock, gameState: next };
   if (next.shop.tofuStock < route.tofuCost) return { ok: false, reason: "Not enough tofu stock.", gameState: next };
   if (next.shop.deliveryOrders < route.orderCost) return { ok: false, reason: "Not enough Delivery Orders.", gameState: next };
@@ -6364,6 +6403,9 @@ function runTrainingDrill(drillId, gameState) {
   let next = normalizeGameState(gameState);
   const drill = TRAINING_DRILLS.find((item) => item.id === drillId);
   if (!drill) return { ok: false, reason: "Training drill unavailable.", gameState: next };
+  if (!routeGameplayEnabled()) {
+    return { ok: false, reason: "Training drills are deferred with Routes for now.", gameState: next };
+  }
   if (next.shop.tips < drill.costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - drill.costTips);
   next.shop.cupStabilityXP = safeNonNegativeInteger(next.shop.cupStabilityXP + drill.cupStabilityXP);
@@ -6376,6 +6418,9 @@ function buyGarageUpgrade(upgradeId, gameState) {
   let next = normalizeGameState(gameState);
   const upgrade = GARAGE_UPGRADES.find((item) => item.id === upgradeId);
   if (!upgrade) return { ok: false, reason: "Garage upgrade unavailable.", gameState: next };
+  if (!routeGameplayEnabled()) {
+    return { ok: false, reason: "Old route-garage upgrades are deferred for now.", gameState: next };
+  }
   const current = safeNonNegativeInteger(next.shop.garage[upgrade.id], 0, upgrade.maxLevel);
   if (current >= upgrade.maxLevel) return { ok: false, reason: "Garage upgrade is maxed.", gameState: next };
   const costTips = Math.ceil(upgrade.costTips * Math.pow(1.25, current));
@@ -6390,6 +6435,9 @@ function hireCrewRole(roleId, gameState) {
   let next = normalizeGameState(gameState);
   const role = CREW_ROLES.find((item) => item.id === roleId);
   if (!role) return { ok: false, reason: "Crew role unavailable.", gameState: next };
+  if (!routeGameplayEnabled() && DEFERRED_ROUTE_CREW_ROLE_IDS.has(role.id)) {
+    return { ok: false, reason: "Route crew roles are deferred for now.", gameState: next };
+  }
   const current = safeNonNegativeInteger(next.shop.crew[role.id], 0, 1000);
   const costTips = Math.ceil(role.costTips * Math.pow(1.35, current));
   if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
@@ -6422,6 +6470,9 @@ function useShopSpiritBoost(boostId, gameState, options = {}) {
   }
   const boost = SHOP_SPIRIT_BOOSTS.find((item) => item.id === boostId);
   if (!boost) return { ok: false, reason: "Shop Spirit boost unavailable.", gameState: next };
+  if (boost.type === "route_multiplier" && !routeGameplayEnabled()) {
+    return { ok: false, reason: routeGameplayDeferredReason(), gameState: next };
+  }
   if (boost.type === "route_multiplier" && !hasRouteStoryBeat(next)) {
     return { ok: false, reason: "Route-focused Spirit actions unlock after route story beats.", gameState: next };
   }
@@ -6451,6 +6502,9 @@ function useFestivalBoost(boostId, gameState, options = {}) {
   }
   const boost = FESTIVAL_BOOSTS.find((item) => item.id === boostId);
   if (!boost) return { ok: false, reason: "Festival Boost unavailable.", gameState: next };
+  if (boost.type === "route_multiplier" && !routeGameplayEnabled()) {
+    return { ok: false, reason: routeGameplayDeferredReason(), gameState: next };
+  }
   if (boost.type === "route_multiplier" && !hasRouteStoryBeat(next)) {
     return { ok: false, reason: "Route-focused tokens unlock after route story beats.", gameState: next };
   }
@@ -9835,6 +9889,9 @@ function stationPurposeCopy(stationId, gameState) {
   const state = normalizeGameState(gameState);
   const prep = orderPrepProgress(state);
   const runway = tofuStockRunway(state);
+  if (isDeferredRouteStationId(stationId)) {
+    return "Future/deferred: Routes are not active Tofu Garage gameplay yet.";
+  }
   if (stationId === "tofu_press") {
     if (runway.isHealthy) {
       return "Not urgent: you have enough tofu for now. Tofu Press helps when Prep Counter starts using stock faster.";
@@ -10056,11 +10113,12 @@ function hasShopStationUpgrade(gameState) {
 
 function hasAdvancedShopStation(gameState) {
   const state = normalizeGameState(gameState);
-  return ["delivery_shelf", "shop_sign", "regular_customer", "delivery_route", "dispatcher_desk", "regional_network"]
+  return ["delivery_shelf", "shop_sign", "regular_customer"]
     .some((stationId) => safeNonNegativeInteger(state.shop.stations[stationId], 0, 100000) > 0);
 }
 
 function hasRouteStoryBeat(gameState) {
+  if (!routeGameplayEnabled()) return false;
   const state = normalizeGameState(gameState);
   const routeProgress = Object.values(state.shop.routes || {}).some((route) => safeNonNegativeInteger(route && route.mastery, 0, 100) > 0);
   return routeProgress

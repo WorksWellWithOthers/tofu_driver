@@ -32,7 +32,7 @@ kept out of the primary Tofu Garage loop.
 | Shop Level | Derived progression label from Reputation | Reputation growth | unlock checks | reach phase gates | start | communicates progression tier | Supplier/Manager gates | meaningful, derived |
 | Shop Spirit | Parked emergency/spend resource | Spirit generators | Rush Stock, Warm Counter, timed effects | save Spirit for bottleneck moments | after shop momentum | short-term recovery | future boost economy | meaningful but tune carefully |
 | Prep Capacity | Recovering expansion capacity | timed regen, future License Perks | station purchases | choose when to expand stations | start but mostly felt after purchases | prevents unlimited instant station buying | staffing/license ideas later | meaningful, should stay explained |
-| Shop Reach | Fictional footprint | route cards/scaffolding | route/district unlocks | future route expansion | routes only | not a first-loop decision | route network | deferred/scaffolding |
+| Shop Reach | Fictional footprint | future route scaffolding | future route/district unlocks | future route expansion | routes only | not a current decision | route network | deferred/hidden |
 | License Stars | Prestige currency | License Exam | License Perks | reset for permanent perk | later prestige | plateau restart | future prestige | deferred for current first-loop tuning |
 | Counter Service | Automatic handoff system | starter system plus upgrades | consumes Tofu Stock and Delivery Orders | start/pause, upgrade interval/batch | start | repeated manual fulfillment | Manager Desk, Wholesale Pickup | meaningful |
 | Supplier Contracts | Reputation-funded stock support | station upgrades | adds Tofu Stock/sec | spend Reputation to solve supply trap | managed-shop stock pressure | high-midgame stock bottleneck | Catering Crate, Manager Desk | meaningful |
@@ -44,7 +44,7 @@ kept out of the primary Tofu Garage loop.
 | Passport Stamps | Local status/milestone layer | shop and Cup Test milestones | collection/progress feedback | pursue short-term proof | first stamp | lack of direction | later achievement layers | meaningful |
 | Driver Bonus | Small capped shop Reputation bonus | Delivery Driver level from Cup Test | order Reputation multiplier | Cup Test status helps shop lightly | driver level threshold | connection between modes | status identity | meaningful, capped |
 | Delivery Crew placeholder | Cosmetic/collection surface | unlocked/selected character art | parked art/cosmetic selection | choose identity later | nav surface | avoids dead nav | future crew stories | placeholder, not gameplay |
-| Routes tab/cards | Fictional parked route cards | route scaffolding | route rewards | future route choices | hidden until story beat | not a current shop bottleneck | route network | deferred/scaffolding |
+| Routes tab/cards | Fictional parked route cards | route scaffolding retained only | route rewards deferred | future route choices | hidden/deferred | not a current shop bottleneck | route network | deferred/hidden; not purchasable |
 | Shop Spirit actions | Emergency stock/order/timed boosts | Shop Spirit | instant/timed spends | spend only when bottlenecked | Shop Spirit panel | short-term bottleneck relief | later boost tuning | meaningful but must avoid click loops |
 
 ## UI Changes From This Audit
@@ -53,6 +53,8 @@ kept out of the primary Tofu Garage loop.
 - Bulk buy actions must only buy visible, unlocked, meaningful, non-maxed items.
 - Route, Regular Customer, Dispatcher Desk, Regional Network, and other future/scaffolded purchases
   should not be included in bulk buying until their systems are meaningful.
+- Gameplay Routes are now fully deferred in the live UI: no `Routes` tab, no Route Familiarity or
+  Careful Notes purchases, no route Spirit actions, and no route recommendations.
 - Affordability progress should appear on visible non-maxed station and upgrade cards, using the
   limiting resource and an ETA only when the relevant income rate is positive.
 - Returning-player offline summaries should include at most three useful suggestions and should not
@@ -109,6 +111,6 @@ choices only after part-level progression is proven.
 
 1. Playtest whether Buy Cheapest is enough for returning players or whether Buy All is used often.
 2. Tune which resources count as reliable ETA income after observing high-midgame saves.
-3. Keep Routes, Regular Customers, License prestige, and Dream Garage future/deferred until the
-   current shop layer is clear after multiple returns.
+3. Keep Routes, Regular Customers, License prestige, and full Dream Garage future/deferred until
+   the current shop layer is clear after multiple returns.
 4. Add future unfold audits before each large new layer.

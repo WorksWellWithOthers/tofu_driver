@@ -73,6 +73,15 @@ Tofu Press -> Prep Counter -> Starter Counter Service -> Cash -> Buy Stations/Up
 Keep this loop fun before expanding Routes, Crew, Garage, Shop Spirit, Rivals, License Exams, or
 large Passport catalogs.
 
+Current V1 route policy:
+
+- gameplay Routes are hidden/deferred in active Tofu Garage UI
+- `#/shop`, `#/garage`, and `#/cup-test` app hash routes remain unchanged
+- route-related stations, upgrades, Spirit actions, training, and old route-garage actions are not
+  purchasable while Routes are deferred
+- future Routes must be safe fictional parked content, not GPS, maps, street names, speed rewards,
+  route leaderboards, or public-road competition
+
 Safety rule:
 
 Shop progression must not use speed, live speed display, real routes, maps, street names,
@@ -614,7 +623,7 @@ more valuable rather than replacing them.
 | 4 | Shop Sign | Reputation gains and Regular Customer unlock pressure | Cash, Prep Capacity | shifts focus from pure Cash to shop visibility | 20 to 40 minutes | invest when the next system is reputation-gated |
 | 5 | Counter Service | order handoff automation | ready Delivery Orders and Tofu Stock reserves | makes the shop idle-first from the first session, then scales through earned upgrades | immediately, with upgrades after early milestones | start/pause automation while preserving backup manual control |
 | 6 | Regular Customers | passive Cash from simple orders | Delivery Orders if available | reduces manual money conversion chores beyond handoff automation | 30 to 60+ minutes | choose passive income versus more raw production |
-| 7 | Shop Street / Fictional Route Cards | Cash, Reputation, Shop Reach, Route Knowledge, stamps | Tofu Stock, Delivery Orders | adds story goals and mastery without real roads | 40 to 90 minutes | spend resources on route cards or keep scaling shop |
+| 7 | Shop Street / Fictional Route Cards | Cash, Reputation, Shop Reach, Route Knowledge, stamps | Tofu Stock, Delivery Orders | future/deferred: adds story goals and mastery without real roads | After route design is reintroduced | spend resources on route cards or keep scaling shop |
 | 8 | Apprentice Driver | automated fictional route/shop task output | Delivery Orders, route slots | removes chores after the player understands them | 1 to 2 hours | assign limited crew to the best fictional task |
 | 9 | Dispatcher Desk | automation efficiency and crew assignment clarity | Cash, Prep Capacity | makes automation legible and scalable | 2 to 4 hours | invest in coordination instead of raw stations |
 | 10 | Regional Tofu Network | broad lower-tier multipliers and prestige requirements | high Cash, Shop Reach, License progress | late-game scale and prestige pressure | after first License Exam | build a network or prepare for the next exam |
@@ -728,7 +737,7 @@ First-day target:
 | 3. First Automation | 1 to 6 hours | The shop starts helping itself | Regular Customers, Shop Street, Apprentice preview | Routes, simple Crew preview, Production, Passport | Cash, Reputation, Shop Reach, Route Knowledge | Start Shop Street, Hire Apprentice Driver, Assign Crew preview | Regular Smile, Delivery Shelf upgrades | First route stamp, first apprentice teaser | 10 to 20 minutes | Manual orders feel repetitive and automation is earned |
 | 4. First License | 4 to 6 hours | A plateau becomes a choice | License Exam preview, requirements, first perks | License, Passport, Routes, Ledger | Reputation, Stamps, Route Knowledge, fulfilled orders | View License Exam, Take License Exam, Confirm/Cancel | Final pre-exam convenience upgrades | Local Delivery License | 10 to 30 minutes | Requirements met and player chooses prestige |
 | 5. Post-License Rebuild | After first License Exam | The early shop rebuilds faster | License Perks, faster starting stations, deeper early flow | Overview, Orders, Production, License, Passport | License Stars, Cash, Tofu Stock, Orders | Buy License Perk, rebuild stations, Fulfill Max | Morning Prep, Labeled Bins, Bigger Thermos | Permanent perk identity | 5 to 15 minutes | Player reaches old plateau faster |
-| 6. Route Network | Later | The fictional delivery world opens | More route cards, route mastery, Route Knowledge | Routes, Training, Garage, Passport | Shop Reach, Route Knowledge, Cash | Start Route Card, View Route Details, Buy Route Notebook | Route Familiarity, Careful Notes | District/route stamps | 10 to 30 minutes | Route mastery motivates automation |
+| 6. Route Network | Later / deferred | The fictional delivery world opens | More route cards, route mastery, Route Knowledge | Routes, Training, Garage, Passport | Shop Reach, Route Knowledge, Cash | Start Route Card, View Route Details, Buy Route Notebook | Route Familiarity, Careful Notes | District/route stamps | 10 to 30 minutes | Route mastery motivates automation |
 | 7. Festival / Spirit Layer | Later | The shop has special rushes | Shop Spirit, Festival Boosts, token inventory | Shop Spirit, Events, Ledger | Shop Spirit, Festival tokens | Buy Tea Kettle, Use Shop Spirit Boost, Use Festival Token | Warmer Kettle, Festival Lanterns | Festival stamps/cosmetics | Short burst sessions | Boost timing becomes meaningful |
 | 8. Regional Tofu Network | Late game | A local shop becomes a network | Regional Tofu Network, Dispatcher Desk, broader automation | Network, Crew, License, Routes | Cash, Reputation, Shop Reach, License Stars | Buy Dispatcher Desk, Buy Regional Network, Assign Crew | Network multipliers, crew routines | Late-game route/status rewards | Longer idle sessions | Next prestige or final arc |
 | 9. Legendary Final Delivery | Future direction | Perfect control, not speed | Endgame story, final stamps, high-order mastery | Story/Finale surfaces | Stamps, License Stars, mastery summaries | Start Final Delivery Trial | Cosmetic/story-only final upgrades | Perfect control ending | Special event session | Story conclusion |
@@ -2047,7 +2056,7 @@ progression contract.
 | Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts running on fresh saves, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
 | Supplier Contracts | Implemented | Reputation-cost station upgrades, rates, Next Best Action, tests | Soy Supplier Contract, Morning Soy Delivery, and Bulk Soy Delivery add Tofu Stock/sec as a high-midgame Reputation sink so Counter Service stock blocks are solved through management, not manual Pack Tofu | tune Reputation costs and stock/sec support after playtesting |
 | Manager Desk V1 | Implemented | Manager Desk station upgrades, Next Milestone/Next Best Action, Counter Service scalar batch processing, tests | Hire Shift Manager raises Counter Service batch size to 25; Wholesale Pickup clears capped waiting-order batches when supplied without adding a new tab, franchise mode, or per-order objects | tune costs, queue threshold, and whether a later dedicated manager surface is needed |
-| Routes | Placeholder | route catalog/panel/tests | fictional route cards can complete | keep hidden until first loop and route unlock are ready |
+| Routes | Deferred/scaffolding | route catalog retained, active tab/actions gated off | future fictional route cards cannot be purchased/played yet | keep hidden until Routes have a clear shop/Dream Build purpose |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |
 | Dream Garage concept | Documented only | Dream Garage / Project Car Progression section | future emotional arc is specified | implement only after first loop and order pacing are stable |

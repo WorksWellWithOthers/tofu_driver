@@ -45,6 +45,12 @@ The current static app uses hash routes:
 - `#/shop` shows `Tofu Garage`; `#/garage` is an alias for the same surface
 - `#/crew` shows `Delivery Crew`
 
+This is app hash routing only. Gameplay `Routes` inside Tofu Garage are currently hidden/deferred:
+there is no active Routes tab, and route-related stations, upgrades, Spirit actions, training, and
+old route-garage actions are not purchasable. Future gameplay Routes must remain fictional,
+parked-safe planning/status content and must not use GPS, maps, street names, speed rewards, or
+public-road competition.
+
 Default visitor behavior:
 
 - The first page is `Don't Spill the Cup`.
@@ -294,8 +300,10 @@ Current design principles:
   `Use Token`. Instant Spirit spends should be strategic emergency recovery, such as adding a
   meaningful amount of Tofu Stock or order prep, not a new clicker loop. Route-related Spirit
   actions stay hidden until fictional route systems matter.
-- Regular Customers, Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige remain
-  deferred until Counter Service and the V1 spine have been playtested and tuned.
+- Regular Customers, gameplay Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige
+  remain deferred until Counter Service and the V1 spine have been playtested and tuned. While
+  gameplay Routes are deferred, the live Tofu Garage UI should not show a Routes tab or sell
+  route-related upgrades/actions.
 - New active decisions should replace automated chores. When Counter Service removes repeated order
   handoffs, the next decisions should be stock supply, service rate, larger orders, or later support
   stations, not more mandatory clicking.
@@ -399,11 +407,13 @@ dominate the first session until the core loop is paced and understandable:
 - expanded Passport
 - Delivery Ledger
 
-The current MVP loop remains the priority. Routes, Crew, Garage, Shop Spirit, Rivals, and License
-are later-phase systems until the core loop feels good. These systems should unlock from meaningful
-milestones such as first upgrades, larger orders, station purchases, route story beats, or repeated
-chores, not from raw idle currency accumulation alone. Use `BALANCE_AND_PROGRESSION.md` for pacing,
-formulas, sources/sinks, upgrade ladders, button inventories, unresolved balance questions, and
+The current MVP loop remains the priority. Gameplay Routes, Crew, Garage, Shop Spirit, Rivals, and
+License are later-phase systems until the core loop feels good. Routes are currently hidden/deferred
+from active Tofu Garage UI even if old save fields contain route progress. Later-phase systems
+should unlock from meaningful milestones such as first upgrades, larger orders, station purchases,
+route story beats, or repeated chores, not from raw idle currency accumulation alone. Use
+`BALANCE_AND_PROGRESSION.md` for pacing, formulas, sources/sinks, upgrade ladders, button
+inventories, unresolved balance questions, and
 implementation audit.
 
 ## Dream Garage / Project Car Fantasy

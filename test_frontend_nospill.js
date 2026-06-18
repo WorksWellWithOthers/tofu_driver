@@ -4902,7 +4902,7 @@ globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
   assert(activeSpirit.reason.includes('already active'));
   const hiddenRouteToken = context.useFestivalBoost('calm_focus_token', spirit);
   assert.strictEqual(hiddenRouteToken.ok, false);
-  assert(hiddenRouteToken.reason.includes('Route-focused'));
+  assert(hiddenRouteToken.reason.includes('Routes are deferred'));
 }
 
 function testTofuGarageHighMidgameSupplyBottleneckBalance() {
@@ -5067,8 +5067,120 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618a'));
-  assert(html.includes('/static/nospill/app.css?v=20260618a'));
+  assert(html.includes('/static/nospill/app.js?v=20260618b'));
+  assert(html.includes('/static/nospill/app.css?v=20260618b'));
+}
+
+function testTofuGarageRoutesSurfaceIsDeferred() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function routeMakeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+const routeElements = {
+  shopTabList: routeMakeNode(),
+  shopTabPanel: routeMakeNode(),
+  gameShopStats: routeMakeNode(),
+  gameShopHelper: routeMakeNode(),
+  gameShopUnlocks: routeMakeNode(),
+  gameShopMilestones: routeMakeNode(),
+  gamePackTofuButton: routeMakeNode(),
+};
+elements = { ...elements, ...routeElements };
+const routeProgress = defaultGameState();
+routeProgress.shop.tips = 500000;
+routeProgress.shop.tofuStock = 5000;
+routeProgress.shop.deliveryOrders = 5000;
+routeProgress.shop.prepSlots = 500;
+routeProgress.shop.reputation = 500000;
+routeProgress.shop.lifetimeDeliveryOrders = 5000;
+routeProgress.shop.lifetimeTips = 500000;
+routeProgress.shop.shopLevel = 100;
+routeProgress.shop.shopReach = 20;
+routeProgress.shop.routeKnowledge = 80;
+routeProgress.shop.stations.delivery_route = 3;
+routeProgress.shop.stations.dispatcher_desk = 1;
+routeProgress.shop.stations.regional_network = 1;
+routeProgress.shop.routes.shop_street.mastery = 60;
+routeProgress.shop.festivalBoosts.calm_focus_token = 1;
+routeProgress.shop.shopSpirit = 100;
+routeProgress.stamps.shop_street_complete = { date: "2026-06-18T00:00:00.000Z", label: "Shop Street" };
+appState.shopTab = "overview";
+renderTofuShop(routeProgress);
+globalThis.deferredTabsHtml = routeElements.shopTabList.innerHTML;
+appState.shopTab = "routes";
+renderTofuShop(routeProgress);
+globalThis.deferredRouteFallbackTab = appState.shopTab;
+globalThis.deferredRouteFallbackHtml = routeElements.shopTabPanel.innerHTML;
+appState.shopTab = "production";
+renderTofuShop(routeProgress);
+globalThis.deferredProductionHtml = routeElements.shopTabPanel.innerHTML;
+appState.shopTab = "upgrades";
+renderTofuShop(routeProgress);
+globalThis.deferredUpgradeHtml = routeElements.shopTabPanel.innerHTML;
+appState.shopTab = "spirit";
+renderTofuShop(routeProgress);
+globalThis.deferredSpiritHtml = routeElements.shopTabPanel.innerHTML;
+globalThis.deferredRouteStation = buyShopStation("delivery_route", routeProgress, 1);
+globalThis.deferredRouteUpgrade = buyStationUpgrade("route_familiarity", routeProgress);
+globalThis.deferredRouteAction = completeFictionalRoute("shop_street", routeProgress);
+globalThis.deferredTraining = runTrainingDrill("cone_drill", routeProgress);
+globalThis.deferredGarage = buyGarageUpgrade("cup_holder_charm", routeProgress);
+globalThis.deferredCrew = hireCrewRole("apprentice_driver", routeProgress);
+globalThis.deferredSpirit = useShopSpiritBoost("calm_focus", routeProgress);
+globalThis.deferredFestival = useFestivalBoost("calm_focus_token", routeProgress);
+globalThis.deferredNextAction = nextBestAction(routeProgress);
+globalThis.deferredNextMilestone = nextMilestoneForShop(routeProgress);
+globalThis.deferredReturning = returningPlayerSuggestedActions(routeProgress);
+globalThis.deferredHashShop = surfaceFromHash("#/shop");
+globalThis.deferredHashGarage = surfaceFromHash("#/garage");
+globalThis.deferredHashCup = surfaceFromHash("#/cup-test");
+`, context);
+
+  assert(!context.deferredTabsHtml.includes('>Routes<'));
+  assert(!context.deferredTabsHtml.includes('>Training<'));
+  assert(!context.deferredTabsHtml.includes('data-shop-tab="routes"'));
+  assert.strictEqual(context.deferredRouteFallbackTab, 'overview');
+  assert(context.deferredRouteFallbackHtml.includes('Overview'));
+  assert(!context.deferredRouteFallbackHtml.includes('Start Route Card'));
+  assert(!context.deferredProductionHtml.includes('Delivery Route'));
+  assert(!context.deferredProductionHtml.includes('Dispatcher Desk'));
+  assert(!context.deferredProductionHtml.includes('Regional Tofu Network'));
+  assert(!context.deferredUpgradeHtml.includes('Route Familiarity'));
+  assert(!context.deferredUpgradeHtml.includes('Careful Notes'));
+  assert(!context.deferredSpiritHtml.includes('Calm Shop Focus'));
+  assert(!context.deferredSpiritHtml.includes('Calm Focus Token'));
+  assert.strictEqual(context.deferredRouteStation.ok, false);
+  assert.strictEqual(context.deferredRouteUpgrade.ok, false);
+  assert.strictEqual(context.deferredRouteAction.ok, false);
+  assert.strictEqual(context.deferredTraining.ok, false);
+  assert.strictEqual(context.deferredGarage.ok, false);
+  assert.strictEqual(context.deferredCrew.ok, false);
+  assert.strictEqual(context.deferredSpirit.ok, false);
+  assert.strictEqual(context.deferredFestival.ok, false);
+  [
+    context.deferredRouteStation.reason,
+    context.deferredRouteUpgrade.reason,
+    context.deferredRouteAction.reason,
+    context.deferredSpirit.reason,
+    context.deferredFestival.reason,
+  ].forEach((reason) => assert(reason.includes('Routes are deferred'), reason));
+  const recommendationText = [
+    context.deferredNextAction.title,
+    context.deferredNextAction.copy,
+    context.deferredNextMilestone.name,
+    context.deferredNextMilestone.guidance,
+    ...context.deferredReturning,
+  ].join(' ');
+  assert(!/route|Route|Route Familiarity|Careful Notes|Shop Street/.test(recommendationText));
+  assert.strictEqual(context.deferredHashShop, 'shop');
+  assert.strictEqual(context.deferredHashGarage, 'shop');
+  assert.strictEqual(context.deferredHashCup, 'cup-test');
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -7042,24 +7154,28 @@ function testExpandedIdleShopLayerMechanics() {
   assert.strictEqual(Boolean(bulkOrders.gameState.stamps.first_shop_order), true);
 
   const route = context.completeFictionalRoute('shop_street', bulkOrders.gameState);
-  assert.strictEqual(route.ok, true);
-  assert.strictEqual(route.gameState.shop.shopReach > bulkOrders.gameState.shop.shopReach, true);
-  assert.strictEqual(Boolean(route.gameState.stamps.shop_street_complete), true);
+  assert.strictEqual(route.ok, false);
+  assert(route.reason.includes('Routes are deferred'));
+  assert.strictEqual(route.gameState.shop.shopReach, bulkOrders.gameState.shop.shopReach);
+  assert.strictEqual(Boolean(route.gameState.stamps.shop_street_complete), false);
 
-  const training = context.runTrainingDrill('cone_drill', route.gameState);
-  assert.strictEqual(training.ok, true);
-  assert.strictEqual(training.gameState.shop.cupStabilityXP > route.gameState.shop.cupStabilityXP, true);
+  const training = context.runTrainingDrill('cone_drill', bulkOrders.gameState);
+  assert.strictEqual(training.ok, false);
+  assert(training.reason.includes('deferred'));
+  assert.strictEqual(training.gameState.shop.cupStabilityXP, bulkOrders.gameState.shop.cupStabilityXP);
 
-  const garage = context.buyGarageUpgrade('cup_holder_charm', training.gameState);
-  assert.strictEqual(garage.ok, true);
-  assert.strictEqual(garage.gameState.shop.garage.cup_holder_charm, 1);
+  const garage = context.buyGarageUpgrade('cup_holder_charm', bulkOrders.gameState);
+  assert.strictEqual(garage.ok, false);
+  assert(garage.reason.includes('deferred'));
+  assert.strictEqual(garage.gameState.shop.garage.cup_holder_charm, 0);
 
-  const crew = context.hireCrewRole('apprentice_driver', garage.gameState);
-  assert.strictEqual(crew.ok, true);
-  assert.strictEqual(crew.gameState.shop.crew.apprentice_driver, 1);
-  assert.strictEqual(Boolean(crew.gameState.stamps.first_apprentice), true);
+  const crew = context.hireCrewRole('apprentice_driver', bulkOrders.gameState);
+  assert.strictEqual(crew.ok, false);
+  assert(crew.reason.includes('deferred'));
+  assert.strictEqual(crew.gameState.shop.crew.apprentice_driver, 0);
+  assert.strictEqual(Boolean(crew.gameState.stamps.first_apprentice), false);
 
-  const spiritGenerator = context.buySpiritGenerator('tea_kettle', crew.gameState);
+  const spiritGenerator = context.buySpiritGenerator('tea_kettle', bulkOrders.gameState);
   assert.strictEqual(spiritGenerator.ok, true);
   spiritGenerator.gameState.shop.shopSpirit = 25;
   const boost = context.useShopSpiritBoost('rush_prep', spiritGenerator.gameState);
@@ -8639,6 +8755,7 @@ async function run() {
   testCounterServiceV1AutomatesEarnedShopHandoffs();
   testCounterServicePolishStatsUpgradesAndSpiritPanel();
   testTofuGarageHighMidgameSupplyBottleneckBalance();
+  testTofuGarageRoutesSurfaceIsDeferred();
   testTofuGarageHighScalePerformanceGuardrails();
   testTofuGarageManagerDeskV1();
   testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit();
