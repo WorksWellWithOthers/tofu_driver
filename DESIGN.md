@@ -52,8 +52,9 @@ Default visitor behavior:
 - Cup page secondary CTA: visit or start Tofu Garage.
 - Cup result screens can include a small parked CTA back to Tofu Garage so Cup-first visitors discover
   the home progression loop without interrupting active driving.
-- Tofu Garage page primary CTA: the current shop loop, such as `Fulfill Shop Order` or the next shop
-  action, and Continue actions land near the shop action area rather than the page top.
+- Tofu Garage page primary CTA: the current shop decision, such as watching starter Counter Service
+  or buying the next bottleneck-solving upgrade, and Continue actions land near the shop action area
+  rather than the page top.
 - Delivery Crew is reachable as a parked placeholder/collection surface and must not be a dead nav
   item.
 
