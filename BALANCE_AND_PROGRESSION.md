@@ -462,6 +462,27 @@ Transcript-derived tuning notes:
 - Avoid expanding social/status, premium cosmetics, and endgame valuation before the local shop loop
   has repeatable motivation.
 
+### Tofu Garage V1 Completion Gate
+
+`TOFU_GARAGE_V1_COMPLETION_AUDIT.md` is the current readiness gate before the car phase. Its verdict
+is that Tofu Garage V1 is close enough to move toward a parked Covered Car / Dream Build teaser,
+but not full car building.
+
+Before implementing that teaser, verify:
+
+- fresh 3-minute flow works without manual Pack Tofu or manual fulfillment
+- first upgrade is reachable through idle play
+- returning-player suggestions remain useful
+- high-progress saves remain responsive
+- Manager Desk and Wholesale Pickup provide a clear late-V1 goal
+- Shop Spirit is either useful as emergency utility or de-emphasized
+- hidden route, crew, garage, Net Worth, and valuation systems do not appear as active mechanics
+
+The teaser transition should happen after the shop feels managed: Counter Service has scaled,
+Supplier Contracts have solved a stock bottleneck, and Manager Desk or Wholesale Pickup has made a
+full order queue feel like a business problem. The teaser is story and aspiration only; car parts,
+Cash migration, Net Worth, asset valuation, and garage events remain separate future slices.
+
 Current station-milestone scope:
 
 Station Milestone Boosts V1 is implemented as the smallest ownership-threshold layer: 5/10 Tofu
