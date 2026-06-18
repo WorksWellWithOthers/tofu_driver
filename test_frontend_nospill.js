@@ -3654,13 +3654,13 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(sealResul
   assert(context.wheelsProgressCardHtml.includes('Wheels · Level 1 / 5 · Wheels Installed'));
   assert(context.wheelsProgressCardHtml.includes('Exhaust · Level 0 / 5 · Not started'));
   assert(context.wheelsProgressCardHtml.includes('Next Dream Step: Polish Wheels'));
-  assert(context.wheelsProgressCardHtml.includes('More build tracks unlock later'));
+  assert(context.wheelsProgressCardHtml.includes('Not faster. Smoother.'));
   assert(!context.wheelsProgressCardHtml.includes('Buy Suspension'));
   assert(!context.wheelsProgressCardHtml.includes('Buy Brakes'));
   assert(!context.wheelsProgressCardHtml.includes('Buy Turbo'));
-  assert(context.wheelsProjectCardHtml.includes('Project Car Value'));
+  assert(context.wheelsProjectCardHtml.includes('Garage Build Value'));
   assert(context.wheelsProjectCardHtml.includes('$25K'));
-  assert(context.wheelsNetWorthCardHtml.includes('Project Car Value'));
+  assert(context.wheelsNetWorthCardHtml.includes('Garage Build Value'));
   assert(context.wheelsNetWorthCardHtml.includes('$25K'));
   assert.strictEqual(context.wheelsMilestone.id, 'polish-wheels');
   assert.strictEqual(context.wheelsAction.type, 'buy_dream_wheels_work');
@@ -3766,8 +3766,8 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(sealResul
   assert(context.sealProgressCardHtml.includes('Exhaust · Level 2 / 5 · Sealed Joints'));
   assert(context.sealProgressCardHtml.includes('Next Dream Step: Tuned Note · future'));
   assert(context.sealProgressCardHtml.includes('future Dream Garage pass'));
-  assert(context.sealProgressCardHtml.includes('Project Car Value: $475K'));
-  assert(context.sealProgressCardHtml.includes('Net Worth includes Cash + Tofu Business Value + Project Car Value'));
+  assert(context.sealProgressCardHtml.includes('Garage Build Value: $475K'));
+  assert(context.sealProgressCardHtml.includes('Net Worth V1 includes Cash + Tofu Business Value + Garage Build Value'));
   assert(!context.sealProgressCardHtml.includes('Tune Note'));
   assert(!context.sealProgressCardHtml.includes('Buy Tuned Note'));
   assert(!context.sealProgressCardHtml.includes('Buy Suspension'));
@@ -3782,7 +3782,7 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(sealResul
   assert(!context.sealCardHtml.includes('Buy Tuned Note'));
   assert.strictEqual(context.sealMilestone.id, 'prepare_showcase_display');
   assert.strictEqual(context.sealMilestone.name, 'Prepare Showcase Display');
-  assert.strictEqual(context.sealMilestone.reward, 'Project Car Value +$300K');
+  assert.strictEqual(context.sealMilestone.reward, 'Garage Build Value +$300K');
   assert.strictEqual(context.sealAction.type, 'showcase_prep_target');
   assert.strictEqual(context.sealAction.title, 'Next: Save Cash for Showcase Prep');
   assert(context.sealAction.copy.includes('Prepare it for its first display'));
@@ -5109,8 +5109,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618e'));
-  assert(html.includes('/static/nospill/app.css?v=20260618e'));
+  assert(html.includes('/static/nospill/app.js?v=20260618f'));
+  assert(html.includes('/static/nospill/app.css?v=20260618f'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -5549,8 +5549,8 @@ traceNetWorthMilestonesStep('render-active');
   assert.strictEqual(context.underMillionNextMilestone.id, 'net_worth_1m');
   assert(context.underMillionNetWorthCard.includes('Cash'));
   assert(context.underMillionNetWorthCard.includes('Tofu Business Value'));
-  assert(context.underMillionNetWorthCard.includes('Project Car Value'));
-  assert(context.underMillionNetWorthCard.includes('Formula: Cash + Tofu Business Value + Project Car Value'));
+  assert(context.underMillionNetWorthCard.includes('Garage Build Value'));
+  assert(context.underMillionNetWorthCard.includes('Formula: Cash + Tofu Business Value + Garage Build Value'));
 
   assert(context.millionNetWorthBeforeSync >= 1000000);
   assert.strictEqual(context.millionNewMilestones.length, 1);
@@ -5570,7 +5570,7 @@ traceNetWorthMilestonesStep('render-active');
   assert.strictEqual(context.millionShowcaseStatus.valueAdded, 300000);
   assert(context.millionShowcaseCard.includes('Showcase Interest'));
   assert(context.millionShowcaseCard.includes('Prepare Showcase Display'));
-  assert(context.millionShowcaseCard.includes('Project Car Value +$300K'));
+  assert(context.millionShowcaseCard.includes('Garage Build Value +$300K'));
   assert(context.millionShowcaseCard.includes('Unlocks: Sponsor Inquiry after the first Net Worth milestone'));
   assert(!context.millionShowcaseCard.includes('Buy Sponsor'));
   assert.strictEqual(context.millionSponsorCard, '');
@@ -5620,7 +5620,7 @@ traceNetWorthMilestonesStep('render-active');
   assert(context.sponsorCard.includes('Sponsor packages come later'));
   assert(!context.sponsorCard.includes('Accept Sponsor Inquiry'));
   assert(context.sponsorNetWorthCard.includes('Brand Value'));
-  assert(context.sponsorNetWorthCard.includes('Formula: Cash + Tofu Business Value + Project Car Value + Brand Value'));
+  assert(context.sponsorNetWorthCard.includes('Formula: Cash + Tofu Business Value + Garage Build Value + Brand Value'));
   assert.strictEqual(context.sponsorNextMilestone.id, 'net_worth_10m');
   assert.notStrictEqual(context.sponsorAction.type, 'accept_sponsor_inquiry');
   assert.strictEqual(context.secondSponsor.ok, false);
@@ -6091,7 +6091,9 @@ function testTofuGarageCashAndNetWorthV1() {
   assert(netWorthHtml.includes('Net Worth'));
   assert(netWorthHtml.includes('toward $1T'));
   assert(netWorthHtml.includes('Cash + Tofu Business Value'));
-  assert(netWorthHtml.includes('Cash can be spent now or invested into assets'));
+  assert(netWorthHtml.includes('careful garage/story value'));
+  assert(!netWorthHtml.includes('Garage Build Value'));
+  assert(!/project car/i.test(netWorthHtml));
   assert(!netWorthHtml.includes('shares'));
 
   vm.runInContext(`

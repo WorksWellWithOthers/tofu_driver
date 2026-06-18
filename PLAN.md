@@ -19,7 +19,7 @@
 - Cash economy V1 is implemented. Player-facing shop money is Cash; order payouts may still use
   tips as flavor (`+$10 from tips`). The legacy save field remains `shop.tips` for compatibility.
 - Net Worth V1 is implemented as a compact later-game progress model:
-  `Cash + Tofu Business Value + Project Car Value + Brand Value` toward `$1T Net Worth`. Full asset
+  `Cash + Tofu Business Value + Garage Build Value + Brand Value` toward `$1T Net Worth`. Full asset
   valuation, garage value, company value, and liabilities remain future.
 - Basic Mode uses device motion only and does not request location.
 - Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
@@ -158,9 +158,9 @@
   events, full asset valuation, or car stats.
 - First Dream Build Investment Purchase V1 is implemented as a compact Wheels Fund card after the
   covered-car teaser or high-progress qualifying saves. Wheels cost `$50K Cash`, subtract Cash,
-  persist locally, and start `$25K Project Car Value`.
+  persist locally, and start `$25K Garage Build Value`.
 - Exhaust Purchase + Work Level V1 is implemented after Wheels level 3. Exhaust costs `$250K Cash`
-  and adds `$125K Project Car Value`; Seal Joints costs `$375K Cash` and adds another `$200K`.
+  and adds `$125K Garage Build Value`; Seal Joints costs `$375K Cash` and adds another `$200K`.
   Tuned Note remains target-only/future, with no Dream Garage tab, full parts inventory, completed
   build events, or full valuation.
 - Dream Build Progress V1 is implemented as a compact Overview card. It counts current work stages
@@ -169,7 +169,7 @@
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
-- Ultimate Net Worth has a V1 progress model: Cash plus Tofu Business Value plus Project Car Value
+- Ultimate Net Worth has a V1 progress model: Cash plus Tofu Business Value plus Garage Build Value
   can appear after later shop milestones. Dream Garage full asset value, business/franchise/
   car-company layers, and aerospace/space layers are still future direction only.
 - Net Worth Milestone Ladder V1 is implemented with compact `$1M`, `$10M`, `$100M`, `$1B`, and
@@ -177,7 +177,7 @@
   Interest after early Dream Build progress.
 - Showcase Interest / Showcase Prep V1 is implemented as the first proof that car investment can
   unlock higher-value opportunities. `Prepare Showcase Display` costs `$500K Cash`, adds `$300K`
-  Project Car Value, persists locally, and unlocks Sponsor Inquiry.
+  Garage Build Value, persists locally, and unlocks Sponsor Inquiry.
 - Sponsor Inquiry V1 is implemented as a one-time parked opportunity after Showcase Prep, early Dream
   Build progress, and first `$1M Net Worth`: accepting it grants `$250K Cash` and `$500K Brand Value`.
   Recurring sponsor packages, completed-car events, auctions, racing/routes, and full Dream Garage
@@ -247,7 +247,7 @@ Canonical references:
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
 11. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream
    Build Progress V1: confirm the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden
-   until Wheels level 3, Buy Exhaust appears only when affordable and stable, Project Car Value and
+   until Wheels level 3, Buy Exhaust appears only when affordable and stable, Garage Build Value and
    `5 / 30` progress totals stay clear, Tuned Note remains target-only, and urgent shop bottlenecks
    still win.
 12. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
@@ -309,11 +309,11 @@ Future Dream Garage milestone sequence:
 1. Verify Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream
    Build Progress V1:
    `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
-   Fitted, `$375K` Sealed Joints, `5 / 30` progress, Project Car Value totals, persistence, and
+   Fitted, `$375K` Sealed Joints, `5 / 30` progress, Garage Build Value totals, persistence, and
    priority rules.
 2. Playtest whether the next slice should add Tuned Note or return to Wheels levels 4-5.
 3. Refine Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
-4. Refine Project Car Value from part work levels after the first two tracks feel clear.
+4. Refine Garage Build Value from careful work levels after the first two tracks feel clear.
 5. Design the first completed-build event threshold and event choice requirements.
 6. Later implement Keep / Show / Auction choice only after part progression is proven.
 7. Much later connect completed builds to business expansion, collector networks, and scalable
@@ -332,7 +332,7 @@ Future endgame/business sequence:
    money balance.
 5. Tune Net Worth V1 reveal timing and first `$1M` Showcase Interest timing; the $1T goal does not
    increase, only progress toward `$1T Net Worth` increases.
-6. Keep Tofu Business Value and Project Car Value as simple V1 estimates until full asset valuation
+6. Keep Tofu Business Value and Garage Build Value as simple V1 estimates until full asset valuation
    is designed.
 7. Add covered-car teaser pacing and Dream Garage Stage 0 before any asset valuation system.
 8. Add the first car part as a Cash investment.

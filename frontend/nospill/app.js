@@ -270,6 +270,7 @@ const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
 const SPONSOR_INQUIRY_CASH_REWARD = 250000;
 const SPONSOR_INQUIRY_BRAND_VALUE = 500000;
+const GARAGE_BUILD_VALUE_LABEL = "Garage Build Value";
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -4715,6 +4716,22 @@ function netWorthV1(gameState) {
   );
 }
 
+function netWorthV1FormulaLabel(gameState) {
+  const state = normalizeGameState(gameState);
+  const components = ["Cash", "Tofu Business Value"];
+  if (projectCarValueV1(state) > 0) components.push(GARAGE_BUILD_VALUE_LABEL);
+  if (brandValueV1(state) > 0) components.push("Brand Value");
+  return components.join(" + ");
+}
+
+function netWorthGrowthGuidance(gameState) {
+  const state = normalizeGameState(gameState);
+  const extras = [];
+  if (projectCarValueV1(state) > 0) extras.push("garage build value");
+  if (brandValueV1(state) > 0) extras.push("Brand Value");
+  return `Keep growing Cash and business value${extras.length ? `, plus ${extras.join(" and ")}` : ""}.`;
+}
+
 function netWorthProgress(gameState) {
   const current = netWorthV1(gameState);
   return {
@@ -5148,7 +5165,7 @@ function buyShowcasePrep(gameState, options = {}) {
     : new Date().toISOString();
   const message = "Showcase Display Prepared.";
   next.shop.counterService.lastResult = message;
-  next = addLedgerEntry(next, "story", `${message} Project Car Value +${formatCashCount(SHOWCASE_PREP_VALUE)}.`);
+  next = addLedgerEntry(next, "story", `${message} ${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(SHOWCASE_PREP_VALUE)}.`);
   next = syncNetWorthMilestones(next).gameState;
   return {
     ok: true,
@@ -9876,7 +9893,7 @@ function nextBestAction(gameState, options = {}) {
       type: ready ? "prepare_showcase" : "showcase_prep_target",
       title: ready ? "Next: Prepare Showcase Display" : "Next: Save Cash for Showcase Prep",
       copy: ready
-        ? "Turn the project car into something worth showing."
+        ? "Turn the covered build into a polished showcase moment. Not faster. Smoother."
         : "The project is getting attention. Prepare it for its first display.",
       buttonLabel: ready ? "Prepare Showcase Display" : "View Showcase Prep",
       disabled: false,
@@ -9986,7 +10003,7 @@ function nextBestAction(gameState, options = {}) {
           title: work.action === "polish-wheels" ? "Next: Polish Wheels" : "Next: Balance Fitment",
           copy: work.action === "polish-wheels"
             ? "Invest Cash into the first Dream Build detail."
-            : "The project car is starting to take shape.",
+            : "The covered build is starting to feel intentional.",
           buttonLabel: work.buttonLabel,
           disabled: false,
         };
@@ -9999,7 +10016,7 @@ function nextBestAction(gameState, options = {}) {
             type: ready ? "buy_dream_exhaust" : "dream_investment_target",
             title: ready ? "Next: Buy Exhaust" : "Next: Grow Cash for Exhaust",
             copy: ready
-              ? "Add the next real part to the project car."
+              ? "Add a cleaner garage detail. This is story/status work, not speed."
               : "The shop is funding the next Dream Build part.",
             buttonLabel: ready ? "Buy Exhaust" : "View Exhaust Fund",
             disabled: false,
@@ -10020,7 +10037,7 @@ function nextBestAction(gameState, options = {}) {
           type: ready ? "prepare_showcase" : "showcase_prep_target",
           title: ready ? "Next: Prepare Showcase Display" : "Next: Save Cash for Showcase Prep",
           copy: ready
-            ? "Turn the project car into something worth showing."
+            ? "Turn the covered build into a polished showcase moment. Not faster. Smoother."
             : "The project is getting attention. Prepare it for its first display.",
           buttonLabel: ready ? "Prepare Showcase Display" : "View Showcase Prep",
           disabled: false,
@@ -10041,7 +10058,7 @@ function nextBestAction(gameState, options = {}) {
         return {
           type: "net_worth_milestone",
           title: `Next: Grow Net Worth to ${netWorthMilestone.label.replace(" Net Worth", "")}`,
-          copy: `Keep improving Cash, business value, project car value${brandValueV1(state) > 0 ? ", and Brand Value" : ""}.`,
+          copy: netWorthGrowthGuidance(state),
           buttonLabel: "View Net Worth",
           disabled: false,
         };
@@ -10772,11 +10789,11 @@ function renderDreamInvestmentTargetCard(gameState) {
       return renderIdleCard({
         title: wheelsLevel >= 2 ? "Polished Wheels" : "Dream Build",
         status: `${levelTitle} · Level ${formatShopCount(wheelsLevel)} / 5`,
-        copy: `${levelCopy} Cash goes down now. Project Car Value goes up. Future opportunities unlock later.`,
+        copy: `${levelCopy} Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up. Not faster. Smoother.`,
         extra: `
           <div class="nospill-afford-progress">
             <div class="nospill-afford-progress-head">
-              <span>Project Car Value</span>
+              <span>${GARAGE_BUILD_VALUE_LABEL}</span>
               <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
             </div>
             <small>Next Work: ${escapeHtml(work.title)}</small>
@@ -10807,8 +10824,8 @@ function renderDreamInvestmentTargetCard(gameState) {
         ? "Balanced Fitment · Wheels Level 3 / 5"
         : `Exhaust Fitted · Exhaust Level ${formatShopCount(exhaustLevel)} / 5`;
       const copy = isPurchase
-        ? "The project needs its first real sound. Cash goes down now. Project Car Value goes up. Future opportunities unlock later."
-        : "The project finally has a voice, even if it still needs work. Cash goes down now. Project Car Value goes up. Future opportunities unlock later.";
+        ? `The project needs its first calm note. Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up.`
+        : `The project finally has a calmer voice. Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up.`;
       return renderIdleCard({
         title: cardTitle,
         status,
@@ -10816,7 +10833,7 @@ function renderDreamInvestmentTargetCard(gameState) {
         extra: `
           <div class="nospill-afford-progress">
             <div class="nospill-afford-progress-head">
-              <span>Project Car Value</span>
+              <span>${GARAGE_BUILD_VALUE_LABEL}</span>
               <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
             </div>
             <small>${isPurchase ? "Next Dream Part" : "Next Work"}: ${escapeHtml(exhaustWork.title)}</small>
@@ -10845,7 +10862,7 @@ function renderDreamInvestmentTargetCard(gameState) {
         extra: `
           <div class="nospill-afford-progress">
             <div class="nospill-afford-progress-head">
-              <span>Project Car Value</span>
+              <span>${GARAGE_BUILD_VALUE_LABEL}</span>
               <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
             </div>
             <small>Next Exhaust Work: Tuned Note</small>
@@ -10862,7 +10879,7 @@ function renderDreamInvestmentTargetCard(gameState) {
       extra: `
         <div class="nospill-afford-progress">
           <div class="nospill-afford-progress-head">
-            <span>Project Car Value</span>
+            <span>${GARAGE_BUILD_VALUE_LABEL}</span>
             <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
           </div>
           <small>Future Wheels Work: Showpiece Fitment</small>
@@ -10876,7 +10893,7 @@ function renderDreamInvestmentTargetCard(gameState) {
     title: "First Dream Investment",
     status: target.ready ? "Wheels Ready" : target.fundLabel,
     copy: target.ready
-      ? "Cash goes down now. Project Car Value begins. Future opportunities unlock later."
+      ? `Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} begins. Not faster. Smoother.`
       : "The covered car needs its first real part. Save Cash from the shop to start the build.",
     extra: `
       <div class="nospill-afford-progress">
@@ -10895,7 +10912,7 @@ function renderDreamInvestmentTargetCard(gameState) {
           <span style="width: ${percent}%"></span>
         </div>
         <small>${formatShopCount(percent)}% · ${target.ready ? "Start the dream build with the first real part." : "Save Cash from the shop to start the build."}</small>
-        <small>Cash can be saved, spent, or invested into assets later. Net Worth V1 includes Cash + Tofu Business Value + Project Car Value${brandValueV1(state) > 0 ? " + Brand Value" : ""}.</small>
+        <small>Cash can be saved, spent, or invested into assets later. Net Worth V1 includes ${netWorthV1FormulaLabel(state)}.</small>
       </div>
     `,
     actions: target.ready && coveredCarTeaserSeen(state)
@@ -10909,9 +10926,9 @@ function renderProjectCarValueCard(gameState) {
   const value = projectCarValueV1(gameState);
   if (value < 1) return "";
   return renderIdleCard({
-    title: "Project Car Value",
+    title: GARAGE_BUILD_VALUE_LABEL,
     status: formatCashCount(value),
-    copy: "Dream Build work started the project car. Full Dream Garage and car-part systems come later.",
+    copy: "The covered build is gaining story and showcase value. This is not a speed upgrade.",
   });
 }
 
@@ -10925,7 +10942,7 @@ function renderDreamBuildProgressCard(gameState) {
   return renderIdleCard({
     title: "Dream Build Progress",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
-    copy: "The project car is built one part at a time. More build tracks unlock later.",
+    copy: "The covered build grows through careful garage work. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
         <div
@@ -10942,7 +10959,7 @@ function renderDreamBuildProgressCard(gameState) {
         <small>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
         <small>Next Dream Step: ${escapeHtml(nextStep.title)}${nextStep.future ? " · future" : ""}</small>
         <small>${escapeHtml(nextStep.copy)}</small>
-        <small>Project Car Value: ${escapeHtml(formatCashCount(projectValue))}. Net Worth includes Cash + Tofu Business Value + Project Car Value${brandValueV1(state) > 0 ? " + Brand Value" : ""}.</small>
+        <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}. Net Worth V1 includes ${escapeHtml(netWorthV1FormulaLabel(state))}.</small>
       </div>
     `,
   });
@@ -11007,10 +11024,18 @@ function renderNetWorthCard(gameState) {
         </div>
       `
     : "";
+  const buildValueRow = projectValue > 0
+    ? `
+        <div class="nospill-afford-progress-head">
+          <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+          <strong>${escapeHtml(formatCashCount(projectValue))}</strong>
+        </div>
+      `
+    : "";
   return renderIdleCard({
     title: "Net Worth",
     status: `${formatCashCount(progress.current)} toward $1T`,
-    copy: "Cash can be spent now or invested into assets that may grow Net Worth later.",
+    copy: "Cash can be spent now or invested into careful garage/story value later. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
         <div class="nospill-afford-progress-head">
@@ -11021,12 +11046,9 @@ function renderNetWorthCard(gameState) {
           <span>Tofu Business Value</span>
           <strong>${escapeHtml(formatCashCount(businessValue))}</strong>
         </div>
-        <div class="nospill-afford-progress-head">
-          <span>Project Car Value</span>
-          <strong>${escapeHtml(formatCashCount(projectValue))}</strong>
-        </div>
+        ${buildValueRow}
         ${brandValueRow}
-        <small>Formula: Cash + Tofu Business Value + Project Car Value${brandValue > 0 ? " + Brand Value" : ""}.</small>
+        <small>Formula: ${escapeHtml(netWorthV1FormulaLabel(state))}.</small>
         <div class="nospill-afford-progress-head">
           <span>Current era: Tofu Garage</span>
           <strong>${escapeHtml(`${roundTo(percent, percent < 1 ? 3 : 1)}%`)}</strong>
@@ -11117,7 +11139,7 @@ function renderShowcaseInterestCard(gameState) {
       extra: `
         <div class="nospill-afford-progress">
           <div class="nospill-afford-progress-head">
-            <span>Project Car Value</span>
+            <span>${GARAGE_BUILD_VALUE_LABEL}</span>
             <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
           </div>
           <small>Showcase Display contribution: +${escapeHtml(formatCashCount(SHOWCASE_PREP_VALUE))}</small>
@@ -11136,7 +11158,7 @@ function renderShowcaseInterestCard(gameState) {
           <span>Prepare Showcase Display</span>
           <strong>${escapeHtml(formatCash(SHOWCASE_PREP_COST))}</strong>
         </div>
-        <small>Effect: Project Car Value +${escapeHtml(formatCashCount(SHOWCASE_PREP_VALUE))}</small>
+        <small>Effect: ${GARAGE_BUILD_VALUE_LABEL} +${escapeHtml(formatCashCount(SHOWCASE_PREP_VALUE))}</small>
         <small>Unlocks: Sponsor Inquiry after the first Net Worth milestone.</small>
         ${showcase.affordable ? "" : `<small>Need ${escapeHtml(formatCash(showcase.missingCash))} more Cash.</small>`}
       </div>
@@ -11178,7 +11200,7 @@ function renderSponsorInquiryCard(gameState) {
   return renderIdleCard({
     title: "Sponsor Inquiry",
     status: "Local parts sponsor",
-    copy: "A local parts sponsor noticed the project car. They want their name near the first display build.",
+    copy: "A local parts sponsor noticed the careful garage build. They want their name near the first display.",
     extra: `
       <div class="nospill-afford-progress">
         <div class="nospill-afford-progress-head">
@@ -11536,7 +11558,7 @@ function nextMilestoneForShop(gameState) {
           name: work.title,
           progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
           percent: progress.percent,
-          reward: `Project Car Value +${formatCashCount(work.valueAdded)}`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(work.valueAdded)}`,
           guidance: work.copy,
         };
       }
@@ -11552,7 +11574,7 @@ function nextMilestoneForShop(gameState) {
             ? "Exhaust Fund is ready"
             : `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
           percent: progress.percent,
-          reward: `Project Car Value +${formatCashCount(exhaustWork.valueAdded)}`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(exhaustWork.valueAdded)}`,
           guidance: exhaustWork.copy,
         };
       }
@@ -11564,7 +11586,7 @@ function nextMilestoneForShop(gameState) {
           name: "Prepare Showcase Display",
           progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
           percent: progress.percent,
-          reward: `Project Car Value +${formatCashCount(showcase.valueAdded)}`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(showcase.valueAdded)}`,
           guidance: "The project is getting attention. Prepare it for its first display.",
         };
       }
@@ -11588,7 +11610,7 @@ function nextMilestoneForShop(gameState) {
           progressText: `${formatCashCount(progress.current)} / ${formatCashCount(progress.required)}`,
           percent: progress.percent,
           reward: netWorthMilestone.reward,
-          guidance: `Keep improving Cash, business value, project car value${brandValueV1(state) > 0 ? ", and Brand Value" : ""}.`,
+          guidance: netWorthGrowthGuidance(state),
         };
       }
       const nextTarget = dreamBuildNextTargetProgress(state);
@@ -11598,7 +11620,7 @@ function nextMilestoneForShop(gameState) {
         name: "Dream Build Progress",
         progressText: `${formatShopCount(buildProgress.completed)} / ${formatShopCount(buildProgress.total)} work stages`,
         percent: buildProgress.percent || nextTarget.percent,
-        reward: "First project car path",
+        reward: "First smooth garage-build path",
         guidance: "Next Dream Step: Tuned Note. Future Dream Garage work; keep growing Cash.",
       };
     }
@@ -11611,8 +11633,8 @@ function nextMilestoneForShop(gameState) {
       percent: target.percent,
       reward: target.ready ? "First Dream Build investment" : "First Dream Build investment target",
       guidance: target.ready
-        ? "Spend Cash on Wheels to start Project Car Value."
-        : "Save Cash from the shop for the first visible project-car target.",
+        ? `Spend Cash on Wheels to start ${GARAGE_BUILD_VALUE_LABEL}.`
+        : "Save Cash from the shop for the first visible garage-build target.",
     };
   }
 
@@ -11640,7 +11662,7 @@ function nextMilestoneForShop(gameState) {
       name: "Prepare Showcase Display",
       progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
       percent: progress.percent,
-      reward: `Project Car Value +${formatCashCount(showcasePriority.valueAdded)}`,
+      reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(showcasePriority.valueAdded)}`,
       guidance: "The project is getting attention. Prepare it for its first display.",
     };
   }
@@ -11665,7 +11687,7 @@ function nextMilestoneForShop(gameState) {
         progressText: `${formatCashCount(progress.current)} / ${formatCashCount(progress.required)}`,
         percent: progress.percent,
         reward: netWorthMilestone.reward,
-        guidance: `Keep improving Cash, business value, project car value${brandValueV1(state) > 0 ? ", and Brand Value" : ""}.`,
+        guidance: netWorthGrowthGuidance(state),
       };
     }
   }

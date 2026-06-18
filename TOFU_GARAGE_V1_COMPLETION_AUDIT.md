@@ -63,15 +63,15 @@ or car assets.
 | Routes | Deferred / scaffolding | Route-related concepts remain hidden/deferred until meaningful. |
 | Delivery Crew gameplay | Deferred | Current crew surface is cosmetic/placeholder only. |
 | Covered Car / Dream Build Teaser V1 | Implemented | Unlocks after managed-shop scale and Wholesale Pickup progress; no car mechanics are implemented. |
-| First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, and starts `$25K Project Car Value` without a Dream Garage tab or full parts inventory. |
-| Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Project Car Value to `$65K`; Balanced Fitment costs `$150K` and raises Project Car Value to `$150K`; levels 4-5 remain future. |
-| Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Project Car Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note remains future/target-only. |
+| First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, and starts `$25K Garage Build Value` without a Dream Garage tab or full parts inventory. |
+| Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Garage Build Value to `$65K`; Balanced Fitment costs `$150K` and raises Garage Build Value to `$150K`; levels 4-5 remain future. |
+| Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Garage Build Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note remains future/target-only. |
 | Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level against `30` planned work stages; current maximum is `5 / 30`; future tracks remain locked/deferred. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
-| Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Project Car Value`. |
+| Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
-| Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Project Car Value + Brand Value. Full valuation remains future. |
+| Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Garage Build Value + Brand Value. Full valuation remains future. |
 
 ## 3. Missing Or Weak Tofu Garage Mechanics
 
@@ -169,17 +169,17 @@ Current code status:
 
 - Cash is the implemented player-facing currency.
 - `shop.tips` is still the legacy internal field for save compatibility.
-- Net Worth V1 is implemented as Cash + Tofu Business Value + Project Car Value + Brand Value.
+- Net Worth V1 is implemented as Cash + Tofu Business Value + Garage Build Value + Brand Value.
 - Net Worth Milestone Ladder V1 is implemented as a compact stepping-stone display toward `$1T`.
 - Showcase Interest / Showcase Prep V1 and Sponsor Inquiry V1 are implemented as the first value
   unlocks after early Dream Build progress and first `$1M Net Worth`; they do not implement
   completed events, recurring sponsor packages, routes, racing, or full Dream Garage.
 - First Dream Build Investment Purchase V1 lets the player buy Wheels for `$50K Cash`; Wheels add
-  `$25K Project Car Value`.
+  `$25K Garage Build Value`.
 - Wheels Work Levels V1 implements level 2 Polished Wheels and level 3 Balanced Fitment. Project
   Car Value totals are `$65K` and `$150K` respectively.
 - Exhaust Purchase + Work Level V1 implements level 1 Exhaust Fitted and level 2 Sealed Joints.
-  Combined Project Car Value totals are `$275K` and `$475K` respectively.
+  Combined Garage Build Value totals are `$275K` and `$475K` respectively.
 - Dream Build Progress V1 shows the project as `30` planned work stages. Current implemented stages
   are Wheels levels 1-3 and Exhaust levels 1-2.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
@@ -208,14 +208,14 @@ budgets, and any Car Asset Value-facing accounting.
 5. Keep route, crew gameplay, license prestige, and full garage systems hidden/deferred.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
 7. Playtest First Dream Build Investment Purchase V1: verify the `$50K` Wheels purchase and `$25K`
-   Project Car Value tradeoff are clear without feeling like full Dream Garage.
+   Garage Build Value tradeoff is clear without feeling like full Dream Garage.
 8. Playtest Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream Build Progress V1
    before any broader part system. Parts should be purchased once, then improved through levels.
 9. Keep Tuned Note target-only until Exhaust levels 1-2 prove the second part track.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
-12. Keep Net Worth V1 as Cash + Tofu Business Value + Project Car Value + Brand Value until full
+12. Keep Net Worth V1 as Cash + Tofu Business Value + Garage Build Value + Brand Value until full
    valuation has a coherent accounting model.
 
 ## 8. Deferred Systems
