@@ -516,6 +516,15 @@ Each tier should make earlier tiers more valuable:
 The first 10 minutes should prove the one-loop game. Fresh players should not see every advanced
 system.
 
+Starter diagnosis after the idle-first pass: 10 starting Tofu Stock was too low for a 6-stock
+Simple Tofu Box, because the first automatic handoff could leave the counter stock-blocked before
+Tips reached the first useful 20-29 Tip purchase. The implemented opener now starts with a 24-stock
+buffer, 1 ready Delivery Order, 1 Tofu Press, 1 Prep Counter, and running Counter Service. Target
+timing is first automatic pickup in 10-30 seconds, first useful upgrade affordability in 30-90
+seconds, and at least three automatic Simple Tofu Box completions without Pack Tofu or manual
+fulfillment. Tofu Stock should become a real bottleneck after the opening, not a blocker before the
+first upgrade.
+
 | Time Window | Player Goal | Visible Resources | Visible Active Buttons | Visible Disabled Buttons | Hidden Systems | Intended Bottleneck | Next Best Action Text | Expected Reward | Expected Unlock / Story Beat |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | 0:00 to 0:30 | Understand that the shop runs itself | Tofu Stock, Delivery Orders, Tips, Reputation, Shop XP | Watch Counter Service; Take the Cup Test as secondary | Buy Tofu Press if shown but unaffordable | Routes, Crew, Garage, Shop Spirit, Rivals, License, deep Passport, character/sound economy | Waiting for first automatic handoff | `Watch the first order complete` | +Tips, +Reputation, +Shop XP | `The first order leaves the counter.` |
@@ -565,7 +574,7 @@ implementation pass deliberately aligns code to them.
 
 | Time | Expected State | New Mechanic | Primary Button | Bottleneck | Reward Feeling |
 | --- | --- | --- | --- | --- | --- |
-| 0:00 | Fresh shop has stock, 1 ready order, 1 Tofu Press, 1 Prep Counter, and running Counter Service | Simple Tofu Box | Watch Counter Service | none yet | the shop runs by itself |
+| 0:00 | Fresh shop has 24 Tofu Stock, 1 ready order, 1 Tofu Press, 1 Prep Counter, and running Counter Service | Simple Tofu Box | Watch Counter Service | none yet | the shop runs by itself |
 | 0:30 | First automatic order result shows Tips/Reputation/Shop XP and first story beat | Shop Order Complete | Return to Tofu Garage | need more Tips or next order | the shop woke up |
 | 1:00 | Prep Counter progress is visible | ready/preparing order split | Wait for Prep Counter or buy the first bottleneck fix | order prep | the shop works while parked |
 | 2:00 | First purchase is close or available | Tidy Packaging / first station choice | Buy bottleneck-solving improvement | Tips | clear progress toward first upgrade |
@@ -1698,7 +1707,7 @@ Starter first-loop balance sheet:
 
 | id | label | phase | visibleAt | enabledWhen | primaryResource | costFormula | baseCost | growthRate | effectFormula | expectedUnlockTime | expectedTimeToBuy | bottleneckSolved | nextBestActionText | replacesOrAutomates | safetyNotes | status |
 | --- | --- | --- | --- | --- | --- | --- | ---: | ---: | --- | --- | --- | --- | --- | --- | --- | --- |
-| starter_counter_service | Starter Counter Service | First Loop | Start | Ready Orders >= 1 and supplied | Delivery Orders, Tofu Stock | flat by order type | 1 order handoff | 1.0 | +10 Tips, +1 Reputation, +8 Shop XP for Simple Tofu Box | 0:00 | 10 to 30 seconds | Converts orders to spendable progress automatically | Watch Counter Service | manual fulfillment | Parked-only, no sensors | Implemented |
+| starter_counter_service | Starter Counter Service | First Loop | Start | Ready Orders >= 1 and supplied | Delivery Orders, Tofu Stock | flat by order type | 1 order handoff | 1.0 | +10 Tips, +1 Reputation, +8 Shop XP for Simple Tofu Box; fresh shop starts with 24 Tofu Stock so the first 3 automatic handoffs can reach the first upgrade without Pack Tofu | 0:00 | 10 to 30 seconds for first handoff; first upgrade affordable in 30 to 90 seconds | Converts orders to spendable progress automatically | Watch Counter Service / Wait for Tofu Stock ETA | manual fulfillment | Parked-only, no sensors | Implemented |
 | family_tofu_tray | Family Tofu Tray | First Shop | 5 fulfilled orders or Shop Level 2 | 24 stock and 1 ready order | Tofu Stock, Delivery Orders | flat | 24 stock + 1 order | 1.0 | +45 Tips, +3 Reputation, +24 Shop XP | 5 to 10 minutes | when unlocked and stocked | Extra stock has value | Fulfill Family Tofu Tray | simple order only | Shop only | Implemented |
 | festival_bento | Festival Bento | First Shop / later | 25 fulfilled orders or 50 Reputation | 75 stock and 2 ready orders | Tofu Stock, Delivery Orders | flat | 75 stock + 2 orders | 1.0 | +130 Tips, +8 Reputation, +70 Shop XP | 20 to 40 minutes | when unlocked and stocked | First big payout | Fulfill Festival Bento | smaller orders | Shop only | Implemented |
 | tofu_press | Tofu Press | First Loop | Start | always owned; buys require Tips | Tips | baseCost * growthRate ^ owned | 15 | 1.15 | +0.10 stock/sec target each | 0:00 | about 2 orders for first extra | Low Tofu Stock | Buy Tofu Press | Pack Tofu pressure | Shop only | Implemented, target value gap |

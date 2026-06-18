@@ -242,6 +242,7 @@ const SHOP_GENERATOR_SAVE_MS = 5000;
 const SHOP_RENDER_THROTTLE_MS = 500;
 const SHOP_OPEN_TICK_MAX_SECONDS = 300;
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
+const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
 const PREP_COUNTER_CONSUME_PER_ORDER = 2;
 const PREP_COUNTER_BASE_ORDERS_PER_SECOND = 1 / 40;
@@ -2665,7 +2666,7 @@ function shouldRevealUpgradesSystem(previousState, nextState) {
 
 function defaultShopState() {
   return {
-    tofuStock: 10,
+    tofuStock: STARTER_TOFU_STOCK,
     deliveryOrders: 1,
     tips: 0,
     reputation: 0,
@@ -2680,6 +2681,7 @@ function defaultShopState() {
     lifetimeDeliveryOrders: 0,
     lifetimeTips: 0,
     lifetimeTofuPacked: 0,
+    starterStockBufferApplied: true,
     lifetimeReputation: 0,
     lifetimeShopXP: 0,
     lifetimeRoutesCompleted: 0,
@@ -2823,9 +2825,31 @@ function normalizeShopState(shop) {
     100000,
   );
   if (stations.tofu_press < 1) stations.tofu_press = 1;
+  const sourceTofuStock = safeNonNegativeInteger(source.tofuStock, defaults.tofuStock);
+  const sourceLifetimeDeliveryOrders = safeNonNegativeInteger(
+    source.lifetimeDeliveryOrders,
+    defaults.lifetimeDeliveryOrders,
+  );
+  const sourceLifetimeTips = Math.max(
+    tips,
+    safeNonNegativeInteger(source.lifetimeTips, defaults.lifetimeTips),
+  );
+  const sourceLifetimeTofuPacked = safeNonNegativeInteger(
+    source.lifetimeTofuPacked,
+    defaults.lifetimeTofuPacked,
+  );
+  const starterStockBufferApplied = Boolean(source.starterStockBufferApplied);
+  const shouldTopUpStarterStock = !starterStockBufferApplied
+    && sourceTofuStock < STARTER_TOFU_STOCK
+    && sourceLifetimeTips <= 30
+    && sourceLifetimeDeliveryOrders <= 3
+    && sourceLifetimeTofuPacked === 0
+    && stations.tofu_press === 1
+    && stations.prep_counter === 1;
+  const tofuStock = shouldTopUpStarterStock ? STARTER_TOFU_STOCK : sourceTofuStock;
   return {
     ...defaults,
-    tofuStock: safeNonNegativeInteger(source.tofuStock, defaults.tofuStock),
+    tofuStock,
     deliveryOrders: clampDeliveryOrderQueue(source.deliveryOrders ?? defaults.deliveryOrders),
     tips,
     reputation,
@@ -2837,18 +2861,10 @@ function normalizeShopState(shop) {
     cupStabilityXP: safeNonNegativeInteger(source.cupStabilityXP, defaults.cupStabilityXP),
     routeKnowledge: safeNonNegativeInteger(source.routeKnowledge, defaults.routeKnowledge),
     shopLevel: getShopLevel(reputation),
-    lifetimeDeliveryOrders: safeNonNegativeInteger(
-      source.lifetimeDeliveryOrders,
-      defaults.lifetimeDeliveryOrders,
-    ),
-    lifetimeTips: Math.max(
-      tips,
-      safeNonNegativeInteger(source.lifetimeTips, defaults.lifetimeTips),
-    ),
-    lifetimeTofuPacked: safeNonNegativeInteger(
-      source.lifetimeTofuPacked,
-      defaults.lifetimeTofuPacked,
-    ),
+    lifetimeDeliveryOrders: sourceLifetimeDeliveryOrders,
+    lifetimeTips: sourceLifetimeTips,
+    lifetimeTofuPacked: sourceLifetimeTofuPacked,
+    starterStockBufferApplied: starterStockBufferApplied || shouldTopUpStarterStock || tofuStock >= STARTER_TOFU_STOCK,
     lifetimeReputation: Math.max(
       reputation,
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
@@ -4896,6 +4912,49 @@ function counterServiceBatchPreview(gameState) {
   };
 }
 
+function counterServiceCandidateOrderTypes(gameState) {
+  const state = normalizeGameState(gameState);
+  const priority = state.shop.counterService.priority || "best_available";
+  const candidateIds = priority === "simple_only"
+    ? ["simple_tofu_box"]
+    : ["catering_crate", "festival_bento", "family_tofu_tray", "simple_tofu_box"];
+  return candidateIds
+    .map((orderTypeId) => shopOrderTypeById(orderTypeId))
+    .filter((orderType) => orderType && shopOrderTypeUnlocked(orderType, state));
+}
+
+function cheapestCounterServiceOrderNeedingStock(gameState) {
+  const state = normalizeGameState(gameState);
+  const ready = readyDeliveryOrders(state.shop);
+  const candidates = counterServiceCandidateOrderTypes(state)
+    .filter((orderType) => ready >= orderType.deliveryOrdersRequired);
+  const usableCandidates = candidates.length > 0 ? candidates : counterServiceCandidateOrderTypes(state);
+  return usableCandidates.reduce((cheapest, orderType) => (
+    !cheapest || orderType.tofuRequired < cheapest.tofuRequired ? orderType : cheapest
+  ), null);
+}
+
+function counterServiceStockEtaDetail(gameState, orderType) {
+  const state = normalizeGameState(gameState);
+  if (!orderType) return { detail: "", stockEtaSeconds: null };
+  const currentTofu = safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE);
+  const missingTofu = Math.max(0, orderType.tofuRequired - currentTofu);
+  if (missingTofu <= 0) return { detail: "", stockEtaSeconds: null };
+  const rates = getShopGeneratorRates(state);
+  const stockPerSecond = safeNonNegativeNumber(rates.tofuPressPerSecond, 0, SHOP_MAX_RESOURCE);
+  if (stockPerSecond <= 0) {
+    return {
+      detail: "Tofu Stock is not catching up. Buy Tofu Press when Tips are available.",
+      stockEtaSeconds: null,
+    };
+  }
+  const stockEtaSeconds = Math.max(1, Math.ceil(missingTofu / stockPerSecond));
+  return {
+    detail: `Needs ${formatShopCost(orderType.tofuRequired)} Tofu Stock. Current: ${formatShopBalance(currentTofu)}. Ready in about ${formatShopCount(stockEtaSeconds)} sec.`,
+    stockEtaSeconds,
+  };
+}
+
 function counterServiceProgress(gameState, now = new Date()) {
   const state = normalizeGameState(gameState);
   const service = state.shop.counterService;
@@ -5090,7 +5149,10 @@ function applyCounterServiceTick(gameState, now = new Date(), options = {}) {
       xpGained: totals.shopXP,
     }, ...next.recentRewards].slice(0, 12);
   } else {
-    next.shop.counterService.lastResult = "Counter Service is waiting for prepared orders and tofu stock.";
+    const status = counterServiceIncomeStatus(next);
+    next.shop.counterService.lastResult = status.detail
+      ? `${status.text}. ${status.detail}`
+      : status.text;
   }
   next.shop.lastShopTickAt = nowIso;
   return {
@@ -5121,21 +5183,44 @@ function counterServiceIncomeStatus(gameState) {
     };
   }
   const ready = readyDeliveryOrders(state.shop);
-  if (ready < 1) {
-    return {
-      active: false,
-      text: "Counter Service waiting for ready orders",
-      status: "waiting_orders",
-      tipsPerMinute: 0,
-    };
-  }
   const preview = counterServiceBatchPreview(state);
   if (preview.quantity < 1) {
+    const neededOrderType = cheapestCounterServiceOrderNeedingStock(state);
+    const missingOrders = ready < 1;
+    const missingStock = Boolean(
+      neededOrderType
+      && safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE) < neededOrderType.tofuRequired
+    );
+    const stockDetail = missingStock
+      ? counterServiceStockEtaDetail(state, neededOrderType)
+      : { detail: "", stockEtaSeconds: null };
+    if (missingOrders && missingStock) {
+      return {
+        active: false,
+        text: "Counter Service waiting for Tofu Stock and ready orders",
+        status: "waiting_both",
+        tipsPerMinute: 0,
+        detail: stockDetail.detail,
+        stockEtaSeconds: stockDetail.stockEtaSeconds,
+        neededTofu: neededOrderType ? neededOrderType.tofuRequired : 0,
+      };
+    }
+    if (missingOrders) {
+      return {
+        active: false,
+        text: "Counter Service waiting for ready orders",
+        status: "waiting_orders",
+        tipsPerMinute: 0,
+      };
+    }
     return {
       active: false,
       text: "Counter Service waiting for Tofu Stock",
       status: "waiting_stock",
       tipsPerMinute: 0,
+      detail: stockDetail.detail,
+      stockEtaSeconds: stockDetail.stockEtaSeconds,
+      neededTofu: neededOrderType ? neededOrderType.tofuRequired : 0,
     };
   }
   const interval = counterServiceIntervalSeconds(state);
@@ -5238,6 +5323,7 @@ function shopRenderSignature(gameState) {
     formatShopRate(rates.prepOrdersPerSecond),
     counter.status,
     counter.text,
+    counter.detail || "",
     appState.shopInlineResult || "",
   ].join("|");
 }
@@ -8425,6 +8511,20 @@ function nextBestAction(gameState, options = {}) {
     };
   }
   if (shopUnlocked && counterIncome.status === "waiting_stock") {
+    if (
+      Number.isFinite(counterIncome.stockEtaSeconds)
+      && counterIncome.stockEtaSeconds <= 90
+      && state.shop.reputation < 10000
+      && state.shop.shopLevel < 25
+    ) {
+      return {
+        type: "wait_counter_stock",
+        title: "Next: Wait for Tofu Stock",
+        copy: `${counterIncome.detail} Buy Tofu Press or Steady Pressing when Tips are available.`,
+        buttonLabel: "Stock Recovering",
+        disabled: true,
+      };
+    }
     if (supplierUpgrade) {
       return {
         type: "buy_upgrade",
@@ -9392,6 +9492,7 @@ function renderCounterServiceCard(state) {
         </div>
         <small>${escapeHtml(progress.message)}</small>
         <small>${escapeHtml(income.text)}</small>
+        ${income.detail ? `<small>${escapeHtml(income.detail)}</small>` : ""}
         ${service.lastResult ? `<small>${escapeHtml(service.lastResult)}</small>` : ""}
       </div>
     `,

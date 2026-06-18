@@ -112,14 +112,16 @@
   Spine V1 adds tested First Upgrade Purchased, First Family Tofu Tray, First 10 Orders, and First
   100 Tips stamp milestones; Delivery Shelf is the first tested throughput support station; Shop
   Sign is the first tested Reputation support station.
-- Tofu Garage now starts idle-first: Tofu Press, Prep Counter, and starter Counter Service move the
-  first Simple Tofu Box without repeated player labor.
+- Tofu Garage now starts idle-first: a 24-stock starter buffer, Tofu Press, Prep Counter, and
+  starter Counter Service move the first Simple Tofu Boxes without repeated player labor.
 - Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
   players back to fulfilling shop orders.
 - Next Best Action follows the current bottleneck: fresh saves point to watching the starter shop,
   ready orders point to Counter Service, early low stock points to Tofu Press, high-midgame stock
   blocks point to Supplier Contracts or stock upgrades, and healthy stock with slow orders points
   to Tidy Packaging, Prep Counter, or order prep rather than Tofu Press.
+- Counter Service blocked copy now identifies only the missing resource and shows a Tofu Stock ETA
+  when the press is actively refilling the next pickup.
 - Pack Tofu and manual fulfillment are collapsed Manual Backup actions. Don't Spill the Cup is an
   optional certified boost rather than the normal shop bottleneck during order prep, Tip shortages,
   or managed-shop supply shortages.

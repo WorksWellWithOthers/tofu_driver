@@ -85,6 +85,7 @@ globalThis.buildCoachRecap = buildCoachRecap;
 globalThis.deliveryPassportSummary = deliveryPassportSummary;
 globalThis.updateMerchProgress = updateMerchProgress;
 globalThis.updateCommuteMastery = updateCommuteMastery;
+globalThis.normalizeGameState = normalizeGameState;
 globalThis.getShopLevel = getShopLevel;
 globalThis.getShopUpgradeCatalog = getShopUpgradeCatalog;
 globalThis.getShopProductionRate = getShopProductionRate;
@@ -3258,7 +3259,7 @@ function testShopOrderTypeProgressionAndRewards() {
   });
 
   const fresh = context.defaultGameState();
-  assert.strictEqual(fresh.shop.tofuStock, 10);
+  assert.strictEqual(fresh.shop.tofuStock, 24);
   assert.strictEqual(fresh.shop.deliveryOrders, 1);
   assert.strictEqual(fresh.shop.stations.tofu_press, 1);
   assert.strictEqual(fresh.shop.stations.prep_counter, 1);
@@ -3278,7 +3279,7 @@ function testShopOrderTypeProgressionAndRewards() {
   assert.strictEqual(simple.deliveryOrdersUsed, 1);
   assert.strictEqual(simple.tofuUsed, 6);
   assert.strictEqual(simple.gameState.shop.deliveryOrders, 0);
-  assert.strictEqual(simple.gameState.shop.tofuStock, 4);
+  assert.strictEqual(simple.gameState.shop.tofuStock, 18);
   assert.strictEqual(simple.firstShopOrderStampUnlocked, true);
   assert.strictEqual(Boolean(simple.gameState.stamps.first_shop_order), true);
   assert(simple.report.includes('First Shop Order stamp discovered'));
@@ -3291,13 +3292,10 @@ function testShopOrderTypeProgressionAndRewards() {
     new Date('2026-06-15T12:00:40.000Z'),
   ).gameState;
   assert(secondOrderReady.shop.deliveryOrders >= 1);
-  const stockPressure = context.fulfillShopOrder(secondOrderReady, { activeDrive: false });
-  assert.strictEqual(stockPressure.ok, false);
-  assert(stockPressure.reason.includes('Need 2 more tofu stock'));
-  secondOrderReady.shop.tofuStock = 6;
   const secondSimple = context.fulfillShopOrder(secondOrderReady, { activeDrive: false });
   assert.strictEqual(secondSimple.ok, true);
   assert.strictEqual(secondSimple.gameState.shop.tips, 20);
+  assert.strictEqual(secondSimple.gameState.shop.lifetimeTofuPacked, 0);
   const baseRate = context.getShopGeneratorRates(secondSimple.gameState).prepOrdersPerSecond;
   const firstUpgrade = context.buyStationUpgrade('prep_counter_faster', secondSimple.gameState);
   assert.strictEqual(firstUpgrade.ok, true);
@@ -3517,7 +3515,7 @@ function testCoreGameSpineV1MilestonesAndSupportStations() {
   });
 
   const fresh = context.defaultGameState();
-  assert.strictEqual(fresh.shop.tofuStock, 10);
+  assert.strictEqual(fresh.shop.tofuStock, 24);
   assert.strictEqual(fresh.shop.deliveryOrders, 1);
   const first = context.fulfillShopOrders(fresh, 1, {
     activeDrive: false,
@@ -3932,6 +3930,7 @@ function testCounterServiceV1AutomatesEarnedShopHandoffs() {
   const fresh = context.defaultGameState();
   assert.strictEqual(context.isCounterServiceUnlocked(fresh), true);
   assert.strictEqual(fresh.shop.counterService.running, true);
+  assert.strictEqual(fresh.shop.tofuStock, 24);
 
   vm.runInContext(`
 function makeNode() {
@@ -3964,6 +3963,33 @@ globalThis.counterFreshHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(freshAutoTick.gameState.shop.reputation, 1);
   assert.strictEqual(freshAutoTick.gameState.shop.lifetimeDeliveryOrders, 1);
   assert(freshAutoTick.gameState.stamps.first_shop_order);
+
+  let starterLoop = JSON.parse(JSON.stringify(fresh));
+  starterLoop.shop.lastGeneratorTickAt = '2026-06-15T12:00:00.000Z';
+  starterLoop.shop.lastShopTickAt = '2026-06-15T12:00:00.000Z';
+  starterLoop.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+  let starterCompleted = 0;
+  for (let second = 10; second <= 90; second += 10) {
+    const now = new Date(Date.parse('2026-06-15T12:00:00.000Z') + second * 1000);
+    const generated = context.applyShopGeneratorTick(starterLoop, now, { maxSeconds: 10 });
+    const serviced = context.applyCounterServiceTick(generated.gameState, now, { maxSeconds: 10 });
+    starterLoop = serviced.gameState;
+    starterCompleted += serviced.completed;
+  }
+  assert(starterCompleted >= 3);
+  assert(starterLoop.shop.tips >= 20);
+  assert.strictEqual(starterLoop.shop.lifetimeTofuPacked, 0);
+  assert(starterLoop.shop.lifetimeDeliveryOrders >= 3);
+
+  const earlyMigrated = context.defaultGameState();
+  earlyMigrated.shop.tofuStock = 5;
+  earlyMigrated.shop.tips = 10;
+  earlyMigrated.shop.lifetimeTips = 10;
+  earlyMigrated.shop.lifetimeDeliveryOrders = 1;
+  delete earlyMigrated.shop.starterStockBufferApplied;
+  const normalizedEarlyMigrated = context.normalizeGameState(earlyMigrated);
+  assert.strictEqual(normalizedEarlyMigrated.shop.tofuStock, 24);
+  assert.strictEqual(normalizedEarlyMigrated.shop.starterStockBufferApplied, true);
 
   const unlocked = context.defaultGameState();
   unlocked.shop.lifetimeDeliveryOrders = 10;
@@ -4145,9 +4171,15 @@ function testCounterServicePolishStatsUpgradesAndSpiritPanel() {
   const stockBlocked = JSON.parse(JSON.stringify(state));
   stockBlocked.shop.tofuStock = 0;
   assert.strictEqual(context.counterServiceIncomeStatus(stockBlocked).text, 'Counter Service waiting for Tofu Stock');
+  assert(context.counterServiceIncomeStatus(stockBlocked).detail.includes('Needs 6 Tofu Stock'));
+  assert(context.counterServiceIncomeStatus(stockBlocked).detail.includes('Ready in about'));
   const orderBlocked = JSON.parse(JSON.stringify(state));
   orderBlocked.shop.deliveryOrders = 0;
   assert.strictEqual(context.counterServiceIncomeStatus(orderBlocked).text, 'Counter Service waiting for ready orders');
+  const bothBlocked = JSON.parse(JSON.stringify(state));
+  bothBlocked.shop.deliveryOrders = 0;
+  bothBlocked.shop.tofuStock = 0;
+  assert.strictEqual(context.counterServiceIncomeStatus(bothBlocked).text, 'Counter Service waiting for Tofu Stock and ready orders');
 
   vm.runInContext(`
 function makeNode() {
@@ -4514,8 +4546,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260617b'));
-  assert(html.includes('/static/nospill/app.css?v=20260617b'));
+  assert(html.includes('/static/nospill/app.js?v=20260617c'));
+  assert(html.includes('/static/nospill/app.css?v=20260617c'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -5738,7 +5770,7 @@ function testResetExportAndImportProgressAreScopedAndValidated() {
 function testTofuShopStatePackIdleAndUpgradeRules() {
   const context = loadNoSpillContext();
   const state = context.defaultGameState();
-  assert.strictEqual(state.shop.tofuStock, 10);
+  assert.strictEqual(state.shop.tofuStock, 24);
   assert.strictEqual(state.shop.deliveryOrders, 1);
   assert.strictEqual(state.shop.tips, 0);
   assert.strictEqual(state.shop.reputation, 0);
@@ -5749,11 +5781,11 @@ function testTofuShopStatePackIdleAndUpgradeRules() {
 
   const activePack = context.packTofu(state, { activeDrive: true });
   assert.strictEqual(activePack.ok, false);
-  assert.strictEqual(activePack.gameState.shop.tofuStock, 10);
+  assert.strictEqual(activePack.gameState.shop.tofuStock, 24);
 
   const firstHomePack = context.packTofu(state, { activeDrive: false });
   assert.strictEqual(firstHomePack.ok, true);
-  assert.strictEqual(firstHomePack.gameState.shop.tofuStock, 11);
+  assert.strictEqual(firstHomePack.gameState.shop.tofuStock, 25);
   assert.strictEqual(firstHomePack.gameState.shop.reputation, 0);
 
   const noOrderState = context.defaultGameState();
