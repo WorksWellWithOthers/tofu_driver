@@ -197,6 +197,42 @@ Guardrails:
 - Scene visuals must never cover or intercept controls.
 - If scene work again hurts responsiveness, disable the decorative scene before adding content.
 
+## Test Harness And Recommendation Hotspot: 2026-06
+
+Observed during Net Worth Milestone / Showcase work:
+
+- `node test_frontend_nospill.js` looked stuck because it printed no per-test progress while a broad
+  Tofu Garage fixture was running.
+- A targeted Net Worth / Showcase test path took roughly one minute before failing.
+- Earlier offline and high-midgame fixtures also felt much slower than the amount of logic being
+  tested should require.
+
+Actual root cause found:
+
+- App startup inside the test VM was not the problem; loading `app.js` was about 20ms.
+- Recommendation helpers were repeatedly normalizing the full game state. In the slow Net Worth
+  path, individual recommendation calls caused tens of thousands of `normalizeGameState()` calls.
+- The old `getShopLevel()` and `shopLevelProgress()` walked level-by-level from Reputation, which
+  amplified the cost whenever normalization was repeated.
+- Upgrade relevance sorting recomputed expensive context for every candidate and comparator path.
+
+Fix applied:
+
+- The test runner now logs `[test x/y] START/PASS/SLOW/FAIL`, supports `TEST_GREP=<name>` for
+  targeted runs, supports `TEST_TRACE_CONTEXT=1` for opt-in timing diagnostics, and caches the
+  compiled `app.js` VM script.
+- Shop Level math is constant-time with a bounded correction step instead of walking every level.
+- Upgrade recommendation scoring computes the shop relevance context once per pass and avoids
+  repeated full normalization inside the sort path.
+- Net Worth / Showcase milestone priority now yields to urgent queue/stock/counter bottlenecks and
+  Manager Desk queue pressure.
+
+Result:
+
+- The Net Worth / Showcase targeted test path dropped from roughly 61 seconds to roughly 2 seconds.
+- The full frontend suite still includes several broad DOM-heavy shop tests, but it now completes
+  with visible progress and fails fast at the exact test name instead of appearing hung.
+
 ## BigNumber Decision
 
 BigNumber or mantissa/exponent is not needed now.

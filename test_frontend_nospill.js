@@ -9,6 +9,26 @@ const NOSPILL_IMAGES_DIR = path.join(NOSPILL_DIR, 'images');
 const NOSPILL_JS = path.join(NOSPILL_DIR, 'app.js');
 const NOSPILL_CSS = path.join(NOSPILL_DIR, 'app.css');
 const NOSPILL_HTML = path.join(NOSPILL_DIR, 'index.html');
+const TEST_GREP = process.env.TEST_GREP || "";
+const TEST_PROGRESS = process.env.TEST_PROGRESS !== "0";
+const TEST_SLOW_MS = Number(process.env.TEST_SLOW_MS || 1000);
+const TEST_TRACE_CONTEXT = process.env.TEST_TRACE_CONTEXT === "1";
+let cachedNoSpillSource = null;
+let cachedNoSpillAppScript = null;
+
+function readNoSpillSource() {
+  if (cachedNoSpillSource === null) {
+    cachedNoSpillSource = fs.readFileSync(NOSPILL_JS, 'utf8');
+  }
+  return cachedNoSpillSource;
+}
+
+function noSpillAppScript() {
+  if (cachedNoSpillAppScript === null) {
+    cachedNoSpillAppScript = new vm.Script(readNoSpillSource(), { filename: 'app.js' });
+  }
+  return cachedNoSpillAppScript;
+}
 
 function walkFiles(dir) {
   const skippedDirs = new Set([
@@ -30,7 +50,7 @@ function walkFiles(dir) {
 }
 
 function loadNoSpillContext(options = {}) {
-  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  const started = Date.now();
   const context = {
     console,
     window: options.window || {},
@@ -39,9 +59,11 @@ function loadNoSpillContext(options = {}) {
   if (options.document) context.document = options.document;
   if (options.URLSearchParams) context.URLSearchParams = options.URLSearchParams;
   vm.createContext(context);
+  const createdAt = Date.now();
+  noSpillAppScript().runInContext(context);
+  const appLoadedAt = Date.now();
   vm.runInContext(
-    `${source}
-globalThis.rankForWater = rankForWater;
+    `globalThis.rankForWater = rankForWater;
 globalThis.computeWaterLoss = computeWaterLoss;
 globalThis.computeAudioTargetGain = computeAudioTargetGain;
 globalThis.normalizeAudioLevel = normalizeAudioLevel;
@@ -124,8 +146,16 @@ globalThis.netWorthV1 = netWorthV1;
 globalThis.netWorthProgress = netWorthProgress;
 globalThis.shouldShowNetWorthV1 = shouldShowNetWorthV1;
 globalThis.renderNetWorthCard = renderNetWorthCard;
+globalThis.nextNetWorthMilestone = nextNetWorthMilestone;
+globalThis.netWorthMilestoneReached = netWorthMilestoneReached;
+globalThis.syncNetWorthMilestones = syncNetWorthMilestones;
+globalThis.renderNetWorthMilestoneCard = renderNetWorthMilestoneCard;
 globalThis.projectCarValueV1 = projectCarValueV1;
 globalThis.renderProjectCarValueCard = renderProjectCarValueCard;
+globalThis.showcaseInterestUnlocked = showcaseInterestUnlocked;
+globalThis.showcasePrepStatus = showcasePrepStatus;
+globalThis.renderShowcaseInterestCard = renderShowcaseInterestCard;
+globalThis.buyShowcasePrep = buyShowcasePrep;
 globalThis.dreamBuildWheelsLevel = dreamBuildWheelsLevel;
 globalThis.dreamBuildExhaustLevel = dreamBuildExhaustLevel;
 globalThis.dreamBuildProgressVisible = dreamBuildProgressVisible;
@@ -300,6 +330,9 @@ globalThis.GAME_STORAGE_KEY = GAME_STORAGE_KEY;`,
     context,
     { filename: 'app.js' },
   );
+  if (TEST_TRACE_CONTEXT) {
+    console.error(`[context] create=${createdAt - started}ms app=${appLoadedAt - createdAt}ms exports=${Date.now() - appLoadedAt}ms`);
+  }
   return context;
 }
 
@@ -3621,7 +3654,8 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(sealResul
   assert(!context.wheelsProgressCardHtml.includes('Buy Turbo'));
   assert(context.wheelsProjectCardHtml.includes('Project Car Value'));
   assert(context.wheelsProjectCardHtml.includes('$25K'));
-  assert(context.wheelsNetWorthCardHtml.includes('Project Car Value ($25K)'));
+  assert(context.wheelsNetWorthCardHtml.includes('Project Car Value'));
+  assert(context.wheelsNetWorthCardHtml.includes('$25K'));
   assert.strictEqual(context.wheelsMilestone.id, 'polish-wheels');
   assert.strictEqual(context.wheelsAction.type, 'buy_dream_wheels_work');
   assert.strictEqual(context.secondWheelsPurchase.ok, false);
@@ -3740,12 +3774,12 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(sealResul
   assert(context.sealCardHtml.includes('Full Dream Garage comes later'));
   assert(!context.sealCardHtml.includes('Tune Note'));
   assert(!context.sealCardHtml.includes('Buy Tuned Note'));
-  assert.strictEqual(context.sealMilestone.id, 'dream_build_progress');
-  assert.strictEqual(context.sealMilestone.name, 'Dream Build Progress');
-  assert.strictEqual(context.sealMilestone.progressText, '5 / 30 work stages');
-  assert.strictEqual(context.sealAction.type, 'dream_investment_target');
-  assert.strictEqual(context.sealAction.title, 'Next: Grow Cash for Tuned Note');
-  assert(context.sealAction.copy.includes('future Dream Garage pass'));
+  assert.strictEqual(context.sealMilestone.id, 'prepare_showcase_display');
+  assert.strictEqual(context.sealMilestone.name, 'Prepare Showcase Display');
+  assert.strictEqual(context.sealMilestone.reward, 'Project Car Value +$300K');
+  assert.strictEqual(context.sealAction.type, 'showcase_prep_target');
+  assert.strictEqual(context.sealAction.title, 'Next: Save Cash for Showcase Prep');
+  assert(context.sealAction.copy.includes('Prepare it for its first display'));
   assert.strictEqual(context.secondSeal.ok, false);
   assert.strictEqual(context.activeExhaustPurchase.ok, false);
   assert.strictEqual(context.reloadedWheelsPurchased, true);
@@ -5069,8 +5103,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618c'));
-  assert(html.includes('/static/nospill/app.css?v=20260618c'));
+  assert(html.includes('/static/nospill/app.js?v=20260618d'));
+  assert(html.includes('/static/nospill/app.css?v=20260618d'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -5318,6 +5352,218 @@ globalThis.generousOfflineSummarySecond = offlineElements.shopOfflineEarnings.te
   assert(!context.generousOfflineSummaryFirst.includes('Infinity'));
   const suggestions = context.generousOfflineSummaryFirst.split('Suggested next: ')[1].split('.')[0].split('; ');
   assert(suggestions.length <= 3);
+}
+
+function testTofuGarageNetWorthMilestonesAndShowcaseInterestV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(source.includes('$1T Net Worth'));
+  assert(source.includes('SHOWCASE_PREP_COST'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+
+  vm.runInContext(`
+const traceNetWorthMilestones = ${TEST_TRACE_CONTEXT ? "true" : "false"};
+let traceNetWorthMilestonesAt = Date.now();
+let traceNormalizeCalls = 0;
+if (traceNetWorthMilestones) {
+  const traceOriginalNormalizeGameState = normalizeGameState;
+  normalizeGameState = function tracedNormalizeGameState(value) {
+    traceNormalizeCalls += 1;
+    return traceOriginalNormalizeGameState(value);
+  };
+}
+function traceNetWorthMilestonesStep(label) {
+  if (!traceNetWorthMilestones) return;
+  const now = Date.now();
+  console.error('[networth-step] ' + label + ' ' + (now - traceNetWorthMilestonesAt) + 'ms normalize=' + traceNormalizeCalls);
+  traceNormalizeCalls = 0;
+  traceNetWorthMilestonesAt = now;
+}
+function buildDreamFiveState(cash) {
+  const state = defaultGameState();
+  state.shop.tips = cash;
+  state.shop.lifetimeTips = Math.max(state.shop.lifetimeTips, cash, 100000);
+  state.shop.lifetimeDeliveryOrders = 150;
+  state.shop.reputation = 2000000;
+  state.shop.shopLevel = 150;
+  state.shop.tofuStock = 500000;
+  state.shop.deliveryOrders = 0;
+  state.shop.prepSlots = 0;
+  state.shop.stations.tofu_press = 5;
+  state.shop.stations.prep_counter = 5;
+  state.shop.stations.delivery_shelf = 1;
+  state.shop.stations.shop_sign = 1;
+  state.shop.stationUpgrades.counter_service_crew = 1;
+  state.shop.stationUpgrades.manager_shift_manager = 1;
+  state.shop.stationUpgrades.manager_wholesale_pickup = 1;
+  state.shop.wholesalePickupsCompleted = 1;
+  state.stamps.first_shop_order = { label: 'First Shop Order' };
+  state.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased' };
+  state.stamps.first_10_orders = { label: 'First 10 Orders' };
+  state.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray' };
+  state.stamps.first_100_tips = { label: 'First $100 Cash' };
+  state.shop.coveredCarTeaserUnlocked = true;
+  state.shop.coveredCarTeaserSeen = true;
+  state.shop.dreamBuild.wheelsPurchased = true;
+  state.shop.dreamBuild.wheelsLevel = 3;
+  state.shop.dreamBuild.exhaustPurchased = true;
+  state.shop.dreamBuild.exhaustLevel = 2;
+  return state;
+}
+
+const fresh = defaultGameState();
+globalThis.freshNetWorthMilestoneCard = renderNetWorthMilestoneCard(fresh);
+globalThis.freshShowcaseCard = renderShowcaseInterestCard(fresh);
+traceNetWorthMilestonesStep('fresh');
+
+const underMillion = buildDreamFiveState(0);
+globalThis.underMillionNetWorth = netWorthV1(underMillion);
+globalThis.underMillionMilestone = nextNetWorthMilestone(underMillion);
+globalThis.underMillionMilestoneCard = renderNetWorthMilestoneCard(underMillion);
+globalThis.underMillionShowcaseUnlocked = showcaseInterestUnlocked(underMillion);
+globalThis.underMillionShowcaseCard = renderShowcaseInterestCard(underMillion);
+globalThis.underMillionNextMilestone = nextMilestoneForShop(underMillion);
+globalThis.underMillionNetWorthCard = renderNetWorthCard(underMillion);
+traceNetWorthMilestonesStep('under-million');
+
+const millionRaw = buildDreamFiveState(600000);
+globalThis.millionNetWorthBeforeSync = netWorthV1(millionRaw);
+const synced = syncNetWorthMilestones(millionRaw);
+globalThis.millionNewMilestones = synced.newMilestones.map((milestone) => milestone.id);
+globalThis.millionReachedIds = synced.gameState.shop.dreamBuild.netWorthMilestonesReached.slice();
+globalThis.millionLastResult = synced.gameState.shop.counterService.lastResult;
+globalThis.millionLedgerCount = synced.gameState.shop.ledger.filter((entry) => entry.text.includes('Net Worth milestone reached')).length;
+const syncedAgain = syncNetWorthMilestones(synced.gameState);
+globalThis.millionNewAgain = syncedAgain.newMilestones.length;
+globalThis.millionLedgerCountAgain = syncedAgain.gameState.shop.ledger.filter((entry) => entry.text.includes('Net Worth milestone reached')).length;
+synced.gameState.shop.stations.tofu_press = 20;
+synced.gameState.shop.stations.prep_counter = 20;
+synced.gameState.shop.stations.delivery_shelf = 20;
+synced.gameState.shop.stations.shop_sign = 20;
+globalThis.millionNextNetWorth = nextNetWorthMilestone(synced.gameState);
+globalThis.millionMilestoneCard = renderNetWorthMilestoneCard(synced.gameState);
+globalThis.millionShowcaseUnlocked = showcaseInterestUnlocked(synced.gameState);
+globalThis.millionShowcaseStatus = showcasePrepStatus(synced.gameState);
+globalThis.millionShowcaseCard = renderShowcaseInterestCard(synced.gameState);
+traceNetWorthMilestonesStep('million-showcase-card');
+globalThis.millionNextMilestone = nextMilestoneForShop(synced.gameState);
+traceNetWorthMilestonesStep('million-next-milestone');
+globalThis.millionAction = nextBestAction(synced.gameState);
+traceNetWorthMilestonesStep('million-next-action');
+globalThis.millionReturningActions = returningPlayerSuggestedActions(synced.gameState);
+traceNetWorthMilestonesStep('million-synced');
+
+const urgent = JSON.parse(JSON.stringify(synced.gameState));
+urgent.shop.deliveryOrders = deliveryOrderQueueCapacity();
+globalThis.urgentShowcaseAction = nextBestAction(urgent);
+traceNetWorthMilestonesStep('urgent-action');
+globalThis.urgentShowcaseMilestone = nextMilestoneForShop(urgent);
+traceNetWorthMilestonesStep('urgent');
+
+const prepResult = buyShowcasePrep(synced.gameState, { now: new Date('2026-06-18T17:00:00Z') });
+traceNetWorthMilestonesStep('prep-buy');
+globalThis.showcasePrepOk = prepResult.ok;
+globalThis.showcasePrepFeedback = prepResult.feedback;
+globalThis.showcasePrepCashAfter = prepResult.gameState.shop.tips;
+globalThis.showcasePrepPrepared = prepResult.gameState.shop.dreamBuild.showcaseDisplayPrepared;
+globalThis.showcasePrepAt = prepResult.gameState.shop.dreamBuild.showcaseDisplayPreparedAt;
+globalThis.showcasePrepValue = projectCarValueV1(prepResult.gameState);
+globalThis.showcasePrepNetWorth = netWorthV1(prepResult.gameState);
+globalThis.showcasePrepFormula = cashBalance(prepResult.gameState) + tofuBusinessValue(prepResult.gameState) + projectCarValueV1(prepResult.gameState);
+globalThis.showcasePrepCard = renderShowcaseInterestCard(prepResult.gameState);
+globalThis.showcasePrepNextMilestone = nextMilestoneForShop(prepResult.gameState);
+traceNetWorthMilestonesStep('prep-next-milestone');
+globalThis.showcasePrepAction = nextBestAction(prepResult.gameState);
+traceNetWorthMilestonesStep('prep-next-action');
+globalThis.secondShowcasePrep = buyShowcasePrep(prepResult.gameState);
+globalThis.activeShowcasePrep = buyShowcasePrep(synced.gameState, { activeDrive: true });
+traceNetWorthMilestonesStep('prep-purchase');
+
+saveGameState(prepResult.gameState);
+const reloaded = loadGameState();
+globalThis.reloadedShowcasePrepared = reloaded.shop.dreamBuild.showcaseDisplayPrepared;
+globalThis.reloadedShowcaseValue = projectCarValueV1(reloaded);
+globalThis.reloadedShowcaseCard = renderShowcaseInterestCard(reloaded);
+
+appState.running = true;
+appState.calibrating = false;
+globalThis.activeMilestoneCard = renderNetWorthMilestoneCard(prepResult.gameState);
+globalThis.activeShowcaseCard = renderShowcaseInterestCard(prepResult.gameState);
+appState.running = false;
+appState.calibrating = true;
+globalThis.calibratingShowcaseCard = renderShowcaseInterestCard(prepResult.gameState);
+traceNetWorthMilestonesStep('render-active');
+`, context);
+
+  assert.strictEqual(context.freshNetWorthMilestoneCard, '');
+  assert.strictEqual(context.freshShowcaseCard, '');
+  assert(context.underMillionNetWorth < 1000000);
+  assert.strictEqual(context.underMillionMilestone.id, 'net_worth_1m');
+  assert(context.underMillionMilestoneCard.includes('Next Net Worth Milestone'));
+  assert(context.underMillionMilestoneCard.includes('$1M Net Worth'));
+  assert.strictEqual(context.underMillionShowcaseUnlocked, false);
+  assert.strictEqual(context.underMillionShowcaseCard, '');
+  assert.strictEqual(context.underMillionNextMilestone.id, 'net_worth_1m');
+  assert(context.underMillionNetWorthCard.includes('Cash'));
+  assert(context.underMillionNetWorthCard.includes('Tofu Business Value'));
+  assert(context.underMillionNetWorthCard.includes('Project Car Value'));
+  assert(context.underMillionNetWorthCard.includes('Formula: Cash + Tofu Business Value + Project Car Value'));
+
+  assert(context.millionNetWorthBeforeSync >= 1000000);
+  assert.strictEqual(context.millionNewMilestones.length, 1);
+  assert.strictEqual(context.millionNewMilestones[0], 'net_worth_1m');
+  assert(context.millionReachedIds.includes('net_worth_1m'));
+  assert(context.millionLastResult.includes('Net Worth milestone reached: First $1M'));
+  assert.strictEqual(context.millionLedgerCount, 1);
+  assert.strictEqual(context.millionNewAgain, 0);
+  assert.strictEqual(context.millionLedgerCountAgain, 1);
+  assert.strictEqual(context.millionNextNetWorth.id, 'net_worth_10m');
+  assert(context.millionMilestoneCard.includes('Net Worth Milestone Reached'));
+  assert(context.millionMilestoneCard.includes('First $1M'));
+  assert(context.millionMilestoneCard.includes('Next: $10M Net Worth'));
+  assert.strictEqual(context.millionShowcaseUnlocked, true);
+  assert.strictEqual(context.millionShowcaseStatus.prepared, false);
+  assert.strictEqual(context.millionShowcaseStatus.cost, 500000);
+  assert.strictEqual(context.millionShowcaseStatus.valueAdded, 300000);
+  assert(context.millionShowcaseCard.includes('Showcase Interest'));
+  assert(context.millionShowcaseCard.includes('Prepare Showcase Display'));
+  assert(context.millionShowcaseCard.includes('Project Car Value +$300K'));
+  assert(context.millionShowcaseCard.includes('Sponsor Inquiry target, future only'));
+  assert(!context.millionShowcaseCard.includes('Buy Sponsor'));
+  assert.strictEqual(context.millionNextMilestone.id, 'prepare_showcase_display');
+  assert.strictEqual(context.millionAction.type, 'prepare_showcase');
+  assert.strictEqual(context.millionAction.buttonLabel, 'Prepare Showcase Display');
+  assert(context.millionReturningActions.length <= 3);
+  assert(context.millionReturningActions.some((item) => item.includes('$1M Net Worth') || item.includes('Showcase Prep')));
+
+  assert.notStrictEqual(context.urgentShowcaseAction.type, 'prepare_showcase');
+  assert(context.urgentShowcaseAction.title.includes('Clear the Order Queue') || context.urgentShowcaseAction.copy.includes('queue is full'));
+  assert.notStrictEqual(context.urgentShowcaseMilestone.id, 'prepare_showcase_display');
+
+  assert.strictEqual(context.showcasePrepOk, true);
+  assert.strictEqual(context.showcasePrepFeedback, 'Showcase Display Prepared.');
+  assert.strictEqual(context.showcasePrepCashAfter, 100000);
+  assert.strictEqual(context.showcasePrepPrepared, true);
+  assert(context.showcasePrepAt.includes('2026-06-18'));
+  assert.strictEqual(context.showcasePrepValue, 775000);
+  assert.strictEqual(context.showcasePrepNetWorth, context.showcasePrepFormula);
+  assert(context.showcasePrepCard.includes('Showcase Display Prepared'));
+  assert(context.showcasePrepCard.includes('Sponsor Inquiry remains future'));
+  assert(!context.showcasePrepCard.includes('Buy Sponsor'));
+  assert.strictEqual(context.showcasePrepNextMilestone.id, 'net_worth_10m');
+  assert(['buy_upgrade', 'net_worth_milestone'].includes(context.showcasePrepAction.type));
+  assert.strictEqual(context.secondShowcasePrep.ok, false);
+  assert.strictEqual(context.activeShowcasePrep.ok, false);
+  assert.strictEqual(context.reloadedShowcasePrepared, true);
+  assert.strictEqual(context.reloadedShowcaseValue, 775000);
+  assert(context.reloadedShowcaseCard.includes('Showcase Display Prepared'));
+  assert.strictEqual(context.activeMilestoneCard, '');
+  assert.strictEqual(context.activeShowcaseCard, '');
+  assert.strictEqual(context.calibratingShowcaseCard, '');
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -8861,93 +9107,130 @@ function testQualifiedRouteAnalysisAndQualification() {
   assert.strictEqual(qualification.status, 'qualified');
 }
 
+const TESTS = [
+  ["testNoSpillIsNotLinkedFromExistingFrontendSurfaces", testNoSpillIsNotLinkedFromExistingFrontendSurfaces],
+  ["testNoSitemapOrRobotsRevealNoSpill", testNoSitemapOrRobotsRevealNoSpill],
+  ["testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata", testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata],
+  ["testTofuDriverBrandHierarchy", testTofuDriverBrandHierarchy],
+  ["testCargoTypeDriveShapeAndCupTrailResultSlice", testCargoTypeDriveShapeAndCupTrailResultSlice],
+  ["testCoachRecapV1UsesSafeOutcomeBasedSummary", testCoachRecapV1UsesSafeOutcomeBasedSummary],
+  ["testSmoothControlRecapDriveShapeTrailAndDailyCreditFollowup", testSmoothControlRecapDriveShapeTrailAndDailyCreditFollowup],
+  ["testFirstTimeGameDashboardIsVisibleBeforeSetup", testFirstTimeGameDashboardIsVisibleBeforeSetup],
+  ["testTwoSurfaceRoutingSeparatesShopAndCupTest", testTwoSurfaceRoutingSeparatesShopAndCupTest],
+  ["testCupTestMobileMotionSupportDetection", testCupTestMobileMotionSupportDetection],
+  ["testProgressiveRevealTeasersUnlockAfterFirstDelivery", testProgressiveRevealTeasersUnlockAfterFirstDelivery],
+  ["testTofuShopGeneratorUpgradeUiIsHonestAndProgressive", testTofuShopGeneratorUpgradeUiIsHonestAndProgressive],
+  ["testEarlyShopResourceFunnelMakesTipsObvious", testEarlyShopResourceFunnelMakesTipsObvious],
+  ["testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal", testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal],
+  ["testTofuStockRunwayGuidesEarlyPurchases", testTofuStockRunwayGuidesEarlyPurchases],
+  ["testCompactTofuShopNumberFormatting", testCompactTofuShopNumberFormatting],
+  ["testShopRecentRewardUsesSafeFallbackLabel", testShopRecentRewardUsesSafeFallbackLabel],
+  ["testDriverAndShopProgressionAreSeparated", testDriverAndShopProgressionAreSeparated],
+  ["testFirstStampFanfareCelebratesAndPersists", testFirstStampFanfareCelebratesAndPersists],
+  ["testStampFanfareReducedMotionUsesStaticState", testStampFanfareReducedMotionUsesStaticState],
+  ["testDiscoveryFanfareRevealsUpgradesOnce", testDiscoveryFanfareRevealsUpgradesOnce],
+  ["testDiscoveryFanfareReducedMotionUsesStaticState", testDiscoveryFanfareReducedMotionUsesStaticState],
+  ["testCoveredCarTeaserIsOneTimeStoryBeatOnly", testCoveredCarTeaserIsOneTimeStoryBeatOnly],
+  ["testShopOrderTypeProgressionAndRewards", testShopOrderTypeProgressionAndRewards],
+  ["testCoreGameSpineV1MilestonesAndSupportStations", testCoreGameSpineV1MilestonesAndSupportStations],
+  ["testTofuShopNextMilestoneBarGuidesImplementedSpine", testTofuShopNextMilestoneBarGuidesImplementedSpine],
+  ["testTofuShopStationMilestoneBoostsV1", testTofuShopStationMilestoneBoostsV1],
+  ["testCounterServiceV1AutomatesEarnedShopHandoffs", testCounterServiceV1AutomatesEarnedShopHandoffs],
+  ["testCounterServicePolishStatsUpgradesAndSpiritPanel", testCounterServicePolishStatsUpgradesAndSpiritPanel],
+  ["testTofuGarageHighMidgameSupplyBottleneckBalance", testTofuGarageHighMidgameSupplyBottleneckBalance],
+  ["testTofuGarageRoutesSurfaceIsDeferred", testTofuGarageRoutesSurfaceIsDeferred],
+  ["testTofuGarageGenerousOfflineProgressV1", testTofuGarageGenerousOfflineProgressV1],
+  ["testTofuGarageNetWorthMilestonesAndShowcaseInterestV1", testTofuGarageNetWorthMilestonesAndShowcaseInterestV1],
+  ["testTofuGarageHighScalePerformanceGuardrails", testTofuGarageHighScalePerformanceGuardrails],
+  ["testTofuGarageManagerDeskV1", testTofuGarageManagerDeskV1],
+  ["testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit", testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit],
+  ["testTofuGarageCashAndNetWorthV1", testTofuGarageCashAndNetWorthV1],
+  ["testNextBestActionHierarchyStaysSinglePrimary", testNextBestActionHierarchyStaysSinglePrimary],
+  ["testTofuDriverArtworkIsIsolatedAndAccessible", testTofuDriverArtworkIsIsolatedAndAccessible],
+  ["testSuperCuteCollectiblesLandingAndMerchCopy", testSuperCuteCollectiblesLandingAndMerchCopy],
+  ["testDiscordCtaConfigAndRendering", testDiscordCtaConfigAndRendering],
+  ["testPostHogAnalyticsNoOpsWithoutConfigAndHonorsOptOut", testPostHogAnalyticsNoOpsWithoutConfigAndHonorsOptOut],
+  ["testPostHogAnalyticsInitializesWithPrivacyOptions", testPostHogAnalyticsInitializesWithPrivacyOptions],
+  ["testAnalyticsSanitizerDropsDangerousKeysAndCampaignsAreSafe", testAnalyticsSanitizerDropsDangerousKeysAndCampaignsAreSafe],
+  ["testAnalyticsRouteCupShopAndShareEventsUseSafeProperties", testAnalyticsRouteCupShopAndShareEventsUseSafeProperties],
+  ["testNoSpillClientDoesNotUploadRawRunData", testNoSpillClientDoesNotUploadRawRunData],
+  ["testNoSpillLiveSummaryAndShareAvoidSensitiveDetails", testNoSpillLiveSummaryAndShareAvoidSensitiveDetails],
+  ["testShareConfigAndCardData", testShareConfigAndCardData],
+  ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
+  ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
+  ["testRouteTypeClassification", testRouteTypeClassification],
+  ["testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext", testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext],
+  ["testPracticeModeRewardGatingAndRankCopy", testPracticeModeRewardGatingAndRankCopy],
+  ["testPracticeShareOutputIsLabeledAndNotPerfectPour", testPracticeShareOutputIsLabeledAndNotPerfectPour],
+  ["testLongHaulDailyXpCapAndMerchProgress", testLongHaulDailyXpCapAndMerchProgress],
+  ["testNoSpillClubGearRequiresRepeatedQualifiedDeliveries", testNoSpillClubGearRequiresRepeatedQualifiedDeliveries],
+  ["testPerfectPourAndDeliveryCrewProgressRules", testPerfectPourAndDeliveryCrewProgressRules],
+  ["testDriverLicensePassportAndCoachRecap", testDriverLicensePassportAndCoachRecap],
+  ["testGameStateStorageIsSummaryOnlyAndCommuteMasteryUsesFingerprints", testGameStateStorageIsSummaryOnlyAndCommuteMasteryUsesFingerprints],
+  ["testGameProgressPersistsAcrossReloadSimulation", testGameProgressPersistsAcrossReloadSimulation],
+  ["testResetExportAndImportProgressAreScopedAndValidated", testResetExportAndImportProgressAreScopedAndValidated],
+  ["testTofuShopStatePackIdleAndUpgradeRules", testTofuShopStatePackIdleAndUpgradeRules],
+  ["testLiveIdleTickAndShopButtonReliability", testLiveIdleTickAndShopButtonReliability],
+  ["testExpandedIdleShopLayerMechanics", testExpandedIdleShopLayerMechanics],
+  ["testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault", testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault],
+  ["testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly", testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly],
+  ["testCharacterArtAssetSlotsAndPlaceholders", testCharacterArtAssetSlotsAndPlaceholders],
+  ["testTofuShopLivingSceneV1Groundwork", testTofuShopLivingSceneV1Groundwork],
+  ["testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted", testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted],
+  ["testDeliverySimulatorIsHiddenLocalAndSummarized", testDeliverySimulatorIsHiddenLocalAndSummarized],
+  ["testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels", testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels],
+  ["testUnlockShelvesStayOutOfMainShopUi", testUnlockShelvesStayOutOfMainShopUi],
+  ["testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails", testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails],
+  ["testShopOrderFulfillmentStaysInlineAndKeepsFanfare", testShopOrderFulfillmentStaysInlineAndKeepsFanfare],
+  ["testResultScreenShowsGameSummarySections", testResultScreenShowsGameSummarySections],
+  ["testPostRunNavigationReturnsToUpdatedDashboard", testPostRunNavigationReturnsToUpdatedDashboard],
+  ["testLocationPermissionFlowRemainsOptIn", testLocationPermissionFlowRemainsOptIn],
+  ["testPrivateQualifiedSummaryMayShowDistance", testPrivateQualifiedSummaryMayShowDistance],
+  ["testMountAxisMapping", testMountAxisMapping],
+  ["testMappedMotionUsesSelectedMountConfig", testMappedMotionUsesSelectedMountConfig],
+  ["testRunMotionPathUsesSharedAxisMapping", testRunMotionPathUsesSharedAxisMapping],
+  ["testTofuCargoVisualizationReplacesGenericGDot", testTofuCargoVisualizationReplacesGenericGDot],
+  ["testTofuCargoVisualizationUsesMotionNotSpeed", testTofuCargoVisualizationUsesMotionNotSpeed],
+  ["testAudioVolumeGainModel", testAudioVolumeGainModel],
+  ["testAudioVolumePersistsInLocalStorageState", testAudioVolumePersistsInLocalStorageState],
+  ["testWaterRanksAndLossAreMotionOnly", testWaterRanksAndLossAreMotionOnly],
+  ["testQualifiedRouteAnalysisAndQualification", testQualifiedRouteAnalysisAndQualification],
+];
+
+async function runOneTest(name, fn, index, total) {
+  const started = Date.now();
+  if (TEST_PROGRESS) console.error(`[test ${index}/${total}] START ${name}`);
+  try {
+    await fn();
+  } catch (error) {
+    const elapsed = Date.now() - started;
+    console.error(`[test ${index}/${total}] FAIL ${name} ${elapsed}ms`);
+    throw error;
+  }
+  const elapsed = Date.now() - started;
+  if (TEST_PROGRESS || elapsed >= TEST_SLOW_MS) {
+    const label = elapsed >= TEST_SLOW_MS ? "SLOW" : "PASS";
+    console.error(`[test ${index}/${total}] ${label} ${name} ${elapsed}ms`);
+  }
+}
+
 async function run() {
-  testNoSpillIsNotLinkedFromExistingFrontendSurfaces();
-  testNoSitemapOrRobotsRevealNoSpill();
-  testNoSpillHtmlUsesNoindexWithoutSocialIndexingMetadata();
-  testTofuDriverBrandHierarchy();
-  testCargoTypeDriveShapeAndCupTrailResultSlice();
-  testCoachRecapV1UsesSafeOutcomeBasedSummary();
-  testSmoothControlRecapDriveShapeTrailAndDailyCreditFollowup();
-  testFirstTimeGameDashboardIsVisibleBeforeSetup();
-  testTwoSurfaceRoutingSeparatesShopAndCupTest();
-  await testCupTestMobileMotionSupportDetection();
-  testProgressiveRevealTeasersUnlockAfterFirstDelivery();
-  testTofuShopGeneratorUpgradeUiIsHonestAndProgressive();
-  testEarlyShopResourceFunnelMakesTipsObvious();
-  testFractionalDeliveryOrdersShowPrepProgressNotRawDecimal();
-  testTofuStockRunwayGuidesEarlyPurchases();
-  testCompactTofuShopNumberFormatting();
-  testShopRecentRewardUsesSafeFallbackLabel();
-  testDriverAndShopProgressionAreSeparated();
-  testFirstStampFanfareCelebratesAndPersists();
-  testStampFanfareReducedMotionUsesStaticState();
-  testDiscoveryFanfareRevealsUpgradesOnce();
-  testDiscoveryFanfareReducedMotionUsesStaticState();
-  testCoveredCarTeaserIsOneTimeStoryBeatOnly();
-  testShopOrderTypeProgressionAndRewards();
-  testCoreGameSpineV1MilestonesAndSupportStations();
-  testTofuShopNextMilestoneBarGuidesImplementedSpine();
-  testTofuShopStationMilestoneBoostsV1();
-  testCounterServiceV1AutomatesEarnedShopHandoffs();
-  testCounterServicePolishStatsUpgradesAndSpiritPanel();
-  testTofuGarageHighMidgameSupplyBottleneckBalance();
-  testTofuGarageRoutesSurfaceIsDeferred();
-  testTofuGarageGenerousOfflineProgressV1();
-  testTofuGarageHighScalePerformanceGuardrails();
-  testTofuGarageManagerDeskV1();
-  testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit();
-  testTofuGarageCashAndNetWorthV1();
-  testNextBestActionHierarchyStaysSinglePrimary();
-  testTofuDriverArtworkIsIsolatedAndAccessible();
-  testSuperCuteCollectiblesLandingAndMerchCopy();
-  testDiscordCtaConfigAndRendering();
-  testPostHogAnalyticsNoOpsWithoutConfigAndHonorsOptOut();
-  testPostHogAnalyticsInitializesWithPrivacyOptions();
-  testAnalyticsSanitizerDropsDangerousKeysAndCampaignsAreSafe();
-  testAnalyticsRouteCupShopAndShareEventsUseSafeProperties();
-  testNoSpillClientDoesNotUploadRawRunData();
-  testNoSpillLiveSummaryAndShareAvoidSensitiveDetails();
-  testShareConfigAndCardData();
-  testLockedMerchLinksAreNotShownBeforeUnlock();
-  testDailyDeliverySelectionAndEvaluation();
-  testRouteTypeClassification();
-  testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext();
-  testPracticeModeRewardGatingAndRankCopy();
-  testPracticeShareOutputIsLabeledAndNotPerfectPour();
-  testLongHaulDailyXpCapAndMerchProgress();
-  testNoSpillClubGearRequiresRepeatedQualifiedDeliveries();
-  testPerfectPourAndDeliveryCrewProgressRules();
-  testDriverLicensePassportAndCoachRecap();
-  testGameStateStorageIsSummaryOnlyAndCommuteMasteryUsesFingerprints();
-  testGameProgressPersistsAcrossReloadSimulation();
-  testResetExportAndImportProgressAreScopedAndValidated();
-  testTofuShopStatePackIdleAndUpgradeRules();
-  testLiveIdleTickAndShopButtonReliability();
-  testExpandedIdleShopLayerMechanics();
-  testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault();
-  testDeliveryToShopRewardsDoNotUseSpeedAndStaySummaryOnly();
-  testCharacterArtAssetSlotsAndPlaceholders();
-  testTofuShopLivingSceneV1Groundwork();
-  testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted();
-  testDeliverySimulatorIsHiddenLocalAndSummarized();
-  testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels();
-  testUnlockShelvesStayOutOfMainShopUi();
-  testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails();
-  testShopOrderFulfillmentStaysInlineAndKeepsFanfare();
-  testResultScreenShowsGameSummarySections();
-  testPostRunNavigationReturnsToUpdatedDashboard();
-  testLocationPermissionFlowRemainsOptIn();
-  testPrivateQualifiedSummaryMayShowDistance();
-  testMountAxisMapping();
-  testMappedMotionUsesSelectedMountConfig();
-  testRunMotionPathUsesSharedAxisMapping();
-  testTofuCargoVisualizationReplacesGenericGDot();
-  testTofuCargoVisualizationUsesMotionNotSpeed();
-  testAudioVolumeGainModel();
-  testAudioVolumePersistsInLocalStorageState();
-  testWaterRanksAndLossAreMotionOnly();
-  testQualifiedRouteAnalysisAndQualification();
+  const selectedTests = TEST_GREP
+    ? TESTS.filter(([name]) => name.toLowerCase().includes(TEST_GREP.toLowerCase()))
+    : TESTS;
+  if (!selectedTests.length) {
+    throw new Error(`No tests matched TEST_GREP=${TEST_GREP}`);
+  }
+  if (TEST_PROGRESS) {
+    console.error(`[test] running ${selectedTests.length}/${TESTS.length} tests${TEST_GREP ? ` matching ${TEST_GREP}` : ""}`);
+  }
+  const started = Date.now();
+  for (const [index, [name, fn]] of selectedTests.entries()) {
+    await runOneTest(name, fn, index + 1, selectedTests.length);
+  }
+  if (TEST_PROGRESS) {
+    console.error(`[test] completed ${selectedTests.length} tests in ${Date.now() - started}ms`);
+  }
 }
 
 run().catch((error) => {

@@ -172,6 +172,15 @@
 - Ultimate Net Worth has a V1 progress model: Cash plus Tofu Business Value plus Project Car Value
   can appear after later shop milestones. Dream Garage full asset value, business/franchise/
   car-company layers, and aerospace/space layers are still future direction only.
+- Net Worth Milestone Ladder V1 is implemented with compact `$1M`, `$10M`, `$100M`, `$1B`, and
+  `$1T Net Worth` targets once Net Worth is visible. The first `$1M` can unlock Local Showcase
+  Interest after early Dream Build progress.
+- Showcase Interest / Showcase Prep V1 is implemented as the first proof that car investment can
+  unlock higher-value opportunities. `Prepare Showcase Display` costs `$500K Cash`, adds `$300K`
+  Project Car Value, persists locally, and leaves Sponsor Inquiry/completed-car events future-only.
+- Frontend tests now fail fast with per-test progress output, optional `TEST_GREP` filtering,
+  `TEST_TRACE_CONTEXT=1` diagnostics, and cached VM compilation. The Net Worth/Showcase test path
+  was optimized from minute-scale recommendation churn to a targeted run of roughly two seconds.
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
@@ -232,46 +241,49 @@ Canonical references:
 10. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
-10. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream
+11. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream
    Build Progress V1: confirm the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden
    until Wheels level 3, Buy Exhaust appears only when affordable and stable, Project Car Value and
    `5 / 30` progress totals stay clear, Tuned Note remains target-only, and urgent shop bottlenecks
    still win.
-11. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
+12. Playtest Net Worth Milestone Ladder V1 and Showcase Prep V1: verify first `$1M` timing,
+   Showcase Prep affordability, Project Car Value increase, one-time milestone feedback, and that
+   urgent shop bottlenecks still override distant Net Worth goals.
+13. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
-12. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
+14. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
    behavior before adding higher station thresholds.
-13. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
+15. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
    Worth systems until the local shop loop keeps a player engaged.
-14. Expand balance tests only where playtesting reveals gaps:
+16. Expand balance tests only where playtesting reveals gaps:
    mobile density, exact time-to-buy targets, and edge cases around order prep, missing resources,
    and Passport reveal timing.
-15. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
+17. Playtest the new Cup Test result-card recap on real drives: confirm Cargo Type, Drive Shape,
    Cup Trail, Daily Delivery Credit, and Coach Recap feel encouraging without implying speed,
    distance, route difficulty, racing technique, or public-road competition.
-16. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
+18. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
    midgame needs a clearer visual step beyond the upgraded-shop scene.
-17. Keep testing the polished single-image Living Scene on phone and desktop: verify one-click shop
+19. Keep testing the polished single-image Living Scene on phone and desktop: verify one-click shop
    controls, tab switches, nav buttons, image flicker, oversized empty panels, debug/pending copy,
    or controls being pushed too far down.
-18. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
+20. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
    reduced-motion fallback.
-19. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
+21. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
    timing. Later, design the first actual garage reveal scene without activating full Dream Garage
    mechanics.
-20. Playtest Mika placement on phone and desktop result/recap layouts, then decide whether future
+22. Playtest Mika placement on phone and desktop result/recap layouts, then decide whether future
    optional slots such as share-card, Passport-detail, Ledger, or offline-progress art need
    dedicated images.
-21. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
+23. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
    muted, including first load, `#/cup-test` reload, permission-needed, permission-denied, and
    no-motion-data cases.
-22. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
+24. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
-23. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-24. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+25. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
+26. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 
@@ -308,15 +320,16 @@ Collector Offer, and business expansion documented until the Dream Build part-le
 
 Future endgame/business sequence:
 
-1. Keep the $1T Net Worth target stable; tune the V1 shop-era progress display only after playtest.
+1. Keep the $1T Net Worth target stable; tune the V1 milestone ladder only after playtest.
 2. Stabilize and tune the First Loop Contract.
 3. Tune Next Milestone Bar V1, Supplier Contracts, Counter Service/Managed Shop V1, and Station
    Milestone Boosts V1 before adding more station thresholds.
 4. Keep `tips` as flavor copy for order rewards while Cash remains the only player-facing liquid
    money balance.
-5. Tune Net Worth V1 reveal timing; the $1T goal does not increase, only progress toward
-   `$1T Net Worth` increases.
-6. Keep Tofu Business Value as the only implemented value estimate until car systems exist.
+5. Tune Net Worth V1 reveal timing and first `$1M` Showcase Interest timing; the $1T goal does not
+   increase, only progress toward `$1T Net Worth` increases.
+6. Keep Tofu Business Value and Project Car Value as simple V1 estimates until full asset valuation
+   is designed.
 7. Add covered-car teaser pacing and Dream Garage Stage 0 before any asset valuation system.
 8. Add the first car part as a Cash investment.
 9. Add sell/keep project car decisions later.

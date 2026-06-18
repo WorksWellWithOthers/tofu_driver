@@ -136,6 +136,16 @@ node --check test_frontend_nospill.js
 node test_frontend_nospill.js
 ```
 
+Frontend test runner helpers:
+
+```bash
+TEST_GREP=NetWorthMilestones node test_frontend_nospill.js
+TEST_TRACE_CONTEXT=1 TEST_GREP=NetWorthMilestones node test_frontend_nospill.js
+```
+
+The runner prints per-test progress and fails at the first failing test. `TEST_GREP` runs matching
+test names, and `TEST_TRACE_CONTEXT=1` enables extra timing diagnostics for instrumented slow paths.
+
 Open `frontend/nospill/index.html` in a browser for static inspection. Device motion behavior needs
 a real mobile browser over HTTPS for full testing.
 

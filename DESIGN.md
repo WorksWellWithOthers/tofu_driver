@@ -321,6 +321,11 @@ Current design principles:
   reaches managed scale: Counter Crew, Manager Desk, Wholesale Pickup progress, and sustained shop
   growth. It says the shop funds the dream, but it does not add Dream Garage mechanics, car parts,
   full asset valuation, or any driving effect.
+- Net Worth Milestones V1 gives the later shop/Dream Build bridge concrete stepping stones:
+  `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth`. The first `$1M` can unlock Local Showcase
+  Interest after early Dream Build progress, and Showcase Prep is a parked Cash investment that
+  raises Project Car Value. It is not a completed-car event, race, route, sponsor system, or full
+  Dream Garage.
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
   Delivery Order, consumes Delivery Orders, and grants Cash, Reputation, and Shop XP, but it is not
   the primary progression loop.

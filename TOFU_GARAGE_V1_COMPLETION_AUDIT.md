@@ -67,6 +67,8 @@ or car assets.
 | Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Project Car Value to `$65K`; Balanced Fitment costs `$150K` and raises Project Car Value to `$150K`; levels 4-5 remain future. |
 | Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Project Car Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note remains future/target-only. |
 | Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level against `30` planned work stages; current maximum is `5 / 30`; future tracks remain locked/deferred. |
+| Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
+| Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Project Car Value`; Sponsor Inquiry remains future-only. |
 | Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
 | Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Project Car Value. Full valuation remains future. |
 
@@ -167,6 +169,10 @@ Current code status:
 - Cash is the implemented player-facing currency.
 - `shop.tips` is still the legacy internal field for save compatibility.
 - Net Worth V1 is implemented as Cash + Tofu Business Value + Project Car Value.
+- Net Worth Milestone Ladder V1 is implemented as a compact stepping-stone display toward `$1T`.
+- Showcase Interest / Showcase Prep V1 is implemented as the first value unlock after early Dream
+  Build progress and first `$1M Net Worth`; it does not implement completed events, sponsors,
+  routes, racing, or full Dream Garage.
 - First Dream Build Investment Purchase V1 lets the player buy Wheels for `$50K Cash`; Wheels add
   `$25K Project Car Value`.
 - Wheels Work Levels V1 implements level 2 Polished Wheels and level 3 Balanced Fitment. Project
