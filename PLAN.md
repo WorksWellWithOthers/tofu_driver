@@ -45,6 +45,8 @@
   milestones without implementing full valuation.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
+- Post-run Result Cameo and Coach Recap use larger Mika real-art portraits without gray fallback
+  tiles, `art pending`, or implementation-note copy.
 - Counter Service V1 is the starter automation layer. It is available from the first session, runs
   by default on fresh saves, auto-fulfills Best Available prepared orders every 10 seconds only
   while parked and the page is open, shows supplied/blocked shop-income status, can be upgraded
@@ -247,8 +249,9 @@ Canonical references:
 19. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
    timing. Later, design the first actual garage reveal scene without activating full Dream Garage
    mechanics.
-20. Review Mika placement on phone and desktop layouts, then decide whether future optional slots
-   such as share-card, Passport-detail, Ledger, or offline-progress art need dedicated images.
+20. Playtest Mika placement on phone and desktop result/recap layouts, then decide whether future
+   optional slots such as share-card, Passport-detail, Ledger, or offline-progress art need
+   dedicated images.
 21. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
    muted, including first load, `#/cup-test` reload, permission-needed, permission-denied, and
    no-motion-data cases.

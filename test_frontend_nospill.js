@@ -682,6 +682,7 @@ elements = {
   summaryStatusLabel: makeNode(),
   summaryTitle: makeNode(),
   summaryWater: makeNode(),
+  summaryCharacterCameo: makeNode(),
   routeContext: makeNode(),
   routeGrid: makeNode(),
   summaryGrid: makeNode(),
@@ -823,6 +824,7 @@ elements = {
   summaryStatusLabel: makeNode(),
   summaryTitle: makeNode(),
   summaryWater: makeNode(),
+  summaryCharacterCameo: makeNode(),
   routeContext: makeNode(),
   routeGrid: makeNode(),
   summaryGrid: makeNode(),
@@ -847,9 +849,19 @@ renderSummary({ ...coachResultSample });
 globalThis.coachResultHtml =
   elements.summaryGrid.innerHTML
   + elements.deliverySummaryGrid.innerHTML
+  + elements.summaryCharacterCameo.innerHTML
   + elements.coachRecapCard.innerHTML;
 `, context);
   assert(context.coachResultHtml.includes('Coach Recap'));
+  assert(context.coachResultHtml.includes('/static/nospill/images/result_screen_cameo.webp'));
+  assert(context.coachResultHtml.includes('/static/nospill/images/coach_pleased.webp'));
+  assert(context.coachResultHtml.includes('is-result-cameo'));
+  assert(context.coachResultHtml.includes('is-coach-cameo'));
+  assert(!context.coachResultHtml.includes('Character art can appear here after the run ends.'));
+  assert(!context.coachResultHtml.includes('Coach portrait not yet assigned'));
+  assert(!context.coachResultHtml.includes('art pending'));
+  assert(!context.coachResultHtml.includes('not assigned'));
+  assert(!context.coachResultHtml.includes('hidden>M</div>'));
   assert(context.coachResultHtml.includes('Brake Feather'));
   assert(context.coachResultHtml.includes('Passenger Comfort'));
   assert(!/left-foot|right-foot|engine braking|trail braking|speed|top speed|average speed|exact distance|gps|coordinates|map|street name|route trace/i.test(context.coachResultHtml));
@@ -5055,8 +5067,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260617k'));
-  assert(html.includes('/static/nospill/app.css?v=20260617k'));
+  assert(html.includes('/static/nospill/app.js?v=20260618a'));
+  assert(html.includes('/static/nospill/app.css?v=20260618a'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -7160,6 +7172,7 @@ function findDailyDeliveryDate(context, missionId) {
 
 function testCharacterArtAssetSlotsAndPlaceholders() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const inventory = fs.readFileSync(path.join(ROOT, 'CHARACTER_ART_ASSET_INVENTORY.md'), 'utf8');
   assert(inventory.includes('| Asset ID | Surface / Screen | Route / UI Area | Purpose |'));
   [
@@ -7247,6 +7260,17 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert(selectedHtml.includes('Sleepy Dispatcher'));
   assert(selectedHtml.includes('result_screen_cameo'));
   assert(selectedHtml.includes('Result cameo art pending'));
+  const selectedPreferAssignedHtml = context.renderCharacterCameo('result_screen_cameo', unlocked, {
+    preferAssigned: true,
+    variant: 'result-cameo',
+    copy: 'Clean delivery.',
+  });
+  assert(selectedPreferAssignedHtml.includes('data-character-id="mika"'));
+  assert(selectedPreferAssignedHtml.includes('/static/nospill/images/result_screen_cameo.webp'));
+  assert(selectedPreferAssignedHtml.includes('is-result-cameo'));
+  assert(selectedPreferAssignedHtml.includes('Clean delivery.'));
+  assert(!selectedPreferAssignedHtml.includes('Result cameo art pending'));
+  assert(!selectedPreferAssignedHtml.includes('hidden>M</div>'));
 
   const mikaState = context.defaultGameState();
   mikaState.collection.unlockedCharacterIds.push('mika');
@@ -7254,14 +7278,27 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   const mikaCameo = context.renderCharacterCameo('shop_assistant_main_portrait', mikaState);
   assert(mikaCameo.includes('data-character-id="mika"'));
   assert(mikaCameo.includes('/static/nospill/images/shop_assistant_main_portrait.webp'));
-  assert(mikaCameo.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
-  assert(mikaCameo.includes('hidden>M</div>'));
+  assert(mikaCameo.includes('onerror="this.hidden = true;"'));
+  assert(!mikaCameo.includes('hidden>M</div>'));
   const mikaNeutral = context.renderCharacterCameo('coach_recap_expression_neutral', mikaState);
   assert(mikaNeutral.includes('/static/nospill/images/coach_neutral.webp'));
   assert(!mikaNeutral.includes('Coach portrait not yet assigned'));
   const mikaPleased = context.renderCharacterCameo('coach_recap_expression_pleased', mikaState);
   assert(mikaPleased.includes('/static/nospill/images/coach_pleased.webp'));
   assert(!mikaPleased.includes('Coach portrait not yet assigned'));
+  const mikaCoachLarge = context.renderCharacterCameo('coach_recap_expression_pleased', mikaState, {
+    preferAssigned: true,
+    variant: 'coach-cameo',
+    copy: 'Mika noted a calm finish.',
+  });
+  assert(mikaCoachLarge.includes('/static/nospill/images/coach_pleased.webp'));
+  assert(mikaCoachLarge.includes('is-coach-cameo'));
+  assert(mikaCoachLarge.includes('Mika noted a calm finish.'));
+  assert(!mikaCoachLarge.includes('Coach portrait not yet assigned'));
+  assert(!mikaCoachLarge.includes('hidden>M</div>'));
+  assert(css.includes('.nospill-character-cameo.is-result-cameo'));
+  assert(css.includes('.nospill-character-cameo.is-coach-cameo'));
+  assert(css.includes('clamp(120px, 28vw, 220px)'));
   assert.strictEqual(
     context.coachRecapCharacterSlot({
       cargoCondition: 0.98,
@@ -7355,7 +7392,8 @@ globalThis.activeCrewArtHtml = elements.characterList.innerHTML;
   assert(!context.parkedOverviewArtHtml.includes('data-character-slot="shop_assistant_main_portrait"'));
   assert(context.parkedCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
   assert(context.parkedCrewArtHtml.includes('/static/nospill/images/crew_profile_card.webp'));
-  assert(context.parkedCrewArtHtml.includes('onerror="this.hidden = true; this.nextElementSibling.hidden = false;"'));
+  assert(context.parkedCrewArtHtml.includes('onerror="this.hidden = true;"'));
+  assert(!context.parkedCrewArtHtml.includes('hidden>M</div>'));
   assert.strictEqual(context.activeCameoHtml, '');
   assert(!context.activeCrewArtHtml.includes('data-character-slot="crew_profile_card"'));
 

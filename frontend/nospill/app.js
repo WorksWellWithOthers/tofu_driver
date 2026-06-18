@@ -6860,23 +6860,36 @@ function renderCharacterCameo(slotId, gameState = loadGameState(), options = {})
       </div>
     `;
   }
-  const character = options.character || defaultCharacterForArt(gameState);
-  const asset = getCharacterAsset(character.id, slotId);
+  let character = options.character || defaultCharacterForArt(gameState);
+  let asset = getCharacterAsset(character.id, slotId);
+  if (options.preferAssigned && !asset.src) {
+    const mika = CHARACTER_CATALOG.find((candidate) => candidate.id === "mika");
+    const mikaAsset = mika ? getCharacterAsset(mika.id, slotId) : null;
+    if (mika && mikaAsset && mikaAsset.src) {
+      character = { ...mika };
+      asset = mikaAsset;
+    }
+  }
   const label = options.label || slot.label;
   const copy = options.copy || character.flavor || slot.purpose;
   const fallbackLabel = asset.src
     ? `${label}: ${character.name} portrait`
     : `${label}: ${asset.placeholder}`;
+  const className = [
+    "nospill-character-cameo",
+    asset.src ? "" : "is-placeholder",
+    options.variant ? `is-${options.variant}` : "",
+  ].filter(Boolean).join(" ");
   const art = asset.src
     ? `<img
         src="${escapeHtml(asset.src)}"
         alt="${escapeHtml(asset.alt || `${character.name} ${label}`)}"
         loading="lazy"
-        onerror="this.hidden = true; this.nextElementSibling.hidden = false;"
-      /><div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(fallbackLabel)}" hidden>${escapeHtml(character.name.slice(0, 1))}</div>`
+        onerror="this.hidden = true;"
+      />`
     : `<div class="nospill-character-art-placeholder" role="img" aria-label="${escapeHtml(fallbackLabel)}">${escapeHtml(character.name.slice(0, 1))}</div>`;
   return `
-    <div class="nospill-character-cameo ${asset.src ? "" : "is-placeholder"}" data-character-slot="${escapeHtml(slotId)}" data-character-id="${escapeHtml(character.id)}">
+    <div class="${className}" data-character-slot="${escapeHtml(slotId)}" data-character-id="${escapeHtml(character.id)}">
       ${art}
       <div>
         <span>${escapeHtml(label)}</span>
@@ -12025,8 +12038,10 @@ function renderDeliverySummary(summary) {
       "result_screen_cameo",
       collectionState,
       {
-        label: crew ? "Delivery Crew" : "Result Cameo",
-        copy: crew ? crew.flavor : "Character art can appear here after the run ends.",
+        label: "Result Cameo",
+        copy: qualified ? "Clean delivery." : "A calm finish.",
+        preferAssigned: true,
+        variant: "result-cameo",
       },
     );
   }
@@ -12077,7 +12092,9 @@ function renderDeliverySummary(summary) {
     elements.coachRecapCard.innerHTML = [
       renderCharacterCameo(coachRecapCharacterSlot(summary), collectionState, {
         label: "Coach Recap",
-        copy: "Outcome-based smooth-control feedback belongs after the run.",
+        copy: "Mika noted a calm finish.",
+        preferAssigned: true,
+        variant: "coach-cameo",
       }),
       renderCoachRecap(summary),
     ].join("");
