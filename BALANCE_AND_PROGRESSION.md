@@ -133,10 +133,11 @@ The first playable loop has eight steps.
    Purpose: teach the money conversion without clicker labor. The first satisfying payout should
    happen automatically on a fresh shop.
 
-5. Tips buy stations and upgrades.
+5. Tips/Cash buy stations and upgrades.
 
-   Purpose: make a clear spend currency. Tips are the main early purchase currency; Tofu Stock is
-   the production input.
+   Purpose: make a clear spend currency. Current implementation calls the early balance `Tips`, but
+   future economy copy should consolidate this into Cash. Tips are flavor for order income; Cash is
+   the spendable money. Tofu Stock is the production input.
 
 6. Reputation unlocks new systems.
 
@@ -164,7 +165,7 @@ Early conversion roles:
 - Tofu Stock is ingredient/runway.
 - Prep Counter is throughput.
 - Delivery Orders are money opportunities for Counter Service.
-- Tips are purchase currency.
+- Tips are early order-income flavor; Cash is the future single liquid purchase currency.
 - Reputation is unlock pressure.
 - Shop XP is shop-loop progress feedback and must not increase Delivery Driver level.
 - Driver XP belongs to Don't Spill the Cup and completed Cup Test milestones.
@@ -195,7 +196,7 @@ License Exam reset rule.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Stock | Ingredient, runway, and order-size input | Tofu Press, Manual Backup Pack Tofu, Supplier Contracts, offline production, shop boosts | Prep Counter, larger shop orders, future fictional routes | Immediately | Low only when Prep Counter or larger orders outrun press output | Not enough stock to prepare or fulfill the best order | Resets |
 | Delivery Orders | Prepared/waiting shop work that can become money | Prep Counter, boosts, later automation | Counter Service, Manual Backup fulfillment, later routes/rivals | Immediately | First visible throughput bottleneck, capped as a queue | No ready orders to hand off, or queue full until handoffs catch up | Resets |
-| Tips | Main purchase currency | Fulfilled orders, Regular Customers, routes, certified boosts | Stations, upgrades, garage, crew, route cards | Immediately after first order | Scarce early, abundant later | Cannot buy next improvement | Resets |
+| Tips / Cash | Current early UI says Tips; future economy treats order tips as Cash, the liquid spend currency | Fulfilled orders, Regular Customers, routes, certified boosts | Stations, upgrades, future car parts, businesses, route cards | Immediately after first order | Scarce early, abundant later | Cannot buy next improvement | Resets as liquid shop cash unless prestige design says otherwise |
 | Reputation | Unlock currency, social proof, and midgame supply leverage | Orders, routes, certified smooth results, stamps | Gates, Supplier Contracts, rare status spends | After first order | Scarce and meaningful | Next system or managed supply remains locked | Resets, lifetime persists |
 | Shop XP | Local shop progress feedback | Shop orders, shop automation | None by default | After first order | Steady visible shop progress | Shop milestones not met | Lifetime should persist unless prestige design says otherwise |
 | Driver XP | Delivery Driver progress feedback | Completed Cup Test runs and driver milestones | None by default | Cup Test result | Steady visible driver progress | Driver Level requirements not met | Persists |
@@ -212,7 +213,7 @@ License Exam reset rule.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Stock | tofu on hand for orders | Tofu Press, Manual Backup Pack Tofu, Supplier Contracts, offline progress, shop boosts | Prep Counter, larger order types, future route cards | immediately | creates order-size capacity and prevents Prep Counter starvation | Steady Pressing, Double Mold, Tofu Press milestones, Soy Supplier Contract, Morning Soy Delivery, Bulk Soy Delivery, License Perks | Catering Crate, Neighborhood Bundle, route cards, Regional Tofu Order |
 | Delivery Orders | prepared/waiting shop work ready to hand off | Prep Counter, boosts, later automation | order fulfillment, Counter Service, Regular Customers, route cards | immediately | turns production into spendable Tips | Tidy Packaging, Double Labels, Delivery Shelf, Prep Counter milestones | Regular Customers, Apprentice Driver, route queues |
-| Tips | spendable shop money | order types, Regular Customers, routes, certified boosts | stations, upgrades, crew, garage, route cards | after first order | drives almost every early purchase | Better Boxes, Regular Smile, License Perks | bigger stations, automation, route systems |
+| Tips / Cash | tips are early flavor; Cash is spendable money | order types, Regular Customers, routes, certified boosts | stations, upgrades, future car parts, crew, route cards | after first order | drives almost every early purchase and contributes to future Net Worth | Better Boxes, Regular Smile, License Perks | bigger stations, automation, route systems, Dream Build investments |
 | Reputation | proof the shop is known | orders, Shop Sign, route cards, stamps, certified boosts | unlock gates and Supplier Contracts | after first order | opens systems without draining Tips and solves managed-shop supply traps | Shop Sign, Word of Mouth, Supplier Contracts, route mastery bonuses | routes, Crew preview, License requirements |
 | Shop XP | local shop progress meter | shop orders and shop automation | shop-level feedback only | after first order | gives visible growth and shop-loop pacing | Better Boxes and shop reports | shop progress labels |
 | Driver XP | delivery driver progress meter | Cup Test summaries and driver milestones | driver level gates only | Cup Test result | gives visible growth for smooth-driving status | certified result bonuses | Driver License labels |
@@ -280,6 +281,67 @@ Formatting is display-only. Internal resource values, costs, rewards, and progre
 exact. Discrete missing requirements such as Prep Capacity, ready orders, station counts, stamps, and
 License Stars round up in disabled reasons. Small live balances may show short decimals when that is
 needed to make ticking visible, but long raw decimals should never be exposed.
+
+### Cash And Net Worth Model
+
+This section is future economy design, not current implementation. Current runtime state still uses
+`shop.tips`, but the long-term economy should not split Tips and dollars into separate spendable
+balances.
+
+Definitions:
+
+- Cash is the player's liquid money.
+- Tips are early-game flavor for order income. Mechanically, tips become Cash.
+- Tofu orders, Counter Service, Catering Crate, and later shop/business payouts earn Cash.
+- Shop upgrades, Supplier/Manager decisions, future car parts, and future businesses spend Cash.
+- Net Worth is the long-term score toward the `$1T Net Worth` goal.
+
+Preferred future reward copy:
+
+```text
++$10 Cash from tips
+Counter Service: Simple Tofu Box complete · +$10
+```
+
+Avoid:
+
+- separate `Tips` and `$` balances
+- `1T shares` as the main goal
+- real investing or stock-market framing unless it is clearly fictional
+
+Conceptual accounting:
+
+```text
+Net Worth =
+  Cash
+  + Business Value
+  + Car Asset Value
+  + Garage Value
+  + future company value
+  - liabilities
+```
+
+The $1T goal does not increase. The player's progress toward `$1T Net Worth` increases.
+
+Core investment tradeoff:
+
+```text
+Cash helps reach $1T directly.
+Spending Cash delays liquid progress.
+But spending Cash on assets can unlock higher earning paths.
+```
+
+Examples:
+
+- Shop upgrades reduce Cash but increase Business Value and income.
+- Car parts reduce Cash but increase Car Asset Value and unlock future opportunities.
+- A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
+- Keeping a car may increase status and portfolio value.
+- Selling a car may convert Car Asset Value back into Cash.
+- Some investments may be bad and reduce Net Worth temporarily.
+
+Shares can be reserved for a much later fictional company/founder layer. They are not the main
+endgame target.
 
 ### High-Scale Performance Guardrails
 
@@ -1194,7 +1256,7 @@ Practice Mode:
 Qualified smooth result:
 
 - optional certified boost
-- bonus Tips
+- bonus Cash from tips
 - bonus Reputation
 - bonus XP
 - possible certified stamps
@@ -1228,7 +1290,7 @@ The Cup Test proves that smooth control matters more than speed.
 Future loop:
 
 ```text
-Work shop orders -> earn Tips -> reinvest in shop or save for parts -> build the project car ->
+Work shop orders -> earn Cash from tips -> reinvest in shop or buy parts -> build the project car ->
 enter fictional closed-course events -> earn prizes/status -> complete or sell the build -> start
 the next dream car stronger
 ```
@@ -1236,16 +1298,17 @@ the next dream car stronger
 ### Role In The Economy
 
 - Tofu Shop remains the base money engine.
-- Tips are earned from shop orders and later fictional events.
-- Tips can be reinvested into shop production or saved/spent toward project car parts.
-- This creates the key choice: buy more shop production now, or save for the dream car.
+- Cash is earned from shop-order tips and later fictional events.
+- Cash can be reinvested into shop production or spent on project car parts.
+- This creates the key choice: buy more shop production now, or buy car assets that may raise
+  long-term Net Worth potential later.
 - Dream Garage should not appear before the player understands the shop loop.
 
 Suggested reveal:
 
 - teaser after First 100 Tips or Shop Level 2
 - full Dream Garage after 10 fulfilled orders or first larger order type
-- first part purchase after stable Tip income exists
+- first part purchase after stable Cash income exists
 
 Example decision points:
 
@@ -1253,28 +1316,31 @@ Example decision points:
 - Improve larger-order throughput, or save for Paint Touch-Up?
 - Reinvest event prize money into the shop, or buy Stage 2 cooling?
 
-### Dream Jar / Garage Fund Decision
+### Dream Jar / Project Budget Decision
 
-Recommended first design:
+Resolved direction:
 
-- Do not add a confusing new currency at first.
-- Tips remain the actual spend currency.
-- `Dream Jar` is a goal/progress meter showing Tips saved toward the next car part.
+- Cash is the actual spend currency for garage parts.
+- `Dream Jar`, `Project Budget`, or a similar label can be a goal/progress meter showing Cash saved
+  toward the next car part.
+- A project budget should not become a separate currency.
+- Direct Cash spending is the default first garage implementation.
 - Later, the game may add `Builder Reputation` or `Builder Stars`, but not as early spend
   currencies.
 
 Open question:
 
-- Should the garage spend Tips directly, or should Tips be allocated into a Dream Jar / Garage Fund?
+- Does the first garage slice need a visible budget meter for anticipation, or is direct Cash
+  spending clear enough?
 
 ### Project Car Stages
 
 | Stage | Name | Fantasy | Unlock | Main Costs | Main Rewards | Exit Condition |
 | --- | --- | --- | --- | --- | --- | --- |
-| 0 | The Covered Car / Beater | There is an old car under a cover behind the shop. | First 100 Tips, Shop Level 2, or first larger order type | small Tips, basic restoration parts | emotional reveal, Reliability, first build report | car starts and basic reliability is restored |
-| 1 | Daily Driver Build | The car becomes reliable, personal, and fun. | Stage 0 complete | Tips, common parts, style parts | Build Score, Style, first closed-course event access | core reliability/style parts installed |
-| 2 | Track-Day / Closed-Course Build | The car is ready for fictional organized events. | Stage 1 basics and first event report | higher Tips, cooling/brake/suspension parts | Event Readiness, better prizes, rare part chance | major midgame event cleared |
-| 3 | Dream Build | The dream car becomes serious and expensive. | Stage 2 event progress and high Build Score | large Tips, rare parts, showcase parts | Project Car Value, Builder Reputation, completion/sale option | major invitational cleared or value target reached |
+| 0 | The Covered Car / Beater | There is an old car under a cover behind the shop. | First 100 Tips/Cash, Shop Level 2, or first larger order type | small Cash spend, basic restoration parts | emotional reveal, Reliability, first build report | car starts and basic reliability is restored |
+| 1 | Daily Driver Build | The car becomes reliable, personal, and fun. | Stage 0 complete | Cash, common parts, style parts | Build Score, Style, first closed-course event access | core reliability/style parts installed |
+| 2 | Track-Day / Closed-Course Build | The car is ready for fictional organized events. | Stage 1 basics and first event report | higher Cash costs, cooling/brake/suspension parts | Event Readiness, better prizes, rare part chance | major midgame event cleared |
+| 3 | Dream Build | The dream car becomes serious and expensive. | Stage 2 event progress and high Build Score | large Cash costs, rare parts, showcase parts | Project Car Value, Builder Reputation, completion/sale option | major invitational cleared or value target reached |
 
 Stage 0 possible upgrades:
 
@@ -1402,10 +1468,10 @@ Closed-course events are parked/asynchronous game actions:
 
 | Event | Unlock | Requires | Rewards | Purpose |
 | --- | --- | --- | --- | --- |
-| Parking Lot Shakedown | Stage 0 complete | car starts, basic tires | small Tips, Garage XP, first garage report | first event |
-| Tofu Cup Beginner | Stage 1 basics | tires, brakes, reliability | prize Tips, Reputation, stamp | first meaningful prize |
+| Parking Lot Shakedown | Stage 0 complete | car starts, basic tires | small Cash prize, Garage XP, first garage report | first event |
+| Tofu Cup Beginner | Stage 1 basics | tires, brakes, reliability | Cash prize, Reputation, stamp | first meaningful prize |
 | Sponsor Showcase | style/decal progress | paint, decal, Style score | sponsor bonus, style stamp | cosmetics matter |
-| Festival Track Day | Stage 2 | cooling, brakes, suspension | prize Tips, rare part chance | midgame event |
+| Festival Track Day | Stage 2 | cooling, brakes, suspension | Cash prize, rare part chance | midgame event |
 | Night Garage Trial | Stage 2 | reliability and Event Readiness | special report, story stamp | atmosphere |
 | Dream Build Invitational | Stage 3 | high Build Score | huge prize, Builder Reputation, prestige option | endgame build event |
 
@@ -1429,7 +1495,7 @@ from `License Stars`, which are shop/license prestige.
 Possible permanent perks:
 
 - cheaper first parts
-- extra starting Tips in Dream Jar
+- extra starting Cash in the project budget
 - faster part delivery
 - better event prize money
 - extra garage slot
@@ -1464,14 +1530,14 @@ These are design targets, not runtime constants.
 | Button ID | Label | Visible When | Enabled When | Cost | Effect | Disabled Reason | Expected First Use | Status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | view_dream_garage | View Dream Garage | teaser or garage unlock exists | always when visible | none | opens garage surface/panel | Unlocks after the shop has stable income. | 30 to 60 minutes | Documented only |
-| pull_off_cover | Pull Off the Cover | Stage 0 starts | enough Tips or Dream Jar progress | small Tips target | reveals project car | Save a few more Tips from shop orders. | 30 to 60 minutes | Future |
-| deposit_dream_jar | Deposit Tips to Dream Jar | Dream Jar design chosen | Tips > 0 | selected Tips | earmarks progress toward next part | Earn Tips from shop orders first. | 30 to 60 minutes | Future / open question |
-| buy_part | Buy Part | part is visible | enough Tips or Dream Jar funds | part cost | adds part to inventory/build sheet | Need more Tips. Work shop orders or events. | 1 to 2 hours | Future |
+| pull_off_cover | Pull Off the Cover | Stage 0 starts | enough Cash or project-budget progress | small Cash target | reveals project car | Save a little more Cash from shop orders. | 30 to 60 minutes | Future |
+| deposit_project_budget | Add Cash To Project Budget | project-budget meter chosen | Cash > 0 | selected Cash | earmarks progress toward next part | Earn Cash from shop orders first. | 30 to 60 minutes | Future / optional |
+| buy_part | Buy Part | part is visible | enough Cash | part cost | adds part to inventory/build sheet | Need more Cash. Work shop orders or events. | 1 to 2 hours | Future |
 | install_part | Install Part | owned part not installed | garage is available | none or install time | updates build stats | Buy the part first. | 1 to 2 hours | Future |
-| buy_next_part | Buy Next Recommended Part | recommendations exist | enough Tips/funds | part cost | buys the bottleneck-solving part | Need more Tips for the recommended part. | 1 to 2 hours | Future |
+| buy_next_part | Buy Next Recommended Part | recommendations exist | enough Cash | part cost | buys the bottleneck-solving part | Need more Cash for the recommended part. | 1 to 2 hours | Future |
 | view_build_sheet | View Build Sheet | garage active | always | none | shows parts, stats, stage, next recommendation | Unlock Dream Garage first. | 1 to 2 hours | Future |
 | enter_shakedown | Enter Parking Lot Shakedown | Stage 0 complete | basic readiness met | event entry cost target | creates first event report/prize | Finish basic restoration first. | 1 to 2 hours | Future |
-| enter_tofu_cup_beginner | Enter Tofu Cup Beginner | Stage 1 basics | tires, brakes, reliability target | event entry cost target | prize Tips, Reputation, stamp | Build basic reliability first. | 2 to 6 hours | Future |
+| enter_tofu_cup_beginner | Enter Tofu Cup Beginner | Stage 1 basics | tires, brakes, reliability target | event entry cost target | Cash prize, Reputation, stamp | Build basic reliability first. | 2 to 6 hours | Future |
 | enter_sponsor_showcase | Enter Sponsor Showcase | style path visible | style/decal score target | event entry cost target | sponsor bonus/style stamp | Add style parts first. | 2 to 6 hours | Future |
 | claim_event_report | Claim Event Report | event result ready | always | none | applies prizes/report/stamps | Event still in progress. | after first event | Future |
 | showcase_car | Showcase Car | garage active and car has style | always | none | cosmetic/status summary | Build or style the car first. | after Stage 1 | Future |
@@ -1508,7 +1574,7 @@ Future implementation should add tests for:
 - garage hidden during the first shop loop
 - covered car teaser appears at the intended milestone
 - Dream Garage unlocks after the defined condition
-- buying a part consumes Tips or Dream Jar funds
+- buying a part consumes Cash
 - parts update Build Score, Reliability, Style, and Event Readiness
 - closed-course event does not require real driving
 - event rewards do not use speed, GPS, map, street, route trace, exact distance, or high-G data
@@ -1531,21 +1597,22 @@ The rocket company is the absurd endgame.
 The goal is $1 trillion net worth.
 ```
 
-`Dollars` are a placeholder ultimate game abstraction. Future UI may call the value `Net Worth`,
-`Enterprise Value`, `Total Value`, or `Company Value`. This is fictional game economy language, not
-real financial advice.
+Cash is the future liquid currency. Current implementation still labels the early spend balance
+as Tips, but those tips should become Cash rather than a second dollar balance. `Net Worth` is the
+future long-term score toward the `$1T Net Worth` target. This is fictional game economy language,
+not real financial advice.
 
 Conceptual formula:
 
 ```text
 Net Worth =
-  cash / Tips equivalent
-  + business valuations
-  + garage assets
-  + collector car values
-  + manufacturing company value
+  Cash
+  + Business Value
+  + Car Asset Value
+  + Garage Value
+  + future company value
   + future aerospace value
-  - liabilities / loans / obligations
+  - liabilities
 ```
 
 The player may start with very low or negative net worth if future startup costs, shop bills, loans,
@@ -1571,11 +1638,12 @@ Design notes:
 
 - Tofu Shop starts as active labor.
 - Franchise and manager automation eventually make shop income passive.
-- Dream Garage turns Tips into appreciating or depreciating assets.
+- Dream Garage turns Cash into appreciating or depreciating assets.
 - Project cars can be kept, showcased, entered in fictional closed-course events, or sold.
 - Car manufacturing turns individual builds into scalable production.
 - Rocket/aerospace is the late-game paradigm shift.
 - The $1T target is the first major endgame goal; future patches may add more layers beyond it.
+- The target is `$1T Net Worth`, not `$1T Cash` and not `1T shares`.
 
 ### Dream Garage Continuation Into Net Worth
 
@@ -1778,7 +1846,7 @@ progression contract.
 | Starter Counter Service | Implemented | counter service helpers/tests | converts orders into Tips/Reputation/Shop XP automatically while parked | tune first-order timing |
 | Manual Fulfill Shop Order | Implemented as backup | order fulfillment helpers/tests | converts orders into Tips/Reputation/Shop XP and gives feedback when manually used | keep secondary to automation |
 | Order-size ladder | Implemented | order catalog, typed fulfillment, Overview order cards, Next Best Action tests | Simple Tofu Box, Family Tofu Tray, and Festival Bento consume typed tofu/order costs and pay typed rewards | tune unlock timing and presentation |
-| Tips purchase currency | Implemented | station/upgrade costs and disabled copy | buys stations/upgrades | tune first purchase timing |
+| Tips purchase currency | Implemented | station/upgrade costs and disabled copy | current `Tips` balance buys stations/upgrades | future implementation pass should reframe this as Cash earned from tips |
 | Ready order/progress display | Implemented | ready order UI/tests | hides raw fractional order count | refine ETA copy |
 | First Shop Order stamp | Implemented | order result, ledger, Passport teaser tests | first fulfilled Simple Tofu Box unlocks and reports the stamp without showing the full catalog | visual polish |
 | Tofu Press / Prep Counter station cards | Implemented | station rendering/tests | station count and upgrade levels are separate | visual polish |

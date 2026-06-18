@@ -13,6 +13,9 @@
   Shop Level progress, stamps, and shop resources.
 - Driver Level can provide only a small capped Reputation bonus to shop orders. Tofu Shop does not
   level the driver, and Driver Level never changes Cup Test scoring or qualification.
+- Tips/Cash consolidation is documented future direction: current runtime still uses the `Tips`
+  balance, but the coherent economy should treat tips as flavor for Cash, with Cash contributing to
+  future Net Worth.
 - Basic Mode uses device motion only and does not request location.
 - Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
   iOS Safari keeps the `Start & Calibrate` user gesture and avoids false permission-denied states.
@@ -114,8 +117,8 @@
   Sign is the first tested Reputation support station.
 - Tofu Garage now starts idle-first: a 24-stock starter buffer, Tofu Press, Prep Counter, and
   starter Counter Service move the first Simple Tofu Boxes without repeated player labor.
-- Tips are the early purchase currency for stations and upgrades; disabled purchase copy now points
-  players back to fulfilling shop orders.
+- Tips are the current early purchase balance for stations and upgrades; future copy should reframe
+  this as Cash earned from tips rather than adding a separate dollar currency.
 - Next Best Action follows the current bottleneck: fresh saves point to watching the starter shop,
   ready orders point to Counter Service, early low stock points to Tofu Press, high-midgame stock
   blocks point to Supplier Contracts or stock upgrades, and healthy stock with slow orders points
@@ -140,9 +143,9 @@
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
 - Ultimate Net Worth is documented as future endgame direction: Tofu Shop becomes the first
-  business engine, Dream Garage becomes an asset/status layer, later business/franchise/car-company
-  layers may lead toward a fictional `$1 trillion net worth` target, and aerospace/space layers are
-  absurd late-game direction only.
+  business engine, Cash is the liquid money, Dream Garage becomes an asset/status layer, later
+  business/franchise/car-company layers may lead toward a fictional `$1 trillion net worth` target,
+  and aerospace/space layers are absurd late-game direction only.
 - `EXTERNAL_REFERENCE_DOPEWARS_AUDIT.md` documents a read-only external mechanics study and safely
   translates capacity, demand, opportunity, and project-goal ideas into future Tofu Driver concepts.
 - `EXTERNAL_REFERENCE_ANTIMATTER_DIMENSIONS_AUDIT.md` documents a read-only progression-architecture
@@ -259,10 +262,19 @@ Future endgame/business sequence:
 2. Stabilize and tune the First Loop Contract.
 3. Tune Next Milestone Bar V1, Supplier Contracts, Counter Service/Managed Shop V1, and Station
    Milestone Boosts V1 before adding more station thresholds.
-4. Add Dream Garage teaser and Stage 0 before any valuation system.
-5. Add business valuation only after Dream Garage, project-car sale, and franchise loops are fun.
-6. Add social showcase/scout concepts only after a privacy/account/backend design exists.
-7. Add car manufacturing, rocket company, and space league layers only as late-game/future patch
+4. Rename or reframe `Tips` as Cash in a later implementation pass, while keeping `tips` as flavor
+   copy for order rewards.
+5. Add Net Worth as a visible long-term score later; the $1T goal does not increase, only progress
+   toward `$1T Net Worth` increases.
+6. Add Business Value only after Manager Desk / managed shop is stable.
+7. Add covered-car teaser pacing and Dream Garage Stage 0 before any asset valuation system.
+8. Add the first car part as a Cash investment.
+9. Add sell/keep project car decisions later.
+10. Add business valuation only after Dream Garage, project-car sale, and franchise loops are fun.
+11. Keep shares/company ownership deferred as a later fictional founder mechanic, not the main
+   endgame target.
+12. Add social showcase/scout concepts only after a privacy/account/backend design exists.
+13. Add car manufacturing, rocket company, and space league layers only as late-game/future patch
    content.
 
 Deferred until after the First Loop Contract is playtested:
@@ -286,7 +298,8 @@ Deferred until after the First Loop Contract is playtested:
 - Fresh Tofu Shop state starts with a 24 Tofu Stock buffer so the first few Simple Tofu Box pickups
   can complete automatically and reach the first useful upgrade without Pack Tofu.
 - Tofu Stock is an ingredient/runway resource, not the purchase currency.
-- Tips are the early purchase currency.
+- Tips are the current early purchase balance; future economy direction is Cash as the single
+  liquid currency, with tips as flavor.
 - Starter Counter Service is the early money-conversion action.
 - Counter Service blocked copy should identify the actual missing resource and show a Tofu Stock
   ETA when the press is refilling the next handoff.

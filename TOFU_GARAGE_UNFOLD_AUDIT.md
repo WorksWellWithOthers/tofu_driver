@@ -27,7 +27,7 @@ kept out of the primary Tofu Garage loop.
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Tofu Stock | Ingredient/runway for shop orders | Tofu Press, Supplier Contracts, Rush Stock, offline production | Prep Counter, shop orders, larger order types | improve supply or spend stock on larger payouts | start | stock shortage | Family Tray, Festival Bento, Catering Crate | meaningful |
 | Delivery Orders | Prepared/waiting shop work | Prep Counter, Warm Counter, offline prep | Counter Service, Manual Backup, Wholesale Pickup | improve prep or improve handoff throughput | start | no money opportunities or queue full | Counter Service, Manager Desk | meaningful |
-| Tips | Main early purchase currency | Counter Service, shop orders, Wholesale Pickup | stations, upgrades, Manager Desk | buy the next bottleneck fix | first handoff | cannot afford next improvement | all shop expansion | meaningful |
+| Tips / Cash | Current UI balance says Tips; future economy treats tips as Cash, the liquid spend currency | Counter Service, shop orders, Wholesale Pickup | stations, upgrades, Manager Desk, future car parts/businesses | buy the next bottleneck fix or later invest in assets | first handoff | cannot afford next improvement | all shop expansion, Net Worth | meaningful now; rename/reframe future |
 | Reputation | Unlock/status currency and midgame supply sink | shop orders, Shop Sign, driver bonus | Supplier Contracts, Manager Desk, unlock gates | spend status to secure supply | first handoff | stock trap with low Tips | Supplier Contracts, Manager Desk | meaningful |
 | Shop Level | Derived progression label from Reputation | Reputation growth | unlock checks | reach phase gates | start | communicates progression tier | Supplier/Manager gates | meaningful, derived |
 | Shop Spirit | Parked emergency/spend resource | Spirit generators | Rush Stock, Warm Counter, timed effects | save Spirit for bottleneck moments | after shop momentum | short-term recovery | future boost economy | meaningful but tune carefully |
@@ -73,19 +73,21 @@ Tune covered-car teaser timing and first-session visual pacing.
 Later:
 
 ```text
-Dream Garage planning -> first project car -> keep/sell decision -> prestige-like shop transition.
+Dream Garage planning -> first Cash-funded project car -> keep/sell decision -> Net Worth accounting.
 ```
 
 Avoid for now:
 
 ```text
-Net Worth counters, asset valuation, routes expansion, crew gameplay, franchise mode, social systems,
-backend sync, multiplayer, payments, service workers, uploads, or network calls.
+Net Worth counters, asset valuation, separate dollar balances, shares as the main target, routes
+expansion, crew gameplay, franchise mode, social systems, backend sync, multiplayer, payments,
+service workers, uploads, or network calls.
 ```
 
 ## Risks / Anti-Patterns
 
 - Random counters without a spend decision.
+- Separate Tips and dollar balances that make one order payout feel like two currencies.
 - Future tabs visible before they solve a current bottleneck.
 - Bulk buy actions that spend into hidden or deferred systems.
 - Progress bars with fake ETAs while income is blocked.

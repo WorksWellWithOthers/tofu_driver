@@ -305,8 +305,10 @@ Current design principles:
 - Manual Fulfill Shop Order remains a parked Manual Backup action. It requires at least one ready
   Delivery Order, consumes Delivery Orders, and grants Tips, Reputation, and Shop XP, but it is not
   the primary progression loop.
-- Tips buy more production, stations, and upgrades.
-- The early UI must teach that Tips come from automatic Counter Service handoffs.
+- Tips are early flavor for order income. The future coherent economy should treat those earnings
+  as Cash, the single liquid spend currency for shop upgrades, car parts, and later business
+  investments.
+- The early UI must teach that automatic Counter Service handoffs create spendable money.
 - Pack Tofu is a backup/manual Tofu Stock action, not the main money action.
 - Recommendations should follow the current bottleneck: promote Tofu Press when stock is low, but
   promote Prep Counter, order prep, or Tidy Packaging when stock is plentiful and orders are slow.
@@ -409,7 +411,7 @@ control matters more than speed.
 The Tofu Shop upgrade loop stays intact. Dream Garage should run in parallel later:
 
 ```text
-Work shop orders -> earn Tips -> reinvest in shop or save for parts -> build the project car ->
+Work shop orders -> earn Cash from tips -> reinvest in shop or buy parts -> build the project car ->
 enter fictional closed-course events -> earn prizes/status -> complete or sell the build -> start
 the next dream car stronger
 ```
@@ -419,6 +421,10 @@ Design rules:
 - Tofu Shop is how the player earns money.
 - Dream Garage is the long-term aspirational layer.
 - The player slowly builds a project car from an old covered car into a dream build.
+- Car parts should cost Cash, not a separate part currency.
+- Buying car parts should feel like an investment decision: spending Cash slows liquid progress
+  toward the $1T target, but can increase Car Asset Value, unlock higher earning paths, or create
+  later sell/keep decisions.
 - The car-build layer is fictional game progression.
 - Fictional closed-course events are asynchronous parked game events, not instructions to drive in
   real life.
@@ -457,8 +463,36 @@ The rocket company is the absurd endgame.
 The goal is $1 trillion net worth.
 ```
 
-`Net Worth` is a fictional game abstraction, not financial advice. The exact label can later become
-Company Value, Enterprise Value, Total Value, or another clearer game term.
+`Net Worth` is a fictional game abstraction, not financial advice. The $1T goal does not increase;
+the player's progress toward $1T Net Worth increases.
+
+Cash is the future name for the player's spendable money. Early-game flavor may still call order
+income `tips`, but those tips should mechanically be Cash. Tofu orders earn Cash, shop upgrades
+spend Cash, future car parts spend Cash, and Cash contributes directly to Net Worth.
+
+Avoid creating separate `Tips` and `$` balances. Use copy such as `+$10 Cash from tips` or
+`Counter Service: Simple Tofu Box complete · +$10` when implementation catches up. Shares are not
+the main endgame target; they can remain a much later fictional company/founder mechanic if needed.
+
+Conceptual accounting model:
+
+```text
+Net Worth =
+  Cash
+  + Business Value
+  + Car Asset Value
+  + Garage Value
+  + future company value
+  - liabilities
+```
+
+Central investment tradeoff:
+
+```text
+Cash helps reach $1T directly.
+Spending Cash delays liquid progress.
+But spending Cash on assets can unlock higher earning paths.
+```
 
 The player may begin small, possibly even with negative net worth if future design adds startup
 costs, shop bills, project-car expenses, loans, or obligations. Over time, the player builds assets:
@@ -480,7 +514,7 @@ The arc should evolve from labor to ownership:
 2. Shop Owner Era: buy stations and upgrades.
 3. Manager Era: Counter Service and Regular Customers automate order fulfillment.
 4. Franchise Era: Tofu Shop becomes scalable business infrastructure.
-5. Dream Garage Era: Tips fund project cars and parts.
+5. Dream Garage Era: Cash from shop income funds project cars and parts.
 6. Builder Era: completed cars gain value, win fictional closed-course prizes, or sell.
 7. Manufacturer Era: the player builds a car company.
 8. Aerospace Era: the player invests in rockets or space delivery.
