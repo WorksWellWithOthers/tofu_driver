@@ -222,6 +222,7 @@ Status values: `Implemented`, `Partial`, `Placeholder`, `Decorative only`, `Docu
 | Merch | `MERCH_LINKS` | Implemented | constants in `app.js` | merch link tests | Add real product URLs when ready | P2 | Locked links hidden |
 | Merch | `MERCH_LABELS` | Implemented | constants in `app.js` | merch tests | Tune labels | P3 | Local labels only |
 | Merch | Super Cute Collectibles partner copy | Implemented | landing/merch copy, docs | `testSuperCuteCollectiblesLandingAndMerchCopy` | Product URL setup | P2 | Partner does not verify scores |
+| Merch | Hidden Shirt Unlock V1 | Implemented | `HIDDEN_SHIRT_ID`, `applyHiddenShirtUnlock`, `renderHiddenShirtReveal`, `renderMerchPanel` in `frontend/nospill/app.js`; hidden-shirt result section in `frontend/nospill/index.html` | `testHiddenShirtUnlockV1IsLocalParkedAndSafe` | Real-device post-run QA | P1 | Local-only reveal for the Tofu Driver `Not Fast. Smooth.` Tee after Certified Perfect Pour or route-context Perfect Pour achievement; no backend verification, Shopify API, auto-open, active-drive prompt, URL data append, scoring, rewards, Driver XP, shop, Net Worth, Garage Build Value, Brand Value, or economy effect |
 | Community | Discord hidden by default | Implemented | `DISCORD_CONFIG` default false/null | Discord tests | Enable only with invite URL | P3 | No default community link |
 | Community | Discord not shown during active drive | Implemented | `renderDiscordCtas`, active view checks | Discord tests | None | P0 | Parked/community use only |
 

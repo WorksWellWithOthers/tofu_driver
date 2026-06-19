@@ -98,6 +98,10 @@
   explicit post-run share-card choice with warning copy, bucketed route context in copied text, and
   no map tiles, street names, coordinates, speed overlay, automatic sharing, uploads, backend,
   accounts, public profiles, or leaderboards.
+- Hidden Shirt Unlock V1 is implemented as a local parked post-run merch reveal. The Tofu Driver
+  `Not Fast. Smooth.` Tee link appears only after a Certified Perfect Pour or route-context Perfect
+  Pour achievement, is repeat-suppressed after acknowledgement, and does not use backend
+  verification, Shopify APIs, auto-opening, active-drive prompts, score changes, or economy effects.
 - Character-art slots and parked-only placeholders are implemented for future Delivery Crew/shop
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
   expectations, and smallest recommended first asset pack.
@@ -433,8 +437,9 @@ Deferred until after the First Loop Contract is playtested:
 - Tune how often Manual Backup should be opened after Tofu Press and Supplier Contracts are stable.
 - Should the first License Exam target be 4 hours, 6 hours, or later after playtesting?
 - Should saved local sessions migrate if the storage key changes?
-- Should merch unlocks remain local-only for the MVP?
-- Which Super Cute Collectibles product URLs should be added after products exist?
+- Should future merch unlocks remain local-only, or should backend-issued unlock tokens be built
+  after real demand?
+- Which additional Super Cute Collectibles product URLs should be added after products exist?
 - Should Certified Result verification remain share-private by default?
 - What backend, if any, is needed later for earned merch unlock tokens?
 - What moderation policy is required before accepting any user-generated community reports?

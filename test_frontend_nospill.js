@@ -348,6 +348,14 @@ globalThis.shopResourceBucket = shopResourceBucket;
 globalThis.DISCORD_CONFIG = DISCORD_CONFIG;
 globalThis.MERCH_LABELS = MERCH_LABELS;
 globalThis.MERCH_LINKS = MERCH_LINKS;
+globalThis.HIDDEN_SHIRT_ID = HIDDEN_SHIRT_ID;
+globalThis.HIDDEN_SHIRT_NAME = HIDDEN_SHIRT_NAME;
+globalThis.HIDDEN_SHIRT_URL = HIDDEN_SHIRT_URL;
+globalThis.hiddenShirtUnlockSource = hiddenShirtUnlockSource;
+globalThis.applyHiddenShirtUnlock = applyHiddenShirtUnlock;
+globalThis.acknowledgeHiddenShirtReveal = acknowledgeHiddenShirtReveal;
+globalThis.renderHiddenShirtReveal = renderHiddenShirtReveal;
+globalThis.renderMerchPanel = renderMerchPanel;
 globalThis.CARGO_PROFILES = CARGO_PROFILES;
 globalThis.SHARE_CONFIG = SHARE_CONFIG;
 globalThis.STORAGE_KEY = STORAGE_KEY;
@@ -5455,8 +5463,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619c'));
-  assert(html.includes('/static/nospill/app.css?v=20260619c'));
+  assert(html.includes('/static/nospill/app.js?v=20260619d'));
+  assert(html.includes('/static/nospill/app.css?v=20260619d'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7889,8 +7897,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619c'));
-  assert(html.includes('/static/nospill/app.css?v=20260619c'));
+  assert(html.includes('/static/nospill/app.js?v=20260619d'));
+  assert(html.includes('/static/nospill/app.css?v=20260619d'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -8070,6 +8078,131 @@ globalThis.unlockedMerchHtml = elements.merchGrid.innerHTML;
   assert(context.unlockedMerchHtml.includes('https://supercutecollectibles.com/products/nospill-club'));
   assert(context.unlockedMerchHtml.includes('target="_blank" rel="noopener noreferrer"'));
   assert(context.unlockedMerchHtml.includes('Buy unlocked shirt'));
+}
+
+function testHiddenShirtUnlockV1IsLocalParkedAndSafe() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const productUrl = 'https://supercutecollectibles.com/products/tofu-driver-not-fast-smooth-tee?utm_source=copyToPasteBoard&utm_medium=product-links&utm_content=web';
+  assert.strictEqual(context.HIDDEN_SHIRT_ID, 'not_fast_smooth_tee');
+  assert.strictEqual(context.HIDDEN_SHIRT_NAME, 'Tofu Driver “Not Fast. Smooth.” Tee');
+  assert.strictEqual(context.HIDDEN_SHIRT_URL, productUrl);
+  assert(!fs.readFileSync(NOSPILL_HTML, 'utf8').includes(productUrl));
+
+  vm.runInContext(`
+elements = { merchGrid: { innerHTML: "" } };
+renderMerchPanel({ unlockedMilestones: {} }, defaultGameState());
+globalThis.lockedHiddenShirtHtml = elements.merchGrid.innerHTML;
+`, context);
+  assert(context.lockedHiddenShirtHtml.includes('Hidden Shirt'));
+  assert(context.lockedHiddenShirtHtml.includes('Earn a Certified Perfect Pour'));
+  assert(!context.lockedHiddenShirtHtml.includes(productUrl));
+
+  const certifiedPerfect = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), context.defaultGameState());
+  const shirt = certifiedPerfect.gameState.merchUnlocks.not_fast_smooth_tee;
+  assert.strictEqual(certifiedPerfect.hiddenShirtUnlock.unlockedThisRun, true);
+  assert.strictEqual(certifiedPerfect.hiddenShirtUnlock.source, 'certified_perfect_pour');
+  assert.strictEqual(shirt.unlocked, true);
+  assert.strictEqual(shirt.revealSeen, false);
+  assert.strictEqual(shirt.source, 'certified_perfect_pour');
+
+  const localPerfect = context.calculateDeliveryRewards(sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 300,
+    distanceMiles: 0,
+  }), context.defaultGameState());
+  assert.strictEqual(localPerfect.hiddenShirtUnlock.unlockedThisRun, false);
+  assert.strictEqual(localPerfect.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, false);
+
+  const simulatedPerfect = context.calculateDeliveryRewards(sampleDeliverySession({
+    simulated: true,
+    mode: 'simulated',
+    qualificationStatus: 'qualified',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+  }), context.defaultGameState());
+  assert.strictEqual(simulatedPerfect.hiddenShirtUnlock.unlockedThisRun, false);
+  assert.strictEqual(simulatedPerfect.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, false);
+
+  const routeContextSummary = sampleDeliverySession({
+    waterLeft: 96,
+    cargoCondition: 96,
+    qualificationStatus: 'qualified',
+    routeContext: {
+      status: 'usable',
+      routeContextLabel: 'Technical',
+      routeContextScore: 82,
+      turnDensity: 'High',
+      curvature: 'High',
+      stopStartTexture: 'Medium',
+      signalQuality: 'Strong',
+    },
+  });
+  const routeRewards = context.calculateDeliveryRewards(routeContextSummary, context.defaultGameState());
+  assert(routeRewards.stamps.includes('winding_perfect_pour'));
+  assert.strictEqual(routeRewards.hiddenShirtUnlock.unlockedThisRun, true);
+  assert.strictEqual(routeRewards.hiddenShirtUnlock.source, 'route_context_achievement');
+
+  const shareText = context.buildShareText({ ...routeContextSummary, deliveryRewards: routeRewards });
+  assert(!shareText.includes(productUrl));
+  assert(!/speed|mph|gps|map|street|trace|lat|lon/i.test(shareText));
+
+  vm.runInContext(`
+const unlockedState = ${JSON.stringify(certifiedPerfect.gameState)};
+elements = {
+  hiddenShirtReveal: { hidden: false, classes: new Set(["is-hidden"]), classList: { toggle(_name, hidden) { hidden ? this.owner.classes.add("is-hidden") : this.owner.classes.delete("is-hidden"); }, add(name) { this.owner.classes.add(name); } } },
+  hiddenShirtLink: { attrs: {}, href: "", setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; this.href = ""; } },
+  merchGrid: { innerHTML: "" },
+  merchProgressGrid: { innerHTML: "" },
+};
+elements.hiddenShirtReveal.classList.owner = elements.hiddenShirtReveal;
+renderHiddenShirtReveal({ deliveryRewards: { hiddenShirtUnlock: { unlockedThisRun: true }, gameState: unlockedState } });
+globalThis.revealVisible = !elements.hiddenShirtReveal.classes.has("is-hidden");
+globalThis.revealHref = elements.hiddenShirtLink.href;
+globalThis.revealTarget = elements.hiddenShirtLink.attrs.target;
+globalThis.revealRel = elements.hiddenShirtLink.attrs.rel;
+const acknowledged = acknowledgeHiddenShirtReveal(unlockedState);
+globalThis.acknowledgedSeen = acknowledged.gameState.merchUnlocks.not_fast_smooth_tee.revealSeen;
+globalThis.acknowledgedState = acknowledged.gameState;
+renderHiddenShirtReveal({ deliveryRewards: { hiddenShirtUnlock: { unlockedThisRun: true }, gameState: acknowledged.gameState } });
+globalThis.revealHiddenAfterAck = elements.hiddenShirtReveal.classes.has("is-hidden");
+renderMerchPanel({ unlockedMilestones: {} }, acknowledged.gameState);
+globalThis.unlockedHiddenShirtHtml = elements.merchGrid.innerHTML;
+`, context);
+  assert.strictEqual(context.revealVisible, true);
+  assert.strictEqual(context.revealHref, productUrl);
+  assert.strictEqual(context.revealTarget, '_blank');
+  assert.strictEqual(context.revealRel, 'noopener noreferrer');
+  assert.strictEqual(context.acknowledgedSeen, true);
+  assert.strictEqual(context.revealHiddenAfterAck, true);
+  assert(context.unlockedHiddenShirtHtml.includes('Tofu Driver “Not Fast. Smooth.” Tee'));
+  assert(context.unlockedHiddenShirtHtml.includes(productUrl.replaceAll('&', '&amp;')));
+  assert(context.unlockedHiddenShirtHtml.includes('target="_blank" rel="noopener noreferrer"'));
+
+  const exported = context.exportGameProgress(context.acknowledgedState);
+  assert(exported.includes('"not_fast_smooth_tee"'));
+  assert(!/routeSamples|gpsSamples|raw|coordinates|latitude|longitude|speedLog/i.test(exported));
+  const imported = context.importGameProgress(exported);
+  assert.strictEqual(imported.ok, true);
+  assert.strictEqual(imported.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, true);
+  assert.strictEqual(imported.gameState.merchUnlocks.not_fast_smooth_tee.revealSeen, true);
+
+  assert.deepStrictEqual(
+    context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 100 }), context.defaultGameState()).skillXP,
+    context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 100 }), context.defaultGameState()).skillXP,
+  );
 }
 
 function testDailyDeliverySelectionAndEvaluation() {
@@ -10756,6 +10889,7 @@ const TESTS = [
   ["testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy", testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy],
   ["testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic", testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic],
   ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
+  ["testHiddenShirtUnlockV1IsLocalParkedAndSafe", testHiddenShirtUnlockV1IsLocalParkedAndSafe],
   ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
   ["testRouteTypeClassification", testRouteTypeClassification],
   ["testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext", testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext],

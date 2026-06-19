@@ -26,6 +26,11 @@ system uses a local Discovery Fanfare so progression moments are visible without
 future roadmap. Midgame supply pressure is handled through parked management decisions such as
 Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking.
 
+Hidden merch is local-only in the MVP. The Tofu Driver `Not Fast. Smooth.` Tee link is revealed
+inside the parked result/rewards UI after an earned Certified Perfect Pour or route-context Perfect
+Pour achievement. The app does not run payments, call Shopify APIs, verify unlocks with a backend,
+or open external merch links automatically.
+
 ## Privacy And Safety Stance
 
 - No backend is required for the current MVP.
