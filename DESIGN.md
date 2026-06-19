@@ -368,6 +368,8 @@ Current design principles:
   regions, and should compute from already-normalized milestone state so shop buttons remain
   one-click responsive. The covered-car state may use only restrained flavor such as `Behind the
   shop, an old car waits under a cover`; it remains a purpose hint, not Dream Garage implementation.
+  The Old Car Out Back story splash is a one-time parked acknowledgement for that milestone, separate
+  from the normal Living Scene background.
 - Mika, Night Shift Manager, is the first implemented Delivery Crew character art pack. Her current
   six-image MVP set lives under `/static/nospill/images/` and can appear only on parked/result
   surfaces such as Delivery Crew, post-run results, Coach Recap, and local fanfare moments.
@@ -798,6 +800,7 @@ future optional slots can still fall back to placeholders. Assigned real art sho
 single intentional image treatment per surface, without duplicate fallback tiles beside it.
 Character cameos belong on parked shop, crew, result, recap, reward, and stamp surfaces only, not
 active-drive UI.
+Story splash art follows the same rule: it is parked-only, repeat-suppressed, and cosmetic.
 
 Muted mode must mute cosmetic sounds. Active-drive audio coach remains separate and user-controlled.
 
