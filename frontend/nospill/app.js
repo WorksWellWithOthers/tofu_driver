@@ -267,6 +267,8 @@ const DREAM_BUILD_EXHAUST_SEAL_COST = 375000;
 const DREAM_BUILD_EXHAUST_SEAL_VALUE = 200000;
 const DREAM_BUILD_EXHAUST_TUNED_NOTE_COST = 600000;
 const DREAM_BUILD_EXHAUST_TUNED_NOTE_VALUE = 350000;
+const DREAM_BUILD_EXHAUST_HEAT_WRAP_COST = 1100000;
+const DREAM_BUILD_EXHAUST_HEAT_WRAP_VALUE = 650000;
 const DREAM_BUILD_TOTAL_WORK_STAGES = 30;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
@@ -4868,7 +4870,12 @@ function projectCarValueV1(gameState) {
   } else if (wheelsLevel >= 1) {
     value += DREAM_BUILD_WHEELS_VALUE;
   }
-  if (exhaustLevel >= 3) {
+  if (exhaustLevel >= 4) {
+    value += DREAM_BUILD_EXHAUST_VALUE
+      + DREAM_BUILD_EXHAUST_SEAL_VALUE
+      + DREAM_BUILD_EXHAUST_TUNED_NOTE_VALUE
+      + DREAM_BUILD_EXHAUST_HEAT_WRAP_VALUE;
+  } else if (exhaustLevel >= 3) {
     value += DREAM_BUILD_EXHAUST_VALUE + DREAM_BUILD_EXHAUST_SEAL_VALUE + DREAM_BUILD_EXHAUST_TUNED_NOTE_VALUE;
   } else if (exhaustLevel >= 2) {
     value += DREAM_BUILD_EXHAUST_VALUE + DREAM_BUILD_EXHAUST_SEAL_VALUE;
@@ -5039,6 +5046,20 @@ function dreamBuildExhaustWorkForLevel(level) {
       feedback: "Dream Build work complete: Tuned Note.",
     };
   }
+  if (level === 3) {
+    return {
+      action: "heat-wrap",
+      nextLevel: 4,
+      title: "Heat Wrapped",
+      completeTitle: "Heat Wrapped",
+      buttonLabel: "Heat Wrap Exhaust",
+      cost: DREAM_BUILD_EXHAUST_HEAT_WRAP_COST,
+      valueAdded: DREAM_BUILD_EXHAUST_HEAT_WRAP_VALUE,
+      copy: "Protect the install and make the exhaust bay look deliberate.",
+      completeCopy: "The exhaust setup looks cared for, not rushed.",
+      feedback: "Dream Build work complete: Heat Wrapped.",
+    };
+  }
   return null;
 }
 
@@ -5109,8 +5130,8 @@ function nextDreamBuildStep(gameState) {
     return { title: exhaustWork.buttonLabel, copy: exhaustWork.copy, future: false };
   }
   return {
-    title: "Heat Wrapped",
-    copy: "Heat Wrapped comes in a future Dream Garage pass. Keep growing Cash and Net Worth.",
+    title: "Showcase Finish",
+    copy: "Showcase Finish comes in a future Dream Garage pass. Keep growing Cash and Net Worth.",
     future: true,
   };
 }
@@ -10167,14 +10188,18 @@ function nextBestAction(gameState, options = {}) {
           };
         }
         const ready = cashBalance(state) >= exhaustWork.cost;
+        const growCopy = exhaustWork.action === "heat-wrap"
+          ? "Protect the exhaust setup when the shop can fund it."
+          : `Refine the exhaust note when the shop can fund ${exhaustWork.title}.`;
+        const readyCopy = exhaustWork.action === "heat-wrap"
+          ? "Make the exhaust setup look cared for, not rushed."
+          : exhaustWork.copy;
         return {
           type: ready ? "buy_dream_exhaust_work" : "dream_investment_target",
           title: ready
             ? `Next: ${exhaustWork.buttonLabel}`
             : `Next: Grow Cash for ${exhaustWork.title}`,
-          copy: ready
-            ? exhaustWork.copy
-            : `Refine the exhaust note when the shop can fund ${exhaustWork.title}.`,
+          copy: ready ? readyCopy : growCopy,
           buttonLabel: exhaustWork.buttonLabel,
           disabled: false,
         };
@@ -10215,7 +10240,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "Heat Wrapped comes in a future Dream Garage pass.",
+        copy: "Showcase Finish comes in a future Dream Garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -11039,7 +11064,7 @@ function renderDreamInvestmentTargetCard(gameState) {
               <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
             </div>
             <small>${isPurchase ? "Next Dream Part" : "Next Work"}: ${escapeHtml(exhaustWork.title)}</small>
-            <small>Cost: ${escapeHtml(formatCash(exhaustWork.cost))} Cash · Value added: +${escapeHtml(formatCashCount(exhaustWork.valueAdded))}</small>
+            <small>Cost: ${escapeHtml(formatCash(exhaustWork.cost))} Cash · ${exhaustWork.action === "heat-wrap" ? "Build Value added" : "Value added"}: +${escapeHtml(formatCashCount(exhaustWork.valueAdded))}</small>
             <small>${escapeHtml(exhaustWork.copy)}</small>
             ${!canAffordExhaustWork ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
           </div>
@@ -11054,6 +11079,24 @@ function renderDreamInvestmentTargetCard(gameState) {
             `Need ${formatCash(missing)} more Cash.`,
           ),
         ] : [],
+      });
+    }
+    if (exhaustLevel >= 4) {
+      return renderIdleCard({
+        title: "Heat Wrapped",
+        status: "Exhaust Level 4 / 5",
+        copy: "The exhaust setup looks cared for, not rushed.",
+        extra: `
+          <div class="nospill-afford-progress">
+            <div class="nospill-afford-progress-head">
+              <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+              <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+            </div>
+            <small>Next Exhaust Work: Showcase Finish</small>
+            <small>Full Dream Garage comes later.</small>
+          </div>
+        `,
+        actions: [],
       });
     }
     if (exhaustLevel >= 3) {
@@ -11823,7 +11866,7 @@ function nextMilestoneForShop(gameState) {
         progressText: `${formatShopCount(buildProgress.completed)} / ${formatShopCount(buildProgress.total)} work stages`,
         percent: buildProgress.percent || nextTarget.percent,
         reward: "First smooth garage-build path",
-        guidance: "Next Dream Step: Heat Wrapped. Future Dream Garage work; keep growing Cash.",
+        guidance: "Next Dream Step: Showcase Finish. Future Dream Garage work; keep growing Cash.",
       };
     }
     return {
@@ -14045,7 +14088,7 @@ function handleTofuShopPanelClick(event) {
   if (target.dataset.dreamBuildAction) {
     if (target.dataset.dreamBuildAction === "buy-wheels") {
       handleBuyDreamBuildWheels();
-    } else if (target.dataset.dreamBuildAction === "buy-exhaust" || target.dataset.dreamBuildAction === "seal-joints" || target.dataset.dreamBuildAction === "tuned-note") {
+    } else if (target.dataset.dreamBuildAction === "buy-exhaust" || target.dataset.dreamBuildAction === "seal-joints" || target.dataset.dreamBuildAction === "tuned-note" || target.dataset.dreamBuildAction === "heat-wrap") {
       handleDreamBuildExhaust(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
@@ -14568,7 +14611,7 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildExhaust(work.action);
     } else {
-      setSummaryStatusMessage("Heat Wrapped comes in a future Dream Garage pass.");
+      setSummaryStatusMessage("Showcase Finish comes in a future Dream Garage pass.");
     }
     return;
   }
