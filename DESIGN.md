@@ -103,6 +103,16 @@ These rules are authoritative for all current and future features:
 - Do not show shop, crew, sound, upgrade, reward-claiming, or social actions during an active drive.
 - Basic Mode must not request location.
 - Qualified Run Mode may request location only after explicit opt-in/start.
+- Default sharing must stay privacy-safe and abstract. The default share card uses the motion-derived
+  Abstract Cup Trail, which is not a map, route identity, street shape, distance plot, or speed
+  chart.
+- Actual route outline sharing is allowed only as an explicit, post-run, user-selected Qualified Run
+  option. The Route Outline + Smoothness Overlay card may reveal where the user drove, so the UI must
+  warn: `This may reveal where you drove. Share only if you are comfortable showing this route
+  shape.`
+- Optional route-outline cards must never be shared automatically and must not include map tiles,
+  street names, exact coordinates, speed overlays, route leaderboards, or route points in copied
+  share text.
 - Motion permission must be requested from the explicit `Start & Calibrate` tap before optional
   audio setup or other awaited work, so mobile Safari keeps the user-gesture chain.
 - Permission-needed, permission-denied, insecure-context, unsupported-browser, and no-motion-data
@@ -119,8 +129,11 @@ These rules are authoritative for all current and future features:
 - Do not make safety certification, insurance, legal compliance, or real-world driving protection
   claims.
 
-Qualified Run Mode may use summarized route validation only to decide whether a run qualifies. It
-must remain validation-only and must not become a performance/reward signal.
+Qualified Run Mode may use summarized route validation to decide whether a run qualifies and may use
+coarse qualified route context for route-context achievements. Route Context Score describes how much
+shape/context the route had; Cargo Result describes how smoothly the player handled it. Route context
+must not reward speed, dangerous acceleration, aggressive driving, exact street identity, or public
+road competition.
 
 ## Local Storage And Runtime
 

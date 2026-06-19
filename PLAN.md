@@ -91,6 +91,11 @@
   Drive Shape, a decorative Cup Trail, Daily Delivery Credit copy, and a Coach Recap focused on
   smooth hands, brake feather, decel control, transition smoothness, cargo balance, passenger
   comfort, and consistency.
+- Qualified Route Context V1 is implemented for completed opt-in Qualified Runs with usable local
+  route data. Default sharing remains the Abstract Cup Trail. Route Outline + Smoothness Overlay is
+  an explicit post-run share-card choice with warning copy, bucketed route context in copied text,
+  and no map tiles, street names, coordinates, speed overlay, automatic sharing, uploads, backend,
+  accounts, public profiles, or leaderboards.
 - Character-art slots and parked-only placeholders are implemented for future Delivery Crew/shop
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
   expectations, and smallest recommended first asset pack.
@@ -325,10 +330,13 @@ Canonical references:
 28. Playtest Result Card Visual Polish V1 on mobile and desktop: confirm Story Card Preview, Cargo
    Commentary, Story Caption, and downloaded card boxes feel readable without crowding the result
    actions.
-29. Playtest Garage Pride / Builder Note V1: confirm the 100-character limit, preset chips, saved
+29. Real-device QA Qualified Route Context V1: verify route-context buckets, warning copy, opt-in
+   Route Outline card rendering, and Winding/Stop-and-Go/Technical achievement gates without
+   changing base Cup Test scoring or rewarding speed.
+30. Playtest Garage Pride / Builder Note V1: confirm the 100-character limit, preset chips, saved
    note display, and local-only positioning create build ownership without feeling like required
    progression.
-30. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+31. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 

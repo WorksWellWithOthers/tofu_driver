@@ -202,6 +202,11 @@ stamps. Tofu Shop progression belongs to the parked idle game: Tofu Stock, Deliv
 Reputation, Shop Level, Shop Spirit, stations, station milestones, Counter Service, shop upgrades,
 Shop XP, and shop stamps.
 
+Route-context stamps such as Winding Perfect Pour, Stop-and-Go Smooth Pour, and Technical Perfect
+Pour are status achievements for completed Qualified Runs with enough route context plus strong cargo
+results. They do not alter the base Cup Test scoring formula, Driver XP, shop rewards, Net Worth,
+Garage Build Value, Brand Value, or economy balance, and they must not reward speed.
+
 Shop orders, Counter Service, Catering Crate, and other shop automation grant shop resources and
 Shop XP only. They must not grant Driver XP or inflate Driver Level. Driver Level can provide only a
 small capped shop status bonus, currently a Reputation-from-orders bonus, and it must never improve

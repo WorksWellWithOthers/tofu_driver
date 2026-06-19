@@ -94,6 +94,10 @@ globalThis.failureFlavorForSession = failureFlavorForSession;
 globalThis.storyCardPreviewData = storyCardPreviewData;
 globalThis.applyDailyDeliveryCredit = applyDailyDeliveryCredit;
 globalThis.analyzeRoute = analyzeRoute;
+globalThis.buildQualifiedRouteContext = buildQualifiedRouteContext;
+globalThis.normalizedRouteOutlineForShare = normalizedRouteOutlineForShare;
+globalThis.routeOutlineShareAvailable = routeOutlineShareAvailable;
+globalThis.routeContextAchievementIds = routeContextAchievementIds;
 globalThis.qualificationForRoute = qualificationForRoute;
 globalThis.getDailyDelivery = getDailyDelivery;
 globalThis.getDriverLicense = getDriverLicense;
@@ -5446,8 +5450,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619a'));
-  assert(html.includes('/static/nospill/app.css?v=20260619a'));
+  assert(html.includes('/static/nospill/app.js?v=20260619b'));
+  assert(html.includes('/static/nospill/app.css?v=20260619b'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7050,6 +7054,189 @@ function testShareConfigAndCardData() {
   assert.strictEqual(distanceCardData.distanceLabel, '');
 }
 
+function qualifiedRouteSamples(kind = 'winding') {
+  const base = 1_800_000_000_000;
+  const points = kind === 'stop'
+    ? [
+        [37.7700, -122.4200, 0],
+        [37.7702, -122.4185, 180000],
+        [37.7704, -122.4170, 360000],
+        [37.7706, -122.4155, 540000],
+        [37.7710, -122.4140, 720000],
+        [37.7714, -122.4125, 900000],
+        [37.7718, -122.4110, 1080000],
+        [37.7722, -122.4095, 1260000],
+      ]
+    : [
+        [37.7749, -122.4194, 0],
+        [37.7749, -122.4094, 60000],
+        [37.7849, -122.4094, 120000],
+        [37.7849, -122.4194, 180000],
+        [37.7949, -122.4194, 240000],
+        [37.7949, -122.4294, 300000],
+        [37.8049, -122.4294, 360000],
+        [37.8049, -122.4394, 420000],
+        [37.8149, -122.4394, 480000],
+        [37.8149, -122.4494, 540000],
+      ];
+  return points.map(([lat, lon, offset]) => ({
+    lat,
+    lon,
+    accuracy: 12,
+    timestamp: base + offset,
+  }));
+}
+
+function testQualifiedRouteContextSharingAndAchievementsV1() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(html.includes('Share Card Trail'));
+  assert(html.includes('Route Outline + Smoothness Overlay'));
+  assert(html.includes('id="route-share-warning"'));
+  assert(source.includes('ROUTE_OUTLINE_SHARE_WARNING'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+
+  const context = loadNoSpillContext();
+  const windingSamples = qualifiedRouteSamples('winding');
+  const qualifiedSummary = sampleShareSummary({
+    mode: 'qualified',
+    qualificationStatus: 'qualified',
+    simulated: false,
+    waterLeft: 98,
+    cargoCondition: 98,
+  });
+  const routeContext = context.buildQualifiedRouteContext(qualifiedSummary, windingSamples);
+  assert.strictEqual(routeContext.status, 'usable');
+  assert(['Calm', 'Rolling', 'Winding', 'Stop-and-Go', 'Technical'].includes(routeContext.routeContextLabel));
+  assert(['Usable', 'Strong'].includes(routeContext.signalQuality));
+  const outline = context.normalizedRouteOutlineForShare(windingSamples, qualifiedSummary);
+  assert(outline.length >= 2);
+  assert(outline.length <= 80);
+  outline.forEach((point) => {
+    assert(Number.isFinite(point.x));
+    assert(Number.isFinite(point.y));
+    assert(!('lat' in point));
+    assert(!('lon' in point));
+    assert(!('latitude' in point));
+    assert(!('longitude' in point));
+    assert(!('timestamp' in point));
+    assert(!('speed' in point));
+  });
+
+  const summaryWithContext = {
+    ...qualifiedSummary,
+    routeContext,
+    normalizedRouteOutline: outline,
+  };
+  const defaultCard = context.buildShareCardData(summaryWithContext);
+  assert.strictEqual(defaultCard.shareTrailMode, 'abstract');
+  assert.strictEqual(defaultCard.routeOutline.length, 0);
+  assert.strictEqual(context.routeOutlineShareAvailable(summaryWithContext), true);
+
+  const routeCard = context.buildShareCardData(summaryWithContext, { shareTrailMode: 'route_outline' });
+  assert.strictEqual(routeCard.shareTrailMode, 'route_outline');
+  assert(routeCard.routeOutline.length >= 2);
+  assert.strictEqual(routeCard.routeContext.routeContextLabel, routeContext.routeContextLabel);
+
+  const shareText = context.buildShareText(summaryWithContext, { shareTrailMode: 'route_outline' });
+  assert(shareText.includes(`Route Context: ${routeContext.routeContextLabel}`));
+  assert(shareText.includes('Turn Density:'));
+  assert(shareText.includes('Curvature:'));
+  assert(shareText.includes('Stop-Start Texture:'));
+  assert(shareText.includes('Route Outline: user chose to include it on the image card.'));
+  assert(!/gps|map|street|trace|location|lat|lon|speed|mph|\[|\{/.test(shareText.toLowerCase()));
+
+  const basicSummary = {
+    ...summaryWithContext,
+    mode: 'basic',
+    qualificationStatus: 'practice',
+  };
+  assert.strictEqual(context.routeOutlineShareAvailable(basicSummary), false);
+  assert.strictEqual(
+    context.buildShareCardData(basicSummary, { shareTrailMode: 'route_outline' }).shareTrailMode,
+    'abstract',
+  );
+  assert.strictEqual(context.routeContextAchievementIds(basicSummary).length, 0);
+
+  const simulatedSummary = {
+    ...summaryWithContext,
+    mode: 'simulated',
+    simulated: true,
+  };
+  assert.strictEqual(context.buildQualifiedRouteContext(simulatedSummary, windingSamples).status, 'unavailable');
+  assert.strictEqual(context.routeOutlineShareAvailable(simulatedSummary), false);
+  assert.strictEqual(context.routeContextAchievementIds(simulatedSummary).length, 0);
+
+  const windingAchievements = context.routeContextAchievementIds({
+    ...summaryWithContext,
+    routeContext: {
+      qualifiedRouteContext: true,
+      status: 'usable',
+      routeContextScore: 76,
+      routeContextLabel: 'Winding',
+      turnDensity: 'High',
+      curvature: 'High',
+      stopStartTexture: 'Medium',
+      signalQuality: 'Usable',
+    },
+  });
+  assert(windingAchievements.includes('winding_perfect_pour'));
+  assert(!context.routeContextAchievementIds({ ...summaryWithContext, waterLeft: 70, cargoCondition: 70 }).includes('winding_perfect_pour'));
+
+  const stopSummary = {
+    ...summaryWithContext,
+    routeContext: {
+      qualifiedRouteContext: true,
+      status: 'usable',
+      routeContextScore: 58,
+      routeContextLabel: 'Stop-and-Go',
+      turnDensity: 'Medium',
+      curvature: 'Medium',
+      stopStartTexture: 'High',
+      signalQuality: 'Usable',
+    },
+    waterLeft: 92,
+    cargoCondition: 92,
+  };
+  assert(context.routeContextAchievementIds(stopSummary).includes('stop_and_go_smooth_pour'));
+
+  const technicalSummary = {
+    ...summaryWithContext,
+    routeContext: {
+      qualifiedRouteContext: true,
+      status: 'usable',
+      routeContextScore: 82,
+      routeContextLabel: 'Technical',
+      turnDensity: 'High',
+      curvature: 'High',
+      stopStartTexture: 'Medium',
+      signalQuality: 'Strong',
+    },
+    waterLeft: 99,
+    cargoCondition: 99,
+  };
+  assert(context.routeContextAchievementIds(technicalSummary).includes('route_context_perfect_pour'));
+
+  const state = context.defaultGameState();
+  const netWorthBefore = context.netWorthV1(state);
+  const rewards = context.calculateDeliveryRewards(technicalSummary, state);
+  const noContextRewards = context.calculateDeliveryRewards({
+    ...technicalSummary,
+    routeContext: null,
+  }, context.defaultGameState());
+  assert(rewards.stamps.includes('winding_perfect_pour'));
+  assert(rewards.stamps.includes('route_context_perfect_pour'));
+  assert.strictEqual(rewards.xpGained, noContextRewards.xpGained);
+  assert.deepStrictEqual(rewards.skillXP, noContextRewards.skillXP);
+  assert.strictEqual(rewards.shop.tipsGained, noContextRewards.shop.tipsGained);
+  assert.strictEqual(rewards.shop.tofuStockGained, noContextRewards.shop.tofuStockGained);
+  assert.strictEqual(rewards.shop.reputationGained, noContextRewards.shop.reputationGained);
+  assert.strictEqual(rewards.shop.xpGained, noContextRewards.shop.xpGained);
+  assert.strictEqual(context.netWorthV1(state), netWorthBefore);
+}
+
 function testResultStoryCaptionV1IsLocalSafeAndShareable() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
@@ -7702,8 +7889,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619a'));
-  assert(html.includes('/static/nospill/app.css?v=20260619a'));
+  assert(html.includes('/static/nospill/app.js?v=20260619b'));
+  assert(html.includes('/static/nospill/app.css?v=20260619b'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -10503,6 +10690,7 @@ const TESTS = [
   ["testNoSpillClientDoesNotUploadRawRunData", testNoSpillClientDoesNotUploadRawRunData],
   ["testNoSpillLiveSummaryAndShareAvoidSensitiveDetails", testNoSpillLiveSummaryAndShareAvoidSensitiveDetails],
   ["testShareConfigAndCardData", testShareConfigAndCardData],
+  ["testQualifiedRouteContextSharingAndAchievementsV1", testQualifiedRouteContextSharingAndAchievementsV1],
   ["testResultStoryCaptionV1IsLocalSafeAndShareable", testResultStoryCaptionV1IsLocalSafeAndShareable],
   ["testFailureFlavorV1AddsSafeCargoCommentary", testFailureFlavorV1AddsSafeCargoCommentary],
   ["testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy", testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy],

@@ -13,7 +13,10 @@ Cup Test result cards include safe local summaries such as Cargo Type, Trip Time
 decorative Cup Trail, Daily Delivery Credit, Coach Recap labels, local Cargo Commentary, Story Card
 Preview, and optional player Story Captions. These are derived from summarized motion only and must
 not expose speed, distance, GPS, maps, street names, route traces, or racing/performance-driving
-technique.
+technique. Completed Qualified Runs can also show coarse Route Context buckets. The default share
+card remains the abstract Cup Trail; a Route Outline + Smoothness Overlay card is shown only as an
+explicit post-run opt-in and copied text never includes route points, coordinates, street names,
+speed, or map data.
 
 Tofu Shop, the first Tofu Garage business, starts with a focused first loop and reveals depth over
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
@@ -30,6 +33,8 @@ Counter Service batch upgrades and Reputation-funded Supplier Contracts, not fas
 - PostHog autocapture and session recording are disabled by default.
 - No upload of raw motion or GPS samples.
 - No upload of route traces, maps, street names, coordinates, or speed logs.
+- No automatic route outline sharing; optional Qualified Run route-outline cards are post-run and
+  user-selected only.
 - Basic Mode does not request location.
 - Qualified Run Mode requests location only after opt-in/start.
 - Scoring and rewards prioritize smoothness, not speed.
