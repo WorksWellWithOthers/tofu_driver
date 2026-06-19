@@ -5463,8 +5463,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619d'));
-  assert(html.includes('/static/nospill/app.css?v=20260619d'));
+  assert(html.includes('/static/nospill/app.js?v=20260619e'));
+  assert(html.includes('/static/nospill/app.css?v=20260619e'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6700,6 +6700,19 @@ function testTofuDriverArtworkIsIsolatedAndAccessible() {
   const logoPath = path.join(NOSPILL_IMAGES_DIR, 'tofu_driver_logo.webp');
   const shirtPath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-shirt-1.png');
   const appImagePath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-app-image.png');
+  [
+    'banner.png',
+    'larger_banner.png',
+    'tofu_driver_banner.png',
+    'tofu_driver_logo.png',
+    'tofu_driver_logo.webp',
+    'tofu-driver-logo.png',
+    'tofu-driver-app-image.png',
+    'tofu_driver_shirt_1.png',
+    'tofu-driver-shirt-1.png',
+  ].forEach((filename) => {
+    assert(fs.existsSync(path.join(NOSPILL_IMAGES_DIR, filename)), `${filename} should remain available`);
+  });
 
   assert(fs.existsSync(logoPath), 'Tofu Driver logo asset should exist');
   assert(fs.existsSync(shirtPath), 'No-Spill Club shirt preview asset should exist');
@@ -7897,8 +7910,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619d'));
-  assert(html.includes('/static/nospill/app.css?v=20260619d'));
+  assert(html.includes('/static/nospill/app.js?v=20260619e'));
+  assert(html.includes('/static/nospill/app.css?v=20260619e'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -9353,6 +9366,9 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
     '/static/nospill/images/scene_tiny_shop_upgraded.webp',
     '/static/nospill/images/scene_busy_shop_with_covered_car.webp',
     '/static/nospill/images/old_car_out_back_story_splash.webp',
+    '/static/nospill/images/penguin_driver_icon.webp',
+    '/static/nospill/images/penguin_delivery_buddy.webp',
+    '/static/nospill/images/penguin_tofu_driver_sticker.webp',
   ].forEach((runtimePath) => {
     const filename = runtimePath.split('/').pop();
     assert.strictEqual(
@@ -9392,6 +9408,27 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
     const asset = context.getCharacterAsset('mika', slotId);
     assert.strictEqual(asset.src, expectedPath);
     assert.strictEqual(asset.status, 'assigned');
+  });
+  const penguinExpectedPaths = {
+    penguin_driver: '/static/nospill/images/penguin_driver_icon.webp',
+    penguin_delivery_buddy: '/static/nospill/images/penguin_delivery_buddy.webp',
+    penguin_tofu_driver_sticker: '/static/nospill/images/penguin_tofu_driver_sticker.webp',
+  };
+  Object.entries(penguinExpectedPaths).forEach(([characterId, expectedPath]) => {
+    const asset = context.getCharacterAsset(characterId, 'crew_profile_card');
+    assert.strictEqual(asset.src, expectedPath);
+    assert.strictEqual(asset.status, 'assigned');
+    const cameo = context.renderCharacterCameo('crew_profile_card', context.defaultGameState(), {
+      character: context.getCharacterCatalog().find((character) => character.id === characterId),
+    });
+    assert(cameo.includes(expectedPath));
+    assert(!cameo.includes('Crew portrait not yet assigned'));
+    assert(!cameo.includes('art pending'));
+    const activeCameo = context.renderCharacterCameo('crew_profile_card', context.defaultGameState(), {
+      character: context.getCharacterCatalog().find((character) => character.id === characterId),
+      activeDrive: true,
+    });
+    assert.strictEqual(activeCameo, '');
   });
   const missingSlot = context.renderCharacterCameo('undefined_future_slot', context.defaultGameState());
   assert(missingSlot.includes('Character art coming soon'));
@@ -9474,6 +9511,10 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert.strictEqual(
     context.getStorySplashAsset('old_car_out_back_story_splash').src,
     '/static/nospill/images/old_car_out_back_story_splash.webp',
+  );
+  assert.strictEqual(
+    context.TOFU_SHOP_SCENE_ASSETS.scene_busy_shop_established.src,
+    '/static/nospill/images/scene_tiny_shop_upgraded.webp',
   );
 
   context.artSlotState = mikaState;
@@ -9906,6 +9947,52 @@ globalThis.livingSceneActiveHtml = elements.shopTabPanel.innerHTML;
   assert(!context.livingSceneOverviewHtml.includes('data-scene-layer='));
   assert(!context.livingSceneOverviewHtml.includes('Delivery Shelf art pending'));
   assert(!context.livingSceneActiveHtml.includes('nospill-shop-scene'));
+
+  context.penguinCrewState = context.defaultGameState();
+  context.penguinCrewState.collection.unlockedCharacterIds.push(
+    'angry_tofu_driver',
+    'penguin_driver',
+    'penguin_delivery_buddy',
+    'penguin_tofu_driver_sticker',
+  );
+  vm.runInContext(`
+elements = {
+  selectedCharacterBadge: makeNode(),
+  selectedCharacterName: makeNode(),
+  selectedCharacterFlavor: makeNode(),
+  selectedSoundPackName: makeNode(),
+  selectedSoundPackFlavor: makeNode(),
+  characterList: makeNode(),
+  soundPackList: makeNode(),
+  previewSoundButton: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderCollectionPanel(penguinCrewState);
+globalThis.penguinCrewHtml = elements.characterList.innerHTML;
+appState.running = true;
+renderCollectionPanel(penguinCrewState);
+globalThis.penguinActiveDriveCrewHtml = elements.characterList.innerHTML;
+`, context);
+  assert(context.penguinCrewHtml.includes('/static/nospill/images/penguin_driver_icon.webp'));
+  assert(context.penguinCrewHtml.includes('/static/nospill/images/penguin_delivery_buddy.webp'));
+  assert(context.penguinCrewHtml.includes('/static/nospill/images/penguin_tofu_driver_sticker.webp'));
+  assert(context.penguinCrewHtml.includes('data-character-id="penguin_driver"'));
+  assert(context.penguinCrewHtml.includes('data-character-id="penguin_delivery_buddy"'));
+  assert(context.penguinCrewHtml.includes('data-character-id="penguin_tofu_driver_sticker"'));
+  assert(!context.penguinCrewHtml.includes('not assigned'));
+  assert(!context.penguinCrewHtml.includes('art pending'));
+  assert(!context.penguinActiveDriveCrewHtml.includes('/static/nospill/images/penguin_driver_icon.webp'));
+
+  const penguinSelectedState = context.defaultGameState();
+  penguinSelectedState.collection.unlockedCharacterIds.push('penguin_driver');
+  penguinSelectedState.collection.selectedCharacterId = 'penguin_driver';
+  const rewardSession = sampleDeliverySession({ waterLeft: 96, durationSeconds: 900, distanceMiles: 6 });
+  const baseRewards = context.calculateDeliveryRewards(rewardSession, context.defaultGameState());
+  const penguinRewards = context.calculateDeliveryRewards(rewardSession, penguinSelectedState);
+  assert.strictEqual(penguinRewards.xpGained, baseRewards.xpGained);
+  assert.strictEqual(penguinRewards.shop.certifiedBoost.tips, baseRewards.shop.certifiedBoost.tips);
+  assert.strictEqual(penguinRewards.shop.certifiedBoost.reputation, baseRewards.shop.certifiedBoost.reputation);
 }
 
 function testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted() {

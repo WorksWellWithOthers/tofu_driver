@@ -675,6 +675,27 @@ const CHARACTER_CATALOG = [
     unlock: "Future Mika character pack",
     flavor: "Sharp, calm, and quietly impressed by smooth deliveries.",
   },
+  {
+    id: "penguin_driver",
+    name: "Penguin Driver",
+    role: "Mascot Driver",
+    unlock: "Penguin mascot collectible",
+    flavor: "A compact mascot avatar for parked Delivery Crew cards.",
+  },
+  {
+    id: "penguin_delivery_buddy",
+    name: "Penguin Delivery Buddy",
+    role: "Delivery Buddy",
+    unlock: "Penguin buddy collectible",
+    flavor: "A cheerful tofu-delivery buddy for parked collection flavor.",
+  },
+  {
+    id: "penguin_tofu_driver_sticker",
+    name: "Tofu Driver Penguin Sticker",
+    role: "Sticker",
+    unlock: "Penguin sticker collectible",
+    flavor: "A badge-like Tofu Driver collectible for parked sticker shelves.",
+  },
 ];
 
 const CHARACTER_ART_SLOTS = {
@@ -776,6 +797,24 @@ const CHARACTER_ART_MANIFEST = {
     stamp_fanfare_cameo: {
       src: "/static/nospill/images/reward_unlock_splash.webp",
       alt: "Mika in a restrained reward splash for parked unlock moments.",
+    },
+  },
+  penguin_driver: {
+    crew_profile_card: {
+      src: "/static/nospill/images/penguin_driver_icon.webp",
+      alt: "Penguin Driver mascot icon for parked Delivery Crew cards.",
+    },
+  },
+  penguin_delivery_buddy: {
+    crew_profile_card: {
+      src: "/static/nospill/images/penguin_delivery_buddy.webp",
+      alt: "Cheerful penguin delivery buddy holding tofu.",
+    },
+  },
+  penguin_tofu_driver_sticker: {
+    crew_profile_card: {
+      src: "/static/nospill/images/penguin_tofu_driver_sticker.webp",
+      alt: "Monochrome Tofu Driver penguin sticker badge.",
     },
   },
 };

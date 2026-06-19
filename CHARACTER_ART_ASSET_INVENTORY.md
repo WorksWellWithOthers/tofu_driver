@@ -84,6 +84,21 @@ Current active Mika runtime files are:
 - `/static/nospill/images/crew_profile_card.webp`
 - `/static/nospill/images/reward_unlock_splash.webp`
 
+## Penguin Mascot Assets
+
+The current penguin assets are integrated as parked-only Delivery Crew / collection flavor. They do
+not replace Mika on the Tofu Shop assistant, Coach Recap, result cameo, or reward splash surfaces.
+
+| Asset Role | Filename | Runtime Path | Surface | Status |
+| --- | --- | --- | --- | --- |
+| Main penguin driver icon / mascot avatar | `penguin_driver_icon.webp` | `/static/nospill/images/penguin_driver_icon.webp` | Delivery Crew character card | Integrated |
+| Delivery buddy / helper mascot | `penguin_delivery_buddy.webp` | `/static/nospill/images/penguin_delivery_buddy.webp` | Delivery Crew buddy card | Integrated |
+| Sticker / badge collectible | `penguin_tofu_driver_sticker.webp` | `/static/nospill/images/penguin_tofu_driver_sticker.webp` | Delivery Crew sticker card | Integrated |
+
+Penguin art is cosmetic only. It must not affect Cup score, cargo thresholds, qualification, route
+validation, rewards, speed, distance, shop economy, or safety-sensitive behavior. It is not rendered
+during active Cup Test, calibration, or motion permission flow.
+
 Replacement checklist:
 
 1. Export final images as WebP at the exact filenames above.

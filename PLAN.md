@@ -109,6 +109,10 @@
   `frontend/nospill/images/*.webp` files. Current Mika slots use real parked-only art, and Mika is
   the default parked/result art source when no selected character has assigned art; future optional
   slots still fall back to placeholders until they need dedicated images.
+- Three penguin mascot assets are integrated as parked-only Delivery Crew / collection cards:
+  `penguin_driver_icon.webp`, `penguin_delivery_buddy.webp`, and
+  `penguin_tofu_driver_sticker.webp`. They are cosmetic only and do not replace Mika's shop,
+  coach, result, or reward surfaces.
 - Tofu Shop Living Scene V1 groundwork is implemented on the parked Overview. It now renders one
   cohesive full-scene image at a time, selected from milestone-based scene variants, while gameplay
   controls remain separate UI. Four real WebP scene assets are integrated; the established-shop
@@ -312,18 +316,22 @@ Canonical references:
    distance, route difficulty, racing technique, or public-road competition.
 18. Generate optional dedicated `scene_busy_shop_established.webp` art if playtesting shows the
    midgame needs a clearer visual step beyond the upgraded-shop scene.
-19. Keep testing the polished single-image Living Scene on phone and desktop: verify one-click shop
+19. Review legacy banner/logo/shirt duplicates after production usage is fully confirmed. Active
+   runtime references currently include `tofu_driver_logo.webp`, `tofu-driver-shirt-1.png`, and
+   `tofu-driver-app-image.png`; the remaining banner/logo/shirt files are preserved as
+   legacy/deployment assets for now.
+20. Keep testing the polished single-image Living Scene on phone and desktop: verify one-click shop
    controls, tab switches, nav buttons, image flicker, oversized empty panels, debug/pending copy,
    or controls being pushed too far down.
-20. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
+21. Consider one subtle overlay or tofu/order animation inside the same scene panel with a static
    reduced-motion fallback.
-21. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
+22. Playtest living-scene pacing from a fresh save; tune thresholds only after observing first-session
    timing. Later, design the first actual garage reveal scene without activating full Dream Garage
    mechanics.
-22. Playtest Mika placement on phone and desktop result/recap layouts, then decide whether future
+23. Playtest Mika and penguin collection placement on phone and desktop result/recap/crew layouts, then decide whether future
    optional slots such as share-card, Passport-detail, Ledger, or offline-progress art need
    dedicated images.
-23. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
+24. Re-test the Cup Test on real iPhone Safari and Android Chrome over HTTPS, with audio enabled and
    muted, including first load, `#/cup-test` reload, permission-needed, permission-denied, and
    no-motion-data cases.
 24. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
