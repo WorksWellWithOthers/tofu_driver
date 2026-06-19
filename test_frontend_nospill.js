@@ -6689,14 +6689,14 @@ globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
 
 function testTofuDriverArtworkIsIsolatedAndAccessible() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
-  const logoPath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-logo.png');
+  const logoPath = path.join(NOSPILL_IMAGES_DIR, 'tofu_driver_logo.webp');
   const shirtPath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-shirt-1.png');
   const appImagePath = path.join(NOSPILL_IMAGES_DIR, 'tofu-driver-app-image.png');
 
   assert(fs.existsSync(logoPath), 'Tofu Driver logo asset should exist');
   assert(fs.existsSync(shirtPath), 'No-Spill Club shirt preview asset should exist');
   assert(fs.existsSync(appImagePath), 'Tofu Driver cargo mascot app image should exist');
-  assert(html.includes('/static/nospill/images/tofu-driver-logo.png'));
+  assert(html.includes('/static/nospill/images/tofu_driver_logo.webp'));
   assert(html.includes('/static/nospill/images/tofu-driver-shirt-1.png'));
   assert(!html.includes('Tofu Driver mascot logo'));
   assert(html.includes('class="nospill-hero-fallback" hidden>Tofu Driver</span>'));
