@@ -103,6 +103,11 @@ globalThis.getDailyDelivery = getDailyDelivery;
 globalThis.getDriverLicense = getDriverLicense;
 globalThis.classifyRouteType = classifyRouteType;
 globalThis.calculateCargoCondition = calculateCargoCondition;
+globalThis.isQualifiedSession = isQualifiedSession;
+globalThis.resultStatusForSession = resultStatusForSession;
+globalThis.resultStatusLabel = resultStatusLabel;
+globalThis.resultStatusCopy = resultStatusCopy;
+globalThis.routeQualificationStatusForSummary = routeQualificationStatusForSummary;
 globalThis.isValidPracticeSession = isValidPracticeSession;
 globalThis.displayRankForSession = displayRankForSession;
 globalThis.evaluateCargoMission = evaluateCargoMission;
@@ -471,7 +476,7 @@ function sampleShareSummary(overrides = {}) {
     mode: 'qualified',
     rank: 'No-Spill Club',
     qualificationStatus: 'qualified',
-    qualificationLabel: 'Qualified',
+    qualificationLabel: 'Certified Result',
     routeDifficultyLabel: 'Technical Route',
     routeType: 'Technical Route',
     cargoType: 'soft_tofu',
@@ -497,7 +502,7 @@ function sampleDeliverySession(overrides = {}) {
     rank: 'Smooth Driver',
     durationSeconds: 720,
     qualificationStatus: 'qualified',
-    qualificationLabel: 'Qualified',
+    qualificationLabel: 'Certified Result',
     harshInputCount: 1,
     harshBraking: 0,
     harshAcceleration: 0,
@@ -5450,8 +5455,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619b'));
-  assert(html.includes('/static/nospill/app.css?v=20260619b'));
+  assert(html.includes('/static/nospill/app.js?v=20260619c'));
+  assert(html.includes('/static/nospill/app.css?v=20260619c'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6941,15 +6946,10 @@ function testAnalyticsRouteCupShopAndShareEventsUseSafeProperties() {
 
 function testNoSpillLiveSummaryAndShareAvoidSensitiveDetails() {
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(!source.includes('Location denied. This run'));
-  assert(!source.includes('Location is unavailable. This run'));
-  assert(!source.includes('Location could not start.'));
-  assert(!source.includes('Location signal is unavailable.'));
-  assert(!source.includes('Location permission was denied.'));
-  assert(!source.includes('Location was unavailable.'));
   assert(!source.includes('GPS Quality'));
   assert(!source.includes('No raw GPS or sensor stream was saved.'));
   assert(source.includes('summaryMetric("Signal Quality"'));
+  assert(source.includes('This run can continue as a Local Result.'));
 
   const context = loadNoSpillContext();
   const shareText = context.buildShareText(sampleShareSummary());
@@ -6970,7 +6970,7 @@ function testShareConfigAndCardData() {
 
   const summary = sampleShareSummary();
   const defaultText = context.buildShareText(summary);
-  assert(defaultText.includes('Tofu Driver: Delivery Complete.'));
+  assert(defaultText.includes('Tofu Driver: Certified Result.'));
   assert(defaultText.includes('Cargo: Soft Tofu'));
   assert(defaultText.includes('Cargo Condition: 97.4%'));
   assert(defaultText.includes('Trip Time: 28:14'));
@@ -6992,7 +6992,7 @@ function testShareConfigAndCardData() {
     unlockedBadges: ['nospill_club'],
     deliveryStamps: ['nospill_club'],
   }));
-  assert(clubText.includes('Tofu Driver: Delivery Complete.'));
+  assert(clubText.includes('Tofu Driver: Certified Result.'));
   assert(clubText.includes('Stamp: No-Spill Club'));
   assert(clubText.includes('Rank: No-Spill Club'));
 
@@ -7017,11 +7017,11 @@ function testShareConfigAndCardData() {
   const cardData = context.buildShareCardData(summary);
   assert(!JSON.stringify(cardData).includes('discord.gg'));
   assert.strictEqual(cardData.title, 'Tofu Driver');
-  assert.strictEqual(cardData.challengeName, 'Delivery Complete');
+  assert.strictEqual(cardData.challengeName, 'Certified Result');
   assert.strictEqual(cardData.waterDelivered, '97.4%');
   assert.strictEqual(cardData.waterSpilled, '2.6%');
   assert.strictEqual(cardData.rank, 'No-Spill Club');
-  assert.strictEqual(cardData.qualificationStatus, 'Qualified');
+  assert.strictEqual(cardData.qualificationStatus, 'Certified Result');
   assert.strictEqual(cardData.cargoLabel, 'Soft Tofu');
   assert.strictEqual(cardData.tripTime, '28:14');
   assert.strictEqual(cardData.driveShape, 'Winding Pour');
@@ -7275,17 +7275,17 @@ function testResultStoryCaptionV1IsLocalSafeAndShareable() {
   const practiceText = context.buildShareText(sampleShareSummary({
     mode: 'basic',
     qualificationStatus: 'practice',
-    qualificationLabel: 'Practice Only',
+    qualificationLabel: 'Local Result',
     storyCaption: normalCaption,
   }));
-  assert(practiceText.includes('Practice Delivery'));
+  assert(practiceText.includes('Local Result'));
   assert(practiceText.includes('Caption: "The tofu has opinions."'));
 
   const simulatedText = context.buildShareText(sampleShareSummary({
     simulated: true,
     storyCaption: normalCaption,
   }));
-  assert(simulatedText.includes('Simulated Delivery'));
+  assert(simulatedText.includes('Simulated Result'));
   assert(simulatedText.includes('Caption: "The tofu has opinions."'));
 
   const captionedCard = context.buildShareCardData(captionedSummary);
@@ -7456,7 +7456,7 @@ function testFailureFlavorV1AddsSafeCargoCommentary() {
   const practiceSummary = sampleShareSummary({
     mode: 'basic',
     qualificationStatus: 'practice',
-    qualificationLabel: 'Practice Only',
+    qualificationLabel: 'Local Result',
     cargoCondition: 43,
     waterLeft: 43,
   });
@@ -7479,7 +7479,7 @@ function testFailureFlavorV1AddsSafeCargoCommentary() {
   assert.strictEqual(simulatedFlavor.severity, 'simulated');
   assert(roughFlavor.line.length > 0);
   assert(spilledFlavor.line.length > 0);
-  assert(practiceFlavor.line.includes('Practice') || practiceFlavor.hint.includes('cargo'));
+  assert(practiceFlavor.line.includes('Local') || practiceFlavor.hint.includes('cargo'));
   assert(simulatedFlavor.line.includes('Simulator') || simulatedFlavor.hint.includes('Simulated'));
 
   const flavorText = [
@@ -7522,10 +7522,10 @@ function testFailureFlavorV1AddsSafeCargoCommentary() {
   assert(!cardData.cargoCommentary.line.includes('<'));
 
   const practiceText = context.buildShareText(practiceSummary);
-  assert(practiceText.includes('Practice Delivery'));
+  assert(practiceText.includes('Local Result'));
   assert(practiceText.includes('Cargo Commentary:'));
   const simulatedText = context.buildShareText(simulatedSummary);
-  assert(simulatedText.includes('Simulated Delivery'));
+  assert(simulatedText.includes('Simulated Result'));
   assert(simulatedText.includes('Cargo Commentary:'));
 
   const stateBefore = context.defaultGameState();
@@ -7692,7 +7692,7 @@ function testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy() {
     exactDistance: 9,
   });
   const preview = context.storyCardPreviewData(captionedSummary);
-  assert.strictEqual(preview.status, 'Delivery Complete');
+  assert.strictEqual(preview.status, 'Certified Result');
   assert.strictEqual(preview.cargo, 'Cargo: Soft Tofu');
   assert.strictEqual(preview.condition, '54.0%');
   assert.strictEqual(preview.rank, 'Rank: Half Cup Hero');
@@ -7706,10 +7706,10 @@ function testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy() {
   const practiceCard = context.buildShareCardData(sampleShareSummary({
     mode: 'basic',
     qualificationStatus: 'practice',
-    qualificationLabel: 'Practice Only',
+    qualificationLabel: 'Local Result',
     storyCaption: longCaption,
   }));
-  assert.strictEqual(practiceCard.challengeName, 'Practice Delivery');
+  assert.strictEqual(practiceCard.challengeName, 'Local Result');
   assert.strictEqual(practiceCard.storyCaption.length, 90);
   assert(practiceCard.cargoCommentary.line.length > 0);
 
@@ -7870,7 +7870,7 @@ globalThis.storyPreviewActiveHidden = elements.storyCardPreviewSection.classes.h
 `, Object.assign(context, { sampleVisualPolishSummary: captionedSummary }));
 
   assert.strictEqual(context.storyPreviewHidden, false);
-  assert.strictEqual(context.storyPreviewStatus, 'Delivery Complete');
+  assert.strictEqual(context.storyPreviewStatus, 'Certified Result');
   assert.strictEqual(context.storyPreviewCondition, '54.0%');
   assert.strictEqual(context.storyPreviewCargo, 'Cargo: Soft Tofu');
   assert.strictEqual(context.storyPreviewRank, 'Rank: Half Cup Hero');
@@ -7889,8 +7889,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619b'));
-  assert(html.includes('/static/nospill/app.css?v=20260619b'));
+  assert(html.includes('/static/nospill/app.js?v=20260619c'));
+  assert(html.includes('/static/nospill/app.css?v=20260619c'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -8098,11 +8098,11 @@ function testDailyDeliverySelectionAndEvaluation() {
   const silken = { id: 'silken_tofu' };
   assert.strictEqual(context.evaluateDailyDelivery(silken, sampleDeliverySession({
     waterLeft: 86,
-    routeType: 'Practice Route',
+    routeType: 'Local Route',
   })), true);
   assert.strictEqual(context.evaluateDailyDelivery(silken, sampleDeliverySession({
     waterLeft: 84.9,
-    routeType: 'Practice Route',
+    routeType: 'Local Route',
   })), false);
   assert.strictEqual(context.evaluateCargoMission({ id: 'soup_bowl' }, sampleDeliverySession({
     waterLeft: 90,
@@ -8121,7 +8121,7 @@ function testRouteTypeClassification() {
   assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
     mode: 'basic',
     qualificationStatus: 'practice',
-  })), 'Practice Route');
+  })), 'Local Route');
   assert.strictEqual(context.classifyRouteType(sampleDeliverySession({
     turnDensityScore: 0.05,
     curvatureScore: 0.05,
@@ -8189,7 +8189,7 @@ function testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext() {
     curvatureScore: 0,
     routeDifficultyScore: 0,
   }), state);
-  assert.strictEqual(practice.routeType, 'Practice Route');
+  assert.strictEqual(practice.routeType, 'Local Route');
   assert.strictEqual(practice.merchProgress.nospillClubGear.count, 0);
   assert.strictEqual(practice.merchProgress.perfectPourDrop.unlocked, false);
   assert(!practice.stamps.includes('technical_pour'));
@@ -8226,8 +8226,8 @@ function testPracticeModeRewardGatingAndRankCopy() {
     routeDifficultyScore: 0,
   });
   const shortRewards = context.calculateDeliveryRewards(shortPractice, state);
-  assert.strictEqual(context.classifyRouteType(shortPractice), 'Practice Route');
-  assert.strictEqual(context.displayRankForSession(shortPractice), 'Perfect Practice');
+  assert.strictEqual(context.classifyRouteType(shortPractice), 'Local Route');
+  assert.strictEqual(context.displayRankForSession(shortPractice), 'Perfect Local');
   assert.strictEqual(shortRewards.dailyComplete, false);
   assert.strictEqual(shortRewards.stamps.length, 0);
   assert.strictEqual(shortRewards.shop.tofuStockGained, 0);
@@ -8241,7 +8241,7 @@ function testPracticeModeRewardGatingAndRankCopy() {
   const validPractice = sampleDeliverySession({
     mode: 'basic',
     qualificationStatus: 'practice',
-    qualificationLabel: 'Practice Only',
+    qualificationLabel: 'Local Result',
     waterLeft: 100,
     durationSeconds: 120,
     distanceMiles: 0,
@@ -8284,8 +8284,8 @@ function testPracticeShareOutputIsLabeledAndNotPerfectPour() {
   const practiceSummary = sampleShareSummary({
     mode: 'basic',
     qualificationStatus: 'practice',
-    qualificationLabel: 'Practice Only',
-    routeType: 'Practice Route',
+    qualificationLabel: 'Local Result',
+    routeType: 'Local Route',
     rank: 'Perfect Pour',
     cargoCondition: 100,
     waterLeft: 100,
@@ -8296,12 +8296,12 @@ function testPracticeShareOutputIsLabeledAndNotPerfectPour() {
   });
   const text = context.buildShareText(practiceSummary);
   const card = context.buildShareCardData(practiceSummary);
-  assert(text.includes('Practice Delivery'));
-  assert(text.includes('Rank: Perfect Practice'));
+  assert(text.includes('Local Result'));
+  assert(text.includes('Rank: Perfect Local'));
   assert(!text.includes('Perfect Pour'));
-  assert.strictEqual(card.challengeName, 'Practice Delivery');
-  assert.strictEqual(card.rank, 'Perfect Practice');
-  assert.strictEqual(card.qualificationStatus, 'Practice');
+  assert.strictEqual(card.challengeName, 'Local Result');
+  assert.strictEqual(card.rank, 'Perfect Local');
+  assert.strictEqual(card.qualificationStatus, 'Local Result');
 }
 
 function testLongHaulDailyXpCapAndMerchProgress() {
@@ -10003,9 +10003,9 @@ function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
   assert.strictEqual(shaky.gameState.merchProgress.perfectPourDrop.unlocked, false);
 
   const shareText = context.buildShareText(smooth.summary);
-  assert(shareText.includes('Simulated Delivery'));
+  assert(shareText.includes('Simulated Result'));
   const payload = context.buildDeliverySharePayload(smooth.summary, smooth.rewards, smooth.gameState);
-  assert.strictEqual(payload.status, 'Simulated Delivery');
+  assert.strictEqual(payload.status, 'Simulated Result');
   assert(!/\b(?:speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g)\b/i.test(shareText));
   assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(shareText));
   assert(!shareText.includes('cavrino.com/nospill'));
@@ -10046,7 +10046,7 @@ function testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails() {
   });
   const text = context.buildShareText(summary);
   assert(text.includes('Tofu Driver'));
-  assert(text.includes('Delivery Complete'));
+  assert(text.includes('Certified Result'));
   assert(text.includes('Cargo Condition: 97.4%'));
   assert(text.includes('Rank: No-Spill Club'));
   assert(text.includes('Drive Shape: Winding Pour'));
@@ -10254,7 +10254,7 @@ function testResultScreenShowsGameSummarySections() {
   assert(!summaryHtml.includes('id="milestone-output"'));
   assert(!summaryHtml.includes('id="merch-grid"'));
   assert(summaryHtml.includes('Story Card Preview'));
-  assert.strictEqual((summaryHtml.match(/Delivery Complete/g) || []).length, 1);
+  assert.strictEqual((summaryHtml.match(/Certified Result/g) || []).length, 1);
   [
     '"Cargo Condition"',
     '"Driver XP Gained"',
@@ -10365,12 +10365,72 @@ globalThis.takeAnotherRevealedSetup = elements.setupFlow.revealed && elements.se
   assert.strictEqual(context.takeAnotherRevealedSetup, true);
 }
 
+function testAutomaticResultStatusModel() {
+  const context = loadNoSpillContext();
+  const certified = sampleShareSummary({
+    mode: 'qualified',
+    qualificationStatus: 'qualified',
+    qualificationLabel: 'Certified Result',
+  });
+  assert.strictEqual(context.resultStatusForSession(certified), 'certified');
+  assert.strictEqual(context.resultStatusLabel(certified), 'Certified Result');
+
+  const oldPractice = sampleShareSummary({
+    mode: 'practice',
+    qualificationStatus: 'practice',
+    qualificationLabel: 'Practice Only',
+  });
+  assert.strictEqual(context.resultStatusForSession(oldPractice), 'local');
+  assert.strictEqual(context.resultStatusLabel(oldPractice), 'Local Result');
+
+  const locationDenied = sampleShareSummary({
+    mode: 'qualified',
+    qualificationStatus: 'practice',
+    routeQualificationStatus: 'location_denied',
+    qualificationReasons: ['Certification location permission was denied.'],
+  });
+  assert.strictEqual(context.resultStatusForSession(locationDenied), 'local');
+  assert.strictEqual(context.resultStatusLabel(locationDenied), 'Local Result');
+  assert(context.resultStatusCopy(locationDenied).includes('Route-context achievements need location'));
+
+  const simulated = sampleShareSummary({
+    simulated: true,
+    mode: 'simulated',
+    qualificationStatus: 'qualified',
+  });
+  assert.strictEqual(context.resultStatusForSession(simulated), 'simulated');
+  assert.strictEqual(context.resultStatusLabel(simulated), 'Simulated Result');
+
+  assert.strictEqual(
+    context.routeQualificationStatusForSummary({ status: 'qualified' }, 'active', false),
+    'qualified',
+  );
+  assert.strictEqual(
+    context.routeQualificationStatusForSummary({ status: 'practice' }, 'denied', false),
+    'location_denied',
+  );
+  assert.strictEqual(
+    context.routeQualificationStatusForSummary({ status: 'practice' }, 'active', false),
+    'insufficient_data',
+  );
+  assert.strictEqual(
+    context.routeQualificationStatusForSummary({ status: 'qualified' }, 'active', true),
+    'simulated',
+  );
+}
+
 function testLocationPermissionFlowRemainsOptIn() {
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(source.includes('if (appState.mode === "qualified") startLocationWatch();'));
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  assert(html.includes('Start Cup Test'));
+  assert(!html.includes('data-mode="basic"'));
+  assert(!html.includes('data-mode="qualified"'));
+  assert(!html.includes('Basic Mode'));
+  assert(!html.includes('Qualified Run'));
+  assert(source.includes('startLocationWatch();'));
   assert(!source.includes('if (appState.mode === "basic") startLocationWatch();'));
-  assert(source.includes('Basic Mode does not use location.'));
-  assert(source.includes('Qualified Run is opt-in.'));
+  assert(source.includes('Start Cup Test. For certified route-context achievements'));
+  assert(source.includes('This run can continue as a Local Result.'));
 }
 
 function testPrivateQualifiedSummaryMayShowDistance() {
@@ -10723,6 +10783,7 @@ const TESTS = [
   ["testShopOrderFulfillmentStaysInlineAndKeepsFanfare", testShopOrderFulfillmentStaysInlineAndKeepsFanfare],
   ["testResultScreenShowsGameSummarySections", testResultScreenShowsGameSummarySections],
   ["testPostRunNavigationReturnsToUpdatedDashboard", testPostRunNavigationReturnsToUpdatedDashboard],
+  ["testAutomaticResultStatusModel", testAutomaticResultStatusModel],
   ["testLocationPermissionFlowRemainsOptIn", testLocationPermissionFlowRemainsOptIn],
   ["testPrivateQualifiedSummaryMayShowDistance", testPrivateQualifiedSummaryMayShowDistance],
   ["testMountAxisMapping", testMountAxisMapping],

@@ -955,11 +955,11 @@ const SIMULATOR_SCENARIOS = [
   },
   {
     id: "shaky_practice",
-    name: "Shaky Practice",
+    name: "Shaky Local Result",
     cargoProfileId: "egg_carton",
     cargoCondition: 62,
     qualificationStatus: "practice",
-    routeType: "Practice Route",
+    routeType: "Local Route",
     durationSeconds: 120,
     distanceMiles: 0,
     harshBraking: 2,
@@ -977,7 +977,7 @@ const SIMULATOR_SCENARIOS = [
     cargoProfileId: "soup_bowl",
     cargoCondition: 28,
     qualificationStatus: "practice",
-    routeType: "Practice Route",
+    routeType: "Local Route",
     durationSeconds: 90,
     distanceMiles: 0,
     harshBraking: 5,
@@ -1066,7 +1066,7 @@ const TOFU_VISUAL = {
 };
 
 const appState = {
-  mode: "basic",
+  mode: "qualified",
   difficulty: "soft_tofu",
   mountConfig: { ...DEFAULT_MOUNT_CONFIG },
   audioLevel: DEFAULT_AUDIO_LEVEL,
@@ -3676,6 +3676,45 @@ function isQualifiedSession(session) {
   );
 }
 
+function resultStatusForSession(session = {}) {
+  if (session.simulated || session.mode === "simulated") return "simulated";
+  if (isQualifiedSession(session)) return "certified";
+  return "local";
+}
+
+function resultStatusLabel(session = {}) {
+  const status = resultStatusForSession(session);
+  if (status === "certified") return "Certified Result";
+  if (status === "simulated") return "Simulated Result";
+  return "Local Result";
+}
+
+function resultStatusCopy(session = {}) {
+  const status = resultStatusForSession(session);
+  if (status === "certified") {
+    return "Eligible for route-context achievements when route context is strong enough.";
+  }
+  if (status === "simulated") return "Local QA only.";
+  return "Smoothness counted locally. Route-context achievements need location and enough route data.";
+}
+
+function routeQualificationStatusForSummary(qualification = {}, geoStatus = "inactive", simulated = false) {
+  if (simulated) return "simulated";
+  if (qualification.status === "qualified") return "qualified";
+  if (geoStatus === "denied") return "location_denied";
+  if (geoStatus === "unavailable") return "local_only";
+  return "insufficient_data";
+}
+
+function routeQualificationReason(session = {}) {
+  const status = session.routeQualificationStatus || "";
+  if (status === "qualified") return "";
+  if (status === "location_denied") return "location was denied.";
+  if (status === "local_only") return "location was unavailable.";
+  if (status === "simulated") return "simulated results are local QA only.";
+  return "not enough route data.";
+}
+
 function isPracticeSession(session) {
   return !isQualifiedSession(session);
 }
@@ -3693,15 +3732,15 @@ function isDailyEligiblePracticeSession(session) {
 function displayRankForSession(session) {
   if (isQualifiedSession(session)) return rankForWater(calculateCargoCondition(session));
   const cargo = calculateCargoCondition(session);
-  if (cargo >= 99.95) return "Perfect Practice";
-  if (cargo >= 95) return "Full Cup Practice";
-  if (cargo >= 75) return "Smooth Practice";
-  if (cargo >= 50) return "Practice Saved";
-  return "Spill Practice";
+  if (cargo >= 99.95) return "Perfect Local";
+  if (cargo >= 95) return "Full Cup Local";
+  if (cargo >= 75) return "Smooth Local";
+  if (cargo >= 50) return "Local Result";
+  return "Local Spill";
 }
 
 function classifyRouteType(summary) {
-  if (!isQualifiedSession(summary)) return "Practice Route";
+  if (!isQualifiedSession(summary)) return "Local Route";
   if (
     summary
     && summary.simulated
@@ -7319,9 +7358,10 @@ function buildSimulatedSessionSummary(scenarioId, now = new Date(), options = {}
     cargoCondition: waterLeft,
     rank: rankForWater(waterLeft),
     qualificationStatus: scenario.qualificationStatus,
-    qualificationLabel: scenario.qualificationStatus === "qualified" ? "Qualified" : "Practice Only",
+    qualificationLabel: scenario.qualificationStatus === "qualified" ? "Certified Result" : "Local Result",
     qualificationMessage: "Simulated delivery result for local testing.",
     qualificationReasons: [],
+    routeQualificationStatus: "simulated",
     routeType: scenario.routeType,
     routeDifficultyLabel: scenario.routeType,
     durationSeconds: scenario.durationSeconds,
@@ -8015,9 +8055,9 @@ function buildCoachRecap(sessionSummary, rewardSummary = {}) {
   let message = "Cargo loss mostly came from small input changes.";
 
   if (!isQualifiedSession(session)) {
-    damageSource = "Short/unqualified practice session";
-    nextFocus = "Try a normal qualified delivery when parked and ready.";
-    message = "Practice complete. Qualified deliveries can add route context later.";
+    damageSource = "Local result";
+    nextFocus = "Start another Cup Test when parked and ready.";
+    message = "Local Result complete. Certified results can add route context when data allows.";
   } else if (harshBraking >= Math.max(harshAcceleration, lateralJerk, abruptTransitions, 1)) {
     damageSource = "Brake release";
     nextFocus = "Next focus: smoother brake release.";
@@ -8253,9 +8293,7 @@ function buildDeliverySharePayload(session, rewardSummary = null, gameState = nu
     : bestUnlockedMilestone(session);
   return {
     title: APP_BRAND,
-    status: session.simulated
-      ? (qualified ? "Simulated Delivery" : "Simulated Practice Delivery")
-      : (qualified ? "Delivery Complete" : "Practice Delivery"),
+    status: resultStatusLabel(session),
     cargoCondition: formatPercent(cargoCondition),
     rank: displayRankForSession(session),
     driverLicense: level ? `Level ${level} · ${getDriverLicense(level)}` : "",
@@ -8371,7 +8409,7 @@ function failureFlavorForSession(summary = {}) {
     ],
     practice: [
       {
-        line: "Practice cargo is here to learn, not judge.",
+        line: "Local cargo is here to learn, not judge.",
         hint: "Less sudden motion usually helps the tofu settle.",
       },
       {
@@ -8419,10 +8457,10 @@ function hasDeviceMotionSupport() {
 }
 
 const MOTION_SUPPORT_MESSAGES = {
-  supported: "Tap Start & Calibrate to enable motion.",
-  permissionNeeded: "Motion permission needed. Tap Start & Calibrate to allow motion access.",
+  supported: "Tap Start Cup Test to enable motion.",
+  permissionNeeded: "Motion permission needed. Tap Start Cup Test to allow motion access.",
   permissionDenied: "Motion permission was denied. Enable Motion & Orientation access in browser settings, then reload.",
-  permissionError: "Motion permission could not be requested. Check browser Motion settings, then try Start & Calibrate again.",
+  permissionError: "Motion permission could not be requested. Check browser Motion settings, then try Start Cup Test again.",
   insecure: "Motion sensors require HTTPS. Open Tofu Driver over HTTPS to use Don't Spill the Cup.",
   unsupported: "This browser does not appear to support motion sensors. Try Safari or Chrome on a mobile device.",
   noData: "Motion permission was granted, but no sensor data has arrived yet. Keep the phone still, check browser Motion settings, or reload.",
@@ -8642,7 +8680,7 @@ function startLocationWatch() {
   appState.geoStatus = "pending";
   if (typeof navigator === "undefined" || !navigator.geolocation) {
     appState.geoStatus = "unavailable";
-    setRunStatus("Qualified verification is unavailable. This run can continue as Practice Only.");
+    setRunStatus("Location is unavailable. This run can continue as a Local Result.");
     return;
   }
   try {
@@ -8657,7 +8695,7 @@ function startLocationWatch() {
     );
   } catch (_) {
     appState.geoStatus = "unavailable";
-    setRunStatus("Qualified verification could not start. This run can continue as Practice Only.");
+    setRunStatus("Location could not start. This run can continue as a Local Result.");
   }
 }
 
@@ -8684,11 +8722,11 @@ function handleLocationError(error) {
   if (error && error.code === 1) {
     appState.geoStatus = "denied";
     trackEvent("tofu_driver_geolocation_permission_denied", { mode: "qualified" });
-    setRunStatus("Qualified verification permission was denied. This run can continue as Practice Only.");
+    setRunStatus("Location permission was denied. This run can continue as a Local Result.");
     return;
   }
   appState.geoStatus = "unavailable";
-  setRunStatus("Qualified verification signal is unavailable. This run can continue as Practice Only.");
+  setRunStatus("Location signal is unavailable. This run can continue as a Local Result.");
 }
 
 function clearLocationWatch() {
@@ -8959,14 +8997,14 @@ function routeContextLabelFor(score, turnDensity, stopStartTexture) {
 
 function buildQualifiedRouteContext(summary = {}, routeSamples = []) {
   if (
-    !isQualifiedSession(summary)
+    resultStatusForSession(summary) !== "certified"
     || summary.simulated
     || summary.mode === "simulated"
   ) {
     return {
       qualifiedRouteContext: false,
       status: "unavailable",
-      message: "Route-context achievements require a Qualified Run with enough route data.",
+      message: "Route-context achievements require a Certified Result with enough route data.",
     };
   }
   const route = analyzeRoute(routeSamples);
@@ -9014,7 +9052,7 @@ function projectRouteSample(sample, origin, originLatRadians) {
 }
 
 function normalizedRouteOutlineForShare(routeSamples = [], summary = {}) {
-  if (!isQualifiedSession(summary) || summary.simulated || summary.mode === "simulated") return [];
+  if (resultStatusForSession(summary) !== "certified" || summary.simulated || summary.mode === "simulated") return [];
   const coordinateSamples = (Array.isArray(routeSamples) ? routeSamples : []).filter(
     (sample) =>
       Number.isFinite(sample.lat)
@@ -9050,7 +9088,7 @@ function normalizedRouteOutlineForShare(routeSamples = [], summary = {}) {
 function routeOutlineShareAvailable(summary = {}) {
   return Boolean(
     summary
-    && isQualifiedSession(summary)
+    && resultStatusForSession(summary) === "certified"
     && !summary.simulated
     && summary.mode !== "simulated"
     && summary.routeContext
@@ -9073,7 +9111,7 @@ function activeShareTrailMode(summary = appState.lastSummary) {
 function routeContextAchievementIds(summary = {}) {
   const context = summary.routeContext || {};
   if (
-    !isQualifiedSession(summary)
+    resultStatusForSession(summary) !== "certified"
     || summary.simulated
     || summary.mode === "simulated"
     || context.status !== "usable"
@@ -9107,19 +9145,19 @@ function routeContextAchievementIds(summary = {}) {
 
 function qualificationForRoute({ durationSeconds, route, motion, geoStatus }) {
   const reasons = [];
-  if (geoStatus === "denied") reasons.push("Qualified verification permission was denied.");
-  if (geoStatus === "unavailable") reasons.push("Qualified verification was unavailable.");
+  if (geoStatus === "denied") reasons.push("Certification location permission was denied.");
+  if (geoStatus === "unavailable") reasons.push("Certification location was unavailable.");
   if (durationSeconds < QUALIFICATION_RULES.minDurationSeconds) {
-    reasons.push("Run duration was below the qualified-run minimum.");
+    reasons.push("Run duration was below the certification minimum.");
   }
   if (!route || route.totalDistanceMiles < QUALIFICATION_RULES.minDistanceMiles) {
-    reasons.push("Verified distance was below the qualified-run minimum.");
+    reasons.push("Verified distance was below the certification minimum.");
   }
   if (!route || route.movingDurationSeconds < QUALIFICATION_RULES.minMovingDurationSeconds) {
     reasons.push("Movement validation was too short.");
   }
   if (!route || route.medianMovingSpeedMph < QUALIFICATION_RULES.minMedianMovingSpeedMph) {
-    reasons.push("Movement validation was below the qualified-run threshold.");
+    reasons.push("Movement validation was below the certification threshold.");
   }
   if (
     !route
@@ -9160,15 +9198,15 @@ function qualificationForRoute({ durationSeconds, route, motion, geoStatus }) {
   if (reasons.length) {
     return {
       status: "practice",
-      label: "Practice Only",
-      message: "Session saved as practice, but not qualified for route-based achievements.",
+      label: "Local Result",
+      message: "Local Result saved. Route-context achievements need location and enough route data.",
       reasons,
     };
   }
   return {
     status: "qualified",
-    label: "Qualified",
-    message: "Qualified Run complete. Route context can unlock qualified milestones.",
+    label: "Certified Result",
+    message: "Certified Result complete. Route context can unlock certified route-context milestones.",
     reasons: [],
   };
 }
@@ -9191,10 +9229,10 @@ function buildSummary() {
       })
     : {
         status: "practice",
-        label: roundedDurationSeconds < PRACTICE_VALID_MIN_SECONDS ? "Short Practice" : "Practice Only",
+        label: "Local Result",
         message: roundedDurationSeconds < PRACTICE_VALID_MIN_SECONDS
-          ? "Practice saved. Complete a longer delivery to earn stamps and shop progress."
-          : "Practice score complete. Basic Mode used motion sensors only.",
+          ? "Local Result saved. Complete a longer delivery to earn stamps and shop progress."
+          : "Local Result complete. Motion sensors stayed local.",
         reasons: [],
       };
   const waterLeft = roundTo(appState.waterLeft, 1);
@@ -9217,6 +9255,7 @@ function buildSummary() {
     qualificationLabel: qualification.label,
     qualificationMessage: qualification.message,
     qualificationReasons: qualification.reasons,
+    routeQualificationStatus: routeQualificationStatusForSummary(qualification, appState.geoStatus, false),
     harshInputCount:
       appState.motion.harshBraking
       + appState.motion.harshAcceleration
@@ -9342,7 +9381,7 @@ function renderBrandShelf() {
       ? "Run the Tofu Shop while parked. Take Don't Spill the Cup when you're ready for a certified smooth-delivery boost."
       : crewSurface
         ? "Crew and sound choices never change real-world driving score."
-        : "Start while parked. Basic Mode uses motion only; Qualified Run is opt-in.";
+        : "Start while parked. Certification is automatic when permissions and signal quality allow.";
   }
   if (elements.brandPrimaryCta) {
     elements.brandPrimaryCta.textContent = crewSurface
@@ -13430,7 +13469,7 @@ function renderSimulatorPanel() {
     elements.applySimulatorButton.disabled = activeDrive;
     elements.applySimulatorButton.textContent = activeDrive
       ? "Park First"
-      : "Apply Simulated Delivery";
+      : "Apply Simulated Result";
   }
   if (elements.simulatorStatus) {
     elements.simulatorStatus.textContent = activeDrive
@@ -13533,21 +13572,21 @@ function renderDeliverySummary(summary) {
     : "No skill XP";
   const stampLine = rewards.stampLabels && rewards.stampLabels.length
     ? rewards.stampLabels.join(", ")
-    : qualified ? "No new stamp" : "No qualified stamp";
+    : qualified ? "No new stamp" : "No certified stamp";
   const nextGoal = dailyComplete
     ? "Daily delivery complete. Come back tomorrow for new cargo."
     : qualified
       ? `${dailyDelivery.cargo}: ${dailyDelivery.goal}`
-      : "Take a normal qualified delivery when parked and ready.";
+      : "Start another Cup Test when parked and ready.";
   const certifiedBoost = shop.certifiedBoost || { applied: false };
   const certifiedBoostLine = certifiedBoost.applied
     ? `+${formatShopCount(certifiedBoost.reputationGained)} reputation · +${formatShopCount(certifiedBoost.tofuStockGained)} tofu · +${formatCashCount(certifiedBoost.tipsGained)} Cash from tips · Tofu Press +${certifiedBoost.pressBoostPercent}%`
     : qualified
       ? "No certified boost earned"
-      : "Practice only - no certified boost";
+      : "Local result - no certified boost";
   const shopRewardLine = (shop.tofuStockGained || shop.tipsGained || shop.reputationGained)
     ? `+${formatShopCount(shop.tofuStockGained || 0)} tofu · +${formatCashCount(shop.tipsGained || 0)} Cash from tips · +${formatShopCount(shop.reputationGained || 0)} reputation`
-    : "No shop rewards from this practice";
+    : "No shop rewards from this local result";
   if (elements.summaryCharacterCameo) {
     elements.summaryCharacterCameo.innerHTML = renderCharacterCameo(
       "result_screen_cameo",
@@ -13562,14 +13601,14 @@ function renderDeliverySummary(summary) {
   }
   elements.deliverySummaryGrid.innerHTML = [
     summary.simulated
-      ? summaryMetric("Test Mode", qualified ? "Simulated Delivery" : "Simulated Practice Delivery")
+      ? summaryMetric("Test Mode", "Simulated Result")
       : "",
     summaryMetric("Cargo", summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label),
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
     summaryMetric("Trip Time", formatTripDuration(summary.durationSeconds)),
     summaryMetric("Drive Shape", summary.driveShape || summarizeDriveShape(summary)),
     summaryMetric("Rank", displayRankForSession(summary)),
-    summaryMetric("Qualification", summary.qualificationLabel || (qualified ? "Qualified" : "Practice Only")),
+    summaryMetric("Result Status", resultStatusLabel(summary)),
     summaryMetric("Driver License", `Level ${level} · ${getDriverLicense(level)}`),
     summaryMetric(
       "Daily Delivery Result",
@@ -13577,7 +13616,7 @@ function renderDeliverySummary(summary) {
         ? `${dailyDelivery.cargo} delivered`
         : qualified
           ? `${dailyDelivery.cargo} in progress`
-          : "Practice only - not completed",
+          : "Local result - not completed",
     ),
     summaryMetric("Main Damage Source", coach.damageSource),
     summaryMetric("Best Skill", coach.bestSkill),
@@ -14079,19 +14118,16 @@ function renderSummary(summary) {
   setSummaryMode("cup-test");
   setShareActionsEnabled(true);
   const qualified = isQualifiedSession(summary);
+  const statusLabel = resultStatusLabel(summary);
   const summaryGameState = summary.deliveryRewards
     ? summary.deliveryRewards.gameState
     : loadGameState();
   const reveal = progressiveRevealState(summaryGameState);
   if (elements.summaryStatusLabel) {
-    elements.summaryStatusLabel.textContent = summary.simulated
-      ? (qualified ? "Simulated Delivery" : "Simulated Practice")
-      : summary.qualificationLabel;
+    elements.summaryStatusLabel.textContent = statusLabel;
   }
   if (elements.summaryTitle) {
-    elements.summaryTitle.textContent = summary.simulated
-      ? (qualified ? "Simulated Delivery Complete" : "Simulated Practice Complete")
-      : (qualified ? "Delivery Complete" : "Practice Complete");
+    elements.summaryTitle.textContent = `${statusLabel} Complete`;
   }
   if (elements.summaryWater) {
     elements.summaryWater.textContent = formatPercent(summary.cargoCondition ?? summary.waterLeft);
@@ -14110,7 +14146,7 @@ function renderSummary(summary) {
   }
   if (elements.summaryGrid) {
     elements.summaryGrid.innerHTML = [
-      summary.simulated ? summaryMetric("Test Mode", "Simulated Delivery") : "",
+      summary.simulated ? summaryMetric("Test Mode", "Simulated Result") : "",
       summaryMetric("Cargo", summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label),
       summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
       summaryMetric("Water Spilled", formatPercent(summary.waterSpilled)),
@@ -14118,13 +14154,19 @@ function renderSummary(summary) {
       summaryMetric("Drive Shape", summary.driveShape || summarizeDriveShape(summary)),
       summaryMetric("Rank", displayRankForSession(summary)),
       summaryMetric("Harsh Inputs", String(summary.harshInputCount)),
-      summaryMetric("Qualification", summary.qualificationLabel),
+      summaryMetric("Result Status", statusLabel),
+      summaryMetric(
+        "Certification",
+        resultStatusForSession(summary) === "certified"
+          ? resultStatusCopy(summary)
+          : `${resultStatusCopy(summary)} Route-context achievements unavailable: ${routeQualificationReason(summary)}`,
+      ),
     ].filter(Boolean).join("");
   }
 
   const routeContext = summary.routeContext || {};
   const routeAchievements = routeContextAchievementIds(summary);
-  const showRoute = summary.mode === "qualified";
+  const showRoute = summary.mode === "qualified" || resultStatusForSession(summary) === "local";
   if (elements.routeContext) elements.routeContext.classList.toggle("is-hidden", !showRoute);
   if (showRoute && elements.routeGrid) {
     if (routeContext.status === "usable") {
@@ -14141,7 +14183,7 @@ function renderSummary(summary) {
       ].join("");
     } else {
       elements.routeGrid.innerHTML = [
-        summaryMetric("Route Context", routeContext.message || "Route-context achievements require a Qualified Run with enough route data."),
+        summaryMetric("Route Context", routeContext.message || "Route-context achievements require a Certified Result with enough route data."),
         summaryMetric("Signal Quality", routeContext.signalQuality || "Insufficient"),
       ].join("");
     }
@@ -14155,7 +14197,7 @@ function renderSummary(summary) {
     const reasons = summary.qualificationReasons && summary.qualificationReasons.length
       ? ` ${summary.qualificationReasons[0]}`
       : "";
-    elements.summaryStatus.textContent = `${summary.qualificationMessage}${reasons}`;
+    elements.summaryStatus.textContent = `${resultStatusCopy(summary)}${reasons}`;
   }
   renderMerchPanel(loadClubState());
   renderGamePanels(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
@@ -14212,10 +14254,7 @@ function bestUnlockedMilestone(summary) {
 }
 
 function qualificationShareLabel(summary) {
-  return summary.qualificationStatus === "qualified"
-    || summary.qualificationLabel === "Qualified"
-    ? "Qualified"
-    : "Practice";
+  return resultStatusLabel(summary);
 }
 
 function shareDistanceLabel(summary) {
@@ -15188,17 +15227,13 @@ function showMotionStartFailure(result) {
 }
 
 function updateModeCopy() {
-  if (appState.mode === "qualified") {
-    elements.modeCopy.textContent =
-      "Qualified Run is opt-in. It requests location only to verify distance, movement, and route complexity. Higher speed does not improve your score.";
-    return;
-  }
+  if (!elements.modeCopy) return;
   elements.modeCopy.textContent =
-    "Basic Mode does not use location. Sensor data remains local and can unlock only basic local milestones.";
+    "Start Cup Test. For certified route-context achievements, Tofu Driver may ask for location after you start. Location is used locally to summarize route shape and qualify route-context stamps.";
 }
 
 function setMode(mode) {
-  appState.mode = mode === "qualified" ? "qualified" : "basic";
+  appState.mode = "qualified";
   document.querySelectorAll("[data-mode]").forEach((button) => {
     const active = button.dataset.mode === appState.mode;
     button.classList.toggle("is-active", active);
@@ -15249,13 +15284,12 @@ async function startRun() {
   appState.calibrating = true;
   appState.running = false;
   appState.calibrationStartedMs = performance.now();
-  elements.runModeLabel.textContent =
-    appState.mode === "qualified" ? "Qualified Run" : "Basic Mode";
+  elements.runModeLabel.textContent = "Cup Test";
   showView("run");
   setRunStatus("Calibrating neutral phone position. Keep the phone mounted and still.");
   window.addEventListener("devicemotion", handleMotionEvent, { passive: true });
   window.setTimeout(handleCalibrationTimeout, CALIBRATION_TIMEOUT_MS);
-  if (appState.mode === "qualified") startLocationWatch();
+  startLocationWatch();
   scheduleRender();
 }
 

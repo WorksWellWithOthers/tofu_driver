@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="robots" content="noindex,nofollow,noarchive" />
   <title>Tofu Driver</title>
-  <link rel="stylesheet" href="/static/nospill/app.css?v=20260619b" />
+  <link rel="stylesheet" href="/static/nospill/app.css?v=20260619c" />
   <script src="/static/nospill/runtime-config.js?v=20260615a"></script>
 </head>
 <body class="nospill-page">
@@ -51,7 +51,7 @@
           </p>
           <p class="nospill-hero-tagline">Not faster. Smoother.</p>
           <p class="nospill-hero-safety">
-            <span id="brand-shelf-safety">Start while parked. Basic Mode uses motion only; Qualified Run is opt-in.</span>
+            <span id="brand-shelf-safety">Start while parked. Certification is automatic when permissions and signal quality allow.</span>
           </p>
           <div class="nospill-hero-actions">
             <button class="nospill-primary" id="brand-primary-cta" type="button">
@@ -214,7 +214,7 @@
           <span>Do not count toward merch progress</span>
         </label>
         <button class="nospill-primary" id="apply-simulator-button" type="button">
-          Apply Simulated Delivery
+          Apply Simulated Result
         </button>
         <p class="nospill-panel-helper" id="simulator-status">
           Hidden by default. Enable with <code>?simulator=1</code> or local storage.
@@ -463,17 +463,12 @@
         </section>
 
         <section class="nospill-section" aria-labelledby="mode-title">
-          <h3 id="mode-title">Mode</h3>
-          <div class="nospill-segmented" role="radiogroup" aria-label="Run mode">
-            <button class="is-active" type="button" role="radio" aria-checked="true" data-mode="basic">
-              Basic Mode
-            </button>
-            <button type="button" role="radio" aria-checked="false" data-mode="qualified">
-              Qualified Run
-            </button>
-          </div>
+          <h3 id="mode-title">Cup Test Certification</h3>
           <p class="nospill-mode-copy" id="mode-copy">
-            Basic Mode does not use location. Sensor data remains local and can unlock only basic local milestones.
+            Start Cup Test. For certified route-context achievements, Tofu Driver may ask for location after you start. Location is used locally to summarize route shape and qualify route-context stamps.
+          </p>
+          <p class="nospill-mode-copy">
+            You can still play if you deny location. The result will be local-only.
           </p>
         </section>
 
@@ -587,9 +582,11 @@
         </section>
 
         <section class="nospill-section nospill-safety-copy" aria-label="Privacy and qualified run notes">
-          <p>Basic Mode does not use location.</p>
           <p>
-            Qualified Run uses location only to verify distance, movement, and route complexity.
+            Tofu Driver asks for motion access to run the Cup Test. Location may be requested only after you start so the result can attempt certification.
+          </p>
+          <p>
+            Certified results use location only to verify movement and route context.
             It does not show a live map, street names, route trace, or road leaderboard.
           </p>
           <p>Raw GPS and motion streams are not sent to a server for this MVP.</p>
@@ -611,7 +608,7 @@
             </div>
           </div>
           <button class="nospill-primary" id="start-button" type="button" disabled>
-            Start &amp; Calibrate
+            Start Cup Test
           </button>
         </div>
 
@@ -624,7 +621,7 @@
     <section class="nospill-panel nospill-run is-hidden" id="run-view" aria-labelledby="run-title">
       <div class="nospill-run-top">
         <div>
-          <p class="nospill-kicker" id="run-mode-label">Basic Mode</p>
+          <p class="nospill-kicker" id="run-mode-label">Cup Test</p>
           <h2 id="run-title">Water Left</h2>
         </div>
         <output class="nospill-water-percent" id="water-percent">100.0%</output>
@@ -697,7 +694,7 @@
           />
           <span class="nospill-hero-fallback" hidden>Tofu Driver</span>
           <div>
-            <p class="nospill-kicker" id="summary-status-label">Practice Only</p>
+            <p class="nospill-kicker" id="summary-status-label">Local Result</p>
             <h2 id="summary-title">Run Summary</h2>
           </div>
         </div>
@@ -713,7 +710,7 @@
         <h3 id="story-card-preview-title">Story Card Preview</h3>
         <div class="nospill-story-card-preview" id="story-card-preview">
           <div class="nospill-story-card-preview-head">
-            <span id="story-card-preview-status">Delivery Complete</span>
+            <span id="story-card-preview-status">Certified Result</span>
             <strong id="story-card-preview-condition">100.0%</strong>
           </div>
           <div class="nospill-story-card-preview-trail">
@@ -851,6 +848,6 @@
     </section>
   </main>
 
-  <script src="/static/nospill/app.js?v=20260619b"></script>
+  <script src="/static/nospill/app.js?v=20260619c"></script>
 </body>
 </html>

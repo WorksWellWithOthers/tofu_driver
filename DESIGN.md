@@ -101,19 +101,24 @@ These rules are authoritative for all current and future features:
   `beat the clock`, `drive faster`, `find a twisty road`, or high-G bragging.
 - Do not encourage looking at the screen while driving.
 - Do not show shop, crew, sound, upgrade, reward-claiming, or social actions during an active drive.
-- Basic Mode must not request location.
-- Qualified Run Mode may request location only after explicit opt-in/start.
+- The Cup Test front door is one primary `Start Cup Test` action. Users should not have to choose
+  the right Practice/Qualified mode before a run.
+- Certification is an outcome/status after the run: `Certified Result`, `Local Result`, or
+  `Simulated Result`.
+- Location may be requested only after the explicit Start action to attempt certification and
+  route-context eligibility. Denying or lacking location must not block play; the run remains a
+  `Local Result`.
 - Default sharing must stay privacy-safe and abstract. The default share card uses the motion-derived
   Abstract Cup Trail, which is not a map, route identity, street shape, distance plot, or speed
   chart.
-- Actual route outline sharing is allowed only as an explicit, post-run, user-selected Qualified Run
-  option. The Route Outline + Smoothness Overlay card may reveal where the user drove, so the UI must
-  warn: `This may reveal where you drove. Share only if you are comfortable showing this route
-  shape.`
+- Actual route outline sharing is allowed only as an explicit, post-run, user-selected option for a
+  Certified Result with usable route data. The Route Outline + Smoothness Overlay card may reveal
+  where the user drove, so the UI must warn: `This may reveal where you drove. Share only if you are
+  comfortable showing this route shape.`
 - Optional route-outline cards must never be shared automatically and must not include map tiles,
   street names, exact coordinates, speed overlays, route leaderboards, or route points in copied
   share text.
-- Motion permission must be requested from the explicit `Start & Calibrate` tap before optional
+- Motion permission must be requested from the explicit `Start Cup Test` tap before optional
   audio setup or other awaited work, so mobile Safari keeps the user-gesture chain.
 - Permission-needed, permission-denied, insecure-context, unsupported-browser, and no-motion-data
   states must stay distinct. Do not show permission-denied copy until the browser actually returns a
@@ -129,11 +134,11 @@ These rules are authoritative for all current and future features:
 - Do not make safety certification, insurance, legal compliance, or real-world driving protection
   claims.
 
-Qualified Run Mode may use summarized route validation to decide whether a run qualifies and may use
-coarse qualified route context for route-context achievements. Route Context Score describes how much
-shape/context the route had; Cargo Result describes how smoothly the player handled it. Route context
-must not reward speed, dangerous acceleration, aggressive driving, exact street identity, or public
-road competition.
+Automatic certification may use summarized route validation to decide whether a result is certified
+and may use coarse qualified route context for route-context achievements. Route Context Score
+describes how much shape/context the route had; Cargo Result describes how smoothly the player
+handled it. Route context must not reward speed, dangerous acceleration, aggressive driving, exact
+street identity, or public road competition.
 
 ## Local Storage And Runtime
 
@@ -963,7 +968,7 @@ Ledger storage should be capped to avoid unbounded localStorage growth.
 Default share output may include:
 
 - Tofu Driver
-- Delivery Complete / Practice Complete / Simulated Delivery labels
+- Certified Result / Local Result / Simulated Result labels
 - Cargo Type
 - Cargo Condition
 - Rank
@@ -1068,7 +1073,7 @@ Avoid:
 
 Social status should come from privacy-safe proof and identity:
 
-- Delivery Complete cards
+- Certified/Local/Simulated result cards
 - Passport stamps
 - earned merch unlocks
 - shop level

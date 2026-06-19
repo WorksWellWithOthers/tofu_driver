@@ -25,10 +25,12 @@
 - Net Worth V1 is implemented as a compact later-game progress model:
   `Cash + Tofu Business Value + Garage Build Value + Brand Value` toward `$1T Net Worth`. Full asset
   valuation, garage value, company value, and liabilities remain future.
-- Basic Mode uses device motion only and does not request location.
-- Cup Test motion permission now requests `DeviceMotionEvent` access before optional audio setup, so
-  iOS Safari keeps the `Start & Calibrate` user gesture and avoids false permission-denied states.
-- Qualified Run Mode is opt-in and may request location only after explicit start.
+- The Cup Test front door is one primary `Start Cup Test` action. The app attempts certification
+  automatically after the user starts, requests motion first, and may request location to qualify
+  route-context achievements.
+- Denying or lacking location no longer blocks play; the completed run is labeled `Local Result`.
+  Runs with real motion and usable route data can be labeled `Certified Result`, while simulator/dev
+  output is labeled `Simulated Result`.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
 - Tofu Shop is idle-first, not clicker-first: manual actions teach the loop, automation exits
@@ -91,10 +93,10 @@
   Drive Shape, a decorative Cup Trail, Daily Delivery Credit copy, and a Coach Recap focused on
   smooth hands, brake feather, decel control, transition smoothness, cargo balance, passenger
   comfort, and consistency.
-- Qualified Route Context V1 is implemented for completed opt-in Qualified Runs with usable local
-  route data. Default sharing remains the Abstract Cup Trail. Route Outline + Smoothness Overlay is
-  an explicit post-run share-card choice with warning copy, bucketed route context in copied text,
-  and no map tiles, street names, coordinates, speed overlay, automatic sharing, uploads, backend,
+- Qualified Route Context V1 is implemented for completed Certified Results with usable local route
+  data. Default sharing remains the Abstract Cup Trail. Route Outline + Smoothness Overlay is an
+  explicit post-run share-card choice with warning copy, bucketed route context in copied text, and
+  no map tiles, street names, coordinates, speed overlay, automatic sharing, uploads, backend,
   accounts, public profiles, or leaderboards.
 - Character-art slots and parked-only placeholders are implemented for future Delivery Crew/shop
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
@@ -433,7 +435,7 @@ Deferred until after the First Loop Contract is playtested:
 - Should saved local sessions migrate if the storage key changes?
 - Should merch unlocks remain local-only for the MVP?
 - Which Super Cute Collectibles product URLs should be added after products exist?
-- Should Qualified Run verification remain share-private by default?
+- Should Certified Result verification remain share-private by default?
 - What backend, if any, is needed later for earned merch unlock tokens?
 - What moderation policy is required before accepting any user-generated community reports?
 - Do Result Story Caption V1, Failure Flavor V1, and Result Card Visual Polish V1 create enough

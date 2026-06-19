@@ -203,7 +203,7 @@ Reputation, Shop Level, Shop Spirit, stations, station milestones, Counter Servi
 Shop XP, and shop stamps.
 
 Route-context stamps such as Winding Perfect Pour, Stop-and-Go Smooth Pour, and Technical Perfect
-Pour are status achievements for completed Qualified Runs with enough route context plus strong cargo
+Pour are status achievements for Certified Results with enough route context plus strong cargo
 results. They do not alter the base Cup Test scoring formula, Driver XP, shop rewards, Net Worth,
 Garage Build Value, Brand Value, or economy balance, and they must not reward speed.
 
@@ -1326,8 +1326,9 @@ Rules:
 - no high-G bragging
 - no real GPS route data for shop progression
 - no maps, route traces, street names, coordinates, or exact distance by default
-- Basic Mode does not request location
-- Qualified Run requests location only after opt-in/start
+- `Start Cup Test` is the single front door
+- certification is attempted automatically after Start when permissions/data allow
+- denied or insufficient location remains playable as a Local Result
 - Cup Test should not become the normal shop bottleneck recommendation
 
 Practice Mode:
@@ -1338,7 +1339,7 @@ Practice Mode:
 - no Perfect Pour
 - no trusted certified proof
 
-Qualified smooth result:
+Certified smooth result:
 
 - optional certified boost
 - bonus Cash from tips
@@ -2182,8 +2183,8 @@ Safety/privacy:
 - no real-world driving is required for ordinary shop progression
 - no speed, GPS, route, map, street name, coordinate, exact distance, or high-G data affects shop
   progression
-- Basic Mode does not request geolocation
-- Qualified Run requests geolocation only after explicit opt-in/start
+- location may be requested only after `Start Cup Test` to attempt certification
+- denied or insufficient location remains playable as a Local Result
 - shop actions remain hidden/disabled during active drive
 
 Offline:

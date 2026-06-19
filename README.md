@@ -13,10 +13,12 @@ Cup Test result cards include safe local summaries such as Cargo Type, Trip Time
 decorative Cup Trail, Daily Delivery Credit, Coach Recap labels, local Cargo Commentary, Story Card
 Preview, and optional player Story Captions. These are derived from summarized motion only and must
 not expose speed, distance, GPS, maps, street names, route traces, or racing/performance-driving
-technique. Completed Qualified Runs can also show coarse Route Context buckets. The default share
-card remains the abstract Cup Trail; a Route Outline + Smoothness Overlay card is shown only as an
-explicit post-run opt-in and copied text never includes route points, coordinates, street names,
-speed, or map data.
+technique. Tapping `Start Cup Test` attempts certification automatically: usable local route data can
+produce a Certified Result, denied or insufficient location produces a Local Result, and simulator QA
+stays a Simulated Result. Certified Results can also show coarse Route Context buckets. The default
+share card remains the abstract Cup Trail; a Route Outline + Smoothness Overlay card is shown only
+as an explicit post-run opt-in and copied text never includes route points, coordinates, street
+names, speed, or map data.
 
 Tofu Shop, the first Tofu Garage business, starts with a focused first loop and reveals depth over
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
@@ -33,10 +35,10 @@ Counter Service batch upgrades and Reputation-funded Supplier Contracts, not fas
 - PostHog autocapture and session recording are disabled by default.
 - No upload of raw motion or GPS samples.
 - No upload of route traces, maps, street names, coordinates, or speed logs.
-- No automatic route outline sharing; optional Qualified Run route-outline cards are post-run and
+- No automatic route outline sharing; optional Certified Result route-outline cards are post-run and
   user-selected only.
-- Basic Mode does not request location.
-- Qualified Run Mode requests location only after opt-in/start.
+- Location may be requested only after `Start Cup Test` to attempt certification.
+- Denying location does not block play; the run becomes a Local Result.
 - Scoring and rewards prioritize smoothness, not speed.
 - Shop, crew, sound, upgrade, and reward actions are parked-only.
 
@@ -162,7 +164,7 @@ a real mobile browser over HTTPS for full testing.
 Mobile motion troubleshooting:
 
 - iOS Safari may require a user gesture before motion permission can be requested. Tap
-  `Start & Calibrate`; do not expect permission prompts on page load. The app requests motion
+  `Start Cup Test`; do not expect permission prompts on page load. The app requests motion
   permission before starting optional audio so the tap gesture is preserved for Safari.
 - Don’t Spill the Cup requires HTTPS for motion sensors, except local development contexts such as
   `localhost`.
