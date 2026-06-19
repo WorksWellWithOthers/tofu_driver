@@ -432,11 +432,24 @@ Player-facing rules:
 - Overview should prioritize ready orders and Prep Counter progress; Production owns the station
   capacity explanation
 
-### Next Milestone Bar
+### Overview Goal Stack
 
-Next Milestone Bar V1 is implemented as a compact Overview card. It shows one relevant shop goal at
-a time, not the full roadmap, and pairs with Next Best Action: the milestone says what the player is
-working toward, while Next Best Action says what to do now.
+Overview Goal Stack V1 is implemented as the compact Overview guidance card. It replaces the single
+overloaded milestone presentation with three lanes:
+
+- Immediate Action: the live bottleneck or next click, using the existing Next Best Action logic.
+- Pinned Near Goal: a stable medium-term target such as the next implemented Dream Build work,
+  Showcase/Sponsor opportunity, manager/supplier target, or an explicit current build-track cap.
+- Era Goal: the long-term Net Worth or shop horizon, such as `$100M Net Worth`.
+
+The Pinned Near Goal should update when a meaningful milestone completes, not because Cash crosses
+an affordability threshold, the order queue briefly fills, or ETA text changes. If Wheels and
+Exhaust have reached the current implemented cap, the pinned goal should state that the current
+track is complete and that Suspension is future/target-only. Do not add a Suspension purchase
+button or Dream Garage tab until that work is intentionally implemented.
+
+The older Next Milestone helper remains useful as the era/horizon source and for early milestones.
+It still shows one relevant shop goal at a time, not the full roadmap.
 
 Implemented target order:
 

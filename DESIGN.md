@@ -489,6 +489,12 @@ Current design principles:
   best action, ready orders, Prep Counter progress, the best available order card, and one relevant
   station or upgrade. A new player should not need to open Orders to understand or play the first
   loop.
+- Overview Goal Stack V1 is the current guidance pattern. It separates `Immediate Action` for the
+  live bottleneck, `Pinned Near Goal` for a stable medium-term target, and `Era Goal` for the large
+  Net Worth or shop horizon. The pinned goal should not flip just because Cash, queue fullness, or
+  ETA changes; live state updates copy/progress in place. When the current implemented Dream Build
+  track is complete, the Overview should say so directly and show Suspension only as a future
+  target, with no Suspension purchase button or Dream Garage tab.
 - The Tofu Shop Living Scene is a decorative parked Overview panel, not a control surface. It should
   present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
   milestones, while buttons and gameplay decisions remain separate UI. Do not show separate

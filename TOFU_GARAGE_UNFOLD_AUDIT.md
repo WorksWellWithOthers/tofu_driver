@@ -75,8 +75,14 @@ Current latest unfold:
 ```text
 Covered Car / Dream Build Teaser V1 -> First Dream Build Investment Purchase V1 ->
 Wheels Work Levels V1 -> Exhaust Purchase + Work Level V1 -> Dream Build Progress V1 ->
-Net Worth Milestone Ladder V1 -> Showcase Interest / Showcase Prep V1 -> Sponsor Inquiry V1.
+Net Worth Milestone Ladder V1 -> Showcase Interest / Showcase Prep V1 -> Sponsor Inquiry V1 ->
+Overview Goal Stack V1.
 ```
+
+Overview Goal Stack V1 does not add a new resource or system. It clarifies the current unfold by
+separating live `Immediate Action`, stable `Pinned Near Goal`, and long-term `Era Goal`. When Wheels
+and Exhaust are complete, it tells the player that the current implemented Dream Build track is
+capped and that Suspension is future/target-only.
 
 Later:
 

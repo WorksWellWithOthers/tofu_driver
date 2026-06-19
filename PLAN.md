@@ -49,9 +49,10 @@
 - Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
   progress, the best available order card, and the relevant next station/upgrade so the first loop
   is playable without opening Orders.
-- Tofu Shop Overview now includes Next Milestone Bar V1. It shows one current implemented shop goal
-  at a time, pairs with Next Best Action, and can show a compact Net Worth V1 line after later shop
-  milestones without implementing full valuation.
+- Tofu Shop Overview now includes Overview Goal Stack V1. It separates Immediate Action, a stable
+  Pinned Near Goal, and the long-term Era Goal so a large Net Worth target does not hide the next
+  meaningful shop or Dream Build target. When the current implemented Dream Build track is capped,
+  the Overview says so directly and labels Suspension as future/target-only.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run Result Cameo and Coach Recap use larger Mika real-art portraits without gray fallback
@@ -205,7 +206,9 @@
   parts inventory, completed build events, or full valuation.
 - Dream Build Progress V1 is implemented as a compact Overview card. It counts current work stages
   as Wheels Level plus Exhaust Level against a planned `30` stage build, shows current Wheels and
-  Exhaust labels, points to the next dream step, and keeps future tracks locked/deferred.
+  Exhaust labels, points to the next dream step, and keeps future tracks locked/deferred. Goal Stack
+  also uses this status as the stable mid-term target so players know whether more implemented car
+  work exists.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -314,8 +317,8 @@ Canonical references:
 13. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
-14. Tune the implemented Next Milestone Bar and Station Milestone Boosts V1 against playtest
-   behavior before adding higher station thresholds.
+14. Tune Overview Goal Stack V1, the retained Next Milestone helper, and Station Milestone Boosts
+   V1 against playtest behavior before adding higher station thresholds.
 15. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
@@ -401,7 +404,7 @@ Future endgame/business sequence:
 
 1. Keep the $1T Net Worth target stable; tune the V1 milestone ladder only after playtest.
 2. Stabilize and tune the First Loop Contract.
-3. Tune Next Milestone Bar V1, Supplier Contracts, Counter Service/Managed Shop V1, and Station
+3. Tune Overview Goal Stack V1, Supplier Contracts, Counter Service/Managed Shop V1, and Station
    Milestone Boosts V1 before adding more station thresholds.
 4. Keep `tips` as flavor copy for order rewards while Cash remains the only player-facing liquid
    money balance.

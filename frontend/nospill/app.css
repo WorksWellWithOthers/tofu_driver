@@ -1414,6 +1414,97 @@
   font-weight: 800;
 }
 
+.nospill-goal-stack {
+  display: grid;
+  gap: 10px;
+  border: 1px solid rgba(110, 198, 255, 0.24);
+  border-radius: 8px;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(110, 198, 255, 0.10), rgba(244, 247, 239, 0.035));
+}
+
+.nospill-goal-stack-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.nospill-goal-stack-item {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  border: 1px solid rgba(244, 247, 239, 0.11);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(7, 10, 10, 0.38);
+}
+
+.nospill-goal-stack-label {
+  color: #93a099;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nospill-goal-stack-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.nospill-goal-stack-title strong {
+  min-width: 0;
+  color: #f4f7ef;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.nospill-goal-stack-badge {
+  flex: 0 0 auto;
+  border: 1px solid rgba(247, 214, 107, 0.32);
+  border-radius: 999px;
+  padding: 2px 7px;
+  color: #f7d66b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-goal-stack-item p,
+.nospill-goal-stack-reward {
+  margin: 0;
+  color: #d8e3dc;
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.nospill-goal-stack-reward {
+  color: #f7d66b;
+  font-weight: 800;
+}
+
+.nospill-goal-stack-progress {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  color: #d8e3dc;
+  font-size: 0.78rem;
+}
+
+.nospill-goal-stack-progress span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nospill-goal-stack-progress strong {
+  color: #9ee9bf;
+  white-space: nowrap;
+}
+
 .nospill-counter-service {
   display: grid;
   gap: 7px;
@@ -1578,9 +1669,16 @@
 
   .nospill-next-milestone-head,
   .nospill-next-milestone-progress,
+  .nospill-goal-stack-grid,
+  .nospill-goal-stack-title,
+  .nospill-goal-stack-progress,
   .nospill-counter-service-row {
     display: grid;
     gap: 4px;
+  }
+
+  .nospill-goal-stack-grid {
+    grid-template-columns: 1fr;
   }
 
   .nospill-spirit-wallet {

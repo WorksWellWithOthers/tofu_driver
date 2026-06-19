@@ -4579,7 +4579,10 @@ globalThis.activeDriveMilestoneHtml = elements.shopTabPanel.innerHTML;
 appState.running = false;
 `, context);
 
-  assert(context.nextMilestoneFreshHtml.includes('Next Milestone'));
+  assert(context.nextMilestoneFreshHtml.includes('Goal Stack'));
+  assert(context.nextMilestoneFreshHtml.includes('Immediate Action'));
+  assert(context.nextMilestoneFreshHtml.includes('Pinned Near Goal'));
+  assert(context.nextMilestoneFreshHtml.includes('Era Goal'));
   assert(context.nextMilestoneFreshHtml.includes('First Cash Earned'));
   assert(context.nextMilestoneFreshHtml.includes('Simple Tofu Box'));
   assert(context.nextMilestoneFreshHtml.includes('Ready Orders'));
@@ -4594,6 +4597,7 @@ appState.running = false;
   assert(!context.nextMilestoneLongRoadHtml.includes('Company Value'));
   assert(context.nextMilestoneMissingOrderHtml.includes('Need 24 Tofu Stock and 1 ready order'));
   assert(!context.nextMilestoneMissingOrderHtml.includes('0.649941'));
+  assert(!context.activeDriveMilestoneHtml.includes('Goal Stack'));
   assert(!context.activeDriveMilestoneHtml.includes('Next Milestone'));
 
   const activeAction = context.nextBestAction(afterUpgrade, { date: new Date('2026-06-15T12:00:00.000Z') });
@@ -4603,6 +4607,7 @@ appState.running = false;
   assert(css.includes('.nospill-available-badge'));
   assert(css.includes('button:focus-visible'));
   assert(css.includes('.nospill-next-milestone-bar'));
+  assert(css.includes('.nospill-goal-stack'));
 
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(!source.includes('fetch('));
@@ -5580,8 +5585,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619h'));
-  assert(html.includes('/static/nospill/app.css?v=20260619h'));
+  assert(html.includes('/static/nospill/app.js?v=20260619i'));
+  assert(html.includes('/static/nospill/app.css?v=20260619i'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6112,6 +6117,143 @@ traceNetWorthMilestonesStep('render-active');
   assert.strictEqual(context.activeSponsorCard, '');
   assert.strictEqual(context.calibratingShowcaseCard, '');
   assert.strictEqual(context.calibratingSponsorCard, '');
+}
+
+function testTofuGarageOverviewGoalStackV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+
+  vm.runInContext(`
+function makeGoalStackBaseState(cash) {
+  const state = defaultGameState();
+  state.shop.tips = cash;
+  state.shop.lifetimeTips = Math.max(cash, 20000000);
+  state.shop.lifetimeDeliveryOrders = 1000;
+  state.shop.reputation = 3000000;
+  state.shop.lifetimeReputation = 3000000;
+  state.shop.shopLevel = 220;
+  state.shop.tofuStock = 5000000;
+  state.shop.deliveryOrders = 100;
+  state.shop.prepSlots = 1000;
+  state.shop.stations.tofu_press = 20;
+  state.shop.stations.prep_counter = 20;
+  state.shop.stations.delivery_shelf = 20;
+  state.shop.stations.shop_sign = 20;
+  state.shop.stationUpgrades.counter_service_order_bell = 1;
+  state.shop.stationUpgrades.counter_service_wider_counter = 1;
+  state.shop.stationUpgrades.counter_service_pickup_routine = 1;
+  state.shop.stationUpgrades.counter_service_second_register = 1;
+  state.shop.stationUpgrades.counter_service_pickup_window = 1;
+  state.shop.stationUpgrades.counter_service_crew = 1;
+  state.shop.stationUpgrades.manager_shift_manager = 1;
+  state.shop.stationUpgrades.manager_wholesale_pickup = 1;
+  state.shop.stationUpgrades.soy_supplier_contract = 1;
+  state.shop.stationUpgrades.morning_soy_delivery = 1;
+  state.shop.stationUpgrades.bulk_soy_delivery = 1;
+  state.shop.wholesalePickupsCompleted = 1;
+  state.shop.counterService.running = true;
+  state.stamps.first_shop_order = { label: 'First Shop Order' };
+  state.stamps.first_upgrade_purchased = { label: 'First Upgrade Purchased' };
+  state.stamps.first_10_orders = { label: 'First 10 Orders' };
+  state.stamps.first_family_tofu_tray = { label: 'First Family Tofu Tray' };
+  state.stamps.first_100_tips = { label: 'First $100 Cash' };
+  state.shop.coveredCarTeaserUnlocked = true;
+  state.shop.coveredCarTeaserSeen = true;
+  return state;
+}
+
+const fresh = defaultGameState();
+globalThis.freshGoalStackHtml = renderGoalStackCard(fresh);
+globalThis.freshOverviewHtml = renderOverviewPanel(fresh);
+
+const wheelsWork = makeGoalStackBaseState(10000);
+wheelsWork.shop.dreamBuild.wheelsPurchased = true;
+wheelsWork.shop.dreamBuild.wheelsLevel = 1;
+globalThis.wheelsPinned = pinnedNearGoalForShop(wheelsWork);
+globalThis.wheelsGoalHtml = renderGoalStackCard(wheelsWork);
+
+const wheelsLowCash = JSON.parse(JSON.stringify(wheelsWork));
+wheelsLowCash.shop.tips = 100;
+const wheelsHighCash = JSON.parse(JSON.stringify(wheelsWork));
+wheelsHighCash.shop.tips = 1000000;
+globalThis.cashStablePinnedLow = pinnedNearGoalForShop(wheelsLowCash).title;
+globalThis.cashStablePinnedHigh = pinnedNearGoalForShop(wheelsHighCash).title;
+
+const queueFull = JSON.parse(JSON.stringify(wheelsHighCash));
+queueFull.shop.deliveryOrders = deliveryOrderQueueCapacity();
+const queueOpen = JSON.parse(JSON.stringify(wheelsHighCash));
+queueOpen.shop.deliveryOrders = 10;
+globalThis.queueFullImmediate = renderGoalStackCard(queueFull);
+globalThis.queueOpenImmediate = renderGoalStackCard(queueOpen);
+globalThis.queueStablePinnedFull = pinnedNearGoalForShop(queueFull).title;
+globalThis.queueStablePinnedOpen = pinnedNearGoalForShop(queueOpen).title;
+
+const cap = makeGoalStackBaseState(19500000);
+cap.shop.dreamBuild.wheelsPurchased = true;
+cap.shop.dreamBuild.wheelsLevel = 3;
+cap.shop.dreamBuild.exhaustPurchased = true;
+cap.shop.dreamBuild.exhaustLevel = 5;
+cap.shop.dreamBuild.showcaseDisplayPrepared = true;
+cap.shop.dreamBuild.sponsor.inquiryAccepted = true;
+cap.shop.dreamBuild.sponsor.brandValue = 500000;
+cap.shop.dreamBuild.netWorthMilestonesReached = ['net_worth_1m', 'net_worth_10m'];
+globalThis.capPinned = pinnedNearGoalForShop(cap);
+globalThis.capGoalHtml = renderGoalStackCard(cap);
+globalThis.capOverviewHtml = renderOverviewPanel(cap);
+globalThis.capEra = eraGoalForShop(cap);
+globalThis.capAction = nextBestAction(queueFull);
+
+appState.running = true;
+appState.calibrating = false;
+globalThis.activeGoalStackHtml = renderGoalStackCard(cap);
+globalThis.activeOverviewHtml = renderOverviewPanel(cap);
+appState.running = false;
+`, context);
+
+  assert(context.freshGoalStackHtml.includes('Goal Stack'));
+  assert(context.freshGoalStackHtml.includes('Immediate Action'));
+  assert(context.freshGoalStackHtml.includes('Pinned Near Goal'));
+  assert(context.freshGoalStackHtml.includes('Era Goal'));
+  assert(context.freshOverviewHtml.includes('Goal Stack'));
+
+  assert.strictEqual(context.wheelsPinned.id, 'polish-wheels');
+  assert(context.wheelsPinned.title.includes('Polish Wheels'));
+  assert(context.wheelsGoalHtml.includes('Dream Build: Polish Wheels'));
+  assert(context.wheelsGoalHtml.includes('data-goal-stack-target="dream-build"'));
+
+  assert.strictEqual(context.cashStablePinnedLow, context.cashStablePinnedHigh);
+  assert.strictEqual(context.queueStablePinnedFull, context.queueStablePinnedOpen);
+  assert(context.queueFullImmediate.includes('Clear the Order Queue'));
+  assert(context.queueFullImmediate.includes('data-goal-stack-target="counter-service"'));
+  assert(!context.queueOpenImmediate.includes('Clear the Order Queue'));
+
+  assert.strictEqual(context.capPinned.id, 'dream_build_current_cap');
+  assert(context.capGoalHtml.includes('Current implemented build track complete'));
+  assert(context.capGoalHtml.includes('Next Build Track: Suspension'));
+  assert(context.capGoalHtml.includes('future garage pass'));
+  assert(context.capGoalHtml.includes('Future'));
+  assert(context.capGoalHtml.includes('$100M Net Worth'));
+  assert.strictEqual(context.capEra.id, 'net_worth_100m');
+  assert(context.capEra.percent > 0 && context.capEra.percent < 100);
+  assert(!context.capGoalHtml.includes('Buy Suspension'));
+  assert(!context.capGoalHtml.includes('data-dream-build-action="suspension"'));
+  assert(!context.capOverviewHtml.includes('data-shop-tab="dream-garage"'));
+  assert(!context.capOverviewHtml.includes('data-surface-target="dream-garage"'));
+  assert(!context.capOverviewHtml.includes('Routes'));
+  assert(!context.capOverviewHtml.includes('Use Token'));
+  assert(!context.capOverviewHtml.includes('undefined'));
+  assert(!context.capOverviewHtml.includes('NaN'));
+  assert(!context.capOverviewHtml.includes('Infinity'));
+
+  assert(context.capAction.title.includes('Clear the Order Queue'));
+  assert.strictEqual(context.activeGoalStackHtml, '');
+  assert(!context.activeOverviewHtml.includes('Goal Stack'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
 }
 
 function testTofuGarageHighScalePerformanceGuardrails() {
@@ -8051,8 +8193,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619h'));
-  assert(html.includes('/static/nospill/app.css?v=20260619h'));
+  assert(html.includes('/static/nospill/app.js?v=20260619i'));
+  assert(html.includes('/static/nospill/app.css?v=20260619i'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -9557,6 +9699,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     .map((match) => match[1]);
   const delegatedAttrs = [
     'data-surface-target',
+    'data-goal-stack-target',
     'data-shop-station',
     'data-shop-station-max',
     'data-fulfill-orders',
@@ -11483,6 +11626,7 @@ const TESTS = [
   ["testTofuGarageRoutesSurfaceIsDeferred", testTofuGarageRoutesSurfaceIsDeferred],
   ["testTofuGarageGenerousOfflineProgressV1", testTofuGarageGenerousOfflineProgressV1],
   ["testTofuGarageNetWorthMilestonesAndShowcaseInterestV1", testTofuGarageNetWorthMilestonesAndShowcaseInterestV1],
+  ["testTofuGarageOverviewGoalStackV1", testTofuGarageOverviewGoalStackV1],
   ["testTofuGarageHighScalePerformanceGuardrails", testTofuGarageHighScalePerformanceGuardrails],
   ["testTofuGarageManagerDeskV1", testTofuGarageManagerDeskV1],
   ["testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit", testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit],

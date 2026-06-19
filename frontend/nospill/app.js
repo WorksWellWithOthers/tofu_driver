@@ -12906,13 +12906,361 @@ function renderNextMilestoneCard(state) {
   `;
 }
 
+function stripNextPrefix(value) {
+  return String(value || "").replace(/^Next:\s*/i, "").trim();
+}
+
+function goalStackTargetForAction(action) {
+  if (!action || action.disabled) return "";
+  if (action.type === "buy_upgrade") return "upgrades";
+  if (action.type === "buy_station") return "production";
+  if (action.type === "use_spirit_boost") return "spirit";
+  if (
+    action.type === "watch_starter_shop"
+    || action.type === "queue_full"
+    || action.type === "wait_counter_service"
+    || action.type === "start_counter_service"
+  ) {
+    return "counter-service";
+  }
+  if (
+    action.type === "buy_dream_wheels"
+    || action.type === "buy_dream_wheels_work"
+    || action.type === "buy_dream_exhaust"
+    || action.type === "buy_dream_exhaust_work"
+    || action.type === "dream_investment_target"
+    || action.type === "prepare_showcase"
+    || action.type === "showcase_prep_target"
+    || action.type === "accept_sponsor_inquiry"
+  ) {
+    return "dream-build";
+  }
+  if (action.type === "net_worth_milestone") return "net-worth";
+  if (action.type === "covered_car_teaser") return "overview";
+  return "";
+}
+
+function goalStackCta(label, target) {
+  if (!label || !target) return "";
+  return actionButton(label, "data-goal-stack-target", target, false, "nospill-secondary");
+}
+
+function dreamBuildImplementedCapReached(gameState) {
+  const state = normalizeGameState(gameState);
+  return dreamBuildWheelsLevel(state) >= 3 && dreamBuildExhaustLevel(state) >= 5;
+}
+
+function pinnedNearGoalForShop(gameState) {
+  const state = normalizeGameState(gameState);
+  if (appState.running || appState.calibrating) return null;
+  if (dreamInvestmentTargetVisible(state)) {
+    const target = dreamInvestmentTargetProgress(state);
+    if (!target.purchased) {
+      return {
+        id: "dream_investment_wheels",
+        title: target.ready ? "Dream Build: Buy Wheels" : "Dream Build: Wheels Fund",
+        body: target.ready
+          ? "The first build investment is ready. Cash goes down now; Garage Build Value starts."
+          : "Save Cash from the shop to start the covered build with its first real part.",
+        progressCurrent: target.current,
+        progressTarget: target.required,
+        progressLabel: target.ready
+          ? "Wheels Fund ready"
+          : `${formatCashCount(target.current)} / ${formatCashCount(target.required)} Cash`,
+        reward: "Starts Garage Build Value",
+        ctaLabel: "View Dream Build",
+        ctaTarget: "dream-build",
+        isFutureOnly: false,
+      };
+    }
+    const wheelsWork = nextDreamBuildWheelsWork(state);
+    if (wheelsWork) {
+      return {
+        id: wheelsWork.action,
+        title: `Dream Build: ${wheelsWork.title}`,
+        body: wheelsWork.copy,
+        progressCurrent: cashBalance(state),
+        progressTarget: wheelsWork.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(wheelsWork.cost)} Cash`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(wheelsWork.valueAdded)}`,
+        ctaLabel: "View Dream Build",
+        ctaTarget: "dream-build",
+        isFutureOnly: false,
+      };
+    }
+    const exhaustWork = nextDreamBuildExhaustWork(state);
+    if (exhaustWork) {
+      return {
+        id: exhaustWork.action,
+        title: `Dream Build: ${exhaustWork.title}`,
+        body: exhaustWork.copy,
+        progressCurrent: cashBalance(state),
+        progressTarget: exhaustWork.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(exhaustWork.cost)} Cash`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(exhaustWork.valueAdded)}`,
+        ctaLabel: "View Dream Build",
+        ctaTarget: "dream-build",
+        isFutureOnly: false,
+      };
+    }
+    if (dreamBuildImplementedCapReached(state)) {
+      const progress = dreamBuildProgressSummary(state);
+      return {
+        id: "dream_build_current_cap",
+        title: "Dream Build Status",
+        body: "Current implemented build track complete. Next Build Track: Suspension. Coming in a future garage pass.",
+        progressCurrent: progress.completed,
+        progressTarget: progress.total,
+        progressLabel: `Wheels: ${progress.wheelsStatus} · Exhaust: ${progress.exhaustStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Suspension is future/target-only",
+        ctaLabel: "View Dream Build",
+        ctaTarget: "dream-build",
+        isFutureOnly: true,
+      };
+    }
+    const showcase = showcasePrepStatus(state);
+    if (showcase.unlocked && !showcase.prepared) {
+      return {
+        id: "prepare_showcase_display",
+        title: "Showcase Prep",
+        body: "The project is getting attention. Prepare it for its first display when Cash is ready.",
+        progressCurrent: cashBalance(state),
+        progressTarget: showcase.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(showcase.cost)} Cash`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(showcase.valueAdded)}`,
+        ctaLabel: "View Dream Build",
+        ctaTarget: "dream-build",
+        isFutureOnly: false,
+      };
+    }
+    const sponsor = sponsorInquiryStatus(state);
+    if (sponsor.unlocked && !sponsor.accepted) {
+      return {
+        id: "accept_sponsor_inquiry",
+        title: "Sponsor Inquiry",
+        body: "The first display build is starting to attract business.",
+        progressCurrent: 1,
+        progressTarget: 1,
+        progressLabel: "Ready",
+        reward: `+${formatCashCount(sponsor.cashReward)} Cash and +${formatCashCount(sponsor.brandValueReward)} Brand Value`,
+        ctaLabel: "View Dream Build",
+        ctaTarget: "dream-build",
+        isFutureOnly: false,
+      };
+    }
+  }
+
+  const counterUpgrade = visibleRelevantStationUpgrades(state).find((upgrade) => (
+    upgrade.stationId === "counter_service"
+    && safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel) < upgrade.maxLevel
+  ));
+  if (counterUpgrade) {
+    const level = safeNonNegativeInteger(state.shop.stationUpgrades[counterUpgrade.id], 0, counterUpgrade.maxLevel);
+    const cost = stationUpgradeCostTips(counterUpgrade, level);
+    return {
+      id: counterUpgrade.id,
+      title: `Counter Service: ${counterUpgrade.name}`,
+      body: stationUpgradeWhyItMatters(counterUpgrade),
+      progressCurrent: cashBalance(state),
+      progressTarget: cost,
+      progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(cost)} Cash`,
+      reward: counterUpgrade.effect,
+      ctaLabel: "View Upgrades",
+      ctaTarget: "upgrades",
+      isFutureOnly: false,
+    };
+  }
+
+  const managerUpgrade = nextManagerDeskUpgrade(state, false);
+  if (managerUpgrade) {
+    const level = safeNonNegativeInteger(state.shop.stationUpgrades[managerUpgrade.id], 0, managerUpgrade.maxLevel);
+    const cost = stationUpgradeCostTips(managerUpgrade, level);
+    return {
+      id: managerUpgrade.id,
+      title: `Manager Desk: ${managerUpgrade.name}`,
+      body: stationUpgradeWhyItMatters(managerUpgrade),
+      progressCurrent: cashBalance(state),
+      progressTarget: cost,
+      progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(cost)} Cash`,
+      reward: managerUpgrade.effect,
+      ctaLabel: "View Upgrades",
+      ctaTarget: "upgrades",
+      isFutureOnly: false,
+    };
+  }
+
+  const supplierUpgrade = nextSupplierUpgrade(state, false);
+  if (supplierUpgrade) {
+    const level = safeNonNegativeInteger(state.shop.stationUpgrades[supplierUpgrade.id], 0, supplierUpgrade.maxLevel);
+    const cost = stationUpgradeCostReputation(supplierUpgrade, level);
+    return {
+      id: supplierUpgrade.id,
+      title: `Supplier: ${supplierUpgrade.name}`,
+      body: stationUpgradeWhyItMatters(supplierUpgrade),
+      progressCurrent: state.shop.reputation,
+      progressTarget: cost,
+      progressLabel: `${formatShopCount(state.shop.reputation)} / ${formatShopCount(cost)} Reputation`,
+      reward: supplierUpgrade.effect,
+      ctaLabel: "View Upgrades",
+      ctaTarget: "upgrades",
+      isFutureOnly: false,
+    };
+  }
+
+  if (shouldShowNetWorthV1(state)) {
+    const milestone = nextNetWorthMilestone(state);
+    if (milestone) {
+      const current = netWorthV1(state);
+      const bridgeTarget = current < milestone.amount
+        ? Math.min(milestone.amount, Math.max(current + 1, Math.ceil(current / 25000000) * 25000000 || 25000000))
+        : milestone.amount;
+      return {
+        id: `net_worth_bridge_${milestone.id}`,
+        title: `Reach ${formatCashCount(bridgeTarget)} Net Worth`,
+        body: `Bridge target toward ${milestone.label}. Keep growing Cash, business value, Garage Build Value, and Brand Value.`,
+        progressCurrent: current,
+        progressTarget: bridgeTarget,
+        progressLabel: `${formatCashCount(current)} / ${formatCashCount(bridgeTarget)}`,
+        reward: `Closer to ${milestone.label}`,
+        ctaLabel: "View Net Worth",
+        ctaTarget: "net-worth",
+        isFutureOnly: false,
+      };
+    }
+  }
+
+  const fallback = nextMilestoneForShop(state);
+  return {
+    id: fallback.id,
+    title: fallback.name,
+    body: fallback.guidance,
+    progressLabel: fallback.progressText,
+    percent: fallback.percent,
+    reward: fallback.reward,
+    ctaLabel: "",
+    ctaTarget: "",
+    isFutureOnly: false,
+  };
+}
+
+function eraGoalForShop(gameState) {
+  const state = normalizeGameState(gameState);
+  if (shouldShowNetWorthV1(state)) {
+    const milestone = nextNetWorthMilestone(state);
+    if (milestone) {
+      const progress = nextMilestoneProgress(netWorthV1(state), milestone.amount);
+      return {
+        id: milestone.id,
+        title: milestone.label,
+        body: "Long-term horizon goal. Keep growing Cash, Tofu Business Value, Garage Build Value, and Brand Value.",
+        progressCurrent: progress.current,
+        progressTarget: progress.required,
+        progressLabel: `${formatCashCount(progress.current)} / ${formatCashCount(progress.required)}`,
+        percent: progress.percent,
+        reward: milestone.reward,
+        ctaLabel: "View Net Worth",
+        ctaTarget: "net-worth",
+      };
+    }
+  }
+  const milestone = nextMilestoneForShop(state);
+  return {
+    id: milestone.id,
+    title: milestone.name,
+    body: milestone.guidance,
+    progressLabel: milestone.progressText,
+    percent: milestone.percent,
+    reward: milestone.reward,
+    ctaLabel: "",
+    ctaTarget: "",
+  };
+}
+
+function goalPercent(goal) {
+  if (!goal) return 0;
+  if (Number.isFinite(goal.percent)) return clampPercent(goal.percent);
+  if (Number.isFinite(goal.progressCurrent) && Number.isFinite(goal.progressTarget) && goal.progressTarget > 0) {
+    return nextMilestoneProgress(goal.progressCurrent, goal.progressTarget).percent;
+  }
+  return 0;
+}
+
+function renderGoalStackItem(label, goal, options = {}) {
+  if (!goal) return "";
+  const percent = goalPercent(goal);
+  const progressLabel = goal.progressLabel || (
+    Number.isFinite(goal.progressCurrent) && Number.isFinite(goal.progressTarget)
+      ? `${formatShopCount(goal.progressCurrent)} / ${formatShopCount(goal.progressTarget)}`
+      : ""
+  );
+  const modifier = options.compact ? " is-compact" : "";
+  return `
+    <article class="nospill-goal-stack-item${modifier}" data-goal-id="${escapeHtml(goal.id || label)}">
+      <div class="nospill-goal-stack-label">${escapeHtml(label)}</div>
+      <div class="nospill-goal-stack-title">
+        <strong>${escapeHtml(goal.title || "Goal")}</strong>
+        ${goal.isFutureOnly ? '<span class="nospill-goal-stack-badge">Future</span>' : ""}
+      </div>
+      <p>${escapeHtml(goal.body || "")}</p>
+      ${progressLabel ? `
+        <div class="nospill-goal-stack-progress">
+          <span>${escapeHtml(progressLabel)}</span>
+          <strong>${formatShopCount(percent)}%</strong>
+        </div>
+        <div
+          class="nospill-next-milestone-bar"
+          role="progressbar"
+          aria-label="${escapeHtml(`${label} progress`)}"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="${percent}"
+        >
+          <span style="width: ${percent}%"></span>
+        </div>
+      ` : ""}
+      ${goal.reward ? `<small class="nospill-goal-stack-reward">Reward: ${escapeHtml(goal.reward)}</small>` : ""}
+      ${goalStackCta(goal.ctaLabel, goal.ctaTarget)}
+    </article>
+  `;
+}
+
+function renderGoalStackCard(state) {
+  if (appState.running || appState.calibrating) return "";
+  const action = nextBestAction(state);
+  const actionTarget = goalStackTargetForAction(action);
+  const immediate = {
+    id: action.type || "next_action",
+    title: stripNextPrefix(action.title) || "Continue Tofu Garage",
+    body: action.copy,
+    progressLabel: "",
+    reward: "",
+    ctaLabel: actionTarget ? (action.buttonLabel || "View") : "",
+    ctaTarget: actionTarget,
+  };
+  const pinned = pinnedNearGoalForShop(state);
+  const era = eraGoalForShop(state);
+  return `
+    <section class="nospill-goal-stack" aria-label="Tofu Garage goal stack">
+      <div class="nospill-next-milestone-head">
+        <span>Goal Stack</span>
+        <strong>Now · Next · Later</strong>
+      </div>
+      <div class="nospill-goal-stack-grid">
+        ${renderGoalStackItem("Immediate Action", immediate, { compact: true })}
+        ${renderGoalStackItem("Pinned Near Goal", pinned)}
+        ${renderGoalStackItem("Era Goal", era)}
+      </div>
+    </section>
+  `;
+}
+
 function renderOverviewPanel(state) {
   const bottleneck = currentBottleneck(state);
   const runway = tofuStockRunway(state);
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
   return `
     <h4>Overview</h4>
-    ${renderNextMilestoneCard(state)}
+    ${renderGoalStackCard(state)}
     ${renderTofuShopLivingScene(state)}
     <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
     <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.</p>
@@ -15443,6 +15791,10 @@ function handleTofuShopPanelClick(event) {
   }
   const target = event.target && event.target.closest ? event.target.closest("button") : null;
   if (!target) return;
+  if (target.dataset.goalStackTarget) {
+    handleGoalStackTarget(target.dataset.goalStackTarget);
+    return;
+  }
   if (target.dataset.shopTab) {
     appState.shopTab = target.dataset.shopTab;
     let state = currentGameState();
@@ -15613,6 +15965,42 @@ function handleTofuShopPanelClick(event) {
     saveGameState(state);
     renderGamePanels(state);
     setSummaryStatusMessage("Developer QA state reset.");
+  }
+}
+
+function handleGoalStackTarget(target) {
+  if (appState.running || appState.calibrating) {
+    setSummaryStatusMessage("Shop actions unlock after you finish and park.");
+    return;
+  }
+  if (target === "counter-service") {
+    focusCounterServiceCard();
+    setSummaryStatusMessage("Review Counter Service and its handoff upgrades while parked.");
+    return;
+  }
+  const tabTargets = {
+    production: "production",
+    upgrades: "upgrades",
+    spirit: "spirit",
+    overview: "overview",
+    "dream-build": "overview",
+    "net-worth": "overview",
+  };
+  const tabId = tabTargets[target] || "overview";
+  setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+  appState.shopTab = tabId;
+  const state = currentGameState();
+  state.shop.currentShopTab = tabId;
+  saveGameState(state);
+  renderGamePanels(state);
+  if (target === "dream-build") {
+    setSummaryStatusMessage("Review Dream Build progress. Future build tracks stay target-only until implemented.");
+  } else if (target === "net-worth") {
+    setSummaryStatusMessage("Review Net Worth progress toward the era goal.");
+  } else if (target === "spirit") {
+    setSummaryStatusMessage("Review parked-only Shop Spirit actions.");
+  } else {
+    setSummaryStatusMessage("Review the recommended Tofu Garage panel.");
   }
 }
 
