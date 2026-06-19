@@ -5439,8 +5439,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618n'));
-  assert(html.includes('/static/nospill/app.css?v=20260618n'));
+  assert(html.includes('/static/nospill/app.js?v=20260618o'));
+  assert(html.includes('/static/nospill/app.css?v=20260618o'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7041,6 +7041,208 @@ function testShareConfigAndCardData() {
     includeDistanceInShare: true,
   });
   assert.strictEqual(distanceCardData.distanceLabel, '');
+}
+
+function testResultStoryCaptionV1IsLocalSafeAndShareable() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(html.includes('Mini Story Caption'));
+  assert(html.includes('id="result-story-caption"'));
+  assert(html.includes('maxlength="90"'));
+  assert(html.includes('data-story-caption-preset="The tofu has opinions."'));
+  assert(source.includes('function sanitizeResultStoryCaption'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+
+  const context = loadNoSpillContext();
+  const normalCaption = 'The tofu has opinions.';
+  const unsafeCaption = '  <b>Mika</b>\n\t said\u0007   the tofu   survived <script>x</script>  ';
+  assert.strictEqual(context.sanitizeResultStoryCaption(unsafeCaption), 'Mika said the tofu survived x');
+  const longCaption = 'A'.repeat(120);
+  assert.strictEqual(context.sanitizeResultStoryCaption(longCaption).length, 90);
+  assert.strictEqual(context.sanitizeResultStoryCaption('   '), '');
+
+  const captionedSummary = sampleShareSummary({
+    storyCaption: normalCaption,
+    speed: 80,
+    gps: 'raw',
+    coordinates: '47,-122',
+    exactDistance: 9,
+  });
+  const emptyText = context.buildShareText(sampleShareSummary({ storyCaption: '   ' }));
+  assert(!emptyText.includes('Caption:'));
+  const captionedText = context.buildShareText(captionedSummary);
+  assert(captionedText.includes('Caption: "The tofu has opinions."'));
+  assert(captionedText.includes('Cargo: Soft Tofu'));
+  assert(captionedText.includes('Rank: No-Spill Club'));
+  assert(!/speed|mph|gps|map|street|trace|location|lat|lon|exact distance/i.test(captionedText));
+
+  const practiceText = context.buildShareText(sampleShareSummary({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    qualificationLabel: 'Practice Only',
+    storyCaption: normalCaption,
+  }));
+  assert(practiceText.includes('Practice Delivery'));
+  assert(practiceText.includes('Caption: "The tofu has opinions."'));
+
+  const simulatedText = context.buildShareText(sampleShareSummary({
+    simulated: true,
+    storyCaption: normalCaption,
+  }));
+  assert(simulatedText.includes('Simulated Delivery'));
+  assert(simulatedText.includes('Caption: "The tofu has opinions."'));
+
+  const captionedCard = context.buildShareCardData(captionedSummary);
+  assert.strictEqual(captionedCard.storyCaption, normalCaption);
+  const emptyCard = context.buildShareCardData(sampleShareSummary({ storyCaption: '' }));
+  assert.strictEqual(emptyCard.storyCaption, '');
+
+  const stateBefore = context.defaultGameState();
+  stateBefore.totalXP = 500;
+  stateBefore.shop.tips = 2500000;
+  stateBefore.shop.dreamBuild.wheelsPurchased = true;
+  stateBefore.shop.dreamBuild.wheelsLevel = 3;
+  stateBefore.shop.dreamBuild.exhaustPurchased = true;
+  stateBefore.shop.dreamBuild.exhaustLevel = 5;
+  const summaryBefore = sampleShareSummary({
+    deliveryRewards: { gameState: stateBefore, xpGained: 123, shop: { tipsGained: 12, tofuStockGained: 5, reputationGained: 3 } },
+  });
+  const cargoBefore = context.calculateCargoCondition(summaryBefore);
+  const rankBefore = context.displayRankForSession(summaryBefore);
+  const qualifiedBefore = context.isQualifiedSession(summaryBefore);
+  const xpBefore = stateBefore.totalXP;
+  const shopCashBefore = stateBefore.shop.tips;
+  const netWorthBefore = context.netWorthV1(stateBefore);
+  const garageValueBefore = context.projectCarValueV1(stateBefore);
+  context.buildShareText({ ...summaryBefore, storyCaption: normalCaption });
+  assert.strictEqual(context.calculateCargoCondition(summaryBefore), cargoBefore);
+  assert.strictEqual(context.displayRankForSession(summaryBefore), rankBefore);
+  assert.strictEqual(context.isQualifiedSession(summaryBefore), qualifiedBefore);
+  assert.strictEqual(stateBefore.totalXP, xpBefore);
+  assert.strictEqual(stateBefore.shop.tips, shopCashBefore);
+  assert.strictEqual(context.netWorthV1(stateBefore), netWorthBefore);
+  assert.strictEqual(context.projectCarValueV1(stateBefore), garageValueBefore);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: false,
+    value: "",
+    dataset: {},
+    classes: new Set(),
+    listeners: {},
+    focused: false,
+  };
+  node.classList = {
+    toggle(name, value) {
+      if (value) node.classes.add(name);
+      else node.classes.delete(name);
+    },
+    add(name) { node.classes.add(name); },
+    remove(name) { node.classes.delete(name); },
+    contains(name) { return node.classes.has(name); },
+  };
+  node.addEventListener = function addEventListener(type, handler) {
+    node.listeners[type] = handler;
+  };
+  node.focus = function focusNode() { node.focused = true; };
+  node.querySelector = () => null;
+  node.closest = () => node;
+  return node;
+}
+const preset = makeNode();
+preset.dataset.storyCaptionPreset = "The tofu has opinions.";
+const fakeCanvas = makeNode();
+fakeCanvas.width = 1080;
+fakeCanvas.height = 1350;
+fakeCanvas.commands = [];
+fakeCanvas.getContext = () => ({
+  clearRect(...args) { fakeCanvas.commands.push(["clearRect", ...args]); },
+  fillRect(...args) { fakeCanvas.commands.push(["fillRect", ...args]); },
+  strokeRect(...args) { fakeCanvas.commands.push(["strokeRect", ...args]); },
+  fillText(...args) { fakeCanvas.commands.push(["fillText", ...args]); },
+  beginPath() {},
+  arc() {},
+  stroke() {},
+  fill() {},
+  measureText(text) { return { width: String(text).length * 14 }; },
+  set fillStyle(value) { fakeCanvas.fillStyle = value; },
+  set strokeStyle(value) { fakeCanvas.strokeStyle = value; },
+  set lineWidth(value) { fakeCanvas.lineWidth = value; },
+  set font(value) { fakeCanvas.font = value; },
+});
+elements = {
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  summaryCharacterCameo: makeNode(),
+  routeContext: makeNode(),
+  routeGrid: makeNode(),
+  summaryGrid: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  coachRecapCard: makeNode(),
+  cupTrailCard: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  resultStorySection: makeNode(),
+  resultStoryCaptionInput: makeNode(),
+  resultStoryCount: makeNode(),
+  resultStoryPreview: makeNode(),
+  resultStoryPresetButtons: [preset],
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+  shareCanvas: fakeCanvas,
+  summaryDiscordCta: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+  landingStatus: makeNode(),
+  summaryStatus: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderSummary({ ...sampleCaptionSummary, storyCaption: "<i>Bad</i>  tofu" });
+globalThis.storyCaptionInitialValue = elements.resultStoryCaptionInput.value;
+globalThis.storyCaptionInitialPreview = elements.resultStoryPreview.textContent;
+globalThis.storyCaptionInitialHidden = elements.resultStorySection.classes.has("is-hidden");
+globalThis.storyCaptionInitialCardText = fakeCanvas.commands.filter((cmd) => cmd[0] === "fillText").map((cmd) => cmd[1]).join(" ");
+elements.resultStoryCaptionInput.value = "  Mika   is   reviewing\\n the footage.  ";
+handleResultStoryCaptionInput({ target: elements.resultStoryCaptionInput });
+globalThis.storyCaptionInputValue = elements.resultStoryCaptionInput.value;
+globalThis.storyCaptionSummaryValue = appState.lastSummary.storyCaption;
+globalThis.storyCaptionCount = elements.resultStoryCount.textContent;
+globalThis.storyCaptionPreview = elements.resultStoryPreview.textContent;
+handleResultStoryPresetClick({ target: preset });
+globalThis.storyCaptionPresetValue = elements.resultStoryCaptionInput.value;
+globalThis.storyCaptionPresetFocused = elements.resultStoryCaptionInput.focused;
+globalThis.storyCaptionPresetShareText = buildShareText(appState.lastSummary);
+appState.running = true;
+updateResultStoryCaptionUi(appState.lastSummary);
+globalThis.storyCaptionActiveHidden = elements.resultStorySection.classes.has("is-hidden");
+globalThis.storyCaptionActiveDisabled = elements.resultStoryCaptionInput.disabled;
+`, Object.assign(context, { sampleCaptionSummary: sampleShareSummary({ deliveryRewards: {} }) }));
+
+  assert.strictEqual(context.storyCaptionInitialValue, 'Bad tofu');
+  assert(context.storyCaptionInitialPreview.includes('"Bad tofu"'));
+  assert.strictEqual(context.storyCaptionInitialHidden, false);
+  assert(context.storyCaptionInitialCardText.includes('Story Caption'));
+  assert(context.storyCaptionInitialCardText.includes('Bad tofu'));
+  assert.strictEqual(context.storyCaptionInputValue, 'Mika is reviewing the footage.');
+  assert.strictEqual(context.storyCaptionSummaryValue, 'Mika is reviewing the footage.');
+  assert.strictEqual(context.storyCaptionCount, '30 / 90');
+  assert(context.storyCaptionPreview.includes('"Mika is reviewing the footage."'));
+  assert.strictEqual(context.storyCaptionPresetValue, 'The tofu has opinions.');
+  assert.strictEqual(context.storyCaptionPresetFocused, true);
+  assert(context.storyCaptionPresetShareText.includes('Caption: "The tofu has opinions."'));
+  assert.strictEqual(context.storyCaptionActiveHidden, true);
+  assert.strictEqual(context.storyCaptionActiveDisabled, true);
 }
 
 function testLockedMerchLinksAreNotShownBeforeUnlock() {
@@ -9679,6 +9881,7 @@ const TESTS = [
   ["testNoSpillClientDoesNotUploadRawRunData", testNoSpillClientDoesNotUploadRawRunData],
   ["testNoSpillLiveSummaryAndShareAvoidSensitiveDetails", testNoSpillLiveSummaryAndShareAvoidSensitiveDetails],
   ["testShareConfigAndCardData", testShareConfigAndCardData],
+  ["testResultStoryCaptionV1IsLocalSafeAndShareable", testResultStoryCaptionV1IsLocalSafeAndShareable],
   ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
   ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
   ["testRouteTypeClassification", testRouteTypeClassification],

@@ -209,9 +209,12 @@
   design transcripts. Its main planning implications are to playtest the first five to ten minutes,
   keep active play and idle progress balanced, automate mastered chores, add small novelty beats
   when repetition begins, and avoid early UI/currency/system overload.
-- `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` recommends Result Story Card / Mini Comic Caption V1 as the
-  best next expression slice because it gives players a local toy for screenshots/story without
-  adding risky simulation complexity.
+- `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` now treats Result Story Caption V1 as the first implemented
+  authorship toy and recommends Failure Flavor V1 as the next expression slice.
+- Result Story Caption V1 is implemented on parked post-run Cup Test result screens. It lets the
+  player add one sanitized local caption to copied share text and downloaded share cards; it is not
+  a full comic editor and does not add uploads, accounts, backend, public profiles, scoring changes,
+  reward changes, or economy effects.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -303,9 +306,8 @@ Canonical references:
 24. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
 25. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-26. Scope Result Story Card / Mini Comic Caption V1: local-only captioning for safe result/share
-   cards, no speed/GPS/map/street/route trace/raw sensor data, no active-drive editing, no uploads,
-   accounts, backend, service workers, payments, public profiles, or new network calls.
+26. Playtest Result Story Caption V1: check whether the 90-character limit, preset chips, share text,
+   and downloaded card caption box feel expressive without cluttering the result screen.
 27. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
@@ -406,13 +408,14 @@ Deferred until after the First Loop Contract is playtested:
 - Should Qualified Run verification remain share-private by default?
 - What backend, if any, is needed later for earned merch unlock tokens?
 - What moderation policy is required before accepting any user-generated community reports?
-- Does Result Story Card / Mini Comic Caption V1 create enough toy-like expression without
-  requiring public sharing or backend storage?
+- Does Result Story Caption V1 create enough toy-like expression without requiring public sharing or
+  backend storage?
 
 ## Non-Goals For The Current Slice
 
 - No new gameplay systems.
-- No mini comic/card caption runtime in this docs pass.
+- No full comic editor, stickers, image uploads, camera/photo tools, public profiles, or backend
+  sharing.
 - No hunger, fatigue, needs, maintenance, or probability systems until separately scoped.
 - No economy rebalance yet.
 - No React or framework migration.

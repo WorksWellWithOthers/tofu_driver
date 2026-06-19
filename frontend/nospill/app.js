@@ -84,6 +84,7 @@ const SHARE_CONFIG = {
   appUrl: null,
   includeDistanceInShare: false,
 };
+const RESULT_STORY_CAPTION_MAX_LENGTH = 90;
 
 const DISCORD_CONFIG = {
   enabled: false,
@@ -1070,6 +1071,7 @@ const appState = {
   geoStatus: "inactive",
   audio: null,
   lastSummary: null,
+  resultStoryCaption: "",
   tofuVisual: defaultTofuVisualState(),
   renderPending: false,
   axisPreviewActive: false,
@@ -8216,6 +8218,16 @@ function sanitizeShareOutput(text) {
     .trim();
 }
 
+function sanitizeResultStoryCaption(value, maxLength = RESULT_STORY_CAPTION_MAX_LENGTH) {
+  const cleaned = String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[<>]/g, "")
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return Array.from(cleaned).slice(0, maxLength).join("");
+}
+
 function getDeviceMotionConstructor() {
   if (typeof window === "undefined") return null;
   return window.DeviceMotionEvent || null;
@@ -13207,6 +13219,7 @@ function setSummaryMode(mode, options = {}) {
   }
   const hideShare = mode === "shop-order";
   if (elements.shareCardSection) elements.shareCardSection.classList.toggle("is-hidden", hideShare);
+  if (elements.resultStorySection) elements.resultStorySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
   [
     elements.shareButton,
     elements.copyButton,
@@ -13474,7 +13487,69 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function currentResultStoryCaption() {
+  return sanitizeResultStoryCaption(
+    appState.lastSummary && typeof appState.lastSummary.storyCaption === "string"
+      ? appState.lastSummary.storyCaption
+      : appState.resultStoryCaption,
+  );
+}
+
+function updateResultStoryCaptionUi(summary = appState.lastSummary) {
+  const isCupResult = Boolean(summary) && appState.summaryMode === "cup-test" && !appState.running && !appState.calibrating;
+  const caption = currentResultStoryCaption();
+  if (elements.resultStorySection) {
+    elements.resultStorySection.classList.toggle("is-hidden", !isCupResult);
+  }
+  if (elements.resultStoryCaptionInput && elements.resultStoryCaptionInput.value !== caption) {
+    elements.resultStoryCaptionInput.value = caption;
+  }
+  if (elements.resultStoryCount) {
+    elements.resultStoryCount.textContent = `${Array.from(caption).length} / ${RESULT_STORY_CAPTION_MAX_LENGTH}`;
+  }
+  if (elements.resultStoryPreview) {
+    elements.resultStoryPreview.textContent = caption
+      ? `Caption preview: "${caption}"`
+      : "Caption preview: none yet.";
+  }
+  if (elements.resultStoryCaptionInput) {
+    elements.resultStoryCaptionInput.disabled = !isCupResult;
+  }
+  if (elements.resultStoryPresetButtons) {
+    elements.resultStoryPresetButtons.forEach((button) => {
+      button.disabled = !isCupResult;
+    });
+  }
+}
+
+function applyResultStoryCaption(value) {
+  const caption = sanitizeResultStoryCaption(value);
+  appState.resultStoryCaption = caption;
+  if (appState.lastSummary) appState.lastSummary.storyCaption = caption;
+  updateResultStoryCaptionUi(appState.lastSummary);
+  if (appState.lastSummary && appState.summaryMode === "cup-test" && !appState.running && !appState.calibrating) {
+    renderShareCanvas(appState.lastSummary);
+  }
+}
+
+function handleResultStoryCaptionInput(event) {
+  applyResultStoryCaption(event && event.target ? event.target.value : "");
+}
+
+function handleResultStoryPresetClick(event) {
+  const button = event.target && event.target.closest
+    ? event.target.closest("[data-story-caption-preset]")
+    : null;
+  if (!button || button.disabled) return;
+  applyResultStoryCaption(button.dataset.storyCaptionPreset || "");
+  if (elements.resultStoryCaptionInput && typeof elements.resultStoryCaptionInput.focus === "function") {
+    elements.resultStoryCaptionInput.focus();
+  }
+}
+
 function renderSummary(summary) {
+  appState.resultStoryCaption = sanitizeResultStoryCaption(summary.storyCaption || "");
+  summary.storyCaption = appState.resultStoryCaption;
   appState.lastSummary = summary;
   trackCupTestCompletedAnalytics(summary);
   setSummaryMode("cup-test");
@@ -13549,6 +13624,7 @@ function renderSummary(summary) {
   renderMerchPanel(loadClubState());
   renderGamePanels(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderDeliverySummary(summary);
+  updateResultStoryCaptionUi(summary);
   renderShareCanvas(summary);
   showView("summary");
 }
@@ -13609,6 +13685,30 @@ function shareDistanceLabel(summary) {
   return `${roundTo(distance, 1).toFixed(1)} mi`;
 }
 
+function wrappedCanvasLines(context, text, maxWidth, maxLines = 3) {
+  const words = String(text || "").split(/\s+/).filter(Boolean);
+  const lines = [];
+  let current = "";
+  words.forEach((word) => {
+    const candidate = current ? `${current} ${word}` : word;
+    if (context.measureText(candidate).width <= maxWidth || !current) {
+      current = candidate;
+      return;
+    }
+    lines.push(current);
+    current = word;
+  });
+  if (current) lines.push(current);
+  if (lines.length <= maxLines) return lines;
+  const clipped = lines.slice(0, maxLines);
+  let last = clipped[clipped.length - 1] || "";
+  while (last.length > 1 && context.measureText(`${last}...`).width > maxWidth) {
+    last = last.slice(0, -1).trim();
+  }
+  clipped[clipped.length - 1] = `${last}...`;
+  return clipped;
+}
+
 function buildShareCardData(summary, config = SHARE_CONFIG) {
   const delivery = buildDeliverySharePayload(
     summary,
@@ -13631,6 +13731,7 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     distanceLabel: "",
     milestone: delivery.stamp || bestUnlockedMilestone(summary),
     dailyStatus: delivery.dailyStatus,
+    storyCaption: sanitizeResultStoryCaption(summary.storyCaption),
     tagline: TAGLINE_SMOOTHER,
     shirtLine: TAGLINE_CUP,
   };
@@ -13658,6 +13759,7 @@ function buildShareText(summary, config = SHARE_CONFIG) {
   if (data.shopLevel) lines.push(data.shopLevel);
   if (data.deliveryCrew) lines.push(`Delivery Crew: ${data.deliveryCrew}.`);
   if (data.dailyStatus) lines.push(data.dailyStatus);
+  if (data.storyCaption) lines.push(`Caption: "${data.storyCaption}"`);
   if (data.distanceLabel) lines.push(`Distance: ${data.distanceLabel}.`);
   const shareConfig = normalizedShareConfig(config);
   if (shareConfig.includeAppLink) lines.push(shareConfig.appUrl);
@@ -13719,6 +13821,26 @@ function renderShareCanvas(summary) {
   const milestone = data.milestone || "No new stamp";
   context.fillStyle = "#f0b95a";
   context.fillText(`Stamp: ${milestone}`, 118, Math.max(790, detailY + 44));
+
+  if (data.storyCaption) {
+    const boxX = 118;
+    const boxY = 910;
+    const boxWidth = 575;
+    const boxHeight = 150;
+    context.fillStyle = "rgba(240, 185, 90, 0.1)";
+    context.fillRect(boxX, boxY, boxWidth, boxHeight);
+    context.strokeStyle = "rgba(240, 185, 90, 0.62)";
+    context.lineWidth = 3;
+    context.strokeRect(boxX, boxY, boxWidth, boxHeight);
+    context.fillStyle = "#f0b95a";
+    context.font = "800 22px Inter, Arial, sans-serif";
+    context.fillText("Story Caption", boxX + 28, boxY + 38);
+    context.fillStyle = "#f4f7ef";
+    context.font = "800 27px Inter, Arial, sans-serif";
+    wrappedCanvasLines(context, data.storyCaption, boxWidth - 56, 3).forEach((line, index) => {
+      context.fillText(line, boxX + 28, boxY + 78 + index * 31);
+    });
+  }
 
   context.strokeStyle = "rgba(110, 198, 255, 0.75)";
   context.lineWidth = 10;
@@ -14815,6 +14937,12 @@ function bindEvents() {
   elements.downloadButton.addEventListener("click", downloadShareCard);
   elements.copyButton.addEventListener("click", copyShareText);
   elements.saveButton.addEventListener("click", saveCurrentSummary);
+  if (elements.resultStoryCaptionInput) {
+    elements.resultStoryCaptionInput.addEventListener("input", handleResultStoryCaptionInput);
+  }
+  if (elements.resultStorySection) {
+    elements.resultStorySection.addEventListener("click", handleResultStoryPresetClick);
+  }
   elements.returnDashboardButton.addEventListener("click", handlePrimaryResultAction);
   elements.backSimulatorButton.addEventListener("click", () => returnToDashboard("simulator"));
   if (elements.exportProgressButton) elements.exportProgressButton.addEventListener("click", exportProgress);
@@ -14991,6 +15119,11 @@ function cacheElements() {
     coachRecapCard: document.getElementById("coach-recap-card"),
     cupTrailCard: document.getElementById("cup-trail-card"),
     commuteMasteryCopy: document.getElementById("commute-mastery-copy"),
+    resultStorySection: document.getElementById("result-story-section"),
+    resultStoryCaptionInput: document.getElementById("result-story-caption"),
+    resultStoryCount: document.getElementById("result-story-count"),
+    resultStoryPreview: document.getElementById("result-story-preview"),
+    resultStoryPresetButtons: Array.from(document.querySelectorAll("[data-story-caption-preset]")),
     shareCardSection: document.getElementById("share-card-section"),
     shareCanvas: document.getElementById("share-canvas"),
     shareButton: document.getElementById("share-button"),

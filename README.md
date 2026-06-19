@@ -98,7 +98,8 @@ The static app uses hash routing:
 - `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: readiness audit for whether Tofu Garage V1 can move toward
   the parked Covered Car / Dream Build teaser
 - `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md`: toy-first, player-expression, failure, needs/maintenance,
-  discovery, black-box, and probability design audit; documented-only guidance, not runtime behavior
+  discovery, black-box, and probability design audit. Result Story Caption V1 is now implemented as
+  local-only post-run result/share-card captioning; broader comic/simulation systems remain future.
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /

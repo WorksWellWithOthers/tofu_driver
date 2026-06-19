@@ -233,8 +233,8 @@ those toys into personal goals, rituals, screenshots, jokes, and stories.
 
 Current and future toy-like objects include Cup Trail as a safe motion signature, the Tofu Garage
 living scene, Dream Build project-car progress, Delivery Crew characters and cosmetics, Passport
-stamps, share cards, safe screenshot moments, future shop skins, future garage skins, future project
-car cards, and future comic-style result cards.
+stamps, share cards, Result Story captions, safe screenshot moments, future shop skins, future
+garage skins, future project car cards, and future comic-style result cards.
 
 The toy must stay safe, local, and expressive. It must not depend on speed, GPS, public ranking,
 street identity, or risky driving.
@@ -242,8 +242,8 @@ street identity, or risky driving.
 ### Creative Leverage And Customization
 
 Players should be able to express identity through car build choices, shop presentation, crew and
-cosmetic selection, stamps, cards, share-card framing, future captions or comic panels, and future
-garage/shop decoration.
+cosmetic selection, stamps, cards, share-card framing, local result captions, future comic panels,
+and future garage/shop decoration.
 
 Customization should be cosmetic, status, and story expression first. It must never improve Cup Test
 scoring, qualification, speed, route validation, or safety-sensitive behavior.
@@ -959,6 +959,7 @@ Default share output may include:
 - Shop Level
 - selected crew flavor when safe
 - stamp earned
+- optional local Result Story caption when the player writes one
 - `Not faster. Smoother.`
 
 Default share output must not include:
@@ -978,6 +979,11 @@ Default share output must not include:
 - `cavrino.com/nospill`
 - Super Cute Collectibles links by default
 - Discord invite links by default
+
+Result Story Caption V1 is a parked post-run expression tool. It lets the player add one short,
+sanitized, local-only caption to the current result/share card. It may appear in copied share text
+and downloaded share-card rendering, but it is not a full comic editor, upload flow, public profile,
+backend feature, or scoring/reward modifier.
 
 Super Cute Collectibles is the current physical merch fulfillment partner. It does not verify scores
 in the current MVP. Future backend unlock tokens, if built, must verify only summarized unlock state

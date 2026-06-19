@@ -2029,6 +2029,75 @@
   aspect-ratio: 4 / 5;
 }
 
+.nospill-story-caption-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 8px;
+  color: #f4f7ef;
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
+.nospill-story-caption-label span {
+  color: #93a099;
+  font-size: 0.76rem;
+  font-weight: 750;
+}
+
+.nospill-story-caption-input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid rgba(244, 247, 239, 0.18);
+  border-radius: 8px;
+  background: #070a0a;
+  color: #f4f7ef;
+  font: inherit;
+}
+
+.nospill-story-caption-input:focus-visible {
+  outline: 3px solid rgba(110, 198, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.nospill-story-caption-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.nospill-story-caption-chips button {
+  min-height: 34px;
+  padding: 7px 10px;
+  border: 1px solid rgba(158, 233, 191, 0.24);
+  border-radius: 999px;
+  background: rgba(158, 233, 191, 0.08);
+  color: #dff9e8;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.nospill-story-caption-chips button:focus-visible {
+  outline: 3px solid rgba(110, 198, 255, 0.8);
+  outline-offset: 2px;
+}
+
+.nospill-story-caption-preview {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border: 1px solid rgba(240, 185, 90, 0.26);
+  border-radius: 8px;
+  background: rgba(240, 185, 90, 0.08);
+  color: #f8d891;
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
 .nospill-run-metrics,
 .nospill-summary-grid,
 .nospill-route-grid,
