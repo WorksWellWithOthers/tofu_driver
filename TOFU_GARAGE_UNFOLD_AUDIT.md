@@ -30,7 +30,7 @@ kept out of the primary Tofu Garage loop.
 | Cash | Player-facing liquid currency earned from tips; stored in legacy `shop.tips` internally | Counter Service, shop orders, Wholesale Pickup | stations, upgrades, Manager Desk, future car parts/businesses | buy the next bottleneck fix or later invest in assets | first handoff | cannot afford next improvement | all shop expansion, Net Worth V1 | meaningful |
 | Reputation | Unlock/status currency and midgame supply sink | shop orders, Shop Sign, driver bonus | Supplier Contracts, Manager Desk, unlock gates | spend status to secure supply | first handoff | stock trap with low Cash | Supplier Contracts, Manager Desk | meaningful |
 | Shop Level | Derived progression label from Reputation | Reputation growth | unlock checks | reach phase gates | start | communicates progression tier | Supplier/Manager gates | meaningful, derived |
-| Shop Spirit | Parked emergency/spend resource | Spirit generators | Rush Stock, Warm Counter, timed effects | save Spirit for bottleneck moments | after shop momentum | short-term recovery | future boost economy | meaningful but tune carefully |
+| Shop Spirit | Parked emergency/spend resource | Spirit generators | Rush Stock, Warm Counter, timed effects | save Spirit for bottleneck moments | after shop momentum | short-term recovery | future boost economy | meaningful but tune carefully; token cards are hidden until token earning exists |
 | Prep Capacity | Recovering expansion capacity | timed regen, future License Perks | station purchases | choose when to expand stations | start but mostly felt after purchases | prevents unlimited instant station buying | staffing/license ideas later | meaningful, should stay explained |
 | Shop Reach | Fictional footprint | future route scaffolding | future route/district unlocks | future route expansion | routes only | not a current decision | route network | deferred/hidden |
 | License Stars | Prestige currency | License Exam | License Perks | reset for permanent perk | later prestige | plateau restart | future prestige | deferred for current first-loop tuning |
@@ -47,7 +47,7 @@ kept out of the primary Tofu Garage loop.
 | Driver Bonus | Small capped shop Reputation bonus | Delivery Driver level from Cup Test | order Reputation multiplier | Cup Test status helps shop lightly | driver level threshold | connection between modes | status identity | meaningful, capped |
 | Delivery Crew placeholder | Cosmetic/collection surface | unlocked/selected character art | parked art/cosmetic selection | choose identity later | nav surface | avoids dead nav | future crew stories | placeholder, not gameplay |
 | Routes tab/cards | Fictional parked route cards | route scaffolding retained only | route rewards deferred | future route choices | hidden/deferred | not a current shop bottleneck | route network | deferred/hidden; not purchasable |
-| Shop Spirit actions | Emergency stock/order/timed boosts | Shop Spirit | instant/timed spends | spend only when bottlenecked | Shop Spirit panel | short-term bottleneck relief | later boost tuning | meaningful but must avoid click loops |
+| Shop Spirit actions | Emergency stock/order/timed boosts | Shop Spirit | instant/timed spends | spend only when bottlenecked | Shop Spirit panel | short-term bottleneck relief | later boost tuning | meaningful but must avoid click loops; fixed card order and inline feedback are required |
 
 ## UI Changes From This Audit
 

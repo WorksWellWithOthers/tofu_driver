@@ -4889,6 +4889,24 @@ globalThis.maxedCounterHtml = elements.shopTabPanel.innerHTML;
   assert.strictEqual(pausedAction.type, 'start_counter_service');
   const stockAction = context.nextBestAction(stockBlocked);
   assert(['pack_tofu', 'buy_station', 'buy_upgrade'].includes(stockAction.type));
+  const stockBlockedWithFullSpirit = JSON.parse(JSON.stringify(stockBlocked));
+  stockBlockedWithFullSpirit.shop.shopLevel = 25;
+  stockBlockedWithFullSpirit.shop.shopSpirit = 145;
+  stockBlockedWithFullSpirit.shop.reputation = 0;
+  const spiritStockAction = context.nextBestAction(stockBlockedWithFullSpirit);
+  assert.strictEqual(spiritStockAction.type, 'use_spirit_boost');
+  assert.strictEqual(spiritStockAction.spiritBoostId, 'rush_prep');
+  assert(spiritStockAction.title.includes('Rush Stock'));
+  const orderBlockedWithFullSpirit = JSON.parse(JSON.stringify(orderBlocked));
+  orderBlockedWithFullSpirit.shop.shopLevel = 25;
+  orderBlockedWithFullSpirit.shop.shopSpirit = 145;
+  const spiritOrderAction = context.nextBestAction(orderBlockedWithFullSpirit);
+  assert.strictEqual(spiritOrderAction.type, 'use_spirit_boost');
+  assert.strictEqual(spiritOrderAction.spiritBoostId, 'warm_counter');
+  const fullQueueActionState = JSON.parse(JSON.stringify(orderBlockedWithFullSpirit));
+  fullQueueActionState.shop.deliveryOrders = 1000000;
+  const fullQueueAction = context.nextBestAction(fullQueueActionState);
+  assert.notStrictEqual(fullQueueAction.spiritBoostId, 'warm_counter');
 
   const spirit = context.defaultGameState();
   spirit.shop.tips = 41900;
@@ -4899,7 +4917,6 @@ globalThis.maxedCounterHtml = elements.shopTabPanel.innerHTML;
   spirit.shop.stations.delivery_shelf = 1;
   spirit.shop.stations.shop_sign = 1;
   spirit.shop.spiritGenerators.tea_kettle = 1;
-  spirit.shop.festivalBoosts.press_token = 1;
   spirit.shop.activeFestivalBoosts = [{
     id: 'busy_lunch',
     label: 'Busy Lunch Hour',
@@ -4924,12 +4941,32 @@ globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
   assert(context.spiritPanelHtml.includes('Spend 10 Spirit'));
   assert(context.spiritPanelHtml.includes('Rush Stock'));
   assert(context.spiritPanelHtml.includes('Adds 30 seconds of Tofu Stock production'));
+  assert(context.spiritPanelHtml.includes('Current effect: +'));
   assert(context.spiritPanelHtml.includes('Start Double Batch'));
-  assert(context.spiritPanelHtml.includes('Use Token'));
+  assert(!context.spiritPanelHtml.includes('Use Token'));
+  assert(!context.spiritPanelHtml.includes('Lunch Rush Token'));
+  assert(!context.spiritPanelHtml.includes('Steam Hour Token'));
+  assert(!context.spiritPanelHtml.includes('Packing Party Token'));
+  assert(!context.spiritPanelHtml.includes('Story Lantern Token'));
   assert(context.spiritPanelHtml.includes('Duration:'));
-  assert(context.spiritPanelHtml.includes('Active for about'));
+  assert(context.spiritPanelHtml.includes('Active ·'));
   assert(context.spiritPanelHtml.includes('Need 3 Spirit'));
   assert(!context.spiritPanelHtml.includes('Calm Shop Focus'));
+  const spiritOrder = [
+    'Tea Kettle',
+    'Shrine Corner',
+    'Festival Lantern',
+    'Night Shift Kettle',
+    'Lucky Cat',
+    'Rush Stock',
+    'Warm Counter',
+    'Busy Lunch Hour',
+    'Double Batch',
+  ].map((label) => context.spiritPanelHtml.indexOf(label));
+  spiritOrder.forEach((index) => assert(index >= 0, `missing Spirit card ${index}`));
+  for (let index = 1; index < spiritOrder.length; index += 1) {
+    assert(spiritOrder[index - 1] < spiritOrder[index], 'Shop Spirit card order should stay fixed');
+  }
 
   const spiritAmountState = JSON.parse(JSON.stringify(spirit));
   spiritAmountState.shop.stations.tofu_press = 20;
@@ -4938,10 +4975,66 @@ globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
   assert(rushBoost >= 30);
   assert(context.spiritPanelHtml.includes('You have 12'));
   assert(!context.spiritPanelHtml.includes('Calm Shop Focus'));
+  const richerSpirit = JSON.parse(JSON.stringify(spirit));
+  richerSpirit.shop.tips = 900000;
+  richerSpirit.shop.shopSpirit = 120;
+  richerSpirit.shop.activeFestivalBoosts = [];
+  vm.runInContext(`
+appState.shopTab = "spirit";
+renderTofuShop(${JSON.stringify(richerSpirit)});
+globalThis.richerSpiritPanelHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  const richerOrder = [
+    'Tea Kettle',
+    'Shrine Corner',
+    'Festival Lantern',
+    'Night Shift Kettle',
+    'Lucky Cat',
+    'Rush Stock',
+    'Warm Counter',
+    'Busy Lunch Hour',
+    'Double Batch',
+  ].map((label) => context.richerSpiritPanelHtml.indexOf(label));
+  for (let index = 1; index < richerOrder.length; index += 1) {
+    assert(richerOrder[index - 1] < richerOrder[index], 'affordability changes must not reorder Shop Spirit cards');
+  }
 
   const activeSpirit = context.useShopSpiritBoost('busy_lunch', spirit);
   assert.strictEqual(activeSpirit.ok, false);
   assert(activeSpirit.reason.includes('already active'));
+  const rushState = JSON.parse(JSON.stringify(spiritAmountState));
+  rushState.shop.shopSpirit = 60;
+  const rushResult = context.useShopSpiritBoost('rush_prep', rushState);
+  assert.strictEqual(rushResult.ok, true);
+  assert(rushResult.gameState.shop.tofuStock > rushState.shop.tofuStock);
+  assert(rushResult.gameState.shop.shopSpirit < rushState.shop.shopSpirit);
+  assert(rushResult.feedback.includes('Rush Stock: +'));
+  assert(rushResult.feedback.includes('Tofu Stock'));
+  assert(rushResult.feedback.includes('-10 Spirit'));
+
+  const warmState = JSON.parse(JSON.stringify(spiritAmountState));
+  warmState.shop.shopSpirit = 60;
+  warmState.shop.deliveryOrders = 10;
+  const warmResult = context.useShopSpiritBoost('warm_counter', warmState);
+  assert.strictEqual(warmResult.ok, true);
+  assert(warmResult.gameState.shop.deliveryOrders > warmState.shop.deliveryOrders);
+  assert(warmResult.gameState.shop.shopSpirit < warmState.shop.shopSpirit);
+  assert(warmResult.feedback.includes('Warm Counter: +'));
+  assert(warmResult.feedback.includes('ready order'));
+  assert(warmResult.feedback.includes('-15 Spirit'));
+
+  const fullQueueSpirit = JSON.parse(JSON.stringify(warmState));
+  fullQueueSpirit.shop.deliveryOrders = 1000000;
+  const fullQueueWarm = context.useShopSpiritBoost('warm_counter', fullQueueSpirit);
+  assert.strictEqual(fullQueueWarm.ok, false);
+  assert(fullQueueWarm.reason.includes('Order queue is full'));
+  assert.strictEqual(fullQueueWarm.gameState.shop.shopSpirit, fullQueueSpirit.shop.shopSpirit);
+  vm.runInContext(`
+appState.shopTab = "spirit";
+renderTofuShop(${JSON.stringify(fullQueueSpirit)});
+globalThis.fullQueueSpiritHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.fullQueueSpiritHtml.includes('Order queue is full. Use Counter Service or Wholesale Pickup first.'));
   const hiddenRouteToken = context.useFestivalBoost('calm_focus_token', spirit);
   assert.strictEqual(hiddenRouteToken.ok, false);
   assert(hiddenRouteToken.reason.includes('Routes are deferred'));
@@ -5109,8 +5202,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618f'));
-  assert(html.includes('/static/nospill/app.css?v=20260618f'));
+  assert(html.includes('/static/nospill/app.js?v=20260618g'));
+  assert(html.includes('/static/nospill/app.css?v=20260618g'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {

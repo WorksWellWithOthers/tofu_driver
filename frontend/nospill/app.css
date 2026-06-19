@@ -1294,6 +1294,18 @@
   color: #f4f7ef;
 }
 
+.nospill-spirit-section {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.nospill-spirit-section h5 {
+  margin: 0;
+  color: #f4f7ef;
+  font-size: 0.82rem;
+}
+
 .nospill-order-prep {
   display: grid;
   gap: 8px;

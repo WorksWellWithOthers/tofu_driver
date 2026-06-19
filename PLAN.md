@@ -77,8 +77,9 @@
   scale. Hire Shift Manager raises Counter Service batch size to 25, and Wholesale Pickup converts
   near-full waiting-order queues into capped scalar handoffs when supplied.
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
-  language and local wallet context: generators use Buy, instant actions spend Spirit, timed effects
-  show duration/active state, and tokens use Use Token.
+  language, fixed sections, and local wallet context: generators use Buy, instant actions spend
+  Spirit with immediate gain/cost feedback, timed effects show duration/active state, and token cards
+  stay hidden until usable token generation exists.
 - Cup-first visitors now get clearer parked paths into Tofu Garage from the landing copy and Cup
   Test result action without making the shop a driving-time prompt. Continue actions land near the
   Tofu Garage action area rather than the page top.

@@ -6806,10 +6806,32 @@ function useShopSpiritBoost(boostId, gameState, options = {}) {
     return { ok: false, reason: `${boost.name} is already active.`, gameState: next };
   }
   if (next.shop.shopSpirit < boost.costSpirit) return { ok: false, reason: "Not enough Shop Spirit.", gameState: next };
+  const previewAmount = shopSpiritInstantAmount(boost, next);
+  let appliedAmount = previewAmount;
+  if (boost.type === "instant_orders") {
+    appliedAmount = Math.min(previewAmount, deliveryOrderQueueSpace(next.shop));
+    if (appliedAmount < 1) {
+      return {
+        ok: false,
+        reason: "Order queue is full. Warm Counter is not useful right now.",
+        gameState: next,
+      };
+    }
+  }
+  if (boost.type === "instant_tofu") {
+    const currentStock = safeNonNegativeNumber(next.shop.tofuStock, 0, SHOP_MAX_RESOURCE);
+    appliedAmount = Math.max(0, Math.min(previewAmount, SHOP_MAX_RESOURCE - currentStock));
+    if (appliedAmount < 1) {
+      return {
+        ok: false,
+        reason: "Tofu Stock is already at capacity. Rush Stock is not useful right now.",
+        gameState: next,
+      };
+    }
+  }
   next.shop.shopSpirit = safeNonNegativeNumber(next.shop.shopSpirit - boost.costSpirit);
-  const instantAmount = shopSpiritInstantAmount(boost, next);
-  if (boost.type === "instant_tofu") next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + instantAmount);
-  if (boost.type === "instant_orders") next.shop.deliveryOrders = safeNonNegativeInteger(next.shop.deliveryOrders + instantAmount);
+  if (boost.type === "instant_tofu") next.shop.tofuStock = safeNonNegativeInteger(next.shop.tofuStock + appliedAmount);
+  if (boost.type === "instant_orders") next.shop.deliveryOrders = clampDeliveryOrderQueue(next.shop.deliveryOrders + appliedAmount);
   if (boost.multiplier) {
     const expiresAt = new Date(Date.now() + boost.durationSeconds * 1000).toISOString();
     next.shop.activeFestivalBoosts = normalizeShopBoosts([
@@ -6818,7 +6840,15 @@ function useShopSpiritBoost(boostId, gameState, options = {}) {
     ]);
   }
   next = addLedgerEntry(next, "boost", `${boost.name} used while parked.`);
-  return { ok: true, gameState: next, boost };
+  let feedback = `${boost.name} used.`;
+  if (boost.type === "instant_tofu") {
+    feedback = `${boost.name}: +${formatShopCount(appliedAmount)} Tofu Stock · -${formatShopCost(boost.costSpirit)} Spirit`;
+  } else if (boost.type === "instant_orders") {
+    feedback = `${boost.name}: +${formatShopCount(appliedAmount)} ready order${appliedAmount === 1 ? "" : "s"} · -${formatShopCost(boost.costSpirit)} Spirit`;
+  } else if (boost.durationSeconds) {
+    feedback = `${boost.name} active for ${formatShopCount(Math.ceil(boost.durationSeconds / 60))} min · -${formatShopCost(boost.costSpirit)} Spirit`;
+  }
+  return { ok: true, gameState: next, boost, amount: appliedAmount, feedback };
 }
 
 function useFestivalBoost(boostId, gameState, options = {}) {
@@ -9684,6 +9714,9 @@ function nextBestAction(gameState, options = {}) {
   const stockMilestone = nextVisibleStationMilestone(state, { stationIds: ["tofu_press"] });
   const prepMilestone = nextVisibleStationMilestone(state, { stationIds: ["prep_counter", "delivery_shelf"] });
   const reputationMilestone = nextVisibleStationMilestone(state, { stationIds: ["shop_sign"] });
+  const rushStockBoost = SHOP_SPIRIT_BOOSTS.find((boost) => boost.id === "rush_prep");
+  const warmCounterBoost = SHOP_SPIRIT_BOOSTS.find((boost) => boost.id === "warm_counter");
+  const spiritWalletFull = state.shop.shopSpirit >= Math.max(1, getShopSpiritMax(state.shop) * 0.9);
   const fulfilled = fulfilledShopOrderCount(state);
   const idleStarterActive = shopUnlocked
     && fulfilled < 1
@@ -9720,6 +9753,20 @@ function nextBestAction(gameState, options = {}) {
         buttonLabel: "View Upgrades",
         disabled: false,
         upgradeId: supplierUpgrade.id,
+      };
+    }
+    if (
+      rushStockBoost
+      && spiritWalletFull
+      && !spiritBoostDisabledReason(rushStockBoost, state)
+    ) {
+      return {
+        type: "use_spirit_boost",
+        title: "Next: Use Rush Stock",
+        copy: "Your Spirit wallet is full and Counter Service is waiting for Tofu Stock. Spend Spirit for an immediate stock refill.",
+        buttonLabel: "Use Rush Stock",
+        disabled: false,
+        spiritBoostId: "rush_prep",
       };
     }
     if (supplierCandidate) {
@@ -9772,6 +9819,23 @@ function nextBestAction(gameState, options = {}) {
       buttonLabel: "View Production",
       stationId: "tofu_press",
       disabled: false,
+    };
+  }
+  if (
+    shopUnlocked
+    && counterIncome.status === "waiting_orders"
+    && warmCounterBoost
+    && spiritWalletFull
+    && deliveryOrderQueueSpace(state.shop) > 0
+    && !spiritBoostDisabledReason(warmCounterBoost, state)
+  ) {
+    return {
+      type: "use_spirit_boost",
+      title: "Next: Use Warm Counter",
+      copy: "Your Spirit wallet is full and Counter Service is waiting for ready orders. Warm Counter adds a short burst of order prep.",
+      buttonLabel: "Use Warm Counter",
+      disabled: false,
+      spiritBoostId: "warm_counter",
     };
   }
   if (idleStarterActive) {
@@ -10163,6 +10227,7 @@ function renderGameDashboard(gameState = loadGameState()) {
       elements.gameCtaButton.dataset.nextOrderQuantity = action.orderQuantity || "";
       elements.gameCtaButton.dataset.nextOrderType = action.orderTypeId || "";
       elements.gameCtaButton.dataset.nextStation = action.stationId || "";
+      elements.gameCtaButton.dataset.nextSpiritBoost = action.spiritBoostId || "";
     }
   }
   if (elements.gameCertifiedCtaButton) {
@@ -10383,6 +10448,12 @@ function spiritGeneratorDisabledReason(generator, state, cost) {
 function spiritBoostDisabledReason(boost, state) {
   const active = activeTimedEffectFor(state, boost.id);
   if (active && boost.durationSeconds) return `${boost.name} is already active.`;
+  if (boost.type === "instant_orders" && deliveryOrderQueueSpace(state.shop) < 1) {
+    return "Order queue is full. Use Counter Service or Wholesale Pickup first.";
+  }
+  if (boost.type === "instant_tofu" && safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE) >= SHOP_MAX_RESOURCE) {
+    return "Tofu Stock is already at capacity.";
+  }
   const missing = Math.max(0, boost.costSpirit - state.shop.shopSpirit);
   return missing > 0
     ? `Need ${formatShopCost(missing)} Spirit · You have ${formatShopBalance(state.shop.shopSpirit)}`
@@ -10411,6 +10482,14 @@ function shopSpiritInstantAmount(boost, gameState) {
   return safeNonNegativeInteger(boost && boost.amount, 0, 1000000);
 }
 
+function visibleFestivalBoostTokens(state) {
+  return FESTIVAL_BOOSTS.filter((boost) => (
+    routeGameplayEnabled()
+    && (boost.type !== "route_multiplier" || hasRouteStoryBeat(state))
+    && safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000) > 0
+  ));
+}
+
 function festivalBoostDisabledReason(boost, state) {
   const ready = safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000);
   return ready < 1 ? `Need 1 ${boost.name} · You have 0` : "";
@@ -10432,16 +10511,18 @@ function spiritBoostCopy(boost, state) {
   const active = activeTimedEffectFor(state, boost.id);
   if (active) {
     const seconds = Math.max(0, Math.ceil((Date.parse(active.expiresAt) - Date.now()) / 1000));
-    return `${boost.description} Active for about ${formatShopCount(Math.ceil(seconds / 60))} more min. Refreshes are blocked while active.`;
+    return `${boost.description} Active · ${formatShopCount(Math.ceil(seconds / 60))}m remaining. Refreshes are blocked while active.`;
   }
   if (boost.durationSeconds) {
     return `${boost.description} Duration: ${formatShopCount(Math.ceil(boost.durationSeconds / 60))} min. Does not stack; start it when the shop is parked.`;
   }
   if (boost.type === "instant_tofu") {
-    return `${boost.description} Adds ${formatShopCount(shopSpiritInstantAmount(boost, state))} Tofu Stock right now.`;
+    return `${boost.description} Current effect: +${formatShopCount(shopSpiritInstantAmount(boost, state))} Tofu Stock.`;
   }
   if (boost.type === "instant_orders") {
-    return `${boost.description} Adds ${formatShopCount(shopSpiritInstantAmount(boost, state))} ready order${shopSpiritInstantAmount(boost, state) === 1 ? "" : "s"} right now.`;
+    const amount = Math.min(shopSpiritInstantAmount(boost, state), deliveryOrderQueueSpace(state.shop));
+    if (amount < 1) return "Order queue is full. Use Counter Service or Wholesale Pickup first.";
+    return `${boost.description} Current effect: +${formatShopCount(amount)} ready order${amount === 1 ? "" : "s"}.`;
   }
   return `${boost.description} Instant parked-only action.`;
 }
@@ -12070,9 +12151,25 @@ function renderSpiritPanel(state) {
   const visibleSpiritBoosts = SHOP_SPIRIT_BOOSTS.filter((boost) => (
     boost.type !== "route_multiplier" || hasRouteStoryBeat(state)
   ));
-  const visibleFestivalBoosts = FESTIVAL_BOOSTS.filter((boost) => (
-    boost.type !== "route_multiplier" || hasRouteStoryBeat(state)
-  ));
+  const instantBoosts = visibleSpiritBoosts.filter((boost) => !boost.durationSeconds);
+  const timedBoosts = visibleSpiritBoosts.filter((boost) => Boolean(boost.durationSeconds));
+  const visibleFestivalBoosts = visibleFestivalBoostTokens(state);
+  const renderSpiritBoostCard = (boost) => {
+    const active = activeTimedEffectFor(state, boost.id);
+    const disabledReason = spiritBoostDisabledReason(boost, state);
+    const disabled = Boolean(disabledReason);
+    const status = boost.durationSeconds
+      ? active
+        ? "Active"
+        : `${formatShopCost(boost.costSpirit)} Spirit · Timed effect`
+      : `${formatShopCost(boost.costSpirit)} Spirit · Instant action`;
+    return renderIdleCard({
+      title: boost.name,
+      status,
+      copy: spiritBoostCopy(boost, state),
+      actions: [actionButton(spiritBoostActionLabel(boost), "data-spirit-boost", boost.id, disabled, "nospill-secondary", disabledReason)],
+    });
+  };
   return `
     <h4>Shop Spirit</h4>
     <p class="nospill-panel-helper">Shop Spirit is a parked-only boost resource. It never affects real driving score.</p>
@@ -12082,45 +12179,51 @@ function renderSpiritPanel(state) {
       <div><span>Spirit/sec</span><strong>+${formatShopRate(spiritRates.shopSpiritPerSecond)}/sec</strong></div>
       <div><span>Buy Multiplier</span><strong>${state.shop.purchaseMultiplier === "max" ? "Max" : `x${state.shop.purchaseMultiplier}`}</strong></div>
     </div>
-    <div class="nospill-idle-grid">
-      ${SPIRIT_GENERATORS.map((generator) => {
-        const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
-        const cost = Math.ceil(generator.costTips * Math.pow(1.22, owned));
-        const disabledReason = spiritGeneratorDisabledReason(generator, state, cost);
-        return renderIdleCard({
-          title: `${generator.name} x${formatShopCount(owned)}`,
-          status: `${formatCash(cost)}`,
-          copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
-          actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost, "nospill-secondary", disabledReason)],
-        });
-      }).join("")}
-      ${visibleSpiritBoosts.map((boost) => {
-        const active = activeTimedEffectFor(state, boost.id);
-        const disabledReason = spiritBoostDisabledReason(boost, state);
-        const disabled = Boolean(disabledReason);
-        const status = boost.durationSeconds
-          ? active
-            ? "Active"
-            : `${formatShopCost(boost.costSpirit)} Spirit · Timed effect`
-          : `${formatShopCost(boost.costSpirit)} Spirit · Instant action`;
-        return renderIdleCard({
-          title: boost.name,
-          status,
-          copy: spiritBoostCopy(boost, state),
-          actions: [actionButton(spiritBoostActionLabel(boost), "data-spirit-boost", boost.id, disabled, "nospill-secondary", disabledReason)],
-        });
-      }).join("")}
-      ${visibleFestivalBoosts.map((boost) => {
-        const ready = safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000);
-        const disabledReason = festivalBoostDisabledReason(boost, state);
-        return renderIdleCard({
-          title: boost.name,
-          status: `${formatShopCount(ready)} ready`,
-          copy: "Consumable parked-only token. Tokens are inventory items, not timed Spirit purchases.",
-          actions: [actionButton("Use Token", "data-festival-boost", boost.id, ready < 1, "nospill-secondary", disabledReason)],
-        });
-      }).join("")}
-    </div>
+    <section class="nospill-spirit-section" aria-label="Spirit generators">
+      <h5>Spirit Generators</h5>
+      <div class="nospill-idle-grid">
+        ${SPIRIT_GENERATORS.map((generator) => {
+          const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
+          const cost = Math.ceil(generator.costTips * Math.pow(1.22, owned));
+          const disabledReason = spiritGeneratorDisabledReason(generator, state, cost);
+          return renderIdleCard({
+            title: `${generator.name} x${formatShopCount(owned)}`,
+            status: `${formatCash(cost)}`,
+            copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
+            actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost, "nospill-secondary", disabledReason)],
+          });
+        }).join("")}
+      </div>
+    </section>
+    <section class="nospill-spirit-section" aria-label="Instant Spirit actions">
+      <h5>Instant Actions</h5>
+      <div class="nospill-idle-grid">
+        ${instantBoosts.map(renderSpiritBoostCard).join("")}
+      </div>
+    </section>
+    <section class="nospill-spirit-section" aria-label="Timed Spirit effects">
+      <h5>Timed Effects</h5>
+      <div class="nospill-idle-grid">
+        ${timedBoosts.map(renderSpiritBoostCard).join("")}
+      </div>
+    </section>
+    ${visibleFestivalBoosts.length ? `
+      <section class="nospill-spirit-section" aria-label="Spirit tokens">
+        <h5>Tokens</h5>
+        <div class="nospill-idle-grid">
+          ${visibleFestivalBoosts.map((boost) => {
+            const ready = safeNonNegativeInteger(state.shop.festivalBoosts[boost.id], 0, 100000);
+            const disabledReason = festivalBoostDisabledReason(boost, state);
+            return renderIdleCard({
+              title: boost.name,
+              status: `${formatShopCount(ready)} ready`,
+              copy: "Earned parked-only token. Future token earning rules stay hidden until implemented.",
+              actions: [actionButton("Use Token", "data-festival-boost", boost.id, ready < 1, "nospill-secondary", disabledReason)],
+            });
+          }).join("")}
+        </div>
+      </section>
+    ` : ""}
   `;
 }
 
@@ -13911,7 +14014,7 @@ function handleTofuShopPanelClick(event) {
     ["garageUpgrade", "data-garage-upgrade", buyGarageUpgrade, (result) => `${result.upgrade.name} upgraded.`],
     ["crewRole", "data-crew-role", hireCrewRole, (result) => `${result.role.name} joined.`],
     ["spiritGenerator", "data-spirit-generator", buySpiritGenerator, (result) => `${result.generator.name} added.`],
-    ["spiritBoost", "data-spirit-boost", useShopSpiritBoost, (result) => `${result.boost.name} used.`],
+    ["spiritBoost", "data-spirit-boost", useShopSpiritBoost, (result) => result.feedback || `${result.boost.name} used.`],
     ["festivalBoost", "data-festival-boost", useFestivalBoost, (result) => `${result.boost.name} used.`],
     ["licensePerk", "data-license-perk", buyLicensePerk, (result) => `${result.perk.name} purchased.`],
     ["rivalChallenge", "data-rival-challenge", startRivalChallenge, (result) => `${result.rival.name} complete.`],
@@ -14316,6 +14419,14 @@ function handleNextBestAction() {
   }
   if (actionType === "start_counter_service") {
     handleCounterServiceAction("start");
+    return;
+  }
+  if (actionType === "use_spirit_boost") {
+    const boostId = elements.gameCtaButton && elements.gameCtaButton.dataset
+      ? elements.gameCtaButton.dataset.nextSpiritBoost || ""
+      : "";
+    const result = useShopSpiritBoost(boostId, currentGameState());
+    saveShopActionResult(result, result.ok ? result.feedback : "");
     return;
   }
   if (actionType === "buy_dream_wheels") {

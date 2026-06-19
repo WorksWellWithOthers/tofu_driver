@@ -297,12 +297,13 @@ Current design principles:
 - Counter Service should display its useful rate or blocked state honestly. If it is supplied and
   running, shop income can include a `Cash/min when supplied` line; if it lacks stock or ready
   orders, the UI should say what is missing rather than showing a misleading zero.
-- Shop Spirit actions should use action-specific language: generators use `Buy`, instant actions use
-  `Spend Spirit`, timed effects use `Start Effect` or a specific effect name, and tokens use
-  `Use Token`. Instant Spirit spends should be strategic emergency recovery, such as adding a
-  meaningful amount of Tofu Stock or order prep, not a new clicker loop. Route-related Spirit
-  actions stay hidden until fictional route systems matter.
-- Regular Customers, gameplay Routes, full Dream Garage, Shop Spirit, Rivals, and License prestige
+- Shop Spirit actions should use stable sections and action-specific language: generators use `Buy`,
+  instant actions use `Spend Spirit`, and timed effects use `Start Effect` or a specific effect
+  name. Instant Spirit spends should be strategic emergency recovery, such as adding a meaningful
+  amount of Tofu Stock or order prep, with immediate inline feedback. Token shelves stay hidden until
+  an implemented system can actually generate usable tokens. Route-related Spirit actions stay hidden
+  until fictional route systems matter.
+- Regular Customers, gameplay Routes, full Dream Garage, Rivals, and License prestige
   remain deferred until Counter Service and the V1 spine have been playtested and tuned. While
   gameplay Routes are deferred, the live Tofu Garage UI should not show a Routes tab or sell
   route-related upgrades/actions.
