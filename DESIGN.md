@@ -233,8 +233,9 @@ those toys into personal goals, rituals, screenshots, jokes, and stories.
 
 Current and future toy-like objects include Cup Trail as a safe motion signature, Cargo Commentary
 flavor, the Tofu Garage living scene, Dream Build project-car progress, Delivery Crew characters
-and cosmetics, Passport stamps, share cards, Result Story captions, safe screenshot moments, future
-shop skins, future garage skins, future project car cards, and future comic-style result cards.
+and cosmetics, Passport stamps, share cards, Result Story captions, local Builder Notes, safe
+screenshot moments, future shop skins, future garage skins, future project car cards, and future
+comic-style result cards.
 
 The toy must stay safe, local, and expressive. It must not depend on speed, GPS, public ranking,
 street identity, or risky driving.
@@ -242,8 +243,8 @@ street identity, or risky driving.
 ### Creative Leverage And Customization
 
 Players should be able to express identity through car build choices, shop presentation, crew and
-cosmetic selection, stamps, cards, share-card framing, local result captions, future comic panels,
-and future garage/shop decoration.
+cosmetic selection, stamps, cards, share-card framing, local result captions, local Builder Notes,
+future comic panels, and future garage/shop decoration.
 
 Customization should be cosmetic, status, and story expression first. It must never improve Cup Test
 scoring, qualification, speed, route validation, or safety-sensitive behavior.
@@ -1001,6 +1002,15 @@ player-written Story Caption must remain visually and semantically distinct, and
 cards should keep the same hierarchy without adding a full comic editor, stickers, uploads,
 backend sharing, accounts, public profiles, scoring changes, reward changes, economy changes, or
 speed/GPS/map/street data.
+
+Garage Pride / Builder Note V1 is a parked Dream Build expression tool. After the player starts the
+Dream Build through a real purchase or work level, the Tofu Garage Overview can show one optional
+sanitized local Builder Note for the current build. The note is cosmetic/story expression only: it
+is saved locally in `tofuDriverGameStateV1`, can be exported/imported only as sanitized save text,
+does not appear in Cup Test share cards, and must not affect Cup Test scoring, qualification,
+Driver XP, shop rewards, Net Worth, Garage Build Value, Brand Value, or economy balance. It is not
+a full Dream Garage, build showcase, upload flow, public profile, AI note generator, or social
+feature.
 
 Super Cute Collectibles is the current physical merch fulfillment partner. It does not verify scores
 in the current MVP. Future backend unlock tokens, if built, must verify only summarized unlock state

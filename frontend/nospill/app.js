@@ -85,6 +85,14 @@ const SHARE_CONFIG = {
   includeDistanceInShare: false,
 };
 const RESULT_STORY_CAPTION_MAX_LENGTH = 90;
+const BUILDER_NOTE_MAX_LENGTH = 100;
+const BUILDER_NOTE_PRESETS = [
+  "Built after too many tofu shifts.",
+  "The shop funded the dream.",
+  "Not faster. Smoother.",
+  "One careful part at a time.",
+  "Mika says it has potential.",
+];
 
 const DISCORD_CONFIG = {
   enabled: false,
@@ -2778,6 +2786,7 @@ function defaultShopState() {
       wheelsLevel: 0,
       exhaustPurchased: false,
       exhaustLevel: 0,
+      builderNote: "",
       firstInvestmentPurchasedAt: "",
       showcaseDisplayPrepared: false,
       showcaseDisplayPreparedAt: "",
@@ -2891,6 +2900,7 @@ function normalizeDreamBuild(dreamBuild) {
     wheelsLevel,
     exhaustPurchased: wheelsLevel >= 3 && exhaustPurchased,
     exhaustLevel: wheelsLevel >= 3 && exhaustPurchased ? clamp(rawExhaustLevel || 1, 1, 5) : 0,
+    builderNote: sanitizeBuilderNote(source.builderNote),
     firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
       ? source.firstInvestmentPurchasedAt.slice(0, 40)
       : "",
@@ -4859,7 +4869,13 @@ function dreamBuildExhaustLevel(gameState) {
 }
 
 function dreamBuildInvestmentStarted(gameState) {
-  return dreamBuildWheelsPurchased(gameState);
+  const state = normalizeGameState(gameState);
+  const build = state.shop.dreamBuild;
+  return Boolean(build.wheelsPurchased)
+    || safeNonNegativeInteger(build.wheelsLevel, 0, 5) > 0
+    || Boolean(build.exhaustPurchased)
+    || safeNonNegativeInteger(build.exhaustLevel, 0, 5) > 0
+    || Boolean(build.showcaseDisplayPrepared);
 }
 
 function projectCarValueV1(gameState) {
@@ -5130,6 +5146,32 @@ function dreamBuildProgressSummary(gameState) {
     wheelsStatus: dreamBuildWheelsStatusLabel(wheelsLevel),
     exhaustLevel,
     exhaustStatus: dreamBuildExhaustStatusLabel(exhaustLevel),
+  };
+}
+
+function builderNoteVisible(gameState) {
+  if (appState.running || appState.calibrating) return false;
+  return dreamBuildInvestmentStarted(gameState);
+}
+
+function builderNoteValue(gameState) {
+  return sanitizeBuilderNote(normalizeGameState(gameState).shop.dreamBuild.builderNote);
+}
+
+function saveBuilderNote(value, gameState = currentGameState(), options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Builder Note unlocks after you finish and park.", gameState: next };
+  }
+  if (!builderNoteVisible(next)) {
+    return { ok: false, reason: "Builder Note unlocks after the Dream Build starts.", gameState: next };
+  }
+  next.shop.dreamBuild.builderNote = sanitizeBuilderNote(value);
+  return {
+    ok: true,
+    reason: "",
+    note: next.shop.dreamBuild.builderNote,
+    gameState: next,
   };
 }
 
@@ -8219,6 +8261,16 @@ function sanitizeShareOutput(text) {
 }
 
 function sanitizeResultStoryCaption(value, maxLength = RESULT_STORY_CAPTION_MAX_LENGTH) {
+  const cleaned = String(value || "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/[<>]/g, "")
+    .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  return Array.from(cleaned).slice(0, maxLength).join("");
+}
+
+function sanitizeBuilderNote(value, maxLength = BUILDER_NOTE_MAX_LENGTH) {
   const cleaned = String(value || "")
     .replace(/<[^>]*>/g, " ")
     .replace(/[<>]/g, "")
@@ -11370,6 +11422,58 @@ function renderDreamBuildProgressCard(gameState) {
   });
 }
 
+function renderBuilderNoteCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!builderNoteVisible(state)) return "";
+  const note = builderNoteValue(state);
+  const count = Array.from(note).length;
+  const presetButtons = BUILDER_NOTE_PRESETS.map((preset) => `
+    <button
+      type="button"
+      class="nospill-secondary nospill-builder-note-chip"
+      data-builder-note-preset="${escapeHtml(preset)}"
+    >${escapeHtml(preset)}</button>
+  `).join("");
+  return renderIdleCard({
+    title: "Builder Note",
+    status: note ? "Saved locally" : "Optional story note",
+    copy: "Write one short note about this build. Local-only, parked-only, and cosmetic.",
+    extra: `
+      <div class="nospill-builder-note-card">
+        <label class="nospill-builder-note-label" for="builder-note-input">
+          <span>Builder Note</span>
+          <small data-builder-note-count>${escapeHtml(`${count} / ${BUILDER_NOTE_MAX_LENGTH}`)}</small>
+        </label>
+        <input
+          id="builder-note-input"
+          class="nospill-builder-note-input"
+          data-builder-note-input
+          type="text"
+          maxlength="${BUILDER_NOTE_MAX_LENGTH}"
+          autocomplete="off"
+          value="${escapeHtml(note)}"
+          placeholder="Built after too many tofu shifts."
+          aria-describedby="builder-note-help"
+        />
+        <p id="builder-note-help" class="nospill-builder-note-help">Max ${BUILDER_NOTE_MAX_LENGTH} characters. This note stays in your local Tofu Garage save.</p>
+        <div class="nospill-builder-note-chips" aria-label="Builder Note presets">
+          ${presetButtons}
+        </div>
+        <div class="nospill-builder-note-display" aria-label="Saved Builder Note">
+          <span>Builder Note</span>
+          <strong>${note ? escapeHtml(`"${note}"`) : "No builder note yet."}</strong>
+        </div>
+        <div class="nospill-builder-note-actions">
+          <button type="button" class="nospill-primary" data-builder-note-action="save">Save Note</button>
+          <button type="button" class="nospill-secondary" data-builder-note-action="clear">Clear</button>
+        </div>
+      </div>
+    `,
+    actions: [],
+  });
+}
+
 function dreamInvestmentReturningNote(gameState) {
   const state = normalizeGameState(gameState);
   if (!dreamInvestmentTargetVisible(state)) return "";
@@ -12222,6 +12326,7 @@ function renderOverviewPanel(state) {
       ${renderCoveredCarTeaserCard(state)}
       ${renderDreamInvestmentTargetCard(state)}
       ${renderDreamBuildProgressCard(state)}
+      ${renderBuilderNoteCard(state)}
       ${renderShowcaseInterestCard(state)}
       ${renderSponsorInquiryCard(state)}
       ${renderProjectCarValueCard(state)}
@@ -14436,6 +14541,31 @@ function handleTofuShopPanelClick(event) {
   if (target.dataset.surfaceTarget) {
     setAppSurface(target.dataset.surfaceTarget, { updateHash: true, scroll: true, trackNav: true });
     renderGamePanels(currentGameState());
+    return;
+  }
+  if (target.dataset.builderNotePreset !== undefined) {
+    const card = target.closest(".nospill-builder-note-card");
+    const input = card && card.querySelector ? card.querySelector("[data-builder-note-input]") : null;
+    const count = card && card.querySelector ? card.querySelector("[data-builder-note-count]") : null;
+    if (input) {
+      const preset = sanitizeBuilderNote(target.dataset.builderNotePreset);
+      input.value = preset;
+      if (count) count.textContent = `${Array.from(preset).length} / ${BUILDER_NOTE_MAX_LENGTH}`;
+    }
+    return;
+  }
+  if (target.dataset.builderNoteAction) {
+    const card = target.closest(".nospill-builder-note-card");
+    const input = card && card.querySelector ? card.querySelector("[data-builder-note-input]") : null;
+    const value = target.dataset.builderNoteAction === "clear" ? "" : (input ? input.value : "");
+    const result = saveBuilderNote(value, currentGameState());
+    if (!result.ok) {
+      setSummaryStatusMessage(result.reason);
+      return;
+    }
+    saveGameState(result.gameState);
+    renderGamePanels(result.gameState);
+    setSummaryStatusMessage(result.note ? "Builder Note saved locally." : "Builder Note cleared.");
     return;
   }
   if (target.dataset.dreamBuildAction) {

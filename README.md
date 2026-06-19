@@ -100,8 +100,8 @@ The static app uses hash routing:
   the parked Covered Car / Dream Build teaser
 - `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md`: toy-first, player-expression, failure, needs/maintenance,
   discovery, black-box, and probability design audit. Result Story Caption V1, Failure Flavor V1,
-  and Result Card Visual Polish V1 are now implemented as local-only post-run result/share-card
-  story tools; broader comic/simulation systems remain future.
+  Result Card Visual Polish V1, and Garage Pride / Builder Note V1 are now implemented as
+  local-only story/expression tools; broader comic/simulation systems remain future.
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /

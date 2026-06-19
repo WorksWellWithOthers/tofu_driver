@@ -1274,6 +1274,81 @@
   line-height: 1.3;
 }
 
+.nospill-builder-note-card {
+  display: grid;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.nospill-builder-note-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #f4f7ef;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.nospill-builder-note-label small,
+.nospill-builder-note-help {
+  margin: 0;
+  color: #93a099;
+  font-size: 0.72rem;
+  line-height: 1.3;
+}
+
+.nospill-builder-note-input {
+  width: 100%;
+  min-height: 42px;
+  border: 1px solid rgba(244, 247, 239, 0.16);
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: #f4f7ef;
+  background: #070a0a;
+  font: inherit;
+}
+
+.nospill-builder-note-input:focus-visible {
+  outline: 2px solid #f7d66b;
+  outline-offset: 2px;
+}
+
+.nospill-builder-note-chips,
+.nospill-builder-note-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.nospill-builder-note-chip {
+  flex: 1 1 128px;
+  font-size: 0.72rem;
+}
+
+.nospill-builder-note-display {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(247, 214, 107, 0.28);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(247, 214, 107, 0.08);
+}
+
+.nospill-builder-note-display span {
+  color: #f7d66b;
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0;
+  text-transform: uppercase;
+}
+
+.nospill-builder-note-display strong {
+  overflow-wrap: anywhere;
+  color: #f4f7ef;
+  line-height: 1.35;
+}
+
 .nospill-next-milestone {
   display: grid;
   gap: 8px;

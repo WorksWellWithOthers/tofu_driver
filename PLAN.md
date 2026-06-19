@@ -210,8 +210,8 @@
   keep active play and idle progress balanced, automate mastered chores, add small novelty beats
   when repetition begins, and avoid early UI/currency/system overload.
 - `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` now treats Result Story Caption V1, Failure Flavor V1, and
-  Result Card Visual Polish V1 as implemented post-run story tools and recommends Garage Pride /
-  Build Reflection V1 as the next expression slice.
+  Result Card Visual Polish V1 as implemented post-run story tools. Garage Pride / Builder Note V1
+  is now implemented as the matching parked Dream Build expression slice.
 - Result Story Caption V1 is implemented on parked post-run Cup Test result screens. It lets the
   player add one sanitized local caption to copied share text and downloaded share cards; it is not
   a full comic editor and does not add uploads, accounts, backend, public profiles, scoring changes,
@@ -223,6 +223,10 @@
 - Result Card Visual Polish V1 is implemented as parked post-run UI polish: Story Card Preview
   combines result status, cargo facts, Cargo Commentary, optional Story Caption, and `Not faster.
   Smoother.` before the deeper recap, and the downloaded card uses the same mini story hierarchy.
+- Garage Pride / Builder Note V1 is implemented on parked Tofu Garage Overview after the Dream
+  Build starts. It lets the player save one sanitized local note about the current build; it is not
+  shown on Cup Test share cards and does not change scoring, rewards, Net Worth, Garage Build Value,
+  Brand Value, or economy balance.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -321,7 +325,10 @@ Canonical references:
 28. Playtest Result Card Visual Polish V1 on mobile and desktop: confirm Story Card Preview, Cargo
    Commentary, Story Caption, and downloaded card boxes feel readable without crowding the result
    actions.
-29. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+29. Playtest Garage Pride / Builder Note V1: confirm the 100-character limit, preset chips, saved
+   note display, and local-only positioning create build ownership without feeling like required
+   progression.
+30. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 

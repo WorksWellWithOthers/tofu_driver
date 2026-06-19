@@ -169,6 +169,11 @@ globalThis.dreamBuildExhaustLevel = dreamBuildExhaustLevel;
 globalThis.dreamBuildProgressVisible = dreamBuildProgressVisible;
 globalThis.dreamBuildProgressSummary = dreamBuildProgressSummary;
 globalThis.renderDreamBuildProgressCard = renderDreamBuildProgressCard;
+globalThis.sanitizeBuilderNote = sanitizeBuilderNote;
+globalThis.builderNoteVisible = builderNoteVisible;
+globalThis.builderNoteValue = builderNoteValue;
+globalThis.saveBuilderNote = saveBuilderNote;
+globalThis.renderBuilderNoteCard = renderBuilderNoteCard;
 globalThis.nextDreamBuildStep = nextDreamBuildStep;
 globalThis.nextDreamBuildWheelsWork = nextDreamBuildWheelsWork;
 globalThis.nextDreamBuildExhaustWork = nextDreamBuildExhaustWork;
@@ -5441,8 +5446,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618q'));
-  assert(html.includes('/static/nospill/app.css?v=20260618q'));
+  assert(html.includes('/static/nospill/app.js?v=20260619a'));
+  assert(html.includes('/static/nospill/app.css?v=20260619a'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7691,6 +7696,174 @@ globalThis.storyPreviewActiveHidden = elements.storyCardPreviewSection.classes.h
   assert(context.storyPreviewCardText.includes('Story Caption'));
   assert.strictEqual(context.storyPreviewEmptyCaptionHidden, true);
   assert.strictEqual(context.storyPreviewActiveHidden, true);
+}
+
+function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(html.includes('/static/nospill/app.js?v=20260619a'));
+  assert(html.includes('/static/nospill/app.css?v=20260619a'));
+  assert(css.includes('.nospill-builder-note-card'));
+  assert(css.includes('overflow-wrap: anywhere'));
+  assert(source.includes('function sanitizeBuilderNote'));
+  assert(source.includes('builderNote: sanitizeBuilderNote'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+
+  const context = loadNoSpillContext();
+  const fresh = context.defaultGameState();
+  const coveredOnly = context.defaultGameState();
+  coveredOnly.shop.coveredCarTeaserUnlocked = true;
+  coveredOnly.shop.coveredCarTeaserSeen = true;
+  const wheels = context.defaultGameState();
+  wheels.shop.tips = 3000000;
+  wheels.shop.dreamBuild.wheelsPurchased = true;
+  wheels.shop.dreamBuild.wheelsLevel = 1;
+  const exhaustComplete = context.defaultGameState();
+  exhaustComplete.shop.tips = 3000000;
+  exhaustComplete.shop.dreamBuild.wheelsPurchased = true;
+  exhaustComplete.shop.dreamBuild.wheelsLevel = 3;
+  exhaustComplete.shop.dreamBuild.exhaustPurchased = true;
+  exhaustComplete.shop.dreamBuild.exhaustLevel = 5;
+
+  assert.strictEqual(context.builderNoteVisible(fresh), false);
+  assert.strictEqual(context.renderBuilderNoteCard(fresh), '');
+  assert.strictEqual(context.builderNoteVisible(coveredOnly), false);
+  assert.strictEqual(context.renderBuilderNoteCard(coveredOnly), '');
+  assert.strictEqual(context.builderNoteVisible(wheels), true);
+  const builderCard = context.renderBuilderNoteCard(wheels);
+  assert(builderCard.includes('Builder Note'));
+  assert(builderCard.includes('Write one short note about this build.'));
+  assert(builderCard.includes('maxlength="100"'));
+  assert(builderCard.includes('data-builder-note-preset="The shop funded the dream."'));
+  assert(builderCard.includes('No builder note yet.'));
+
+  vm.runInContext(`
+appState.running = true;
+globalThis.activeBuilderCard = renderBuilderNoteCard(sampleBuilderState);
+appState.running = false;
+`, Object.assign(context, { sampleBuilderState: wheels }));
+  assert.strictEqual(context.activeBuilderCard, '');
+
+  const unsafeNote = '  <b>The</b>\n\t shop\u0007   funded   the dream <script>x</script>  ';
+  assert.strictEqual(context.sanitizeBuilderNote(unsafeNote), 'The shop funded the dream x');
+  assert.strictEqual(context.sanitizeBuilderNote('A'.repeat(140)).length, 100);
+  assert.strictEqual(context.sanitizeBuilderNote('   '), '');
+
+  const saved = context.saveBuilderNote('  The shop funded the dream.  ', wheels);
+  assert.strictEqual(saved.ok, true);
+  assert.strictEqual(saved.gameState.shop.dreamBuild.builderNote, 'The shop funded the dream.');
+  assert.strictEqual(context.builderNoteValue(saved.gameState), 'The shop funded the dream.');
+  const savedCard = context.renderBuilderNoteCard(saved.gameState);
+  assert(savedCard.includes('&quot;The shop funded the dream.&quot;'));
+  assert(!savedCard.includes('<b>'));
+
+  const cleared = context.saveBuilderNote('', saved.gameState);
+  assert.strictEqual(cleared.ok, true);
+  assert.strictEqual(cleared.gameState.shop.dreamBuild.builderNote, '');
+  assert(context.renderBuilderNoteCard(cleared.gameState).includes('No builder note yet.'));
+
+  const beforeScore = context.calculateCargoCondition(sampleShareSummary());
+  const beforeRank = context.displayRankForSession(sampleShareSummary());
+  const beforeQualified = context.isQualifiedSession(sampleShareSummary());
+  const beforeXp = exhaustComplete.totalXP;
+  const beforeCash = exhaustComplete.shop.tips;
+  const beforeNetWorth = context.netWorthV1(exhaustComplete);
+  const beforeGarageValue = context.projectCarValueV1(exhaustComplete);
+  const beforeBrandValue = context.brandValueV1(exhaustComplete);
+  const noteOnly = context.saveBuilderNote('One careful part at a time.', exhaustComplete).gameState;
+  assert.strictEqual(context.calculateCargoCondition(sampleShareSummary()), beforeScore);
+  assert.strictEqual(context.displayRankForSession(sampleShareSummary()), beforeRank);
+  assert.strictEqual(context.isQualifiedSession(sampleShareSummary()), beforeQualified);
+  assert.strictEqual(noteOnly.totalXP, beforeXp);
+  assert.strictEqual(noteOnly.shop.tips, beforeCash);
+  assert.strictEqual(context.netWorthV1(noteOnly), beforeNetWorth);
+  assert.strictEqual(context.projectCarValueV1(noteOnly), beforeGarageValue);
+  assert.strictEqual(context.brandValueV1(noteOnly), beforeBrandValue);
+
+  const shareSummary = sampleShareSummary({
+    storyCaption: 'Result caption stays separate.',
+    deliveryRewards: { gameState: noteOnly },
+  });
+  const shareText = context.buildShareText(shareSummary);
+  const shareCard = context.buildShareCardData(shareSummary);
+  assert(!shareText.includes('One careful part at a time.'));
+  assert(!JSON.stringify(shareCard).includes('One careful part at a time.'));
+  assert(shareText.includes('Caption: "Result caption stays separate."'));
+  assert.strictEqual(shareCard.storyCaption, 'Result caption stays separate.');
+
+  const localStorage = makeLocalStorage();
+  const storageContext = loadNoSpillContext({ window: { localStorage } });
+  const importedSource = storageContext.defaultGameState();
+  importedSource.shop.dreamBuild.wheelsPurchased = true;
+  importedSource.shop.dreamBuild.wheelsLevel = 1;
+  importedSource.shop.dreamBuild.builderNote = `<b>${'B'.repeat(130)}</b>`;
+  const imported = storageContext.importGameProgress(JSON.stringify({
+    key: storageContext.GAME_STORAGE_KEY,
+    state: importedSource,
+  }));
+  assert.strictEqual(imported.ok, true);
+  assert.strictEqual(imported.gameState.shop.dreamBuild.builderNote.length, 100);
+  assert(!/[<>]/.test(imported.gameState.shop.dreamBuild.builderNote));
+  const exported = storageContext.exportGameProgress(imported.gameState);
+  assert(exported.includes('"builderNote"'));
+  assert(!exported.includes('<b>'));
+  assertNoSensitiveStorageData(exported);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    value: "",
+    dataset: {},
+    closest(selector) { return selector === "button" ? node : null; },
+    querySelector() { return null; },
+  };
+  return node;
+}
+const input = makeNode();
+const count = makeNode();
+const card = {
+  querySelector(selector) {
+    if (selector === "[data-builder-note-input]") return input;
+    if (selector === "[data-builder-note-count]") return count;
+    return null;
+  },
+};
+const presetButton = makeNode();
+presetButton.dataset.builderNotePreset = "The shop funded the dream.";
+presetButton.closest = function closest(selector) {
+  if (selector === "button") return presetButton;
+  if (selector === ".nospill-builder-note-card") return card;
+  return null;
+};
+appState.running = false;
+appState.calibrating = false;
+handleTofuShopPanelClick({ target: { closest: () => presetButton } });
+globalThis.builderPresetInputValue = input.value;
+globalThis.builderPresetCount = count.textContent;
+`, context);
+  assert.strictEqual(context.builderPresetInputValue, 'The shop funded the dream.');
+  assert.strictEqual(context.builderPresetCount, '26 / 100');
+
+  const activeSave = context.saveBuilderNote('Should not save', wheels, { activeDrive: true });
+  assert.strictEqual(activeSave.ok, false);
+  assert.strictEqual(activeSave.gameState.shop.dreamBuild.builderNote, '');
+  const freshSave = context.saveBuilderNote('Too early', fresh);
+  assert.strictEqual(freshSave.ok, false);
+  assert.strictEqual(freshSave.gameState.shop.dreamBuild.builderNote, '');
+
+  const combinedText = [
+    builderCard,
+    savedCard,
+    shareText,
+    JSON.stringify(shareCard),
+    context.renderBuilderNoteCard(noteOnly),
+  ].join(' ');
+  assert(!/undefined|NaN|Infinity/.test(combinedText));
+  assert(!/\b(speed|mph|gps|map|street|trace|location|lat|lon|exact distance)\b/i.test(combinedText));
 }
 
 function testLockedMerchLinksAreNotShownBeforeUnlock() {
@@ -10333,6 +10506,7 @@ const TESTS = [
   ["testResultStoryCaptionV1IsLocalSafeAndShareable", testResultStoryCaptionV1IsLocalSafeAndShareable],
   ["testFailureFlavorV1AddsSafeCargoCommentary", testFailureFlavorV1AddsSafeCargoCommentary],
   ["testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy", testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy],
+  ["testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic", testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic],
   ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
   ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
   ["testRouteTypeClassification", testRouteTypeClassification],
