@@ -5202,8 +5202,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618g'));
-  assert(html.includes('/static/nospill/app.css?v=20260618g'));
+  assert(html.includes('/static/nospill/app.js?v=20260618h'));
+  assert(html.includes('/static/nospill/app.css?v=20260618h'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
