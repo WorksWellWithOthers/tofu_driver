@@ -334,7 +334,8 @@ earned money. It exists to make Cash spending feel like investment, not like los
 `Garage Build Value` is the player-facing V1 label for careful covered-build work. It is
 story/status/showcase value, not speed or real-world performance. Internally, legacy helpers may
 still use `projectCarValueV1`. In V1, Wheels can raise it to `$150K`, Exhaust Fitted raises the
-combined project to `$275K`, and Sealed Joints raises it to `$475K`.
+combined project to `$275K`, Sealed Joints raises it to `$475K`, and Tuned Note raises it to
+`$825K`.
 
 Future full accounting:
 
@@ -364,12 +365,12 @@ Examples:
 - First Dream Build Investment Purchase V1 lets the player buy Wheels for `$50K Cash` after the
   covered-car teaser. It subtracts Cash and starts `$25K Garage Build Value`; it does not create a
   full car-part inventory, Dream Garage tab, resale, depreciation, or liabilities.
-- Exhaust Purchase + Work Level V1 proves the second part track with Exhaust Fitted and Sealed
-  Joints. Future car parts reduce Cash but may increase Car Asset Value and unlock future
+- Exhaust Purchase + Work Level V1 proves the second part track with Exhaust Fitted, Sealed
+  Joints, and Tuned Note. Future car parts reduce Cash but may increase Car Asset Value and unlock future
   opportunities.
 - Dream Build Progress V1 summarizes current build completion as work stages. The planned V1 build
   size is 30 stages: six part tracks times five levels. Current implemented stages are Wheels
-  levels 1-3 and Exhaust levels 1-2.
+  levels 1-3 and Exhaust levels 1-3.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -445,9 +446,9 @@ Rules:
 - after the Covered Car teaser is seen or a high-progress save qualifies for it, the bar may point
   to `Save for Wheels` when no urgent shop bottleneck or useful shop purchase is more important.
   If Cash is already at `$50K`, it may show `Buy Wheels`. After Wheels are purchased, it may show
-  Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`, or
-  `Seal Joints` when no urgent shop goal is more useful. After Exhaust level 2, Tuned Note remains
-  target-only/future.
+  Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`,
+  `Seal Joints`, or `Tuned Note` when no urgent shop goal is more useful. After Exhaust level 3,
+  Heat Wrapped remains target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1376,7 +1377,7 @@ Suggested reveal:
   resale, depreciation, liabilities, events, or full valuation.
 - After Wheels level 3, Exhaust Purchase + Work Level V1 starts the second part track. Buy Exhaust
   costs `$250K Cash` and adds `$125K Project Car Value`; Seal Joints costs `$375K Cash` and adds
-  another `$200K Project Car Value`. Tuned Note remains future/target-only.
+  another `$200K Project Car Value`; Tuned Note costs `$600K Cash` and adds another `$350K`.
 - full Dream Garage only after the teaser proves players understand the shop-to-dream bridge.
 - first part purchase after stable Cash income exists and project-budget rules are resolved.
 
@@ -1448,7 +1449,7 @@ Implemented Exhaust Purchase + Work Level V1:
 | 0 | Not Started | none | `$150K` with Wheels level 3 | Implemented as post-Wheels target state |
 | 1 | Exhaust Fitted | `$250K` | `$275K` with Wheels level 3 | Implemented |
 | 2 | Sealed Joints | `$375K` | `$475K` with Wheels level 3 | Implemented |
-| 3 | Tuned Note | future | future | Target-only/future |
+| 3 | Tuned Note | `$600K` | `$825K` with Wheels level 3 | Implemented |
 | 4 | Heat Wrapped | future | future | Documented only |
 | 5 | Showcase Finish | future | future | Documented only |
 
@@ -1457,14 +1458,14 @@ Dream Build Progress V1:
 | Progress Input | Implemented Runtime Contribution |
 | --- | --- |
 | Wheels Level | `0-3` current runtime stages |
-| Exhaust Level | `0-2` current runtime stages |
+| Exhaust Level | `0-3` current runtime stages |
 | Suspension | future locked track |
 | Brakes | future locked track |
 | Turbo Kit | future locked track |
 | Stage Tune | future locked track |
 
-The progress denominator is `30` planned work stages. After Balanced Fitment and Sealed Joints, the
-current implemented maximum is `5 / 30`. Tuned Note remains target-only/future.
+The progress denominator is `30` planned work stages. After Balanced Fitment and Tuned Note, the
+current implemented maximum is `6 / 30`. Heat Wrapped remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
 

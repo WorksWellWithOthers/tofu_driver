@@ -161,8 +161,9 @@
   covered-car teaser or high-progress qualifying saves. Wheels cost `$50K Cash`, subtract Cash,
   persist locally, and start `$25K Garage Build Value`.
 - Exhaust Purchase + Work Level V1 is implemented after Wheels level 3. Exhaust costs `$250K Cash`
-  and adds `$125K Garage Build Value`; Seal Joints costs `$375K Cash` and adds another `$200K`.
-  Tuned Note remains target-only/future, with no Dream Garage tab, full parts inventory, completed
+  and adds `$125K Garage Build Value`; Seal Joints costs `$375K Cash` and adds another `$200K`;
+  Tuned Note costs `$600K Cash` and adds another `$350K`. Heat Wrapped remains target-only/future,
+  with no Dream Garage tab, full parts inventory, completed
   build events, or full valuation.
 - Dream Build Progress V1 is implemented as a compact Overview card. It counts current work stages
   as Wheels Level plus Exhaust Level against a planned `30` stage build, shows current Wheels and
@@ -248,9 +249,9 @@ Canonical references:
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
 11. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream
    Build Progress V1: confirm the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden
-   until Wheels level 3, Buy Exhaust appears only when affordable and stable, Garage Build Value and
-   `5 / 30` progress totals stay clear, Tuned Note remains target-only, and urgent shop bottlenecks
-   still win.
+   until Wheels level 3, Buy Exhaust/Tuned Note appear only when affordable and stable, Garage Build
+   Value and `6 / 30` progress totals stay clear, Heat Wrapped remains target-only, and urgent shop
+   bottlenecks still win.
 12. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
    `$1M` timing, Showcase Prep affordability, Sponsor reward pacing, one-time feedback, Brand Value
    visibility, and that urgent shop bottlenecks still override distant Net Worth goals.
@@ -310,9 +311,9 @@ Future Dream Garage milestone sequence:
 1. Verify Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream
    Build Progress V1:
    `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
-   Fitted, `$375K` Sealed Joints, `5 / 30` progress, Garage Build Value totals, persistence, and
-   priority rules.
-2. Playtest whether the next slice should add Tuned Note or return to Wheels levels 4-5.
+   Fitted, `$375K` Sealed Joints, `$600K` Tuned Note, `6 / 30` progress, Garage Build Value totals,
+   persistence, and priority rules.
+2. Playtest whether the next slice should add Heat Wrapped or return to Wheels levels 4-5.
 3. Refine Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
 4. Refine Garage Build Value from careful work levels after the first two tracks feel clear.
 5. Design the first completed-build event threshold and event choice requirements.

@@ -65,8 +65,8 @@ or car assets.
 | Covered Car / Dream Build Teaser V1 | Implemented | Unlocks after managed-shop scale and Wholesale Pickup progress; no car mechanics are implemented. |
 | First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, and starts `$25K Garage Build Value` without a Dream Garage tab or full parts inventory. |
 | Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Garage Build Value to `$65K`; Balanced Fitment costs `$150K` and raises Garage Build Value to `$150K`; levels 4-5 remain future. |
-| Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Garage Build Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note remains future/target-only. |
-| Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level against `30` planned work stages; current maximum is `5 / 30`; future tracks remain locked/deferred. |
+| Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Garage Build Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note costs `$600K` and raises it to `$825K`; Heat Wrapped remains future/target-only. |
+| Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level against `30` planned work stages; current maximum is `6 / 30`; future tracks remain locked/deferred. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
@@ -178,10 +178,11 @@ Current code status:
   `$25K Garage Build Value`.
 - Wheels Work Levels V1 implements level 2 Polished Wheels and level 3 Balanced Fitment. Project
   Car Value totals are `$65K` and `$150K` respectively.
-- Exhaust Purchase + Work Level V1 implements level 1 Exhaust Fitted and level 2 Sealed Joints.
-  Combined Garage Build Value totals are `$275K` and `$475K` respectively.
+- Exhaust Purchase + Work Level V1 implements level 1 Exhaust Fitted, level 2 Sealed Joints, and
+  level 3 Tuned Note. Combined Garage Build Value totals are `$275K`, `$475K`, and `$825K`
+  respectively.
 - Dream Build Progress V1 shows the project as `30` planned work stages. Current implemented stages
-  are Wheels levels 1-3 and Exhaust levels 1-2.
+  are Wheels levels 1-3 and Exhaust levels 1-3.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 
@@ -190,9 +191,9 @@ Recommendation:
 - Keep tips as flavor copy for order income, such as `+$10 from tips`.
 - Do not introduce both Tips and `$` as separate spendable balances.
 - Design full Car Asset Value and project budgets before broader car parts.
-- Treat Wheels and Exhaust levels 1-2 as the only V1 Dream Build purchases. Do not add Tuned Note
-  purchase effects, full parts inventory, resale, depreciation, liabilities, or a separate project
-  currency.
+- Treat Wheels and Exhaust levels 1-3 as the only current V1 Dream Build purchases. Do not add Heat
+  Wrapped purchase effects, full parts inventory, resale, depreciation, liabilities, or a separate
+  project currency.
 
 Cash is no longer a blocker for a teaser. Full valuation is still a blocker for car parts, project
 budgets, and any Car Asset Value-facing accounting.
@@ -211,7 +212,7 @@ budgets, and any Car Asset Value-facing accounting.
    Garage Build Value tradeoff is clear without feeling like full Dream Garage.
 8. Playtest Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream Build Progress V1
    before any broader part system. Parts should be purchased once, then improved through levels.
-9. Keep Tuned Note target-only until Exhaust levels 1-2 prove the second part track.
+9. Keep Heat Wrapped target-only until Exhaust level 3 proves the second part track.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
