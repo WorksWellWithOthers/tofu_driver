@@ -474,7 +474,8 @@ Design rules:
 - Exhaust Purchase + Work Level V1 is implemented after Wheels reaches level 3. Exhaust costs
   `$250K Cash`, adds `$125K Project Car Value`, Seal Joints costs `$375K Cash` and adds another
   `$200K`, Tuned Note costs `$600K Cash` and adds another `$350K`, and Heat Wrapped costs `$1.1M`
-  Cash and adds another `$650K`.
+  Cash and adds another `$650K`. Showcase Finish costs `$2M Cash`, adds another `$1.25M`, and
+  completes the current Exhaust track.
 - Parts are purchased once, then improved through work levels. The player should not buy duplicate
   wheels, exhausts, turbos, or other repeated copies of the same part. Future actions should use
   verbs such as Install, Polish, Fit, Balance, Tune, Refine, Restore, Wrap, Detail, Finish, and
@@ -482,11 +483,11 @@ Design rules:
 - Wheels Work Levels V1 implements the first three Wheels levels: Wheels Installed, Polished
   Wheels, and Balanced Fitment. Level 4 Showpiece Fitment and Level 5 Collector Finish remain
   future.
-- Exhaust V1 implements Exhaust Fitted, Sealed Joints, Tuned Note, and Heat Wrapped. Showcase
-  Finish remains future/target-only.
+- Exhaust V1 implements Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped, and Showcase
+  Finish. Suspension remains future/target-only.
 - Dream Build Progress V1 summarizes the project as `6 parts x 5 levels = 30 work stages`.
-  Current runtime progress is Wheels level plus Exhaust level; the implemented maximum is `7 / 30`
-  after Balanced Fitment and Heat Wrapped. Suspension, Brakes, Turbo Kit, Stage Tune,
+  Current runtime progress is Wheels level plus Exhaust level; the implemented maximum is `8 / 30`
+  after Balanced Fitment and Showcase Finish. Suspension, Brakes, Turbo Kit, Stage Tune,
   completed-build events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
@@ -550,9 +551,10 @@ Implemented Exhaust V1 values:
 | 2 | Sealed Joints | `$375K` | `+$200K` (`$475K` with Wheels level 3) |
 | 3 | Tuned Note | `$600K` | `+$350K` (`$825K` with Wheels level 3) |
 | 4 | Heat Wrapped | `$1.1M` | `+$650K` (`$1.475M` with Wheels level 3) |
+| 5 | Showcase Finish | `$2M` | `+$1.25M` (`$2.725M` with Wheels level 3) |
 
-Wheels levels 4-5, Exhaust level 5, full Dream Garage, completed-build events, Auction,
-Showcase, and Collector Offer remain future.
+Wheels levels 4-5, Suspension, full Dream Garage, completed-build events, Auction, Showcase, and
+Collector Offer remain future.
 
 Dream Build Progress V1:
 
