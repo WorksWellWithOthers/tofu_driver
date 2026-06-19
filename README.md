@@ -28,8 +28,10 @@ Counter Service batch upgrades and Reputation-funded Supplier Contracts, not fas
 
 Hidden merch is local-only in the MVP. The Tofu Driver `Not Fast. Smooth.` Tee link is revealed
 inside the parked result/rewards UI after an earned Certified Perfect Pour or route-context Perfect
-Pour achievement. The app does not run payments, call Shopify APIs, verify unlocks with a backend,
-or open external merch links automatically.
+Pour achievement. The Tofu Driver Penguin Delivery White Tee is revealed separately after a
+Certified Result with a Penguin mascot selected. The app does not run payments, call Shopify APIs,
+verify unlocks with a backend, append GPS/route/speed data to merch URLs, or open external merch
+links automatically.
 
 ## Privacy And Safety Stance
 

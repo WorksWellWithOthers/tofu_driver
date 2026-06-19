@@ -99,6 +99,10 @@ Penguin art is cosmetic only. It must not affect Cup score, cargo thresholds, qu
 validation, rewards, speed, distance, shop economy, or safety-sensitive behavior. It is not rendered
 during active Cup Test, calibration, or motion permission flow.
 
+The Penguin Delivery White Tee hidden merch reveal is tied to a Certified Result with one of these
+Penguin mascot characters selected. That reveal is local-only merch presentation; the penguin art
+and selection remain cosmetic and do not change scoring, rewards, qualification, or shop economy.
+
 Replacement checklist:
 
 1. Export final images as WebP at the exact filenames above.

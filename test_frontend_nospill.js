@@ -351,8 +351,15 @@ globalThis.MERCH_LINKS = MERCH_LINKS;
 globalThis.HIDDEN_SHIRT_ID = HIDDEN_SHIRT_ID;
 globalThis.HIDDEN_SHIRT_NAME = HIDDEN_SHIRT_NAME;
 globalThis.HIDDEN_SHIRT_URL = HIDDEN_SHIRT_URL;
+globalThis.HIDDEN_PENGUIN_SHIRT_ID = HIDDEN_PENGUIN_SHIRT_ID;
+globalThis.HIDDEN_PENGUIN_SHIRT_NAME = HIDDEN_PENGUIN_SHIRT_NAME;
+globalThis.HIDDEN_PENGUIN_SHIRT_URL = HIDDEN_PENGUIN_SHIRT_URL;
+globalThis.HIDDEN_MERCH_UNLOCKS = HIDDEN_MERCH_UNLOCKS;
 globalThis.hiddenShirtUnlockSource = hiddenShirtUnlockSource;
+globalThis.hiddenPenguinShirtUnlockSource = hiddenPenguinShirtUnlockSource;
 globalThis.applyHiddenShirtUnlock = applyHiddenShirtUnlock;
+globalThis.applyMerchUnlock = applyMerchUnlock;
+globalThis.acknowledgeMerchUnlockReveal = acknowledgeMerchUnlockReveal;
 globalThis.acknowledgeHiddenShirtReveal = acknowledgeHiddenShirtReveal;
 globalThis.renderHiddenShirtReveal = renderHiddenShirtReveal;
 globalThis.renderMerchPanel = renderMerchPanel;
@@ -5463,8 +5470,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619e'));
-  assert(html.includes('/static/nospill/app.css?v=20260619e'));
+  assert(html.includes('/static/nospill/app.js?v=20260619f'));
+  assert(html.includes('/static/nospill/app.css?v=20260619f'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7910,8 +7917,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619e'));
-  assert(html.includes('/static/nospill/app.css?v=20260619e'));
+  assert(html.includes('/static/nospill/app.js?v=20260619f'));
+  assert(html.includes('/static/nospill/app.css?v=20260619f'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -8176,7 +8183,10 @@ globalThis.lockedHiddenShirtHtml = elements.merchGrid.innerHTML;
 const unlockedState = ${JSON.stringify(certifiedPerfect.gameState)};
 elements = {
   hiddenShirtReveal: { hidden: false, classes: new Set(["is-hidden"]), classList: { toggle(_name, hidden) { hidden ? this.owner.classes.add("is-hidden") : this.owner.classes.delete("is-hidden"); }, add(name) { this.owner.classes.add(name); } } },
-  hiddenShirtLink: { attrs: {}, href: "", setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; this.href = ""; } },
+  hiddenShirtTitle: { textContent: "" },
+  hiddenShirtCopy: { textContent: "" },
+  hiddenShirtSubcopy: { textContent: "" },
+  hiddenShirtLink: { attrs: {}, dataset: {}, href: "", setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; this.href = ""; } },
   merchGrid: { innerHTML: "" },
   merchProgressGrid: { innerHTML: "" },
 };
@@ -8215,6 +8225,167 @@ globalThis.unlockedHiddenShirtHtml = elements.merchGrid.innerHTML;
   assert.deepStrictEqual(
     context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 100 }), context.defaultGameState()).skillXP,
     context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 100 }), context.defaultGameState()).skillXP,
+  );
+}
+
+function testHiddenPenguinShirtUnlockV1IsLocalParkedAndSafe() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const productUrl = 'https://supercutecollectibles.com/products/tofu-driver-penguin-delivery-white-tee?utm_source=copyToPasteBoard&utm_medium=product-links&utm_content=web';
+  assert.strictEqual(context.HIDDEN_PENGUIN_SHIRT_ID, 'penguin_delivery_white_tee');
+  assert.strictEqual(context.HIDDEN_PENGUIN_SHIRT_NAME, 'Tofu Driver Penguin Delivery White Tee');
+  assert.strictEqual(context.HIDDEN_PENGUIN_SHIRT_URL, productUrl);
+  assert(!fs.readFileSync(NOSPILL_HTML, 'utf8').includes(productUrl));
+
+  vm.runInContext(`
+elements = { merchGrid: { innerHTML: "" } };
+renderMerchPanel({ unlockedMilestones: {} }, defaultGameState());
+globalThis.lockedPenguinShirtHtml = elements.merchGrid.innerHTML;
+`, context);
+  assert(context.lockedPenguinShirtHtml.includes('Hidden Penguin Shirt'));
+  assert(context.lockedPenguinShirtHtml.includes('Complete a Certified Result with a Penguin selected'));
+  assert(!context.lockedPenguinShirtHtml.includes(productUrl));
+
+  const penguinState = context.defaultGameState();
+  penguinState.collection.unlockedCharacterIds.push('penguin_driver');
+  penguinState.collection.selectedCharacterId = 'penguin_driver';
+  const certifiedPenguin = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 92,
+    cargoCondition: 92,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), penguinState);
+  const penguinShirt = certifiedPenguin.gameState.merchUnlocks.penguin_delivery_white_tee;
+  assert.strictEqual(penguinShirt.unlocked, true);
+  assert.strictEqual(penguinShirt.source, 'certified_penguin_result');
+  assert.strictEqual(penguinShirt.revealSeen, false);
+  assert.strictEqual(
+    certifiedPenguin.hiddenMerchUnlocks.find((unlock) => unlock.itemId === 'penguin_delivery_white_tee').unlockedThisRun,
+    true,
+  );
+  assert.strictEqual(certifiedPenguin.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, false);
+
+  const defaultCertified = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 92,
+    cargoCondition: 92,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), context.defaultGameState());
+  assert.strictEqual(defaultCertified.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, false);
+
+  const localPenguin = context.calculateDeliveryRewards(sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 300,
+    distanceMiles: 0,
+  }), penguinState);
+  assert.strictEqual(localPenguin.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, false);
+
+  const simulatedPenguin = context.calculateDeliveryRewards(sampleDeliverySession({
+    simulated: true,
+    mode: 'simulated',
+    qualificationStatus: 'qualified',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+  }), penguinState);
+  assert.strictEqual(simulatedPenguin.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, false);
+
+  const perfectDefault = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), context.defaultGameState());
+  assert.strictEqual(perfectDefault.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, true);
+  assert.strictEqual(perfectDefault.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, false);
+
+  const shareText = context.buildShareText({
+    ...sampleDeliverySession({ waterLeft: 92, qualificationStatus: 'qualified' }),
+    deliveryRewards: certifiedPenguin,
+  });
+  assert(!shareText.includes(productUrl));
+  assert(!/speed|mph|gps|map|street|trace|lat|lon/i.test(shareText));
+
+  vm.runInContext(`
+const penguinUnlockedState = ${JSON.stringify(certifiedPenguin.gameState)};
+elements = {
+  hiddenShirtReveal: { hidden: false, classes: new Set(["is-hidden"]), classList: { toggle(_name, hidden) { hidden ? this.owner.classes.add("is-hidden") : this.owner.classes.delete("is-hidden"); }, add(name) { this.owner.classes.add(name); } } },
+  hiddenShirtTitle: { textContent: "" },
+  hiddenShirtCopy: { textContent: "" },
+  hiddenShirtSubcopy: { textContent: "" },
+  hiddenShirtLink: { attrs: {}, dataset: {}, href: "", setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; this.href = ""; } },
+  merchGrid: { innerHTML: "" },
+  merchProgressGrid: { innerHTML: "" },
+};
+elements.hiddenShirtReveal.classList.owner = elements.hiddenShirtReveal;
+appState.running = false;
+appState.calibrating = false;
+renderHiddenShirtReveal({ deliveryRewards: {
+  hiddenMerchUnlocks: [{ itemId: "penguin_delivery_white_tee", unlockedThisRun: true }],
+  gameState: penguinUnlockedState,
+} });
+globalThis.penguinRevealVisible = !elements.hiddenShirtReveal.classes.has("is-hidden");
+globalThis.penguinRevealTitle = elements.hiddenShirtTitle.textContent;
+globalThis.penguinRevealCopy = elements.hiddenShirtCopy.textContent;
+globalThis.penguinRevealSubcopy = elements.hiddenShirtSubcopy.textContent;
+globalThis.penguinRevealHref = elements.hiddenShirtLink.href;
+globalThis.penguinRevealTarget = elements.hiddenShirtLink.attrs.target;
+globalThis.penguinRevealRel = elements.hiddenShirtLink.attrs.rel;
+globalThis.penguinRevealItemId = elements.hiddenShirtLink.dataset.merchUnlockId;
+appState.running = true;
+renderHiddenShirtReveal({ deliveryRewards: {
+  hiddenMerchUnlocks: [{ itemId: "penguin_delivery_white_tee", unlockedThisRun: true }],
+  gameState: penguinUnlockedState,
+} });
+globalThis.penguinRevealHiddenActiveDrive = elements.hiddenShirtReveal.classes.has("is-hidden");
+appState.running = false;
+const acknowledged = acknowledgeMerchUnlockReveal("penguin_delivery_white_tee", penguinUnlockedState);
+globalThis.penguinAckSeen = acknowledged.gameState.merchUnlocks.penguin_delivery_white_tee.revealSeen;
+globalThis.penguinAckNotFastSeen = acknowledged.gameState.merchUnlocks.not_fast_smooth_tee.revealSeen;
+globalThis.penguinAckState = acknowledged.gameState;
+renderHiddenShirtReveal({ deliveryRewards: {
+  hiddenMerchUnlocks: [{ itemId: "penguin_delivery_white_tee", unlockedThisRun: true }],
+  gameState: acknowledged.gameState,
+} });
+globalThis.penguinRevealHiddenAfterAck = elements.hiddenShirtReveal.classes.has("is-hidden");
+renderMerchPanel({ unlockedMilestones: {} }, acknowledged.gameState);
+globalThis.unlockedPenguinMerchHtml = elements.merchGrid.innerHTML;
+`, context);
+  assert.strictEqual(context.penguinRevealVisible, true);
+  assert.strictEqual(context.penguinRevealTitle, 'Hidden Penguin Shirt Unlocked');
+  assert(context.penguinRevealCopy.includes('Tofu Driver Penguin Delivery White Tee'));
+  assert(context.penguinRevealSubcopy.includes('certified Penguin delivery'));
+  assert.strictEqual(context.penguinRevealHref, productUrl);
+  assert.strictEqual(context.penguinRevealTarget, '_blank');
+  assert.strictEqual(context.penguinRevealRel, 'noopener noreferrer');
+  assert.strictEqual(context.penguinRevealItemId, 'penguin_delivery_white_tee');
+  assert.strictEqual(context.penguinRevealHiddenActiveDrive, true);
+  assert.strictEqual(context.penguinAckSeen, true);
+  assert.strictEqual(context.penguinAckNotFastSeen, false);
+  assert.strictEqual(context.penguinRevealHiddenAfterAck, true);
+  assert(context.unlockedPenguinMerchHtml.includes('Tofu Driver Penguin Delivery White Tee'));
+  assert(context.unlockedPenguinMerchHtml.includes(productUrl.replaceAll('&', '&amp;')));
+  assert(context.unlockedPenguinMerchHtml.includes('target="_blank" rel="noopener noreferrer"'));
+
+  const exported = context.exportGameProgress(context.penguinAckState);
+  assert(exported.includes('"penguin_delivery_white_tee"'));
+  assert(!/routeSamples|gpsSamples|raw|coordinates|latitude|longitude|speedLog/i.test(exported));
+  const imported = context.importGameProgress(exported);
+  assert.strictEqual(imported.ok, true);
+  assert.strictEqual(imported.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, true);
+  assert.strictEqual(imported.gameState.merchUnlocks.penguin_delivery_white_tee.revealSeen, true);
+
+  assert.deepStrictEqual(
+    context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 92 }), penguinState).skillXP,
+    context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 92 }), penguinState).skillXP,
   );
 }
 
@@ -10977,6 +11148,7 @@ const TESTS = [
   ["testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic", testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic],
   ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
   ["testHiddenShirtUnlockV1IsLocalParkedAndSafe", testHiddenShirtUnlockV1IsLocalParkedAndSafe],
+  ["testHiddenPenguinShirtUnlockV1IsLocalParkedAndSafe", testHiddenPenguinShirtUnlockV1IsLocalParkedAndSafe],
   ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
   ["testRouteTypeClassification", testRouteTypeClassification],
   ["testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext", testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext],

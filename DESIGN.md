@@ -1036,8 +1036,10 @@ and must reject simulator/dev/local-only proof.
 
 Hidden Shirt Unlock V1 is an in-app local reveal, not backend merch verification. The Tofu Driver
 `Not Fast. Smooth.` Tee link is hidden until local state records a Certified Perfect Pour or
-high-tier route-context Perfect Pour achievement. The app must not auto-open the product link, pass
-GPS/route/speed/user data to the URL, call Shopify APIs, or imply that Shopify verifies the score.
+high-tier route-context Perfect Pour achievement. Hidden Penguin Shirt Unlock V1 separately reveals
+the Tofu Driver Penguin Delivery White Tee after a Certified Result completed with a Penguin mascot
+selected. The app must not auto-open product links, pass GPS/route/speed/user data to URLs, call
+Shopify APIs, or imply that Shopify verifies either unlock.
 
 Discord/community links are optional parked-use CTAs. They must be hidden by default unless
 configured, never shown during active drive, and never framed as a place to report, identify, shame,

@@ -102,6 +102,10 @@
   `Not Fast. Smooth.` Tee link appears only after a Certified Perfect Pour or route-context Perfect
   Pour achievement, is repeat-suppressed after acknowledgement, and does not use backend
   verification, Shopify APIs, auto-opening, active-drive prompts, score changes, or economy effects.
+- Hidden Penguin Shirt Unlock V1 is implemented as a separate local parked merch reveal. The Tofu
+  Driver Penguin Delivery White Tee appears only after a Certified Result completed with a Penguin
+  mascot selected, has per-item repeat suppression, and does not change scoring, rewards, shop
+  economy, Net Worth, or existing `Not Fast. Smooth.` Tee behavior.
 - Character-art slots and parked-only placeholders are implemented for future Delivery Crew/shop
   assistant artwork. `CHARACTER_ART_ASSET_INVENTORY.md` defines the current image surfaces, slot
   expectations, and smallest recommended first asset pack.

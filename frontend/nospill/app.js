@@ -103,6 +103,43 @@ const HIDDEN_SHIRT_ID = "not_fast_smooth_tee";
 const HIDDEN_SHIRT_NAME = "Tofu Driver \u201cNot Fast. Smooth.\u201d Tee";
 const HIDDEN_SHIRT_URL =
   "https://supercutecollectibles.com/products/tofu-driver-not-fast-smooth-tee?utm_source=copyToPasteBoard&utm_medium=product-links&utm_content=web";
+const HIDDEN_PENGUIN_SHIRT_ID = "penguin_delivery_white_tee";
+const HIDDEN_PENGUIN_SHIRT_NAME = "Tofu Driver Penguin Delivery White Tee";
+const HIDDEN_PENGUIN_SHIRT_URL =
+  "https://supercutecollectibles.com/products/tofu-driver-penguin-delivery-white-tee?utm_source=copyToPasteBoard&utm_medium=product-links&utm_content=web";
+
+const PENGUIN_CHARACTER_IDS = new Set([
+  "penguin_driver",
+  "penguin_delivery_buddy",
+  "penguin_tofu_driver_sticker",
+]);
+
+const HIDDEN_MERCH_UNLOCKS = {
+  [HIDDEN_SHIRT_ID]: {
+    id: HIDDEN_SHIRT_ID,
+    name: HIDDEN_SHIRT_NAME,
+    url: HIDDEN_SHIRT_URL,
+    lockedTitle: "Hidden Shirt",
+    lockedCopy: "Earn a Certified Perfect Pour to reveal this link.",
+    unlockedCopy: "Exclusive hidden shirt unlocked.",
+    revealTitle: "Hidden Shirt Unlocked",
+    revealCopy: `You unlocked the exclusive ${HIDDEN_SHIRT_NAME}.`,
+    revealSubcopy: "This link is hidden until you earn it in Tofu Driver.",
+    allowedSources: new Set(["certified_perfect_pour", "route_context_achievement"]),
+  },
+  [HIDDEN_PENGUIN_SHIRT_ID]: {
+    id: HIDDEN_PENGUIN_SHIRT_ID,
+    name: HIDDEN_PENGUIN_SHIRT_NAME,
+    url: HIDDEN_PENGUIN_SHIRT_URL,
+    lockedTitle: "Hidden Penguin Shirt",
+    lockedCopy: "Complete a Certified Result with a Penguin selected to reveal this link.",
+    unlockedCopy: "Exclusive Penguin shirt unlocked.",
+    revealTitle: "Hidden Penguin Shirt Unlocked",
+    revealCopy: `You unlocked the exclusive ${HIDDEN_PENGUIN_SHIRT_NAME}.`,
+    revealSubcopy: "This hidden shirt appears after a certified Penguin delivery.",
+    allowedSources: new Set(["certified_penguin_result", "earned_penguin_collection_unlock"]),
+  },
+};
 
 const DISCORD_CONFIG = {
   enabled: false,
@@ -2591,23 +2628,22 @@ function normalizeSkillXP(skillXP) {
 
 function normalizeMerchUnlocks(merchUnlocks) {
   const source = merchUnlocks && typeof merchUnlocks === "object" ? merchUnlocks : {};
-  const shirt = source[HIDDEN_SHIRT_ID] && typeof source[HIDDEN_SHIRT_ID] === "object"
-    ? source[HIDDEN_SHIRT_ID]
-    : {};
-  const allowedSources = new Set(["certified_perfect_pour", "route_context_achievement"]);
-  const unlocked = Boolean(shirt.unlocked);
-  const unlockedAt = typeof shirt.unlockedAt === "string" ? shirt.unlockedAt.slice(0, 40) : "";
-  const sourceId = typeof shirt.source === "string" && allowedSources.has(shirt.source)
-    ? shirt.source
-    : "";
-  return {
-    [HIDDEN_SHIRT_ID]: {
+  return Object.fromEntries(Object.values(HIDDEN_MERCH_UNLOCKS).map((definition) => {
+    const item = source[definition.id] && typeof source[definition.id] === "object"
+      ? source[definition.id]
+      : {};
+    const unlocked = Boolean(item.unlocked);
+    const unlockedAt = typeof item.unlockedAt === "string" ? item.unlockedAt.slice(0, 40) : "";
+    const sourceId = typeof item.source === "string" && definition.allowedSources.has(item.source)
+      ? item.source
+      : "";
+    return [definition.id, {
       unlocked,
       unlockedAt: unlocked ? unlockedAt : "",
       source: unlocked ? sourceId : "",
-      revealSeen: Boolean(shirt.revealSeen),
-    },
-  };
+      revealSeen: Boolean(item.revealSeen),
+    }];
+  }));
 }
 
 function safeNonNegativeNumber(value, fallback = 0, maxValue = SHOP_MAX_RESOURCE) {
@@ -3532,17 +3568,16 @@ function validateImportedCollectionState(collection) {
 function validateImportedMerchUnlocks(merchUnlocks) {
   if (merchUnlocks === undefined) return true;
   if (!merchUnlocks || typeof merchUnlocks !== "object" || Array.isArray(merchUnlocks)) return false;
-  const shirt = merchUnlocks[HIDDEN_SHIRT_ID];
-  if (shirt === undefined) return true;
-  if (!shirt || typeof shirt !== "object" || Array.isArray(shirt)) return false;
-  if (shirt.unlocked !== undefined && typeof shirt.unlocked !== "boolean") return false;
-  if (shirt.revealSeen !== undefined && typeof shirt.revealSeen !== "boolean") return false;
-  if (shirt.unlockedAt !== undefined && typeof shirt.unlockedAt !== "string") return false;
-  if (
-    shirt.source !== undefined
-    && !["", "certified_perfect_pour", "route_context_achievement"].includes(shirt.source)
-  ) {
-    return false;
+  const knownIds = new Set(Object.keys(HIDDEN_MERCH_UNLOCKS));
+  if (Object.keys(merchUnlocks).some((id) => !knownIds.has(id))) return false;
+  for (const [id, definition] of Object.entries(HIDDEN_MERCH_UNLOCKS)) {
+    const item = merchUnlocks[id];
+    if (item === undefined) continue;
+    if (!item || typeof item !== "object" || Array.isArray(item)) return false;
+    if (item.unlocked !== undefined && typeof item.unlocked !== "boolean") return false;
+    if (item.revealSeen !== undefined && typeof item.revealSeen !== "boolean") return false;
+    if (item.unlockedAt !== undefined && typeof item.unlockedAt !== "string") return false;
+    if (item.source !== undefined && item.source !== "" && !definition.allowedSources.has(item.source)) return false;
   }
   return true;
 }
@@ -8044,29 +8079,59 @@ function hiddenShirtUnlockSource(session, stamps = []) {
   return "";
 }
 
-function applyHiddenShirtUnlock(gameState, session, stamps = []) {
+function selectedPenguinCharacterId(gameState) {
+  const state = normalizeGameState(gameState);
+  const selectedId = state.collection.selectedCharacterId;
+  if (!PENGUIN_CHARACTER_IDS.has(selectedId)) return "";
+  if (!state.collection.unlockedCharacterIds.includes(selectedId)) return "";
+  return selectedId;
+}
+
+function hiddenPenguinShirtUnlockSource(session, gameState) {
+  if (!isQualifiedSession(session) || session.simulated || session.mode === "simulated") return "";
+  return selectedPenguinCharacterId(gameState) ? "certified_penguin_result" : "";
+}
+
+function merchUnlockSource(itemId, gameState, session, stamps = []) {
+  if (itemId === HIDDEN_SHIRT_ID) return hiddenShirtUnlockSource(session, stamps);
+  if (itemId === HIDDEN_PENGUIN_SHIRT_ID) return hiddenPenguinShirtUnlockSource(session, gameState);
+  return "";
+}
+
+function applyMerchUnlock(gameState, itemId, session, stamps = []) {
   const next = normalizeGameState(gameState);
-  const current = next.merchUnlocks[HIDDEN_SHIRT_ID];
+  const definition = HIDDEN_MERCH_UNLOCKS[itemId];
+  if (!definition) return { gameState: next, unlockedThisRun: false, source: "", itemId: "" };
+  const current = next.merchUnlocks[itemId];
   if (current && current.unlocked) {
-    return { gameState: next, unlockedThisRun: false, source: current.source || "" };
+    return { gameState: next, unlockedThisRun: false, source: current.source || "", itemId };
   }
-  const source = hiddenShirtUnlockSource(session, stamps);
-  if (!source) return { gameState: next, unlockedThisRun: false, source: "" };
-  next.merchUnlocks[HIDDEN_SHIRT_ID] = {
+  const source = merchUnlockSource(itemId, next, session, stamps);
+  if (!source) return { gameState: next, unlockedThisRun: false, source: "", itemId };
+  next.merchUnlocks[itemId] = {
     unlocked: true,
     unlockedAt: typeof session.date === "string" ? session.date : new Date().toISOString(),
     source,
     revealSeen: false,
   };
-  return { gameState: next, unlockedThisRun: true, source };
+  return { gameState: next, unlockedThisRun: true, source, itemId };
+}
+
+function applyHiddenShirtUnlock(gameState, session, stamps = []) {
+  return applyMerchUnlock(gameState, HIDDEN_SHIRT_ID, session, stamps);
+}
+
+function acknowledgeMerchUnlockReveal(itemId, gameState = currentGameState()) {
+  const next = normalizeGameState(gameState);
+  const definition = HIDDEN_MERCH_UNLOCKS[itemId];
+  const item = definition ? next.merchUnlocks[itemId] : null;
+  if (!definition || !item || !item.unlocked) return { ok: false, reason: "Hidden shirt is still locked.", gameState: next };
+  next.merchUnlocks[itemId] = { ...item, revealSeen: true };
+  return { ok: true, gameState: next };
 }
 
 function acknowledgeHiddenShirtReveal(gameState = currentGameState()) {
-  const next = normalizeGameState(gameState);
-  const shirt = next.merchUnlocks[HIDDEN_SHIRT_ID];
-  if (!shirt || !shirt.unlocked) return { ok: false, reason: "Hidden shirt is still locked.", gameState: next };
-  next.merchUnlocks[HIDDEN_SHIRT_ID] = { ...shirt, revealSeen: true };
-  return { ok: true, gameState: next };
+  return acknowledgeMerchUnlockReveal(HIDDEN_SHIRT_ID, gameState);
 }
 
 function routeBucket(value, thresholds) {
@@ -8316,6 +8381,13 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
     : updateMerchProgress(enrichedSession, nextState, dailyComplete);
   const hiddenShirtUnlock = applyHiddenShirtUnlock(nextState, enrichedSession, stamps);
   nextState = hiddenShirtUnlock.gameState;
+  const hiddenPenguinShirtUnlock = applyMerchUnlock(
+    nextState,
+    HIDDEN_PENGUIN_SHIRT_ID,
+    enrichedSession,
+    stamps,
+  );
+  nextState = hiddenPenguinShirtUnlock.gameState;
   if (nextState.merchProgress.nospillClubGear.unlocked) {
     nextState.stamps.nospill_club = nextState.stamps.nospill_club || {
       label: STAMP_LABELS.nospill_club,
@@ -8391,6 +8463,14 @@ function calculateDeliveryRewards(session, gameState = defaultGameState()) {
       itemId: HIDDEN_SHIRT_ID,
       label: HIDDEN_SHIRT_NAME,
     },
+    hiddenMerchUnlocks: [hiddenShirtUnlock, hiddenPenguinShirtUnlock]
+      .filter((unlock) => unlock.itemId)
+      .map((unlock) => ({
+        unlockedThisRun: unlock.unlockedThisRun,
+        source: unlock.source,
+        itemId: unlock.itemId,
+        label: HIDDEN_MERCH_UNLOCKS[unlock.itemId].name,
+      })),
     commuteMasteryMessage: mastery.message,
     gameState: nextState,
     coach,
@@ -13667,6 +13747,7 @@ function renderMerchProgress(gameState = loadGameState()) {
   const state = normalizeGameState(gameState);
   const progress = state.merchProgress;
   const hiddenShirt = state.merchUnlocks[HIDDEN_SHIRT_ID];
+  const hiddenPenguinShirt = state.merchUnlocks[HIDDEN_PENGUIN_SHIRT_ID];
   elements.merchProgressGrid.innerHTML = [
     merchProgressMetric(
       "No-Spill Club Gear",
@@ -13684,31 +13765,55 @@ function renderMerchProgress(gameState = loadGameState()) {
       "Hidden Shirt",
       hiddenShirt.unlocked ? "Unlocked" : "Secret",
     ),
+    merchProgressMetric(
+      "Penguin Shirt",
+      hiddenPenguinShirt.unlocked ? "Unlocked" : "Secret",
+    ),
   ].join("");
+}
+
+function pendingHiddenMerchReveal(summary) {
+  const rewards = summary && summary.deliveryRewards ? summary.deliveryRewards : {};
+  const state = normalizeGameState(rewards.gameState || loadGameState());
+  const unlocks = Array.isArray(rewards.hiddenMerchUnlocks)
+    ? rewards.hiddenMerchUnlocks
+    : rewards.hiddenShirtUnlock
+      ? [rewards.hiddenShirtUnlock]
+      : [];
+  return unlocks.find((unlock) => {
+    const itemId = unlock && unlock.itemId ? unlock.itemId : HIDDEN_SHIRT_ID;
+    const item = state.merchUnlocks[itemId];
+    return Boolean(unlock && unlock.unlockedThisRun && item && item.unlocked && !item.revealSeen);
+  }) || null;
 }
 
 function renderHiddenShirtReveal(summary) {
   if (!elements.hiddenShirtReveal) return;
   const rewards = summary && summary.deliveryRewards ? summary.deliveryRewards : {};
-  const unlock = rewards.hiddenShirtUnlock || {};
   const state = normalizeGameState(rewards.gameState || loadGameState());
-  const shirt = state.merchUnlocks[HIDDEN_SHIRT_ID];
+  const pending = pendingHiddenMerchReveal(summary);
+  const itemId = pending && pending.itemId ? pending.itemId : HIDDEN_SHIRT_ID;
+  const definition = HIDDEN_MERCH_UNLOCKS[itemId] || HIDDEN_MERCH_UNLOCKS[HIDDEN_SHIRT_ID];
   const show = Boolean(
     !appState.running
     && !appState.calibrating
-    && unlock.unlockedThisRun
-    && shirt
-    && shirt.unlocked
-    && !shirt.revealSeen
+    && pending
   );
   elements.hiddenShirtReveal.classList.toggle("is-hidden", !show);
+  if (show) {
+    if (elements.hiddenShirtTitle) elements.hiddenShirtTitle.textContent = definition.revealTitle;
+    if (elements.hiddenShirtCopy) elements.hiddenShirtCopy.textContent = definition.revealCopy;
+    if (elements.hiddenShirtSubcopy) elements.hiddenShirtSubcopy.textContent = definition.revealSubcopy;
+  }
   if (elements.hiddenShirtLink) {
     if (show) {
-      elements.hiddenShirtLink.href = HIDDEN_SHIRT_URL;
+      elements.hiddenShirtLink.href = definition.url;
+      elements.hiddenShirtLink.dataset.merchUnlockId = definition.id;
       elements.hiddenShirtLink.setAttribute("target", "_blank");
       elements.hiddenShirtLink.setAttribute("rel", "noopener noreferrer");
     } else {
       elements.hiddenShirtLink.removeAttribute("href");
+      if (elements.hiddenShirtLink.dataset) elements.hiddenShirtLink.dataset.merchUnlockId = "";
     }
   }
 }
@@ -13720,7 +13825,9 @@ function renderDeliverySummary(summary) {
   const coach = rewards.coach || buildCoachRecap(summary, rewards);
   const passport = rewards.passport || deliveryPassportSummary(rewards.gameState || loadGameState());
   const merch = rewards.merchProgress || normalizeGameState(loadGameState()).merchProgress;
-  const hiddenShirt = normalizeGameState(rewards.gameState || loadGameState()).merchUnlocks[HIDDEN_SHIRT_ID];
+  const merchUnlocks = normalizeGameState(rewards.gameState || loadGameState()).merchUnlocks;
+  const hiddenShirt = merchUnlocks[HIDDEN_SHIRT_ID];
+  const hiddenPenguinShirt = merchUnlocks[HIDDEN_PENGUIN_SHIRT_ID];
   const dailyDelivery = rewards.dailyDelivery || getDailyDelivery(summary.date || new Date());
   const dailyComplete = Boolean(rewards.dailyComplete);
   const qualified = isQualifiedSession(summary);
@@ -13813,6 +13920,7 @@ function renderDeliverySummary(summary) {
     summaryMetric("Perfect Pour Drop", merch.perfectPourDrop.unlocked ? "Unlocked" : "Locked"),
     summaryMetric("Delivery Crew Merch", `${merch.deliveryCrew.count}/${merch.deliveryCrew.target}`),
     summaryMetric("Hidden Shirt", hiddenShirt.unlocked ? "Unlocked" : "Locked"),
+    summaryMetric("Hidden Penguin Shirt", hiddenPenguinShirt.unlocked ? "Unlocked" : "Locked"),
     summaryMetric("Next Delivery Goal", nextGoal),
   ].filter(Boolean).join("");
   if (elements.cupTrailCard) {
@@ -14390,7 +14498,6 @@ function renderSummary(summary) {
 function renderMerchPanel(clubState, gameState = loadGameState()) {
   if (!elements.merchGrid) return;
   const state = normalizeGameState(gameState);
-  const hiddenShirt = state.merchUnlocks[HIDDEN_SHIRT_ID];
   const milestoneCards = MERCH_MILESTONES.map((id) => {
     const label = MERCH_LABELS[id] || MILESTONE_LABELS[id] || id;
     const unlocked = Boolean(clubState.unlockedMilestones[id]);
@@ -14407,21 +14514,24 @@ function renderMerchPanel(clubState, gameState = loadGameState()) {
       </div>
     `;
   });
-  const hiddenShirtCard = hiddenShirt.unlocked
-    ? `
-      <div class="nospill-merch-item">
-        <span>${escapeHtml(HIDDEN_SHIRT_NAME)}</span>
-        <strong>Exclusive hidden shirt unlocked.</strong>
-        <a class="nospill-merch-link" href="${escapeHtml(HIDDEN_SHIRT_URL)}" target="_blank" rel="noopener noreferrer">View Shirt</a>
-      </div>
-    `
-    : `
-      <div class="nospill-merch-item is-locked">
-        <span>Hidden Shirt</span>
-        <strong>Earn a Certified Perfect Pour to reveal this link.</strong>
-      </div>
-    `;
-  elements.merchGrid.innerHTML = [...milestoneCards, hiddenShirtCard].join("");
+  const hiddenMerchCards = Object.values(HIDDEN_MERCH_UNLOCKS).map((definition) => {
+    const item = state.merchUnlocks[definition.id];
+    return item && item.unlocked
+      ? `
+        <div class="nospill-merch-item">
+          <span>${escapeHtml(definition.name)}</span>
+          <strong>${escapeHtml(definition.unlockedCopy)}</strong>
+          <a class="nospill-merch-link" href="${escapeHtml(definition.url)}" target="_blank" rel="noopener noreferrer">View Shirt</a>
+        </div>
+      `
+      : `
+        <div class="nospill-merch-item is-locked">
+          <span>${escapeHtml(definition.lockedTitle)}</span>
+          <strong>${escapeHtml(definition.lockedCopy)}</strong>
+        </div>
+      `;
+  });
+  elements.merchGrid.innerHTML = [...milestoneCards, ...hiddenMerchCards].join("");
 }
 
 function bestUnlockedMilestone(summary) {
@@ -15085,7 +15195,10 @@ function handleSponsorInquiry() {
 
 function handleHiddenShirtLater() {
   if (appState.running || appState.calibrating) return;
-  const result = acknowledgeHiddenShirtReveal(currentGameState());
+  const itemId = elements.hiddenShirtLink && elements.hiddenShirtLink.dataset
+    ? elements.hiddenShirtLink.dataset.merchUnlockId || HIDDEN_SHIRT_ID
+    : HIDDEN_SHIRT_ID;
+  const result = acknowledgeMerchUnlockReveal(itemId, currentGameState());
   if (!result.ok) {
     setSummaryStatusMessage(result.reason);
     return;
@@ -15099,7 +15212,10 @@ function handleHiddenShirtLater() {
 
 function handleHiddenShirtLinkClick() {
   if (appState.running || appState.calibrating) return;
-  const result = acknowledgeHiddenShirtReveal(currentGameState());
+  const itemId = elements.hiddenShirtLink && elements.hiddenShirtLink.dataset
+    ? elements.hiddenShirtLink.dataset.merchUnlockId || HIDDEN_SHIRT_ID
+    : HIDDEN_SHIRT_ID;
+  const result = acknowledgeMerchUnlockReveal(itemId, currentGameState());
   if (result.ok) saveGameState(result.gameState);
 }
 
@@ -16051,6 +16167,9 @@ function cacheElements() {
     summaryWater: document.getElementById("summary-water"),
     summaryCharacterCameo: document.getElementById("summary-character-cameo"),
     hiddenShirtReveal: document.getElementById("hidden-shirt-reveal"),
+    hiddenShirtTitle: document.getElementById("hidden-shirt-title"),
+    hiddenShirtCopy: document.getElementById("hidden-shirt-copy"),
+    hiddenShirtSubcopy: document.getElementById("hidden-shirt-subcopy"),
     hiddenShirtLink: document.getElementById("hidden-shirt-link"),
     hiddenShirtLater: document.getElementById("hidden-shirt-later"),
     summaryGrid: document.getElementById("summary-grid"),
