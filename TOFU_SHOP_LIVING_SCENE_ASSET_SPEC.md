@@ -27,6 +27,7 @@ slowly than the mechanics so each image feels like a story beat.
 | `scene_tiny_shop_upgraded` | `frontend/nospill/images/scene_tiny_shop_upgraded.webp` | Tofu Shop Overview scene | First named upgrade, First 10 Orders, First Family Tofu Tray, or First 100 Tips | Yes | 16:9 | 1600x900 or 1920x1080 | Better counter setup, packaging, or slightly improved station props | Leave room for action cards below, not inside art | Static | Static | No placeholder in normal gameplay; real image is integrated | Integrated | Also used as the temporary visual alias for `scene_busy_shop_established` |
 | `scene_busy_shop_established` | `frontend/nospill/images/scene_tiny_shop_upgraded.webp` | Tofu Shop Overview scene | Sustained progress such as 25+ orders, a support-station milestone, Shop Level 10+, or Second Register | Yes | 16:9 | 1600x900 or 1920x1080 | Temporarily reuses the upgraded-shop image so normal gameplay never shows missing art | Keep foreground uncluttered on narrow screens | Optional subtle future overlay only | Static | Uses upgraded-shop fallback art | Aliased | Dedicated `scene_busy_shop_established.webp` is optional future work |
 | `scene_busy_shop_with_covered_car` | `frontend/nospill/images/scene_busy_shop_with_covered_car.webp` | Tofu Shop Overview scene | Established shop plus a later teaser milestone such as First Upgrade Purchased, First 100 Tips, 25+ orders, or Second Register | Yes | 16:9 | 1600x900 or 1920x1080 | Established shop plus restrained covered-car hint in background | Covered car should be visible but not dominate | Static | Static | No placeholder in normal gameplay; real image is integrated | Integrated | Story teaser only; no Dream Garage mechanics |
+| `old_car_out_back_story_splash` | `frontend/nospill/images/old_car_out_back_story_splash.webp` | One-time parked story splash | First Old Car Out Back / covered-car teaser acknowledgement | Yes | 16:9 | 1600x900 or 1920x1080 | Focused story splash for the old car under cover | Keep the covered car readable without implying a playable Dream Garage | Static | Static | No placeholder in normal gameplay; real image is integrated | Integrated | Not the normal Living Scene background; shown once and repeat-suppressed |
 
 `scene_busy_shop_established` is currently aliased to `scene_tiny_shop_upgraded.webp`.
 Players should not see a missing-art placeholder for the established-shop state during normal
@@ -35,6 +36,10 @@ more distinct visual state.
 
 Normal gameplay should not show scene IDs, asset-state labels, or `art pending` copy for integrated
 scene states. Placeholder text is reserved for genuinely missing future/optional scene IDs.
+
+`old_car_out_back_story_splash.webp` is a parked-only story splash for the first covered-car moment.
+It is not used as the compact Tofu Shop Living Scene background and does not unlock Dream Garage
+mechanics, car parts, routes, speed, distance, or active-drive behavior.
 
 ## Optional Future Overlays
 
@@ -64,7 +69,8 @@ Make three to five full-scene images first. Recommended order:
 2. `scene_tiny_shop_working`, 16:9, 1600x900 or 1920x1080.
 3. `scene_tiny_shop_upgraded`, 16:9, 1600x900 or 1920x1080.
 4. `scene_busy_shop_with_covered_car`, 16:9, 1600x900 or 1920x1080.
-5. Optional later: a dedicated `scene_busy_shop_established`, 16:9, 1600x900 or 1920x1080.
+5. `old_car_out_back_story_splash`, 16:9, 1600x900 or 1920x1080, for the one-time story splash.
+6. Optional later: a dedicated `scene_busy_shop_established`, 16:9, 1600x900 or 1920x1080.
 
 Do not commission separate visible layer art until the full-scene approach has been playtested.
 

@@ -249,6 +249,9 @@ globalThis.getCharacterAsset = getCharacterAsset;
 globalThis.renderCharacterCameo = renderCharacterCameo;
 globalThis.coachRecapCharacterSlot = coachRecapCharacterSlot;
 globalThis.TOFU_SHOP_SCENE_ASSETS = TOFU_SHOP_SCENE_ASSETS;
+globalThis.STORY_SPLASH_ASSETS = STORY_SPLASH_ASSETS;
+globalThis.getStorySplashAsset = getStorySplashAsset;
+globalThis.renderStorySplashImage = renderStorySplashImage;
 globalThis.getSceneAsset = getSceneAsset;
 globalThis.getTofuShopSceneState = getTofuShopSceneState;
 globalThis.getTofuShopSceneLayers = getTofuShopSceneLayers;
@@ -3384,6 +3387,7 @@ globalThis.acknowledgedIds = acknowledged.gameState.seenStoryBeatIds.slice();
 globalThis.acknowledgedMilestone = nextMilestoneForShop(acknowledged.gameState);
 globalThis.acknowledgedBusyAction = nextBestAction(acknowledged.gameState);
 globalThis.acknowledgedDreamVisible = dreamInvestmentTargetVisible(acknowledged.gameState);
+globalThis.acknowledgedCoveredCardHtml = renderCoveredCarTeaserCard(acknowledged.gameState);
 globalThis.acknowledgedDreamCardHtml = renderDreamInvestmentTargetCard(acknowledged.gameState);
 globalThis.acknowledgedDreamProgressVisible = dreamBuildProgressVisible(acknowledged.gameState);
 globalThis.acknowledgedDreamProgressSummary = dreamBuildProgressSummary(acknowledged.gameState);
@@ -3616,9 +3620,13 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert.notStrictEqual(context.urgentQueueMilestone.id, 'dream_investment_wheels');
   assert(context.urgentQueueAction.title.includes('Clear the Order Queue') || context.urgentQueueAction.copy.includes('queue is full'));
   assert.notStrictEqual(context.urgentAffordableQueueAction.type, 'buy_dream_wheels');
-  assert(context.highCardHtml.includes('Behind the Shop'));
-  assert(context.highCardHtml.includes('Dream Build: Not ready yet'));
-  assert(context.highCardHtml.includes('The Tofu Shop is not the destination'));
+  assert(context.highCardHtml.includes('Old Car Out Back'));
+  assert(context.highCardHtml.includes('Story Teaser'));
+  assert(context.highCardHtml.includes('Behind the shop, an old car waits under a cover.'));
+  assert(context.highCardHtml.includes('/static/nospill/images/old_car_out_back_story_splash.webp'));
+  assert(context.highCardHtml.includes('Continue Tofu Shop'));
+  assert(!context.highCardHtml.includes('Dream Build: Not ready yet'));
+  assert(!context.highCardHtml.includes('Dream Garage'));
   assert(context.storyOverviewHtml.includes('Behind the shop'));
   assert(context.storyOverviewHtml.includes('old car waits under a cover'));
   assert(!context.storyTabsHtml.includes('Dream Garage'));
@@ -3632,6 +3640,11 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert(context.acknowledgedFeedback.includes('Story beat unlocked'));
   assert.strictEqual(context.acknowledgedSeen, true);
   assert(context.acknowledgedIds.includes('dream_build_teaser_v1'));
+  assert(context.acknowledgedCoveredCardHtml.includes('Behind the Shop'));
+  assert(context.acknowledgedCoveredCardHtml.includes('Dream Build: Not ready yet'));
+  assert(context.acknowledgedCoveredCardHtml.includes('The Tofu Shop is not the destination'));
+  assert(!context.acknowledgedCoveredCardHtml.includes('/static/nospill/images/old_car_out_back_story_splash.webp'));
+  assert(!context.acknowledgedCoveredCardHtml.includes('Continue Tofu Shop'));
   assert.strictEqual(context.acknowledgedDreamVisible, true);
   assert(context.acknowledgedDreamCardHtml.includes('Wheels Fund'));
   assert.strictEqual(context.acknowledgedDreamProgressVisible, true);
@@ -5270,8 +5283,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618k'));
-  assert(html.includes('/static/nospill/app.css?v=20260618k'));
+  assert(html.includes('/static/nospill/app.js?v=20260618l'));
+  assert(html.includes('/static/nospill/app.css?v=20260618l'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -8029,6 +8042,26 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
       `${filename} should exist as a real integrated Mika asset`,
     );
   });
+  [
+    '/static/nospill/images/shop_assistant_main_portrait.webp',
+    '/static/nospill/images/coach_neutral.webp',
+    '/static/nospill/images/coach_pleased.webp',
+    '/static/nospill/images/result_screen_cameo.webp',
+    '/static/nospill/images/crew_profile_card.webp',
+    '/static/nospill/images/reward_unlock_splash.webp',
+    '/static/nospill/images/scene_tiny_shop_empty.webp',
+    '/static/nospill/images/scene_tiny_shop_working.webp',
+    '/static/nospill/images/scene_tiny_shop_upgraded.webp',
+    '/static/nospill/images/scene_busy_shop_with_covered_car.webp',
+    '/static/nospill/images/old_car_out_back_story_splash.webp',
+  ].forEach((runtimePath) => {
+    const filename = runtimePath.split('/').pop();
+    assert.strictEqual(
+      fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', filename)),
+      true,
+      `${runtimePath} should have a tracked local image file`,
+    );
+  });
   const runViewHtml = html.slice(
     html.indexOf('id="run-view"'),
     html.indexOf('id="unsupported-view"'),
@@ -8135,6 +8168,14 @@ function testCharacterArtAssetSlotsAndPlaceholders() {
   assert(mikaRewardSplash.includes('/static/nospill/images/reward_unlock_splash.webp'));
   const mikaStampSplash = context.renderCharacterCameo('stamp_fanfare_cameo', mikaState);
   assert(mikaStampSplash.includes('/static/nospill/images/reward_unlock_splash.webp'));
+  assert.strictEqual(
+    context.STORY_SPLASH_ASSETS.old_car_out_back_story_splash.src,
+    '/static/nospill/images/old_car_out_back_story_splash.webp',
+  );
+  assert.strictEqual(
+    context.getStorySplashAsset('old_car_out_back_story_splash').src,
+    '/static/nospill/images/old_car_out_back_story_splash.webp',
+  );
 
   context.artSlotState = mikaState;
   vm.runInContext(`
@@ -8267,6 +8308,7 @@ function testTofuShopLivingSceneV1Groundwork() {
     'frontend/nospill/images/scene_tiny_shop_working.webp',
     'frontend/nospill/images/scene_tiny_shop_upgraded.webp',
     'frontend/nospill/images/scene_busy_shop_with_covered_car.webp',
+    'frontend/nospill/images/old_car_out_back_story_splash.webp',
   ].forEach((expectedPath) => assert(spec.includes(expectedPath), `${expectedPath} should be specified`));
   assert(spec.includes('scene_busy_shop_established` is currently aliased to `scene_tiny_shop_upgraded.webp`'));
   assert(spec.includes('Reduced-Motion Behavior'));
@@ -8279,6 +8321,7 @@ function testTofuShopLivingSceneV1Groundwork() {
     'scene_tiny_shop_working.webp',
     'scene_tiny_shop_upgraded.webp',
     'scene_busy_shop_with_covered_car.webp',
+    'old_car_out_back_story_splash.webp',
   ].forEach((filename) => {
     assert.strictEqual(
       fs.existsSync(path.join(ROOT, 'frontend', 'nospill', 'images', filename)),
@@ -8313,6 +8356,11 @@ function testTofuShopLivingSceneV1Groundwork() {
     context.TOFU_SHOP_SCENE_ASSETS.scene_busy_shop_with_covered_car.src,
     '/static/nospill/images/scene_busy_shop_with_covered_car.webp',
   );
+  assert.strictEqual(
+    context.STORY_SPLASH_ASSETS.old_car_out_back_story_splash.src,
+    '/static/nospill/images/old_car_out_back_story_splash.webp',
+  );
+  assert(context.renderStorySplashImage('old_car_out_back_story_splash').includes('/static/nospill/images/old_car_out_back_story_splash.webp'));
   assert.strictEqual(
     context.getSceneAsset('missing_future_layer').placeholder,
     'Scene art pending',

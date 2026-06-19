@@ -1182,6 +1182,9 @@ Early UI rule:
   reduced motion and muted audio, and never appears during active driving. It uses a single wide
   reward splash plus compact Cash/Reputation/Shop XP cards; player-facing fanfare UI should not show
   character-slot labels, asset-status copy, `art pending`, or internal slot names.
+- The Old Car Out Back splash is a one-time parked story beat after the covered-car milestone. It
+  should use its dedicated story image, repeat-suppress after acknowledgement, and avoid implying
+  that full Dream Garage, car parts, routes, speed, or active-drive mechanics are implemented.
 - The first meaningful hidden shop system should trigger a Discovery Fanfare / New System Revealed
   moment. Upgrades are the preferred first reveal when Tidy Packaging, Steady Pressing, or another
   bottleneck-solving upgrade becomes visible. Future systems should use the same pattern only after

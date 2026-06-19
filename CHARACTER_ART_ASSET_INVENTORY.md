@@ -75,6 +75,15 @@ Celebration renders `reward_unlock_splash.webp` as one wide 16:9 fanfare image, 
 cameo/debug card. Future optional slots such as share-card, Passport-detail, Ledger, and
 offline-progress art remain documented only.
 
+Current active Mika runtime files are:
+
+- `/static/nospill/images/shop_assistant_main_portrait.webp`
+- `/static/nospill/images/coach_neutral.webp`
+- `/static/nospill/images/coach_pleased.webp`
+- `/static/nospill/images/result_screen_cameo.webp`
+- `/static/nospill/images/crew_profile_card.webp`
+- `/static/nospill/images/reward_unlock_splash.webp`
+
 Replacement checklist:
 
 1. Export final images as WebP at the exact filenames above.

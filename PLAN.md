@@ -105,7 +105,9 @@
   card is polished rather than debug-style: real-art states do not show `art pending` copy, raw
   scene IDs, or implementation labels. Scene swaps are intentionally slower than station purchases:
   small purchases stay in cards/buttons, while full-scene images wait for larger story milestones.
-  The covered-car scene uses only a restrained purpose hint.
+  The covered-car scene uses only a restrained purpose hint. `old_car_out_back_story_splash.webp`
+  is wired separately as a one-time parked story splash for that milestone, not as the normal scene
+  background or a Dream Garage system.
 - Delivery Crew is a clickable parked surface with future/deferred copy and CTAs back toward Tofu
   Garage and Don't Spill the Cup; it is no longer a dead visible nav item.
 - The Orders tab has been removed because it duplicated Overview. Normal shop order fulfillment now

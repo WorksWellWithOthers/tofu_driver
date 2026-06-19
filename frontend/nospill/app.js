@@ -787,6 +787,14 @@ const TOFU_SHOP_SCENE_ASSETS = {
   },
 };
 
+const STORY_SPLASH_ASSETS = {
+  old_car_out_back_story_splash: {
+    src: "/static/nospill/images/old_car_out_back_story_splash.webp",
+    label: "Old Car Out Back",
+    alt: "An old car waiting under a cover behind the Tofu Shop.",
+  },
+};
+
 const TOFU_SHOP_SCENE_THRESHOLDS = {
   workingOrders: 3,
   upgradedOrders: 10,
@@ -10913,18 +10921,51 @@ function renderStoryTeaserCard() {
   });
 }
 
+function getStorySplashAsset(assetId) {
+  const asset = STORY_SPLASH_ASSETS[assetId] || null;
+  return {
+    assetId,
+    src: asset && typeof asset.src === "string" ? asset.src : "",
+    label: asset && typeof asset.label === "string" ? asset.label : "Story Splash",
+    alt: asset && typeof asset.alt === "string" ? asset.alt : "Tofu Driver story splash.",
+  };
+}
+
+function renderStorySplashImage(assetId) {
+  const asset = getStorySplashAsset(assetId);
+  if (!asset.src) return "";
+  return `
+    <figure class="nospill-story-splash-art">
+      <img
+        src="${escapeHtml(asset.src)}"
+        alt="${escapeHtml(asset.alt)}"
+        loading="eager"
+        decoding="async"
+        onerror="this.hidden = true;"
+      />
+    </figure>
+  `;
+}
+
 function renderCoveredCarTeaserCard(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
   if (!coveredCarTeaserUnlocked(state)) return "";
   const seen = coveredCarTeaserSeen(state);
+  if (!seen) {
+    return renderIdleCard({
+      title: "Old Car Out Back",
+      status: "Story Teaser",
+      copy: "Behind the shop, an old car waits under a cover.",
+      extra: renderStorySplashImage("old_car_out_back_story_splash"),
+      actions: [actionButton("Continue Tofu Shop", "data-covered-car-teaser", "seen", false)],
+    });
+  }
   return renderIdleCard({
     title: "Behind the Shop",
     status: "Dream Build: Not ready yet",
     copy: "An old car waits under a cover. The Tofu Shop is not the destination. It is how the dream starts. Keep growing the garage. The first build comes later.",
-    actions: seen
-      ? []
-      : [actionButton("Look Behind the Shop", "data-covered-car-teaser", "seen", false)],
+    actions: [],
   });
 }
 
