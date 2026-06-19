@@ -5270,8 +5270,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618j'));
-  assert(html.includes('/static/nospill/app.css?v=20260618j'));
+  assert(html.includes('/static/nospill/app.js?v=20260618k'));
+  assert(html.includes('/static/nospill/app.css?v=20260618k'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6063,9 +6063,10 @@ renderTofuShop(${JSON.stringify(state)});
 globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
 `, context);
   assert(context.managerUpgradeHtml.includes('Hire Shift Manager'));
-  assert(context.managerUpgradeHtml.includes('$75K + 1M Reputation'));
+  assert(context.managerUpgradeHtml.includes('Cost: $75K Cash + 1M Reputation'));
   assert(context.managerUpgradeHtml.includes('Opens Manager Desk scale'));
   assert(context.managerUpgradeHtml.includes('Wholesale Pickup'));
+  assert(context.managerUpgradeHtml.indexOf('Order Bell') < context.managerUpgradeHtml.indexOf('Wholesale Pickup'));
   assert(context.managerUpgradeHtml.indexOf('Hire Shift Manager') < context.managerUpgradeHtml.indexOf('Wholesale Pickup'));
 
   const managerUnlockedLowCash = JSON.parse(JSON.stringify(state));
@@ -6073,6 +6074,7 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
   managerUnlockedLowCash.shop.reputation = 5000000;
   managerUnlockedLowCash.shop.deliveryOrders = 250000;
   managerUnlockedLowCash.shop.tofuStock = 1000000;
+  managerUnlockedLowCash.shop.stationUpgrades.manager_shift_manager = 1;
   const lowCashIds = context.visibleRelevantStationUpgrades(managerUnlockedLowCash).map((upgrade) => upgrade.id);
   assert(lowCashIds.includes('manager_shift_manager'));
   assert(lowCashIds.includes('manager_wholesale_pickup'));
@@ -6080,7 +6082,12 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
   const lowCashHtml = context.renderExpandedUpgradePanel(managerUnlockedLowCash);
   assert(lowCashHtml.includes('Wholesale Pickup'));
   assert(lowCashHtml.includes('Waiting on Cash'));
-  assert(lowCashHtml.includes('81.8K / 125K'));
+  assert(lowCashHtml.includes('Cost: $125K Cash + 1.5M Reputation'));
+  assert(lowCashHtml.includes('Cash: $81.8K / $125K'));
+  assert(lowCashHtml.includes('Reputation: 5M / 1.5M'));
+  assert(lowCashHtml.includes('Need $43.2K more Cash.'));
+  assert(!lowCashHtml.includes('$125K · 1.5M Reputation'));
+  assert(!lowCashHtml.includes('81.8K / 125K'));
 
   const managerUnlockedEnoughCash = JSON.parse(JSON.stringify(managerUnlockedLowCash));
   managerUnlockedEnoughCash.shop.tips = 200000;
@@ -6090,6 +6097,10 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
     lowCashIds.filter((id) => id.startsWith('manager_')),
   );
   assert(context.renderExpandedUpgradePanel(managerUnlockedEnoughCash).includes('Wholesale Pickup'));
+  assert.strictEqual(
+    enoughCashIds.indexOf('counter_service_bell') < enoughCashIds.indexOf('manager_wholesale_pickup'),
+    true,
+  );
 
   const queueFullIds = context.visibleRelevantStationUpgrades({
     ...managerUnlockedLowCash,
@@ -6108,6 +6119,7 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert(noTofuIds.includes('manager_wholesale_pickup'));
   assert.deepStrictEqual(queueFullIds, queueNotFullIds);
   assert.deepStrictEqual(queueFullIds, noTofuIds);
+  assert.strictEqual(queueFullIds.indexOf('counter_service_bell') < queueFullIds.indexOf('manager_wholesale_pickup'), true);
 
   const postHireLowReputation = JSON.parse(JSON.stringify(hired.gameState));
   postHireLowReputation.shop.tips = 81800;
@@ -6117,9 +6129,21 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert(postHireHtml.includes('Hire Shift Manager Lv 1'));
   assert(postHireHtml.includes('Maxed'));
   assert(postHireHtml.includes('Wholesale Pickup'));
+  assert(postHireHtml.indexOf('Order Bell') < postHireHtml.indexOf('Wholesale Pickup'));
   assert(postHireHtml.indexOf('Hire Shift Manager') < postHireHtml.indexOf('Wholesale Pickup'));
   assert(!postHireHtml.includes('NaN'));
   assert(!postHireHtml.includes('Infinity'));
+
+  const wholesaleMaxedHtml = context.renderExpandedUpgradePanel(wholesale.gameState);
+  const wholesaleMaxedStart = wholesaleMaxedHtml.indexOf('Wholesale Pickup Lv 1');
+  const wholesaleCardStart = wholesaleMaxedHtml.lastIndexOf('<div class="nospill-idle-card', wholesaleMaxedStart);
+  const nextCardStart = wholesaleMaxedHtml.indexOf('<div class="nospill-idle-card', wholesaleMaxedStart);
+  const wholesaleMaxedCard = wholesaleMaxedHtml.slice(wholesaleCardStart, nextCardStart > -1 ? nextCardStart : undefined);
+  assert(wholesaleMaxedCard.includes('Maxed'));
+  assert(wholesaleMaxedCard.includes('Current Manager Desk effect is active'));
+  assert(!wholesaleMaxedCard.includes('Cost:'));
+  assert(!wholesaleMaxedCard.includes('Cash:'));
+  assert(!wholesaleMaxedCard.includes('Buy Wholesale Pickup'));
 }
 
 function testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit() {

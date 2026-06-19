@@ -510,6 +510,35 @@ const STATION_UPGRADES = [
   { id: "network_calendar", stationId: "regional_network", name: "Network Calendar", costTips: 3200, effect: "All shop production +10%", maxLevel: 5 },
 ];
 
+const STATION_UPGRADE_DISPLAY_ORDER = [
+  "counter_service_bell",
+  "counter_service_wide",
+  "counter_service_routine",
+  "counter_service_register",
+  "counter_service_window",
+  "counter_service_crew",
+  "manager_shift_manager",
+  "manager_wholesale_pickup",
+  "prep_counter_faster",
+  "tofu_press_faster",
+  "tofu_press_double",
+  "prep_counter_double",
+  "delivery_shelf_faster",
+  "delivery_shelf_double",
+  "shop_sign_faster",
+  "shop_sign_double",
+  "regular_customer_faster",
+  "regular_customer_double",
+  "soy_supplier_contract",
+  "morning_soy_delivery",
+  "bulk_soy_delivery",
+];
+
+const STATION_UPGRADE_DISPLAY_INDEX = STATION_UPGRADE_DISPLAY_ORDER.reduce((lookup, upgradeId, index) => {
+  lookup[upgradeId] = index;
+  return lookup;
+}, {});
+
 const SHOP_ROUTE_CATALOG = [
   { id: "shop_street", name: "Shop Street", unlock: "Available at start", tofuCost: 4, orderCost: 1, tipReward: 24, reputationReward: 2, routeKnowledgeReward: 2, shopReachReward: 1, difficulty: "Beginner fictional route", stampId: "shop_street_complete" },
   { id: "old_hill_road", name: "Old Hill Road", unlock: "Shop Reach 2", tofuCost: 8, orderCost: 2, tipReward: 54, reputationReward: 4, routeKnowledgeReward: 5, shopReachReward: 2, difficulty: "Story route card", stampId: "old_hill_story" },
@@ -5465,7 +5494,21 @@ function visibleRelevantStationUpgrades(gameState) {
   const state = normalizeGameState(gameState);
   return STATION_UPGRADES
     .filter((upgrade) => stationUpgradeIsRevealedForState(upgrade, state))
-    .sort((a, b) => STATION_UPGRADES.indexOf(a) - STATION_UPGRADES.indexOf(b));
+    .sort((a, b) => (
+      (STATION_UPGRADE_DISPLAY_INDEX[a.id] ?? 1000) - (STATION_UPGRADE_DISPLAY_INDEX[b.id] ?? 1000)
+      || STATION_UPGRADES.indexOf(a) - STATION_UPGRADES.indexOf(b)
+    ));
+}
+
+function formatAffordabilityRequirement(requirement) {
+  const isCash = requirement.label === "Cash";
+  const current = isCash
+    ? formatCashBalance(requirement.current)
+    : formatShopBalance(requirement.current);
+  const required = isCash
+    ? formatCash(requirement.required)
+    : formatShopCost(requirement.required);
+  return `${requirement.label}: ${current} / ${required}`;
 }
 
 function affordabilityProgress(requirements) {
@@ -5499,7 +5542,7 @@ function affordabilityProgress(requirements) {
       percent,
       label: "Ready",
       text: activeRequirements
-        .map((requirement) => `${requirement.label} ready`)
+        .map((requirement) => `${formatAffordabilityRequirement(requirement)} · ready`)
         .join(". "),
       etaText: "",
       limiting: null,
@@ -5511,12 +5554,16 @@ function affordabilityProgress(requirements) {
     : "";
   const otherText = activeRequirements
     .filter((requirement) => requirement.label !== limiting.label)
-    .map((requirement) => `${requirement.label} ${requirement.current >= requirement.required ? "ready" : `${formatShopBalance(requirement.current)} / ${formatShopCost(requirement.required)}`}`)
+    .map((requirement) => (
+      requirement.current >= requirement.required
+        ? `${formatAffordabilityRequirement(requirement)} · ready`
+        : formatAffordabilityRequirement(requirement)
+    ))
     .join(". ");
   return {
     percent,
     label: `Waiting on ${limiting.label}`,
-    text: `${formatShopBalance(limiting.current)} / ${formatShopCost(limiting.required)}${otherText ? `. ${otherText}.` : ""}`,
+    text: `${formatAffordabilityRequirement(limiting)}${otherText ? `. ${otherText}.` : ""}`,
     etaText,
     limiting,
   };
@@ -5607,7 +5654,7 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
     const tipsNeeded = Math.max(0, stationUpgradeCostTips(upgrade, level) - state.shop.tips);
     const reputationNeeded = Math.max(0, stationUpgradeCostReputation(upgrade, level) - state.shop.reputation);
     const missing = [];
-    if (tipsNeeded > 0) missing.push(`${formatCash(tipsNeeded)} more`);
+    if (tipsNeeded > 0) missing.push(`${formatCash(tipsNeeded)} more Cash`);
     if (reputationNeeded > 0) missing.push(`${formatShopCost(reputationNeeded)} more Reputation`);
     return missing.length ? `Need ${missing.join(" and ")}.` : "";
   }
@@ -10575,8 +10622,10 @@ function renderStationUpgradeCard(upgrade, gameState) {
       ? `Current effect is active. Tofu supply is +${formatShopRate(getShopGeneratorRates(state).tofuPressPerSecond)}/sec including Supplier Contracts.`
       : upgrade.stationId === "counter_service"
       ? `Current effect is active. Counter Service is ${formatShopCount(counterServiceBatchSize(state))} order${counterServiceBatchSize(state) === 1 ? "" : "s"} per handoff at 1 handoff / ${formatShopCount(counterServiceIntervalSeconds(state))} sec.`
+      : upgrade.id === "manager_wholesale_pickup"
+      ? "Current Manager Desk effect is active. Wholesale Pickup clears capped waiting-order batches when the queue is full and tofu is supplied."
       : managerUpgrade
-      ? `Current Manager Desk effect is active. Counter Service is ${formatShopCount(counterServiceBatchSize(state))} order${counterServiceBatchSize(state) === 1 ? "" : "s"} per handoff, and Wholesale Pickup clears capped queues when supplied.`
+      ? `Current Manager Desk effect is active. Counter Service is ${formatShopCount(counterServiceBatchSize(state))} order${counterServiceBatchSize(state) === 1 ? "" : "s"} per handoff.`
       : `${upgrade.effect}. Current effect is active.`;
     return renderIdleCard({
       title: `${upgrade.name} Lv ${level}`,
@@ -10586,15 +10635,15 @@ function renderStationUpgradeCard(upgrade, gameState) {
     });
   }
   const status = supplierUpgrade
-    ? `${formatShopCost(reputationCost)} Reputation`
+    ? `Cost: ${formatShopCost(reputationCost)} Reputation`
     : managerUpgrade
-    ? `${formatCash(cost)} · ${formatShopCost(reputationCost)} Reputation`
-    : `${formatCash(cost)}`;
+    ? `Cost: ${formatCash(cost)} Cash + ${formatShopCost(reputationCost)} Reputation`
+    : `Cost: ${formatCash(cost)} Cash`;
   const actionLabel = supplierUpgrade
     ? `Buy ${upgrade.name} · ${formatShopCost(reputationCost)} Reputation`
     : managerUpgrade
-    ? `Buy ${upgrade.name} · ${formatCash(cost)} + ${formatShopCost(reputationCost)} Reputation`
-    : `Buy ${upgrade.name} · ${formatCash(cost)}`;
+    ? `Buy ${upgrade.name} · ${formatCash(cost)} Cash + ${formatShopCost(reputationCost)} Reputation`
+    : `Buy ${upgrade.name} · ${formatCash(cost)} Cash`;
   return renderIdleCard({
     title: `${upgrade.name} Lv ${level}`,
     status,

@@ -106,6 +106,8 @@ Tofu Garage now has explicit high-scale guardrails:
 - Upgrade shelves use unlock-based visibility and fixed ordering. Live affordability, queue,
   stock, ETA, or maxed-state changes update card copy in place instead of removing/reinserting
   cards and moving click targets.
+- Multi-resource upgrade copy labels Cost, Cash progress, and Reputation progress explicitly so
+  changing affordability text does not read like a second price.
 
 These bounds preserve the idle-management decision instead of rewarding unbounded backlog size.
 

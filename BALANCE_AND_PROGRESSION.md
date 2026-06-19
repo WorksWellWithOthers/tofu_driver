@@ -69,6 +69,8 @@ Unlocked upgrade cards should remain visible and in fixed section order while Ca
 stock, order queue, affordability, ETA, or temporary usefulness changes. Maxed cards should stay
 visible as Maxed or in a stable completed position. Future/deferred systems should stay hidden
 consistently.
+Multi-resource costs should label each requirement clearly, such as `Cost: $125K Cash + 1.5M
+Reputation`, and progress should label the measured resource, such as `Cash: $81.8K / $125K`.
 
 Design statement:
 

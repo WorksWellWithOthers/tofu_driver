@@ -147,6 +147,7 @@ Unlocked Tofu Garage cards should not blink in and out during live resource upda
 controls visibility; live Cash, Reputation, stock, queue, cooldown, and ETA changes should update
 enabled/disabled state and progress copy in place. Moving click targets are a UX and performance
 bug, especially on mobile.
+Multi-resource upgrade cards must label Cost, Cash progress, and Reputation progress explicitly.
 
 ## Analytics Contract
 
