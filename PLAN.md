@@ -151,6 +151,10 @@
   decorative, confusing, or deferred before adding larger systems.
 - `TOFU_GARAGE_V1_COMPLETION_AUDIT.md` rates Tofu Garage V1 at about 85% ready and recommends the
   next phase be a parked Covered Car / Dream Build teaser, not full car building.
+- `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` translates toy-first, simulation, expression, failure,
+  needs/maintenance, discovery, black-box, and probability design principles into Tofu Driver
+  boundaries. It finds constraint design and progressive reveal strong, expression/story tools
+  partial, and needs/probability systems future-only.
 - Pack Tofu and manual fulfillment are collapsed Manual Backup actions. Don't Spill the Cup is an
   optional certified boost rather than the normal shop bottleneck during order prep, Cash shortages,
   or managed-shop supply shortages.
@@ -205,6 +209,9 @@
   design transcripts. Its main planning implications are to playtest the first five to ten minutes,
   keep active play and idle progress balanced, automate mastered chores, add small novelty beats
   when repetition begins, and avoid early UI/currency/system overload.
+- `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` recommends Result Story Card / Mini Comic Caption V1 as the
+  best next expression slice because it gives players a local toy for screenshots/story without
+  adding risky simulation complexity.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -296,7 +303,10 @@ Canonical references:
 24. Verify PostHog production config on the deployed Cloud Run revision only after a separate Tofu
    Driver PostHog browser key exists.
 25. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
-26. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+26. Scope Result Story Card / Mini Comic Caption V1: local-only captioning for safe result/share
+   cards, no speed/GPS/map/street/route trace/raw sensor data, no active-drive editing, no uploads,
+   accounts, backend, service workers, payments, public profiles, or new network calls.
+27. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 
@@ -396,10 +406,14 @@ Deferred until after the First Loop Contract is playtested:
 - Should Qualified Run verification remain share-private by default?
 - What backend, if any, is needed later for earned merch unlock tokens?
 - What moderation policy is required before accepting any user-generated community reports?
+- Does Result Story Card / Mini Comic Caption V1 create enough toy-like expression without
+  requiring public sharing or backend storage?
 
 ## Non-Goals For The Current Slice
 
 - No new gameplay systems.
+- No mini comic/card caption runtime in this docs pass.
+- No hunger, fatigue, needs, maintenance, or probability systems until separately scoped.
 - No economy rebalance yet.
 - No React or framework migration.
 - No accounts.

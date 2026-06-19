@@ -208,6 +208,116 @@ after the player views the system.
 Progressive reveal should reduce decision confusion, not merely hide content. The user should
 always have one obvious next step.
 
+## Toy, Simulation, and Player Expression Principles
+
+### Design By Constraint
+
+Tofu Driver's strongest constraints are part of the design, not only risk controls:
+
+- reward smoothness, not speed
+- keep the MVP local-first and static-browser friendly
+- make shop, story, build, and expression actions parked-only
+- avoid active-drive upgrades, reward claiming, editing, or social interactions
+- avoid speed leaderboards, route leaderboards, and public-road competition
+- avoid GPS, map, street, route-trace, raw motion, or speed-log sharing
+- require no backend for the MVP
+- start with one simple action before layered systems appear
+
+These constraints give Tofu Driver its identity. They keep it from becoming a generic idle game,
+a driving telemetry product, or an unsafe public-road competition app.
+
+### Toy First, Game Second
+
+Tofu Driver should give the player expressive toys, not only linear tasks. The player can then turn
+those toys into personal goals, rituals, screenshots, jokes, and stories.
+
+Current and future toy-like objects include Cup Trail as a safe motion signature, the Tofu Garage
+living scene, Dream Build project-car progress, Delivery Crew characters and cosmetics, Passport
+stamps, share cards, safe screenshot moments, future shop skins, future garage skins, future project
+car cards, and future comic-style result cards.
+
+The toy must stay safe, local, and expressive. It must not depend on speed, GPS, public ranking,
+street identity, or risky driving.
+
+### Creative Leverage And Customization
+
+Players should be able to express identity through car build choices, shop presentation, crew and
+cosmetic selection, stamps, cards, share-card framing, future captions or comic panels, and future
+garage/shop decoration.
+
+Customization should be cosmetic, status, and story expression first. It must never improve Cup Test
+scoring, qualification, speed, route validation, or safety-sensitive behavior.
+
+### Start Simple, Then Layer Complexity
+
+The first session should stay simple: one clear action, one simple shop loop, one visible bottleneck,
+and one next decision. New systems should unlock only after the player has enough context to care.
+
+Any future needs, maintenance, black-box simulation, project-car systems, or probability systems
+must unlock slowly. They should clarify the current goal state rather than clutter the first session.
+
+### Failure Should Be Enjoyable
+
+Failure should feel recoverable and specific. Spilled-cup results can be funny, gentle, and
+cargo-aware. Shop bottlenecks should read as "now you know what to fix," not punishment. Failure
+copy can use humor and character flavor, but it must avoid shame, hostile scoring language,
+legal/safety claims, or pressure to drive harder.
+
+Most failure should come from missing information, misunderstood systems, resource tradeoffs, or
+choosing a risky plan inside the game. It should not come from twitch skill, reflex precision,
+hidden timing windows, or unsafe real-world driving.
+
+### Multiple Paths To Goal State
+
+Long-term progress should support several safe paths: reinvest in Tofu Shop, scale Counter Service
+and Manager Desk, improve supply, build Dream Build value, grow Brand Value, collect cosmetics and
+stamps, or later choose fictional business/event paths.
+
+The player's goal state can include Cash, Net Worth, identity, collection, shop comfort, garage
+pride, and story status. The game should not collapse into one fastest route.
+
+### Needs, Maintenance, And Complexity Budget
+
+Needs-like systems may be useful later, but only with strict scope. Possible future sliders include
+shop comfort, staff energy, customer patience, tofu freshness, garage focus, crew morale, and
+sponsor attention. Literal hunger or fatigue should be avoided unless it fits the Tofu Driver
+fiction and stays cozy.
+
+Maintenance rule:
+
+```text
+Every maintained item adds complexity.
+If many items require maintenance, the player needs automation, grouping, or a clear reason to care.
+```
+
+Needs systems should create choices and stories, not chores.
+
+### Discovery, Easter Eggs, And Black-Box Simulation
+
+Some systems should be fully legible, while others may remain partly mysterious. Players should see
+enough to make decisions, but not every correlation needs to be exposed. Surprising interactions,
+rare outcomes, and hidden touches can create stories.
+
+Black-box simulation must not hide safety-critical scoring. Cup Test scoring, qualification, route
+validation, privacy behavior, and safety-sensitive outcomes must remain deterministic and
+explainable.
+
+Monte Carlo or probability-driven simulation is allowed only for parked fictional systems such as
+future customer demand, shop events, sponsor interest, garage presentation opportunities, or
+showcase-style story beats. Probability must not decide real-driving qualification in a way that
+feels arbitrary.
+
+### Prototype Questions
+
+Every prototype should answer a specific question before it becomes a larger system:
+
+- Does Shop Spirit feel like a strategic recovery tool or clutter?
+- Does Dream Build make players proud to spend Cash?
+- Does Net Worth make the long-term goal clearer?
+- Does Cup Trail make the result feel personal enough to share?
+- Does failure copy make players laugh and try again?
+- Does a maintenance mechanic create story or just chores?
+
 ## Tofu Shop Design Direction
 
 Tofu Shop is the parked-only idle/incremental management game. It should be playable at home without
