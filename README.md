@@ -24,7 +24,9 @@ Tofu Shop, the first Tofu Garage business, starts with a focused first loop and 
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
 system uses a local Discovery Fanfare so progression moments are visible without exposing the full
 future roadmap. Midgame supply pressure is handled through parked management decisions such as
-Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking.
+Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking. Shop
+Spirit includes a parked `Buy All Affordable` control for permanent Spirit Generators only; it does
+not trigger instant boosts, timed effects, tokens, driving rewards, or networked systems.
 
 Hidden merch is local-only in the MVP. Stickers are the first hidden reward tier: the Tofu Driver
 `Not Fast. Smooth.` Sticker unlocks from a first Certified Result, and the Tofu Driver Penguin

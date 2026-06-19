@@ -108,6 +108,9 @@ Tofu Garage now has explicit high-scale guardrails:
   cards and moving click targets.
 - Multi-resource upgrade copy labels Cost, Cash progress, and Reputation progress explicitly so
   changing affordability text does not read like a second price.
+- Shop Spirit `Buy All Affordable` is bounded and generator-only. It buys permanent Spirit
+  Generators in fixed display order, emits one compact feedback/ledger entry, and never triggers
+  instant Spirit actions, timed effects, tokens, routes, Dream Build, merch, or normal upgrades.
 
 These bounds preserve the idle-management decision instead of rewarding unbounded backlog size.
 

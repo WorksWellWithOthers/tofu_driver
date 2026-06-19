@@ -676,6 +676,7 @@ const SPIRIT_GENERATORS = [
   { id: "night_shift_kettle", name: "Night Shift Kettle", costTips: 900, spiritPerSecond: 0.18, unlock: "Shop Level 4" },
   { id: "lucky_cat", name: "Lucky Cat", costTips: 1400, spiritPerSecond: 0.25, unlock: "Shop Level 5" },
 ];
+const SPIRIT_GENERATOR_BULK_PURCHASE_CAP = 500;
 
 const SHOP_SPIRIT_BOOSTS = [
   { id: "rush_prep", name: "Rush Stock", costSpirit: 10, type: "instant_tofu", seconds: 30, description: "Adds 30 seconds of Tofu Stock production. Useful when Counter Service is waiting for Tofu Stock." },
@@ -7202,6 +7203,65 @@ function buySpiritGenerator(generatorId, gameState) {
   return { ok: true, gameState: next, generator, level: current + 1 };
 }
 
+function spiritGeneratorNextCost(generator, gameState) {
+  const state = normalizeGameState(gameState);
+  const current = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
+  return Math.ceil(generator.costTips * Math.pow(1.22, current));
+}
+
+function affordableSpiritGeneratorPurchases(gameState) {
+  const state = normalizeGameState(gameState);
+  return SPIRIT_GENERATORS.filter((generator) => (
+    safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000) < 1000
+    && state.shop.tips >= spiritGeneratorNextCost(generator, state)
+  ));
+}
+
+function buyAllAffordableSpiritGenerators(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Shop Spirit purchases unlock after you finish and park.", gameState: next };
+  }
+  const beforeRates = getShopGeneratorRates(next);
+  let spent = 0;
+  let bought = 0;
+  const breakdown = {};
+  let hitCap = false;
+  for (let index = 0; index < SPIRIT_GENERATOR_BULK_PURCHASE_CAP; index += 1) {
+    const generator = SPIRIT_GENERATORS.find((item) => (
+      safeNonNegativeInteger(next.shop.spiritGenerators[item.id], 0, 1000) < 1000
+      && next.shop.tips >= spiritGeneratorNextCost(item, next)
+    ));
+    if (!generator) break;
+    const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, 1000);
+    if (current >= 1000) break;
+    const cost = spiritGeneratorNextCost(generator, next);
+    next.shop.tips = safeNonNegativeInteger(next.shop.tips - cost);
+    next.shop.spiritGenerators[generator.id] = current + 1;
+    spent += cost;
+    bought += 1;
+    breakdown[generator.name] = safeNonNegativeInteger(breakdown[generator.name] + 1, 1, 1000);
+    if (index === SPIRIT_GENERATOR_BULK_PURCHASE_CAP - 1) hitCap = true;
+  }
+  if (bought < 1) {
+    return {
+      ok: false,
+      reason: SPIRIT_GENERATORS.length
+        ? "No affordable Spirit generators right now."
+        : "No Spirit generators unlocked yet.",
+      gameState: next,
+    };
+  }
+  const afterRates = getShopGeneratorRates(next);
+  const spiritRateGain = Math.max(0, afterRates.shopSpiritPerSecond - beforeRates.shopSpiritPerSecond);
+  const breakdownText = Object.entries(breakdown)
+    .map(([name, count]) => `${formatShopCount(count)} ${name}`)
+    .join(", ");
+  const feedback = `Bought ${formatShopCount(bought)} Spirit generator level${bought === 1 ? "" : "s"} · spent ${formatCash(spent)} · Shop Spirit/sec +${formatShopRate(spiritRateGain)}/sec${hitCap ? ". More are still affordable." : ""}`;
+  next = addLedgerEntry(next, "spirit", `Bulk Spirit generators: ${breakdownText}.`);
+  return { ok: true, gameState: next, bought, spent, spiritRateGain, breakdown, hitCap, feedback };
+}
+
 function useShopSpiritBoost(boostId, gameState, options = {}) {
   let next = normalizeGameState(gameState);
   if (options.activeDrive || appState.running || appState.calibrating) {
@@ -12366,7 +12426,7 @@ function renderCounterServiceCard(state) {
         "Counter Service is already paused.",
       ),
     ],
-  });
+  }).replace('class="nospill-idle-card', 'data-counter-service-card="true" class="nospill-idle-card');
 }
 
 function nextMilestoneProgress(current, required) {
@@ -13116,6 +13176,14 @@ function renderCrewPanel(state) {
 
 function renderSpiritPanel(state) {
   const spiritRates = getShopGeneratorRates(state);
+  const activeDrive = appState.running || appState.calibrating;
+  const affordableGenerators = affordableSpiritGeneratorPurchases(state);
+  const nextGeneratorCost = Math.min(...SPIRIT_GENERATORS.map((generator) => spiritGeneratorNextCost(generator, state)));
+  const bulkDisabledReason = affordableGenerators.length
+    ? ""
+    : SPIRIT_GENERATORS.length
+      ? `Need more Cash. Next Spirit generator costs ${formatCash(nextGeneratorCost)}.`
+      : "No Spirit generators unlocked yet.";
   const visibleSpiritBoosts = SHOP_SPIRIT_BOOSTS.filter((boost) => (
     boost.type !== "route_multiplier" || hasRouteStoryBeat(state)
   ));
@@ -13149,10 +13217,24 @@ function renderSpiritPanel(state) {
     </div>
     <section class="nospill-spirit-section" aria-label="Spirit generators">
       <h5>Spirit Generators</h5>
+      ${activeDrive ? "" : `
+        <div class="nospill-bulk-card" aria-label="Spirit generator bulk purchase">
+          <strong>Permanent Spirit Generators</strong>
+          <span>Buys Tea Kettle, Shrine Corner, Festival Lantern, Night Shift Kettle, and Lucky Cat only.</span>
+          ${actionButton(
+            "Buy All Affordable",
+            "data-spirit-generator-bulk",
+            "all",
+            affordableGenerators.length < 1,
+            "nospill-secondary",
+            bulkDisabledReason || "No affordable Spirit generators right now.",
+          )}
+        </div>
+      `}
       <div class="nospill-idle-grid">
         ${SPIRIT_GENERATORS.map((generator) => {
           const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
-          const cost = Math.ceil(generator.costTips * Math.pow(1.22, owned));
+          const cost = spiritGeneratorNextCost(generator, state);
           const disabledReason = spiritGeneratorDisabledReason(generator, state, cost);
           return renderIdleCard({
             title: `${generator.name} x${formatShopCount(owned)}`,
@@ -15454,6 +15536,13 @@ function handleTofuShopPanelClick(event) {
     saveShopActionResult(result, result.ok ? result.message : "");
     return;
   }
+  if (target.dataset.spiritGeneratorBulk) {
+    const result = buyAllAffordableSpiritGenerators(currentGameState(), {
+      activeDrive: appState.running || appState.calibrating,
+    });
+    saveShopActionResult(result, result.ok ? result.feedback : "");
+    return;
+  }
   if (target.dataset.coveredCarTeaser) {
     const result = acknowledgeCoveredCarTeaser(currentGameState());
     if (!result.ok) {
@@ -15860,6 +15949,23 @@ function focusShopUpgrade(upgradeId = "") {
   if (button && typeof button.focus === "function") button.focus();
 }
 
+function focusCounterServiceCard() {
+  if (!elements.tofuShopSection) return;
+  setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+  appState.shopTab = "overview";
+  renderGamePanels(currentGameState());
+  if (elements.tofuShopSection && typeof elements.tofuShopSection.scrollIntoView === "function") {
+    elements.tofuShopSection.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  if (!elements.shopTabPanel || !elements.shopTabPanel.querySelector) return;
+  const card = elements.shopTabPanel.querySelector("[data-counter-service-card]");
+  if (card && typeof card.scrollIntoView === "function") card.scrollIntoView({ behavior: "smooth", block: "center" });
+  const button = card && card.querySelector
+    ? card.querySelector("button:not([disabled])")
+    : null;
+  if (button && typeof button.focus === "function") button.focus();
+}
+
 function handleNextBestAction() {
   const actionType = elements.gameCtaButton && elements.gameCtaButton.dataset
     ? elements.gameCtaButton.dataset.nextAction
@@ -15933,11 +16039,16 @@ function handleNextBestAction() {
     handleSponsorInquiry();
     return;
   }
-  if (actionType === "continue_shop" || actionType === "watch_starter_shop") {
-    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+  if (actionType === "watch_starter_shop" || actionType === "queue_full" || actionType === "wait_counter_service") {
+    focusCounterServiceCard();
     setSummaryStatusMessage(actionType === "watch_starter_shop"
       ? "Watch the starter shop run, then buy the first useful upgrade."
-      : "Review the Tofu Shop while parked.");
+      : "Review Counter Service and its handoff upgrades while parked.");
+    return;
+  }
+  if (actionType === "continue_shop") {
+    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+    setSummaryStatusMessage("Review the Tofu Shop while parked.");
     return;
   }
   if (actionType === "covered_car_teaser") {

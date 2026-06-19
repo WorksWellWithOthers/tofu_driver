@@ -85,7 +85,10 @@
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
   language, fixed sections, and local wallet context: generators use Buy, instant actions spend
   Spirit with immediate gain/cost feedback, timed effects show duration/active state, and token cards
-  stay hidden until usable token generation exists.
+  stay hidden until usable token generation exists. `Buy All Affordable` now bulk-buys permanent
+  Spirit Generators only and leaves instant/timed/token actions untouched.
+- Dashboard actions that say `View Counter Service` now open the Tofu Garage overview at the
+  Counter Service card so players can find the running service and its upgrade path.
 - Cup-first visitors now get clearer parked paths into Tofu Garage from the landing copy and Cup
   Test result action without making the shop a driving-time prompt. Continue actions land near the
   Tofu Garage action area rather than the page top.

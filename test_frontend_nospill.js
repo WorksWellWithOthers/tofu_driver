@@ -245,6 +245,7 @@ globalThis.runTrainingDrill = runTrainingDrill;
 globalThis.buyGarageUpgrade = buyGarageUpgrade;
 globalThis.hireCrewRole = hireCrewRole;
 globalThis.buySpiritGenerator = buySpiritGenerator;
+globalThis.buyAllAffordableSpiritGenerators = buyAllAffordableSpiritGenerators;
 globalThis.useShopSpiritBoost = useShopSpiritBoost;
 globalThis.shopSpiritInstantAmount = shopSpiritInstantAmount;
 globalThis.useFestivalBoost = useFestivalBoost;
@@ -308,6 +309,8 @@ globalThis.renderGameDashboard = renderGameDashboard;
 globalThis.renderDeliveryLog = renderDeliveryLog;
 globalThis.renderTofuShop = renderTofuShop;
 globalThis.handleTofuShopPanelClick = handleTofuShopPanelClick;
+globalThis.handleNextBestAction = handleNextBestAction;
+globalThis.focusCounterServiceCard = focusCounterServiceCard;
 globalThis.renderCollectionPanel = renderCollectionPanel;
 globalThis.renderShopOrderResult = renderShopOrderResult;
 globalThis.renderSummary = renderSummary;
@@ -5210,6 +5213,8 @@ globalThis.spiritPanelHtml = elements.shopTabPanel.innerHTML;
   assert(context.spiritPanelHtml.includes('12 /'));
   assert(context.spiritPanelHtml.includes('Spirit/sec'));
   assert(context.spiritPanelHtml.includes('Buy Multiplier'));
+  assert(context.spiritPanelHtml.includes('Buy All Affordable'));
+  assert(context.spiritPanelHtml.includes('Buys Tea Kettle, Shrine Corner, Festival Lantern, Night Shift Kettle, and Lucky Cat only.'));
   assert(!context.spiritPanelHtml.includes('Use Boost'));
   assert(!context.spiritPanelHtml.includes('Use Festival Boost'));
   assert(context.spiritPanelHtml.includes('Spend 10 Spirit'));
@@ -5272,6 +5277,105 @@ globalThis.richerSpiritPanelHtml = elements.shopTabPanel.innerHTML;
   for (let index = 1; index < richerOrder.length; index += 1) {
     assert(richerOrder[index - 1] < richerOrder[index], 'affordability changes must not reorder Shop Spirit cards');
   }
+
+  const activeDriveSpirit = JSON.parse(JSON.stringify(richerSpirit));
+  vm.runInContext(`
+appState.running = true;
+appState.calibrating = false;
+appState.shopTab = "spirit";
+renderTofuShop(${JSON.stringify(activeDriveSpirit)});
+globalThis.activeDriveSpiritPanelHtml = elements.shopTabPanel.innerHTML;
+appState.running = false;
+`, context);
+  assert(!context.activeDriveSpiritPanelHtml.includes('Buy All Affordable'));
+
+  const bulkState = JSON.parse(JSON.stringify(richerSpirit));
+  bulkState.shop.tips = 50000;
+  bulkState.shop.shopSpirit = 33;
+  bulkState.shop.spiritGenerators.tea_kettle = 0;
+  bulkState.shop.spiritGenerators.shrine_corner = 0;
+  bulkState.shop.spiritGenerators.festival_lantern = 0;
+  bulkState.shop.spiritGenerators.night_shift_kettle = 0;
+  bulkState.shop.spiritGenerators.lucky_cat = 0;
+  const beforeBulkRate = context.getShopGeneratorRates(bulkState).shopSpiritPerSecond;
+  const bulkResult = context.buyAllAffordableSpiritGenerators(bulkState, { activeDrive: false });
+  assert.strictEqual(bulkResult.ok, true);
+  assert(bulkResult.bought > 1);
+  assert(bulkResult.bought <= 500);
+  assert(bulkResult.spent > 0);
+  assert(bulkResult.feedback.includes('Bought'));
+  assert(bulkResult.feedback.includes('Spirit generator level'));
+  assert(bulkResult.feedback.includes('Shop Spirit/sec +'));
+  assert(bulkResult.feedback.includes('spent $'));
+  assert(bulkResult.gameState.shop.tips < bulkState.shop.tips);
+  assert.strictEqual(bulkResult.gameState.shop.shopSpirit, bulkState.shop.shopSpirit);
+  assert(context.getShopGeneratorRates(bulkResult.gameState).shopSpiritPerSecond > beforeBulkRate);
+  assert.strictEqual(bulkResult.gameState.shop.activeFestivalBoosts.length, bulkState.shop.activeFestivalBoosts.length);
+  assert.strictEqual(bulkResult.gameState.shop.tofuStock, bulkState.shop.tofuStock);
+  assert.strictEqual(bulkResult.gameState.shop.deliveryOrders, bulkState.shop.deliveryOrders);
+  assert(!bulkResult.gameState.shop.festivalBoosts.lunch_rush);
+  assert(!bulkResult.feedback.includes('Rush Stock'));
+  assert(!bulkResult.feedback.includes('Warm Counter'));
+  assert(!bulkResult.feedback.includes('Busy Lunch Hour'));
+  assert(!bulkResult.feedback.includes('Double Batch'));
+
+  vm.runInContext(`
+appState.shopTab = "spirit";
+renderTofuShop(${JSON.stringify(bulkResult.gameState)});
+globalThis.afterBulkSpiritPanelHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  const afterBulkOrder = [
+    'Tea Kettle',
+    'Shrine Corner',
+    'Festival Lantern',
+    'Night Shift Kettle',
+    'Lucky Cat',
+    'Rush Stock',
+    'Warm Counter',
+    'Busy Lunch Hour',
+    'Double Batch',
+  ].map((label) => context.afterBulkSpiritPanelHtml.indexOf(label));
+  for (let index = 1; index < afterBulkOrder.length; index += 1) {
+    assert(afterBulkOrder[index - 1] < afterBulkOrder[index], 'bulk buying must not reorder Shop Spirit cards');
+  }
+  assert(!context.afterBulkSpiritPanelHtml.includes('Use Token'));
+
+  const oneBulkState = JSON.parse(JSON.stringify(spirit));
+  oneBulkState.shop.tips = 80;
+  oneBulkState.shop.shopSpirit = 9;
+  oneBulkState.shop.spiritGenerators.tea_kettle = 0;
+  oneBulkState.shop.spiritGenerators.shrine_corner = 0;
+  oneBulkState.shop.spiritGenerators.festival_lantern = 0;
+  oneBulkState.shop.spiritGenerators.night_shift_kettle = 0;
+  oneBulkState.shop.spiritGenerators.lucky_cat = 0;
+  const oneBulk = context.buyAllAffordableSpiritGenerators(oneBulkState, { activeDrive: false });
+  assert.strictEqual(oneBulk.ok, true);
+  assert.strictEqual(oneBulk.bought, 1);
+  assert(oneBulk.feedback.includes('Bought 1 Spirit generator level'));
+
+  const poorBulkState = JSON.parse(JSON.stringify(spirit));
+  poorBulkState.shop.tips = 1;
+  const poorBulk = context.buyAllAffordableSpiritGenerators(poorBulkState, { activeDrive: false });
+  assert.strictEqual(poorBulk.ok, false);
+  assert(poorBulk.reason.includes('No affordable Spirit generators') || poorBulk.reason.includes('Need more Cash'));
+  assert.strictEqual(poorBulk.gameState.shop.tips, poorBulkState.shop.tips);
+  vm.runInContext(`
+appState.shopTab = "spirit";
+renderTofuShop(${JSON.stringify(poorBulkState)});
+globalThis.poorBulkSpiritPanelHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.poorBulkSpiritPanelHtml.includes('Need more Cash'));
+
+  const highCashBulkState = JSON.parse(JSON.stringify(richerSpirit));
+  highCashBulkState.shop.tips = 1e12;
+  const highCashBulk = context.buyAllAffordableSpiritGenerators(highCashBulkState, { activeDrive: false });
+  assert.strictEqual(highCashBulk.ok, true);
+  assert(highCashBulk.bought <= 500);
+  assert(highCashBulk.feedback.includes('Bought'));
+
+  const activeDirectBulk = context.buyAllAffordableSpiritGenerators(richerSpirit, { activeDrive: true });
+  assert.strictEqual(activeDirectBulk.ok, false);
+  assert(activeDirectBulk.reason.includes('park'));
 
   const activeSpirit = context.useShopSpiritBoost('busy_lunch', spirit);
   assert.strictEqual(activeSpirit.ok, false);
@@ -5476,8 +5580,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619g'));
-  assert(html.includes('/static/nospill/app.css?v=20260619g'));
+  assert(html.includes('/static/nospill/app.js?v=20260619h'));
+  assert(html.includes('/static/nospill/app.css?v=20260619h'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6696,6 +6800,30 @@ globalThis.topActionType = elements.gameCtaButton.dataset.nextAction;
   assert.strictEqual(context.topActionTitle, 'Next: Watch the first order complete');
   assert.strictEqual(context.topActionButton, 'View Counter Service');
   assert.strictEqual(context.topActionType, 'watch_starter_shop');
+
+  vm.runInContext(`
+const focusEvents = [];
+const focusedButton = { disabled: false, focus() { focusEvents.push("button-focused"); } };
+const counterCard = {
+  scrollIntoView() { focusEvents.push("card-scrolled"); },
+  querySelector(selector) { return selector === "button:not([disabled])" ? focusedButton : null; },
+};
+elements.tofuShopSection = { scrollIntoView() { focusEvents.push("shop-scrolled"); } };
+elements.shopTabPanel = {
+  querySelector(selector) { return selector === "[data-counter-service-card]" ? counterCard : null; },
+};
+const originalRenderGamePanels = renderGamePanels;
+renderGamePanels = () => { focusEvents.push("rendered"); };
+focusCounterServiceCard();
+renderGamePanels = originalRenderGamePanels;
+globalThis.counterFocusTab = appState.shopTab;
+globalThis.counterFocusEvents = focusEvents;
+`, context);
+  assert.strictEqual(context.counterFocusTab, 'overview');
+  assert.deepStrictEqual(
+    Array.from(context.counterFocusEvents),
+    ['shop-scrolled', 'rendered', 'shop-scrolled', 'card-scrolled', 'button-focused'],
+  );
 
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const actionStart = html.indexOf('class="nospill-next-action-card"');
@@ -7923,8 +8051,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619g'));
-  assert(html.includes('/static/nospill/app.css?v=20260619g'));
+  assert(html.includes('/static/nospill/app.js?v=20260619h'));
+  assert(html.includes('/static/nospill/app.css?v=20260619h'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
