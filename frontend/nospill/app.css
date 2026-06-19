@@ -677,6 +677,11 @@
   background: rgba(158, 233, 191, 0.055);
 }
 
+.nospill-story-card-preview-note.is-coach {
+  border: 1px solid rgba(110, 198, 255, 0.28);
+  background: rgba(110, 198, 255, 0.06);
+}
+
 .nospill-story-card-preview-note.is-player {
   border: 1px solid rgba(240, 185, 90, 0.46);
   background: rgba(240, 185, 90, 0.09);
@@ -2304,6 +2309,41 @@
 
 .nospill-share-canvas {
   aspect-ratio: 4 / 5;
+}
+
+.nospill-run-details {
+  display: block;
+}
+
+.nospill-run-details summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  color: #f4f7ef;
+  font-weight: 900;
+}
+
+.nospill-run-details summary::after {
+  content: "Open";
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.nospill-run-details[open] summary {
+  margin-bottom: 12px;
+}
+
+.nospill-run-details[open] summary::after {
+  content: "Close";
+}
+
+.nospill-run-details > .nospill-section {
+  margin-top: 12px;
 }
 
 .nospill-share-trail-mode {

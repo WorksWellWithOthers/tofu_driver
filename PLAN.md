@@ -29,8 +29,9 @@
   automatically after the user starts, requests motion first, and may request location to qualify
   route-context achievements.
 - Denying or lacking location no longer blocks play; the completed run is labeled `Local Result`.
-  Runs with real motion and usable route data can be labeled `Certified Result`, while simulator/dev
-  output is labeled `Simulated Result`.
+  Runs with real motion and usable route data can be labeled `Certified Result`. Production UI no
+  longer exposes Simulation Mode; deterministic simulator helpers remain test-only and surface as
+  Local Result in share/result labels.
 - Tofu Shop has a live local tick loop: Tofu Press produces Tofu Stock, Prep Counter can produce
   Delivery Orders, visible rates are `/sec`, and shop actions save/render immediately.
 - Tofu Shop is idle-first, not clicker-first: manual actions teach the loop, automation exits
@@ -55,8 +56,10 @@
   the Overview says so directly and labels Suspension as future/target-only.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
-- Post-run Result Cameo and Coach Recap use larger Mika real-art portraits without gray fallback
-  tiles, `art pending`, or implementation-note copy.
+- Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
+  commentary, concise Mika coach summary, Abstract Cup Trail, and the share/take-another/garage
+  actions; XP, rewards, merch, passport, route context, signal quality, and full Coach Recap are
+  collapsed under Run Details by default.
 - Counter Service V1 is the starter automation layer. It is available from the first session, runs
   by default on fresh saves, auto-fulfills Best Available prepared orders every 10 seconds only
   while parked and the page is open, shows supplied/blocked shop-income status, can be upgraded
@@ -250,15 +253,18 @@
   Test results and share cards. It keeps player Story Captions separate, uses gentle cargo-centered
   copy, and does not change scoring, qualification, Driver XP, shop rewards, Net Worth, Garage Build
   Value, Brand Value, or economy balance.
-- Result Card Visual Polish V1 is implemented as parked post-run UI polish: Story Card Preview
-  combines result status, cargo facts, Cargo Commentary, optional Story Caption, and `Not faster.
-  Smoother.` before the deeper recap, and the downloaded card uses the same mini story hierarchy.
+- Result Card Visual Polish V1 is implemented as parked post-run UI polish: Result Card combines
+  result status, cargo facts, Cargo Commentary, concise coach summary, optional Story Caption,
+  Abstract Cup Trail, and `Not faster. Smoother.` before collapsed Run Details, and the downloaded
+  card uses the same mini story hierarchy.
 - Garage Pride / Builder Note V1 is implemented on parked Tofu Garage Overview after the Dream
   Build starts. It lets the player save one sanitized local note about the current build; it is not
   shown on Cup Test share cards and does not change scoring, rewards, Net Worth, Garage Build Value,
   Brand Value, or economy balance.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
-- Delivery Simulator is hidden by default and is local QA only.
+- Production Simulation Mode has been removed. Query/localStorage simulator activation is disabled;
+  deterministic simulator helpers remain available only to tests and cannot grant certified
+  route-context achievements or hidden merch.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
   disabled or missing a key. Autocapture/session recording are disabled, route views are manual, and
   event properties are sanitized/coarse.
@@ -356,9 +362,9 @@ Canonical references:
    and downloaded card caption box feel expressive without cluttering the result screen.
 27. Playtest Failure Flavor V1: confirm Cargo Commentary feels funny and recoverable for rough
    outcomes without shaming the player or implying performance-driving coaching.
-28. Playtest Result Card Visual Polish V1 on mobile and desktop: confirm Story Card Preview, Cargo
-   Commentary, Story Caption, and downloaded card boxes feel readable without crowding the result
-   actions.
+28. Playtest Result Card Visual Polish V1 on mobile and desktop: confirm the compact Result Card,
+   Cargo Commentary, Story Caption, concise Coach Summary, Abstract Cup Trail, collapsed Run
+   Details, and downloaded card boxes feel readable without crowding the result actions.
 29. Real-device QA Qualified Route Context V1: verify route-context buckets, warning copy, opt-in
    Route Outline card rendering, and Winding/Stop-and-Go/Technical achievement gates without
    changing base Cup Test scoring or rewarding speed.

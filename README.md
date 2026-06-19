@@ -10,15 +10,14 @@ Garage progression is playable at home without sensors or location.
 
 Cup-first visitors can reach Tofu Garage from the landing page and from parked Cup Test results.
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
-decorative Cup Trail, Daily Delivery Credit, Coach Recap labels, local Cargo Commentary, Story Card
-Preview, and optional player Story Captions. These are derived from summarized motion only and must
-not expose speed, distance, GPS, maps, street names, route traces, or racing/performance-driving
+decorative Cup Trail, Daily Delivery Credit, concise Coach Recap labels, local Cargo Commentary,
+Result Card, and optional player Story Captions. These are derived from summarized motion only and
+must not expose speed, distance, GPS, maps, street names, route traces, or racing/performance-driving
 technique. Tapping `Start Cup Test` attempts certification automatically: usable local route data can
-produce a Certified Result, denied or insufficient location produces a Local Result, and simulator QA
-stays a Simulated Result. Certified Results can also show coarse Route Context buckets. The default
-share card remains the abstract Cup Trail; a Route Outline + Smoothness Overlay card is shown only
-as an explicit post-run opt-in and copied text never includes route points, coordinates, street
-names, speed, or map data.
+produce a Certified Result, while denied or insufficient location produces a Local Result. Certified
+Results can also show coarse Route Context buckets. The default share card remains the abstract Cup
+Trail; a Route Outline + Smoothness Overlay card is shown only as an explicit post-run opt-in and
+copied text never includes route points, coordinates, street names, speed, or map data.
 
 Tofu Shop, the first Tofu Garage business, starts with a focused first loop and reveals depth over
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
@@ -188,8 +187,9 @@ Mobile motion troubleshooting:
 
 ## Local QA Modes
 
-Append `?simulator=1` to enable the hidden local Delivery Simulator. Simulated deliveries are
-labeled as test mode, use no sensors or location, and are not trusted merch verification.
+Production Simulation Mode is not exposed. `?simulator=1` and `tofuDriverSimulatorEnabled` do not
+enable a player-facing simulator panel. Deterministic simulator helpers remain in tests only and are
+not trusted certified proof or merch verification.
 
 Append `?dev=1` or set `tofuDriverDevToolsEnabled=true` in localStorage to expose local developer
 tools. Developer QA state is local-only and not trusted certified proof.

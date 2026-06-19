@@ -1344,12 +1344,14 @@ Rules:
 - denied or insufficient location remains playable as a Local Result
 - Cup Test should not become the normal shop bottleneck recommendation
 
-Practice Mode:
+Local Result:
 
 - modest local XP/skill XP
 - small local shop reward only if valid
 - no certified merch progress
 - no Perfect Pour
+- no route-context achievements
+- no hidden certified merch
 - no trusted certified proof
 
 Certified smooth result:
@@ -1366,10 +1368,11 @@ Boost magnitude should depend on Cargo Condition, qualification status, daily ca
 summarized criteria. It must not improve with speed, exact distance, route risk, street names, maps,
 or high-G events.
 
-Simulator/dev results:
+Simulator/test-fixture summaries:
 
 - local QA only
-- labeled simulated/dev
+- not exposed as production UI
+- share/result labels surface as Local Result, not Simulated Result
 - not trusted certified proof
 - must be rejected or ignored by any future backend merch verification
 

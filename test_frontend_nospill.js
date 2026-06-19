@@ -937,10 +937,10 @@ globalThis.coachResultHtml =
   + elements.coachRecapCard.innerHTML;
 `, context);
   assert(context.coachResultHtml.includes('Coach Recap'));
-  assert(context.coachResultHtml.includes('/static/nospill/images/result_screen_cameo.webp'));
   assert(context.coachResultHtml.includes('/static/nospill/images/coach_pleased.webp'));
-  assert(context.coachResultHtml.includes('is-result-cameo'));
   assert(context.coachResultHtml.includes('is-coach-cameo'));
+  assert.strictEqual(context.coachResultHtml.includes('/static/nospill/images/result_screen_cameo.webp'), false);
+  assert.strictEqual(context.coachResultHtml.includes('is-result-cameo'), false);
   assert(!context.coachResultHtml.includes('Character art can appear here after the run ends.'));
   assert(!context.coachResultHtml.includes('Coach portrait not yet assigned'));
   assert(!context.coachResultHtml.includes('art pending'));
@@ -5585,8 +5585,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619i'));
-  assert(html.includes('/static/nospill/app.css?v=20260619i'));
+  assert(html.includes('/static/nospill/app.js?v=20260619j'));
+  assert(html.includes('/static/nospill/app.css?v=20260619j'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7589,7 +7589,8 @@ function testResultStoryCaptionV1IsLocalSafeAndShareable() {
     simulated: true,
     storyCaption: normalCaption,
   }));
-  assert(simulatedText.includes('Simulated Result'));
+  assert(simulatedText.includes('Local Result'));
+  assert(!simulatedText.includes('Simulated Result'));
   assert(simulatedText.includes('Caption: "The tofu has opinions."'));
 
   const captionedCard = context.buildShareCardData(captionedSummary);
@@ -7829,7 +7830,8 @@ function testFailureFlavorV1AddsSafeCargoCommentary() {
   assert(practiceText.includes('Local Result'));
   assert(practiceText.includes('Cargo Commentary:'));
   const simulatedText = context.buildShareText(simulatedSummary);
-  assert(simulatedText.includes('Simulated Result'));
+  assert(simulatedText.includes('Local Result'));
+  assert(!simulatedText.includes('Simulated Result'));
   assert(simulatedText.includes('Cargo Commentary:'));
 
   const stateBefore = context.defaultGameState();
@@ -7957,9 +7959,8 @@ globalThis.cargoCommentaryActiveHidden = elements.cargoCommentarySection.classes
 globalThis.cargoCommentaryActiveHtml = elements.cargoCommentaryCard.innerHTML;
 `, Object.assign(context, { sampleCargoCommentarySummary: roughSummary }));
 
-  assert.strictEqual(context.cargoCommentaryHidden, false);
-  assert(context.cargoCommentaryHtml.includes('Hint:'));
-  assert(context.cargoCommentaryClass.includes('is-messy'));
+  assert.strictEqual(context.cargoCommentaryHidden, true);
+  assert.strictEqual(context.cargoCommentaryHtml, '');
   assert(context.cargoCommentaryCanvasText.includes('Cargo Commentary'));
   assert.strictEqual(context.cargoCommentaryActiveHidden, true);
   assert.strictEqual(context.cargoCommentaryActiveHtml, '');
@@ -7969,10 +7970,11 @@ function testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('Story Card Preview'));
+  assert(html.includes('Result Card'));
   assert(html.includes('id="story-card-preview-section"'));
   assert(html.includes('id="story-card-preview-caption-box"'));
-  assert(html.indexOf('story-card-preview-section') < html.indexOf('cargo-commentary-section'));
+  assert(html.indexOf('story-card-preview-section') < html.indexOf('run-details-section'));
+  assert(html.indexOf('run-details-section') < html.indexOf('cargo-commentary-section'));
   assert(html.indexOf('cargo-commentary-section') < html.indexOf('result-story-section'));
   assert(html.indexOf('result-story-section') < html.indexOf('delivery-summary-title'));
   assert(css.includes('.nospill-story-card-preview-note.is-generated'));
@@ -8021,12 +8023,13 @@ function testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy() {
     simulated: true,
     storyCaption: longCaption,
   }));
-  assert(simulatedCard.challengeName.includes('Simulated'));
+  assert.strictEqual(simulatedCard.challengeName, 'Local Result');
   assert.strictEqual(simulatedCard.storyCaption.length, 90);
   assert(simulatedCard.cargoCommentary.line.length > 0);
 
   const shareText = context.buildShareText(captionedSummary, { includeDistanceInShare: true });
   assert(shareText.includes('Cargo Commentary:'));
+  assert(shareText.includes('Cup Trail: Abstract Cup Trail'));
   assert(shareText.includes(`Caption: "${longCaption}"`));
   assert(!/\b(speed|mph|gps|map|street|trace|location|lat|lon|exact distance)\b/i.test(shareText));
   assert(!/undefined|NaN|Infinity/.test(shareText));
@@ -8193,8 +8196,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619i'));
-  assert(html.includes('/static/nospill/app.css?v=20260619i'));
+  assert(html.includes('/static/nospill/app.js?v=20260619j'));
+  assert(html.includes('/static/nospill/app.css?v=20260619j'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -10776,8 +10779,9 @@ function testCharacterAndSoundUnlocksAreLocalCosmeticAndPersisted() {
 
 function testDeliverySimulatorIsHiddenLocalAndSummarized() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
-  assert(html.includes('id="simulator-panel"'));
-  assert(html.includes('nospill-simulator is-hidden'));
+  assert(!html.includes('id="simulator-panel"'));
+  assert(!html.includes('apply-simulator-button'));
+  assert(!html.includes('tofuDriverSimulatorEnabled'));
 
   const defaultContext = loadNoSpillContext({
     window: { location: { search: '' }, localStorage: makeLocalStorage() },
@@ -10787,7 +10791,7 @@ function testDeliverySimulatorIsHiddenLocalAndSummarized() {
   const queryContext = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
   });
-  assert.strictEqual(queryContext.isSimulatorEnabled(), true);
+  assert.strictEqual(queryContext.isSimulatorEnabled(), false);
 
   const flagContext = loadNoSpillContext({
     window: {
@@ -10795,7 +10799,7 @@ function testDeliverySimulatorIsHiddenLocalAndSummarized() {
       localStorage: makeLocalStorage({ tofuDriverSimulatorEnabled: 'true' }),
     },
   });
-  assert.strictEqual(flagContext.isSimulatorEnabled(), true);
+  assert.strictEqual(flagContext.isSimulatorEnabled(), false);
 
   vm.runInContext(`
 globalThis.simulatorHiddenStates = [];
@@ -10819,9 +10823,8 @@ globalThis.simulatorSelectHtml = elements.simulatorScenarioSelect.innerHTML;
 appState.running = true;
 renderSimulatorPanel();
 `, queryContext);
-  assert.strictEqual(JSON.stringify(queryContext.simulatorHiddenStates), JSON.stringify([false, true]));
-  assert(queryContext.simulatorSelectHtml.includes('Smooth Commute'));
-  assert(queryContext.simulatorSelectHtml.includes('Perfect Pour'));
+  assert.strictEqual(JSON.stringify(queryContext.simulatorHiddenStates), JSON.stringify([]));
+  assert.strictEqual(queryContext.simulatorSelectHtml, '');
 
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(!String(queryContext.applySimulatedDelivery).includes('startLocationWatch'));
@@ -10846,6 +10849,7 @@ function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
   const context = loadNoSpillContext({
     window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
   });
+  assert.strictEqual(context.isSimulatorEnabled(), false);
 
   const smooth = context.applySimulatedDelivery(
     'smooth_commute',
@@ -10864,9 +10868,9 @@ function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
     context.defaultGameState(),
     { now: new Date('2026-06-15T12:00:00.000Z') },
   );
-  assert(perfect.rewards.stamps.includes('perfect_pour'));
-  assert(perfect.gameState.collection.unlockedCharacterIds.includes('perfect_pour_courier'));
-  assert(perfect.gameState.collection.unlockedSoundPackIds.includes('perfect_pour_chime'));
+  assert(!perfect.rewards.stamps.includes('perfect_pour'));
+  assert(!perfect.gameState.collection.unlockedCharacterIds.includes('perfect_pour_courier'));
+  assert(!perfect.gameState.collection.unlockedSoundPackIds.includes('perfect_pour_chime'));
   assert.strictEqual(perfect.gameState.merchProgress.perfectPourDrop.unlocked, false);
 
   const perfectWithMerch = context.applySimulatedDelivery(
@@ -10874,14 +10878,14 @@ function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
     context.defaultGameState(),
     { now: new Date('2026-06-15T12:00:00.000Z'), excludeMerch: false },
   );
-  assert.strictEqual(perfectWithMerch.gameState.merchProgress.perfectPourDrop.unlocked, true);
+  assert.strictEqual(perfectWithMerch.gameState.merchProgress.perfectPourDrop.unlocked, false);
 
   const hotTea = context.applySimulatedDelivery(
     'hot_tea_90',
     context.defaultGameState(),
     { now: new Date('2026-06-16T12:00:00.000Z') },
   );
-  assert(hotTea.gameState.collection.unlockedCharacterIds.includes('tea_master'));
+  assert(!hotTea.gameState.collection.unlockedCharacterIds.includes('tea_master'));
 
   const shaky = context.applySimulatedDelivery(
     'shaky_practice',
@@ -10894,9 +10898,10 @@ function testDeliverySimulatorAppliesLocalProgressAndSafeShareLabels() {
   assert.strictEqual(shaky.gameState.merchProgress.perfectPourDrop.unlocked, false);
 
   const shareText = context.buildShareText(smooth.summary);
-  assert(shareText.includes('Simulated Result'));
+  assert(shareText.includes('Local Result'));
+  assert(!shareText.includes('Simulated Result'));
   const payload = context.buildDeliverySharePayload(smooth.summary, smooth.rewards, smooth.gameState);
-  assert.strictEqual(payload.status, 'Simulated Result');
+  assert.strictEqual(payload.status, 'Local Result');
   assert(!/\b(?:speed|mph|gps|map|street|trace|location|lat|lon|fastest|high-g)\b/i.test(shareText));
   assert(!/\b(?:mi|miles?|km|kilometers?)\b/i.test(shareText));
   assert(!shareText.includes('cavrino.com/nospill'));
@@ -11128,14 +11133,13 @@ function testResultScreenShowsGameSummarySections() {
   assert(html.includes('id="summary-title"'));
   assert(html.includes('Result Details'));
   assert(html.includes('id="return-dashboard-button"'));
-  assert(html.includes('Return to Tofu Garage'));
+  assert(html.includes('Visit Tofu Garage'));
   assert(html.includes('id="new-run-button"'));
   assert(html.includes('Take Another Cup Test'));
-  assert(html.includes('id="back-simulator-button"'));
-  assert(html.indexOf('id="return-dashboard-button"') < html.indexOf('id="new-run-button"'));
-  assert(html.indexOf('id="new-run-button"') < html.indexOf('id="share-button"'));
+  assert(!html.includes('id="back-simulator-button"'));
+  assert(html.indexOf('id="share-button"') < html.indexOf('id="new-run-button"'));
+  assert(html.indexOf('id="new-run-button"') < html.indexOf('id="return-dashboard-button"'));
   assert(source.includes('returnDashboardButton.addEventListener("click"'));
-  assert(source.includes('backSimulatorButton.addEventListener("click"'));
   assert(source.includes('function returnToDashboard'));
   assert(source.includes('"Visit Tofu Garage"'));
   const summaryStart = html.indexOf('id="summary-view"');
@@ -11144,7 +11148,10 @@ function testResultScreenShowsGameSummarySections() {
   assert(!summaryHtml.includes('id="summary-grid"'));
   assert(!summaryHtml.includes('id="milestone-output"'));
   assert(!summaryHtml.includes('id="merch-grid"'));
-  assert(summaryHtml.includes('Story Card Preview'));
+  assert(summaryHtml.includes('Result Card'));
+  assert(summaryHtml.includes('id="run-details-section"'));
+  assert(summaryHtml.includes('Run Details'));
+  assert(summaryHtml.indexOf('id="story-card-preview-section"') < summaryHtml.indexOf('id="run-details-section"'));
   assert.strictEqual((summaryHtml.match(/Certified Result/g) || []).length, 1);
   [
     '"Cargo Condition"',
@@ -11163,9 +11170,7 @@ function testResultScreenShowsGameSummarySections() {
 }
 
 function testPostRunNavigationReturnsToUpdatedDashboard() {
-  const context = loadNoSpillContext({
-    window: { location: { search: '?simulator=1' }, localStorage: makeLocalStorage() },
-  });
+  const context = loadNoSpillContext();
   vm.runInContext(`
 function makeNode(id) {
   const node = {
@@ -11206,7 +11211,6 @@ elements = {
   setupFlow: makeNode("setup"),
   tofuShopSection: makeNode("shop"),
   tofuGarageActions: makeNode("actions"),
-  simulatorPanel: makeNode("simulator"),
   cupCanvas: null,
 };
 loadGameState = function loadGameStateForTest() { return savedState; };
@@ -11234,8 +11238,6 @@ globalThis.returnScrolledShop = elements.tofuShopSection.scrolled;
 globalThis.returnScrolledActions = elements.tofuGarageActions.scrolled;
 globalThis.returnFocusedActions = elements.tofuGarageActions.focused;
 globalThis.returnFirstLandingStatus = globalThis.returnLandingStatus;
-returnToDashboard("simulator");
-globalThis.returnScrolledSimulator = elements.simulatorPanel.scrolled;
 takeAnotherCupTest();
 globalThis.takeAnotherClearedSummary = appState.lastSummary === null;
 globalThis.takeAnotherRevealedSetup = elements.setupFlow.revealed && elements.setupFlow.scrolled;
@@ -11249,7 +11251,6 @@ globalThis.takeAnotherRevealedSetup = elements.setupFlow.revealed && elements.se
   assert.strictEqual(context.returnScrolledShop, false);
   assert.strictEqual(context.returnScrolledActions, true);
   assert.strictEqual(context.returnFocusedActions, true);
-  assert.strictEqual(context.returnScrolledSimulator, true);
   assert.strictEqual(context.returnFirstLandingStatus, 'Review your rewards. The shop has been updated.');
   assert.strictEqual(context.returnLandingStatus, 'Review setup, then start while parked.');
   assert.strictEqual(context.takeAnotherClearedSummary, true);
@@ -11282,7 +11283,7 @@ function testAutomaticResultStatusModel() {
   });
   assert.strictEqual(context.resultStatusForSession(locationDenied), 'local');
   assert.strictEqual(context.resultStatusLabel(locationDenied), 'Local Result');
-  assert(context.resultStatusCopy(locationDenied).includes('Route-context achievements need location'));
+  assert(context.resultStatusCopy(locationDenied).includes('Smoothness counted locally'));
 
   const simulated = sampleShareSummary({
     simulated: true,
@@ -11290,7 +11291,7 @@ function testAutomaticResultStatusModel() {
     qualificationStatus: 'qualified',
   });
   assert.strictEqual(context.resultStatusForSession(simulated), 'simulated');
-  assert.strictEqual(context.resultStatusLabel(simulated), 'Simulated Result');
+  assert.strictEqual(context.resultStatusLabel(simulated), 'Local Result');
 
   assert.strictEqual(
     context.routeQualificationStatusForSummary({ status: 'qualified' }, 'active', false),

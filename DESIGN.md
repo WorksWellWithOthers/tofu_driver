@@ -103,8 +103,7 @@ These rules are authoritative for all current and future features:
 - Do not show shop, crew, sound, upgrade, reward-claiming, or social actions during an active drive.
 - The Cup Test front door is one primary `Start Cup Test` action. Users should not have to choose
   the right Practice/Qualified mode before a run.
-- Certification is an outcome/status after the run: `Certified Result`, `Local Result`, or
-  `Simulated Result`.
+- Certification is an outcome/status after the run: `Certified Result` or `Local Result`.
 - Location may be requested only after the explicit Start action to attempt certification and
   route-context eligibility. Denying or lacking location must not block play; the run remains a
   `Local Result`.
@@ -147,8 +146,11 @@ Current local storage keys:
 - `nospill.club.v1`: legacy/current Cup Test summary preferences and related local state.
 - `tofuDriverGameStateV1`: local Tofu Shop, progression, collection, stamp, and summarized session
   state.
-- `tofuDriverSimulatorEnabled`: local QA simulator gate.
 - `tofuDriverDevToolsEnabled`: local developer-tools gate.
+
+Production UI does not expose a Delivery Simulator. Deterministic simulator helpers may exist for
+local tests, but `?simulator=1` and `tofuDriverSimulatorEnabled` must not activate a player-facing
+simulator panel or produce a production-visible simulated status.
 
 Stored game state must remain summarized. It may include resources, stamps, unlocks, shop levels,
 coarse route/mastery summaries, and saved result summaries. It must not include raw GPS samples, raw
@@ -511,9 +513,11 @@ Current design principles:
 - Mika, Night Shift Manager, is the first implemented Delivery Crew character art pack. Her current
   six-image MVP set lives under `/static/nospill/images/` and can appear only on parked/result
   surfaces such as Delivery Crew, post-run results, Coach Recap, and local fanfare moments.
-  Post-run Result Cameo and Coach Recap should use the dedicated larger Mika images as polished
-  4:5 character portraits, not thumbnail/debug cards. Real assigned art must not render gray
-  initial tiles, `art pending`, `not assigned`, internal slot names, or implementation-note copy.
+  Coach Recap and reward/fanfare surfaces should use the dedicated larger Mika images as polished
+  character art, not thumbnail/debug cards. The main Cup Test result card should stay compact; any
+  result cameo art belongs in future optional/detail surfaces, not as primary result clutter. Real
+  assigned art must not render gray initial tiles, `art pending`, `not assigned`, internal slot
+  names, or implementation-note copy.
   Character art is cosmetic and must never affect Cup Test scoring, cargo thresholds,
   qualification, rewards, route validation, speed, distance, or active-drive behavior.
 - The first Passport stamp should be a Stamp Fanfare moment. The celebration is local-only,
@@ -900,10 +904,12 @@ Boosts must depend on Cargo Condition, qualification status, daily/repeat caps, 
 criteria. They must not depend positively on speed, exact distance, route risk, street names, maps,
 high-G events, or any signal that encourages risky driving.
 
-Practice Mode may grant modest local progress but must not grant qualified-only ranks, Perfect Pour,
-No-Spill Club merch progress, or trusted certified progress.
+Local Results may grant modest local progress but must not grant qualified-only ranks, Perfect Pour,
+No-Spill Club merch progress, route-context achievements, hidden certified merch, or trusted
+certified progress.
 
-Simulator/dev results are local QA only and are not trusted certified proof.
+Simulator/test-fixture summaries are local QA only, not production UI, and are not trusted certified
+proof.
 
 Cup Test result cards may include safe summarized flavor and coaching:
 
@@ -976,12 +982,13 @@ Ledger storage should be capped to avoid unbounded localStorage growth.
 Default share output may include:
 
 - Tofu Driver
-- Certified Result / Local Result / Simulated Result labels
+- Certified Result / Local Result labels
 - Cargo Type
 - Cargo Condition
 - Rank
 - Trip Time
 - Drive Shape
+- Abstract Cup Trail / Cup Trail label
 - safe Coach Recap labels
 - local generated Cargo Commentary when safe
 - Driver License
@@ -1022,12 +1029,13 @@ balance, and it must not include speed, GPS, maps, streets, exact distance, raw 
 accounts, uploads, social feeds, or active-drive commentary.
 
 Result Card Visual Polish V1 makes those post-run story pieces read as a compact mini story card.
-The parked result screen now prioritizes result identity, Cargo Commentary, player Story Caption,
-and a local Story Card Preview before deeper recap details. Generated Cargo Commentary and
-player-written Story Caption must remain visually and semantically distinct, and downloaded share
-cards should keep the same hierarchy without adding a full comic editor, stickers, uploads,
-backend sharing, accounts, public profiles, scoring changes, reward changes, economy changes, or
-speed/GPS/map/street data.
+The parked result screen now prioritizes result status, rank/cargo condition, cargo type, one Cargo
+Commentary line, optional player Story Caption, concise Mika coach summary, Abstract Cup Trail, and
+the `Not faster. Smoother.` tagline. XP, rewards, merch, passport, selected crew, route-context
+eligibility, signal quality, and the full Coach Recap live in collapsed Run Details by default.
+Downloaded share cards should keep the same story-card hierarchy without adding a full comic
+editor, stickers, uploads, backend sharing, accounts, public profiles, scoring changes, reward
+changes, economy changes, or speed/GPS/map/street data.
 
 Garage Pride / Builder Note V1 is a parked Dream Build expression tool. After the player starts the
 Dream Build through a real purchase or work level, the Tofu Garage Overview can show one optional

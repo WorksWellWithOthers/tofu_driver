@@ -2521,6 +2521,32 @@ function renderCoachRecap(result = {}) {
   `;
 }
 
+function coachRecapKeyLabels(result = {}) {
+  const recap = result.coachRecap || summarizeCoachRecap(result.coachSignals || {}, result);
+  if (recap.insufficient) {
+    return {
+      sentence: recap.message || "Mika did not get enough motion data for a full recap.",
+      labels: ["Coach data: limited"],
+    };
+  }
+  const cargo = recap.cargoBalance || recap.cargoStability || "Recorded";
+  return {
+    sentence: recap.message || "Mika noted a calm finish.",
+    labels: [
+      `Best: ${recap.brakeFeather || "Smooth Hands"}`,
+      `Focus: ${recap.transitionSmoothness || "Transition Smoothness"}`,
+      `Cargo: ${cargo}`,
+    ],
+  };
+}
+
+function coachRecapShortText(result = {}) {
+  const recap = coachRecapKeyLabels(result);
+  return [recap.sentence, recap.labels.slice(0, 3).join(" · ")]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function computeWaterLoss({ totalG, thresholdG, jerk, deltaSeconds }) {
   if (totalG <= thresholdG || deltaSeconds <= 0) return 0;
   const severityRatio = (totalG - thresholdG) / Math.max(thresholdG, 0.05);
@@ -3860,7 +3886,8 @@ function isQualifiedSession(session) {
   return Boolean(
     session
     && session.qualificationStatus === "qualified"
-    && (session.mode === "qualified" || session.mode === "simulated"),
+    && session.mode === "qualified"
+    && !session.simulated,
   );
 }
 
@@ -3873,7 +3900,6 @@ function resultStatusForSession(session = {}) {
 function resultStatusLabel(session = {}) {
   const status = resultStatusForSession(session);
   if (status === "certified") return "Certified Result";
-  if (status === "simulated") return "Simulated Result";
   return "Local Result";
 }
 
@@ -3882,8 +3908,8 @@ function resultStatusCopy(session = {}) {
   if (status === "certified") {
     return "Eligible for route-context achievements when route context is strong enough.";
   }
-  if (status === "simulated") return "Local QA only.";
-  return "Smoothness counted locally. Route-context achievements need location and enough route data.";
+  if (status === "simulated") return "Local test fixture.";
+  return "Smoothness counted locally.";
 }
 
 function routeQualificationStatusForSummary(qualification = {}, geoStatus = "inactive", simulated = false) {
@@ -14154,48 +14180,12 @@ function renderCollectionPanel(gameState = loadGameState()) {
 }
 
 function isSimulatorEnabled() {
-  if (typeof window === "undefined") return false;
-  const search = window.location && typeof window.location.search === "string"
-    ? window.location.search
-    : "";
-  if (/(?:^\?|&)simulator=1(?:&|$)/.test(search)) return true;
-  const storage = safeLocalStorage();
-  return Boolean(
-    storage
-    && ["1", "true", "yes"].includes(
-      String(storage.getItem(SIMULATOR_LOCAL_STORAGE_KEY) || "").toLowerCase(),
-    )
-  );
+  return false;
 }
 
 function renderSimulatorPanel() {
-  if (!elements.simulatorPanel) return;
-  const enabled = isSimulatorEnabled();
-  const activeDrive = appState.running || appState.calibrating;
-  elements.simulatorPanel.classList.toggle(
-    "is-hidden",
-    !enabled || activeDrive || appState.surface !== "cup-test",
-  );
-  if (!enabled) return;
-  if (!activeDrive && appState.surface === "cup-test" && !appState.simulatorViewedTracked) {
-    trackEvent("tofu_driver_simulator_viewed", { mode: "simulated" });
-    appState.simulatorViewedTracked = true;
-  }
-  if (elements.simulatorScenarioSelect && !elements.simulatorScenarioSelect.options.length) {
-    elements.simulatorScenarioSelect.innerHTML = getSimulatorScenarios()
-      .map((scenario) => `<option value="${escapeHtml(scenario.id)}">${escapeHtml(scenario.name)}</option>`)
-      .join("");
-  }
-  if (elements.applySimulatorButton) {
-    elements.applySimulatorButton.disabled = activeDrive;
-    elements.applySimulatorButton.textContent = activeDrive
-      ? "Park First"
-      : "Apply Simulated Result";
-  }
-  if (elements.simulatorStatus) {
-    elements.simulatorStatus.textContent = activeDrive
-      ? "Simulator controls unlock after you finish and park."
-      : "Simulator is local-only and does not use motion sensors or location.";
+  if (elements.simulatorPanel && elements.simulatorPanel.classList && elements.simulatorPanel.classList.add) {
+    elements.simulatorPanel.classList.add("is-hidden");
   }
 }
 
@@ -14381,22 +14371,8 @@ function renderDeliverySummary(summary) {
   const shopRewardLine = (shop.tofuStockGained || shop.tipsGained || shop.reputationGained)
     ? `+${formatShopCount(shop.tofuStockGained || 0)} tofu · +${formatCashCount(shop.tipsGained || 0)} Cash from tips · +${formatShopCount(shop.reputationGained || 0)} reputation`
     : "No shop rewards from this local result";
-  if (elements.summaryCharacterCameo) {
-    elements.summaryCharacterCameo.innerHTML = renderCharacterCameo(
-      "result_screen_cameo",
-      collectionState,
-      {
-        label: "Result Cameo",
-        copy: qualified ? "Clean delivery." : "A calm finish.",
-        preferAssigned: true,
-        variant: "result-cameo",
-      },
-    );
-  }
+  if (elements.summaryCharacterCameo) elements.summaryCharacterCameo.innerHTML = "";
   elements.deliverySummaryGrid.innerHTML = [
-    summary.simulated
-      ? summaryMetric("Test Mode", "Simulated Result")
-      : "",
     summaryMetric("Cargo", summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label),
     summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
     summaryMetric("Trip Time", formatTripDuration(summary.durationSeconds)),
@@ -14477,7 +14453,7 @@ function setSummaryMode(mode, options = {}) {
   if (elements.shareTrailModeSection) elements.shareTrailModeSection.classList.toggle("is-hidden", true);
   if (elements.storyCardPreviewSection) elements.storyCardPreviewSection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
   if (elements.resultStorySection) elements.resultStorySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
-  if (elements.cargoCommentarySection) elements.cargoCommentarySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
+  if (elements.cargoCommentarySection) elements.cargoCommentarySection.classList.toggle("is-hidden", true);
   [
     elements.shareButton,
     elements.copyButton,
@@ -14750,30 +14726,24 @@ function escapeHtml(value) {
 function renderCargoCommentary(summary = appState.lastSummary) {
   const isCupResult = Boolean(summary) && appState.summaryMode === "cup-test" && !appState.running && !appState.calibrating;
   if (elements.cargoCommentarySection) {
-    elements.cargoCommentarySection.classList.toggle("is-hidden", !isCupResult);
+    elements.cargoCommentarySection.classList.toggle("is-hidden", true);
   }
   if (!elements.cargoCommentaryCard) return;
-  if (!isCupResult) {
-    elements.cargoCommentaryCard.innerHTML = "";
-    return;
-  }
-  const flavor = failureFlavorForSession(summary);
-  elements.cargoCommentaryCard.className = `nospill-cargo-commentary is-${flavor.severity}`;
-  elements.cargoCommentaryCard.innerHTML = [
-    `<strong>${escapeHtml(flavor.line)}</strong>`,
-    flavor.hint ? `<span>Hint: ${escapeHtml(flavor.hint)}</span>` : "",
-  ].filter(Boolean).join("");
+  elements.cargoCommentaryCard.innerHTML = "";
+  if (!isCupResult) return;
 }
 
 function storyCardPreviewData(summary = {}) {
   const data = buildShareCardData(summary);
   const routeContext = data.routeContext || null;
+  const coachSummary = coachRecapShortText(summary);
   return {
     status: data.challengeName,
     cargo: `Cargo: ${data.cargoLabel}`,
     condition: data.waterDelivered,
     rank: `Rank: ${data.rank}`,
     commentary: data.cargoCommentary && data.cargoCommentary.line ? data.cargoCommentary.line : "",
+    coachSummary,
     storyCaption: data.storyCaption,
     trailMode: data.shareTrailMode,
     routeContextLabel: routeContext && routeContext.status === "usable" ? routeContext.routeContextLabel : "",
@@ -14796,6 +14766,7 @@ function renderStoryCardPreview(summary = appState.lastSummary) {
   if (elements.storyCardPreviewCargo) elements.storyCardPreviewCargo.textContent = data.cargo;
   if (elements.storyCardPreviewRank) elements.storyCardPreviewRank.textContent = data.rank;
   if (elements.storyCardPreviewCommentary) elements.storyCardPreviewCommentary.textContent = data.commentary;
+  if (elements.storyCardPreviewCoach) elements.storyCardPreviewCoach.textContent = data.coachSummary;
   if (elements.storyCardPreviewRouteMode) {
     elements.storyCardPreviewRouteMode.textContent =
       data.trailMode === SHARE_CARD_TRAIL_MODES.routeOutline
@@ -14940,25 +14911,14 @@ function renderSummary(summary) {
     elements.newRunButton.classList.toggle("is-hidden", false);
   }
   if (elements.backSimulatorButton) {
-    elements.backSimulatorButton.classList.toggle("is-hidden", !isSimulatorEnabled());
+    elements.backSimulatorButton.classList.toggle("is-hidden", true);
   }
   if (elements.summaryGrid) {
     elements.summaryGrid.innerHTML = [
-      summary.simulated ? summaryMetric("Test Mode", "Simulated Result") : "",
       summaryMetric("Cargo", summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label),
       summaryMetric("Cargo Condition", formatPercent(summary.cargoCondition ?? summary.waterLeft), "nospill-is-good"),
-      summaryMetric("Water Spilled", formatPercent(summary.waterSpilled)),
-      summaryMetric("Trip Time", formatTripDuration(summary.durationSeconds)),
-      summaryMetric("Drive Shape", summary.driveShape || summarizeDriveShape(summary)),
       summaryMetric("Rank", displayRankForSession(summary)),
-      summaryMetric("Harsh Inputs", String(summary.harshInputCount)),
       summaryMetric("Result Status", statusLabel),
-      summaryMetric(
-        "Certification",
-        resultStatusForSession(summary) === "certified"
-          ? resultStatusCopy(summary)
-          : `${resultStatusCopy(summary)} Route-context achievements unavailable: ${routeQualificationReason(summary)}`,
-      ),
     ].filter(Boolean).join("");
   }
 
@@ -14981,8 +14941,8 @@ function renderSummary(summary) {
       ].join("");
     } else {
       elements.routeGrid.innerHTML = [
-        summaryMetric("Route Context", routeContext.message || "Route-context achievements require a Certified Result with enough route data."),
-        summaryMetric("Signal Quality", routeContext.signalQuality || "Insufficient"),
+        summaryMetric("Route Context", routeContext.message || "Certified route context is only available when location permission and route data are sufficient."),
+        routeContext.signalQuality ? summaryMetric("Signal Quality", routeContext.signalQuality) : "",
       ].join("");
     }
   }
@@ -14992,14 +14952,14 @@ function renderSummary(summary) {
     : "No milestone unlocked this run.";
   if (elements.milestoneOutput) elements.milestoneOutput.textContent = milestoneText;
   if (elements.summaryStatus) {
-    const reasons = summary.qualificationReasons && summary.qualificationReasons.length
-      ? ` ${summary.qualificationReasons[0]}`
-      : "";
-    elements.summaryStatus.textContent = `${resultStatusCopy(summary)}${reasons}`;
+    elements.summaryStatus.textContent = resultStatusForSession(summary) === "certified"
+      ? resultStatusCopy(summary)
+      : "Local Result saved. Smoothness counted locally.";
   }
   renderMerchPanel(loadClubState(), summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderGamePanels(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderDeliverySummary(summary);
+  if (elements.runDetailsSection) elements.runDetailsSection.open = false;
   renderHiddenShirtReveal(summary);
   renderCargoCommentary(summary);
   updateResultStoryCaptionUi(summary);
@@ -15136,6 +15096,12 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     cargoLabel: summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label,
     tripTime: formatTripDuration(summary.durationSeconds),
     distanceLabel: "",
+    cupTrailLabel: shareTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline
+      ? "Route Outline + Smoothness Overlay"
+      : "Abstract Cup Trail",
+    cupTrail: Array.isArray(summary.cupTrail)
+      ? summary.cupTrail.map(boundedCupTrailPoint).slice(0, 48)
+      : [],
     milestone: delivery.stamp || bestUnlockedMilestone(summary),
     dailyStatus: delivery.dailyStatus,
     cargoCommentary,
@@ -15171,7 +15137,7 @@ function buildShareText(summary, config = SHARE_CONFIG) {
     ? ` Stamp: ${data.milestone}.`
     : "";
   const lines = [
-    `${APP_BRAND}: ${data.challengeName}. Cargo: ${data.cargoLabel}. Cargo Condition: ${data.waterDelivered}. Trip Time: ${data.tripTime}. Drive Shape: ${data.driveShape}. Rank: ${data.rank}.${milestoneText} ${data.tagline}`,
+    `${APP_BRAND}: ${data.challengeName}. Cargo: ${data.cargoLabel}. Cargo Condition: ${data.waterDelivered}. Trip Time: ${data.tripTime}. Drive Shape: ${data.driveShape}. Cup Trail: ${data.cupTrailLabel}. Rank: ${data.rank}.${milestoneText} ${data.tagline}`,
   ];
   if (data.driverLicense) lines.push(`Driver License: ${data.driverLicense}.`);
   if (data.shopLevel) lines.push(data.shopLevel);
@@ -15240,7 +15206,13 @@ function drawRouteOutlineOnCanvas(context, outline, bounds) {
   return true;
 }
 
-function drawAbstractCupTrailOnCanvas(context, width, height) {
+function drawAbstractCupTrailOnCanvas(context, width, height, label = "Abstract Cup Trail") {
+  context.fillStyle = "#9ee9bf";
+  context.font = "800 23px Inter, Arial, sans-serif";
+  context.fillText(label, width - 452, height - 555);
+  context.fillStyle = "#bbc7c0";
+  context.font = "700 18px Inter, Arial, sans-serif";
+  context.fillText("Motion signature, not a route map.", width - 452, height - 528);
   context.strokeStyle = "rgba(110, 198, 255, 0.75)";
   context.lineWidth = 10;
   context.beginPath();
@@ -15365,7 +15337,7 @@ function renderShareCanvas(summary) {
     context.font = "700 18px Inter, Arial, sans-serif";
     context.fillText("Shared by user. May reveal route shape.", width - 452, height - 528);
   } else {
-    drawAbstractCupTrailOnCanvas(context, width, height);
+    drawAbstractCupTrailOnCanvas(context, width, height, data.cupTrailLabel);
   }
 
   if (data.routeContext) {
@@ -16268,9 +16240,7 @@ function refreshLandingDashboard(message, surface = appState.surface || "shop") 
 }
 
 function scrollToDashboardTarget(target) {
-  const node = target === "simulator" && isSimulatorEnabled()
-    ? elements.simulatorPanel
-    : target === "shop" && elements.tofuShopSection
+  const node = target === "shop" && elements.tofuShopSection
       ? elements.tofuGarageActions || elements.tofuShopSection
       : elements.landingView;
   scrollAndFocusParkedNode(node, { focus: target === "shop" });
@@ -16592,7 +16562,6 @@ function bindEvents() {
   elements.returnDashboardButton.addEventListener("click", handlePrimaryResultAction);
   if (elements.hiddenShirtLater) elements.hiddenShirtLater.addEventListener("click", handleHiddenShirtLater);
   if (elements.hiddenShirtLink) elements.hiddenShirtLink.addEventListener("click", handleHiddenShirtLinkClick);
-  elements.backSimulatorButton.addEventListener("click", () => returnToDashboard("simulator"));
   if (elements.exportProgressButton) elements.exportProgressButton.addEventListener("click", exportProgress);
   if (elements.importProgressButton) elements.importProgressButton.addEventListener("click", importProgress);
   if (elements.resetProgressButton) elements.resetProgressButton.addEventListener("click", resetProgress);
@@ -16612,7 +16581,6 @@ function bindEvents() {
   elements.characterList.addEventListener("click", handleCharacterSelect);
   elements.soundPackList.addEventListener("click", handleSoundPackSelect);
   elements.previewSoundButton.addEventListener("click", handlePreviewSound);
-  elements.applySimulatorButton.addEventListener("click", handleApplySimulatedDelivery);
   elements.newRunButton.addEventListener("click", newRun);
 }
 
@@ -16747,11 +16715,6 @@ function cacheElements() {
     characterList: document.getElementById("character-list"),
     soundPackList: document.getElementById("sound-pack-list"),
     previewSoundButton: document.getElementById("preview-sound-button"),
-    simulatorPanel: document.getElementById("simulator-panel"),
-    simulatorScenarioSelect: document.getElementById("simulator-scenario-select"),
-    simulatorExcludeMerch: document.getElementById("simulator-exclude-merch"),
-    applySimulatorButton: document.getElementById("apply-simulator-button"),
-    simulatorStatus: document.getElementById("simulator-status"),
     cupCanvas: document.getElementById("cup-canvas"),
     summaryStatusLabel: document.getElementById("summary-status-label"),
     summaryTitle: document.getElementById("summary-title"),
@@ -16786,6 +16749,7 @@ function cacheElements() {
     storyCardPreviewRouteMode: document.getElementById("story-card-preview-route-mode"),
     storyCardPreviewRouteContext: document.getElementById("story-card-preview-route-context"),
     storyCardPreviewCommentary: document.getElementById("story-card-preview-commentary"),
+    storyCardPreviewCoach: document.getElementById("story-card-preview-coach"),
     storyCardPreviewCaptionBox: document.getElementById("story-card-preview-caption-box"),
     storyCardPreviewCaption: document.getElementById("story-card-preview-caption"),
     storyCardPreviewFooter: document.getElementById("story-card-preview-footer"),
@@ -16801,8 +16765,8 @@ function cacheElements() {
     copyButton: document.getElementById("copy-button"),
     saveButton: document.getElementById("save-button"),
     returnDashboardButton: document.getElementById("return-dashboard-button"),
-    backSimulatorButton: document.getElementById("back-simulator-button"),
     newRunButton: document.getElementById("new-run-button"),
+    runDetailsSection: document.getElementById("run-details-section"),
     summaryStatus: document.getElementById("summary-status"),
     stampFanfare: document.getElementById("stamp-fanfare"),
     stampFanfareCard: document.getElementById("stamp-fanfare-card"),
