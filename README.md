@@ -26,10 +26,12 @@ system uses a local Discovery Fanfare so progression moments are visible without
 future roadmap. Midgame supply pressure is handled through parked management decisions such as
 Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking.
 
-Hidden merch is local-only in the MVP. The Tofu Driver `Not Fast. Smooth.` Tee link is revealed
-inside the parked result/rewards UI after an earned Certified Perfect Pour or route-context Perfect
-Pour achievement. The Tofu Driver Penguin Delivery White Tee is revealed separately after a
-Certified Result with a Penguin mascot selected. The app does not run payments, call Shopify APIs,
+Hidden merch is local-only in the MVP. Stickers are the first hidden reward tier: the Tofu Driver
+`Not Fast. Smooth.` Sticker unlocks from a first Certified Result, and the Tofu Driver Penguin
+Sticker unlocks from a Certified Result with an unlocked Penguin mascot selected. Shirts are the
+larger tier: the Tofu Driver `Not Fast. Smooth.` Tee unlocks from a Certified Perfect Pour or
+route-context Perfect Pour achievement, and the Tofu Driver Penguin Delivery White Tee unlocks from
+a Certified Result with an unlocked Penguin mascot selected. The app does not run payments, call Shopify APIs,
 verify unlocks with a backend, append GPS/route/speed data to merch URLs, or open external merch
 links automatically.
 

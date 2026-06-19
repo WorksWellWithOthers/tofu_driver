@@ -351,6 +351,12 @@ globalThis.MERCH_LINKS = MERCH_LINKS;
 globalThis.HIDDEN_SHIRT_ID = HIDDEN_SHIRT_ID;
 globalThis.HIDDEN_SHIRT_NAME = HIDDEN_SHIRT_NAME;
 globalThis.HIDDEN_SHIRT_URL = HIDDEN_SHIRT_URL;
+globalThis.HIDDEN_STICKER_ID = HIDDEN_STICKER_ID;
+globalThis.HIDDEN_STICKER_NAME = HIDDEN_STICKER_NAME;
+globalThis.HIDDEN_STICKER_URL = HIDDEN_STICKER_URL;
+globalThis.HIDDEN_PENGUIN_STICKER_ID = HIDDEN_PENGUIN_STICKER_ID;
+globalThis.HIDDEN_PENGUIN_STICKER_NAME = HIDDEN_PENGUIN_STICKER_NAME;
+globalThis.HIDDEN_PENGUIN_STICKER_URL = HIDDEN_PENGUIN_STICKER_URL;
 globalThis.HIDDEN_PENGUIN_SHIRT_ID = HIDDEN_PENGUIN_SHIRT_ID;
 globalThis.HIDDEN_PENGUIN_SHIRT_NAME = HIDDEN_PENGUIN_SHIRT_NAME;
 globalThis.HIDDEN_PENGUIN_SHIRT_URL = HIDDEN_PENGUIN_SHIRT_URL;
@@ -5470,8 +5476,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619f'));
-  assert(html.includes('/static/nospill/app.css?v=20260619f'));
+  assert(html.includes('/static/nospill/app.js?v=20260619g'));
+  assert(html.includes('/static/nospill/app.css?v=20260619g'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7917,8 +7923,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619f'));
-  assert(html.includes('/static/nospill/app.css?v=20260619f'));
+  assert(html.includes('/static/nospill/app.js?v=20260619g'));
+  assert(html.includes('/static/nospill/app.css?v=20260619g'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -8386,6 +8392,229 @@ globalThis.unlockedPenguinMerchHtml = elements.merchGrid.innerHTML;
   assert.deepStrictEqual(
     context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 92 }), penguinState).skillXP,
     context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 92 }), penguinState).skillXP,
+  );
+}
+
+function testHiddenStickerRewardsV1PrecedeHiddenShirts() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  const tofuStickerUrl = 'https://supercutecollectibles.com/products/tofu-driver-not-fast-smooth-sticker?utm_source=copyToPasteBoard&utm_medium=product-links&utm_content=web';
+  const penguinStickerUrl = 'https://supercutecollectibles.com/products/tofu-driver-penguin-sticker?utm_source=copyToPasteBoard&utm_medium=product-links&utm_content=web';
+  const tofuShirtUrl = context.HIDDEN_SHIRT_URL;
+  const penguinShirtUrl = context.HIDDEN_PENGUIN_SHIRT_URL;
+  assert.strictEqual(context.HIDDEN_STICKER_ID, 'not_fast_smooth_sticker');
+  assert.strictEqual(context.HIDDEN_STICKER_NAME, 'Tofu Driver “Not Fast. Smooth.” Sticker');
+  assert.strictEqual(context.HIDDEN_STICKER_URL, tofuStickerUrl);
+  assert.strictEqual(context.HIDDEN_PENGUIN_STICKER_ID, 'penguin_sticker');
+  assert.strictEqual(context.HIDDEN_PENGUIN_STICKER_NAME, 'Tofu Driver Penguin Sticker');
+  assert.strictEqual(context.HIDDEN_PENGUIN_STICKER_URL, penguinStickerUrl);
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  [tofuStickerUrl, penguinStickerUrl].forEach((url) => assert(!html.includes(url)));
+
+  vm.runInContext(`
+elements = { merchGrid: { innerHTML: "" } };
+renderMerchPanel({ unlockedMilestones: {} }, defaultGameState());
+globalThis.lockedStickerShelfHtml = elements.merchGrid.innerHTML;
+`, context);
+  assert(context.lockedStickerShelfHtml.includes('Hidden Sticker'));
+  assert(context.lockedStickerShelfHtml.includes('Earn a Certified Result'));
+  assert(context.lockedStickerShelfHtml.includes('Hidden Penguin Sticker'));
+  assert(context.lockedStickerShelfHtml.includes('Complete a Certified Result with a Penguin selected'));
+  [tofuStickerUrl, penguinStickerUrl, tofuShirtUrl, penguinShirtUrl].forEach((url) => {
+    assert(!context.lockedStickerShelfHtml.includes(url));
+  });
+
+  const certified = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 90,
+    cargoCondition: 90,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), context.defaultGameState());
+  assert.strictEqual(certified.gameState.merchUnlocks.not_fast_smooth_sticker.unlocked, true);
+  assert.strictEqual(certified.gameState.merchUnlocks.not_fast_smooth_sticker.source, 'certified_result');
+  assert.strictEqual(certified.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, false);
+
+  const local = context.calculateDeliveryRewards(sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 300,
+    distanceMiles: 0,
+  }), context.defaultGameState());
+  assert.strictEqual(local.gameState.merchUnlocks.not_fast_smooth_sticker.unlocked, false);
+
+  const simulated = context.calculateDeliveryRewards(sampleDeliverySession({
+    simulated: true,
+    mode: 'simulated',
+    qualificationStatus: 'qualified',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+  }), context.defaultGameState());
+  assert.strictEqual(simulated.gameState.merchUnlocks.not_fast_smooth_sticker.unlocked, false);
+
+  const perfect = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), context.defaultGameState());
+  assert.strictEqual(perfect.gameState.merchUnlocks.not_fast_smooth_sticker.unlocked, true);
+  assert.strictEqual(perfect.gameState.merchUnlocks.not_fast_smooth_tee.unlocked, true);
+  assert.deepStrictEqual(
+    Array.from(perfect.hiddenMerchUnlocks.filter((unlock) => unlock.unlockedThisRun).map((unlock) => unlock.itemId)),
+    ['not_fast_smooth_sticker', 'not_fast_smooth_tee'],
+  );
+
+  const penguinState = context.defaultGameState();
+  penguinState.collection.unlockedCharacterIds.push('penguin_driver');
+  penguinState.collection.selectedCharacterId = 'penguin_driver';
+  const penguinCertified = context.calculateDeliveryRewards(sampleDeliverySession({
+    waterLeft: 92,
+    cargoCondition: 92,
+    durationSeconds: 900,
+    distanceMiles: 5,
+    qualificationStatus: 'qualified',
+  }), penguinState);
+  assert.strictEqual(penguinCertified.gameState.merchUnlocks.penguin_sticker.unlocked, true);
+  assert.strictEqual(penguinCertified.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, true);
+  assert.deepStrictEqual(
+    Array.from(penguinCertified.hiddenMerchUnlocks.filter((unlock) => unlock.unlockedThisRun).map((unlock) => unlock.itemId)),
+    ['not_fast_smooth_sticker', 'penguin_sticker', 'penguin_delivery_white_tee'],
+  );
+
+  const localPenguin = context.calculateDeliveryRewards(sampleDeliverySession({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    waterLeft: 100,
+    cargoCondition: 100,
+    durationSeconds: 300,
+    distanceMiles: 0,
+  }), penguinState);
+  assert.strictEqual(localPenguin.gameState.merchUnlocks.penguin_sticker.unlocked, false);
+  assert.strictEqual(localPenguin.gameState.merchUnlocks.penguin_delivery_white_tee.unlocked, false);
+
+  const oldTofuSave = context.defaultGameState();
+  oldTofuSave.merchUnlocks = {
+    not_fast_smooth_tee: {
+      unlocked: true,
+      unlockedAt: '2026-06-14T12:00:00.000Z',
+      source: 'certified_perfect_pour',
+      revealSeen: true,
+    },
+  };
+  const migratedTofu = context.importGameProgress(JSON.stringify({
+    key: context.GAME_STORAGE_KEY,
+    state: oldTofuSave,
+  }));
+  assert.strictEqual(migratedTofu.ok, true);
+  assert.strictEqual(migratedTofu.gameState.merchUnlocks.not_fast_smooth_sticker.unlocked, true);
+  assert.strictEqual(migratedTofu.gameState.merchUnlocks.not_fast_smooth_sticker.source, 'shirt_migration');
+
+  const oldPenguinSave = context.defaultGameState();
+  oldPenguinSave.merchUnlocks = {
+    penguin_delivery_white_tee: {
+      unlocked: true,
+      unlockedAt: '2026-06-14T12:00:00.000Z',
+      source: 'certified_penguin_result',
+      revealSeen: true,
+    },
+  };
+  const migratedPenguin = context.importGameProgress(JSON.stringify({
+    key: context.GAME_STORAGE_KEY,
+    state: oldPenguinSave,
+  }));
+  assert.strictEqual(migratedPenguin.ok, true);
+  assert.strictEqual(migratedPenguin.gameState.merchUnlocks.penguin_sticker.unlocked, true);
+  assert.strictEqual(migratedPenguin.gameState.merchUnlocks.penguin_sticker.source, 'shirt_migration');
+
+  vm.runInContext(`
+const perfectState = ${JSON.stringify(perfect.gameState)};
+elements = {
+  hiddenShirtReveal: { hidden: false, classes: new Set(["is-hidden"]), classList: { toggle(_name, hidden) { hidden ? this.owner.classes.add("is-hidden") : this.owner.classes.delete("is-hidden"); }, add(name) { this.owner.classes.add(name); } } },
+  hiddenShirtTitle: { textContent: "" },
+  hiddenShirtCopy: { textContent: "" },
+  hiddenShirtSubcopy: { textContent: "" },
+  hiddenShirtLink: { attrs: {}, dataset: {}, href: "", setAttribute(name, value) { this.attrs[name] = value; }, removeAttribute(name) { delete this.attrs[name]; this.href = ""; } },
+  merchGrid: { innerHTML: "" },
+  merchProgressGrid: { innerHTML: "" },
+};
+elements.hiddenShirtReveal.classList.owner = elements.hiddenShirtReveal;
+appState.running = false;
+appState.calibrating = false;
+appState.lastSummary = { deliveryRewards: {
+  hiddenMerchUnlocks: ${JSON.stringify(perfect.hiddenMerchUnlocks)},
+  gameState: perfectState,
+} };
+renderHiddenShirtReveal(appState.lastSummary);
+globalThis.firstMerchRevealTitle = elements.hiddenShirtTitle.textContent;
+globalThis.firstMerchRevealHref = elements.hiddenShirtLink.href;
+globalThis.firstMerchRevealLabel = elements.hiddenShirtLink.dataset.merchUnlockId;
+const acknowledgedSticker = acknowledgeMerchUnlockReveal(elements.hiddenShirtLink.dataset.merchUnlockId, perfectState);
+appState.lastSummary.deliveryRewards.gameState = acknowledgedSticker.gameState;
+renderHiddenShirtReveal(appState.lastSummary);
+globalThis.secondMerchRevealTitle = elements.hiddenShirtTitle.textContent;
+globalThis.secondMerchRevealHref = elements.hiddenShirtLink.href;
+globalThis.secondMerchRevealLabel = elements.hiddenShirtLink.dataset.merchUnlockId;
+renderMerchPanel({ unlockedMilestones: {} }, {
+  ...acknowledgedSticker.gameState,
+  merchUnlocks: {
+    not_fast_smooth_sticker: { unlocked: true, unlockedAt: "2026-06-14T12:00:00.000Z", source: "certified_result", revealSeen: true },
+    penguin_sticker: { unlocked: true, unlockedAt: "2026-06-14T12:00:00.000Z", source: "certified_penguin_result", revealSeen: true },
+    not_fast_smooth_tee: { unlocked: true, unlockedAt: "2026-06-14T12:00:00.000Z", source: "certified_perfect_pour", revealSeen: true },
+    penguin_delivery_white_tee: { unlocked: true, unlockedAt: "2026-06-14T12:00:00.000Z", source: "certified_penguin_result", revealSeen: true },
+  },
+});
+globalThis.allHiddenMerchShelfHtml = elements.merchGrid.innerHTML;
+`, context);
+  assert.strictEqual(context.firstMerchRevealTitle, 'Hidden Sticker Unlocked');
+  assert.strictEqual(context.firstMerchRevealHref, tofuStickerUrl);
+  assert.strictEqual(context.firstMerchRevealLabel, 'not_fast_smooth_sticker');
+  assert.strictEqual(context.secondMerchRevealTitle, 'Hidden Shirt Unlocked');
+  assert.strictEqual(context.secondMerchRevealHref, tofuShirtUrl);
+  assert.strictEqual(context.secondMerchRevealLabel, 'not_fast_smooth_tee');
+
+  const shelf = context.allHiddenMerchShelfHtml;
+  assert(shelf.includes('View Sticker'));
+  assert(shelf.includes('View Shirt'));
+  assert(shelf.includes(tofuStickerUrl.replaceAll('&', '&amp;')));
+  assert(shelf.includes(penguinStickerUrl.replaceAll('&', '&amp;')));
+  assert(shelf.includes('target="_blank" rel="noopener noreferrer"'));
+  assert(
+    shelf.indexOf('Tofu Driver “Not Fast. Smooth.” Sticker')
+      < shelf.indexOf('Tofu Driver Penguin Sticker')
+      && shelf.indexOf('Tofu Driver Penguin Sticker')
+      < shelf.indexOf('Tofu Driver “Not Fast. Smooth.” Tee')
+      && shelf.indexOf('Tofu Driver “Not Fast. Smooth.” Tee')
+      < shelf.indexOf('Tofu Driver Penguin Delivery White Tee'),
+  );
+
+  const exported = context.exportGameProgress(penguinCertified.gameState);
+  assert(exported.includes('"not_fast_smooth_sticker"'));
+  assert(exported.includes('"penguin_sticker"'));
+  assert(!/routeSamples|gpsSamples|raw|coordinates|latitude|longitude|speedLog/i.test(exported));
+  const imported = context.importGameProgress(exported);
+  assert.strictEqual(imported.ok, true);
+  assert.strictEqual(imported.gameState.merchUnlocks.not_fast_smooth_sticker.unlocked, true);
+  assert.strictEqual(imported.gameState.merchUnlocks.penguin_sticker.unlocked, true);
+
+  const shareText = context.buildShareText({
+    ...sampleDeliverySession({ waterLeft: 100, qualificationStatus: 'qualified' }),
+    deliveryRewards: perfect,
+  });
+  [tofuStickerUrl, penguinStickerUrl, tofuShirtUrl, penguinShirtUrl].forEach((url) => {
+    assert(!shareText.includes(url));
+  });
+  assert(!/speed|mph|gps|map|street|trace|lat|lon/i.test(shareText));
+
+  assert.deepStrictEqual(
+    JSON.parse(JSON.stringify(context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 90 }), context.defaultGameState()).skillXP)),
+    JSON.parse(JSON.stringify(context.calculateDeliveryRewards(sampleDeliverySession({ waterLeft: 90 }), context.defaultGameState()).skillXP)),
   );
 }
 
@@ -11149,6 +11378,7 @@ const TESTS = [
   ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
   ["testHiddenShirtUnlockV1IsLocalParkedAndSafe", testHiddenShirtUnlockV1IsLocalParkedAndSafe],
   ["testHiddenPenguinShirtUnlockV1IsLocalParkedAndSafe", testHiddenPenguinShirtUnlockV1IsLocalParkedAndSafe],
+  ["testHiddenStickerRewardsV1PrecedeHiddenShirts", testHiddenStickerRewardsV1PrecedeHiddenShirts],
   ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
   ["testRouteTypeClassification", testRouteTypeClassification],
   ["testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext", testDeliveryRewardsDoNotUseSpeedAndRespectMajorUnlockContext],

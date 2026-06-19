@@ -1034,12 +1034,16 @@ Super Cute Collectibles is the current physical merch fulfillment partner. It do
 in the current MVP. Future backend unlock tokens, if built, must verify only summarized unlock state
 and must reject simulator/dev/local-only proof.
 
-Hidden Shirt Unlock V1 is an in-app local reveal, not backend merch verification. The Tofu Driver
-`Not Fast. Smooth.` Tee link is hidden until local state records a Certified Perfect Pour or
-high-tier route-context Perfect Pour achievement. Hidden Penguin Shirt Unlock V1 separately reveals
-the Tofu Driver Penguin Delivery White Tee after a Certified Result completed with a Penguin mascot
-selected. The app must not auto-open product links, pass GPS/route/speed/user data to URLs, call
-Shopify APIs, or imply that Shopify verifies either unlock.
+Hidden merch unlocks are in-app local reveals, not backend merch verification. Stickers are the
+first hidden reward tier: the Tofu Driver `Not Fast. Smooth.` Sticker unlocks from a first
+Certified Result, and the Tofu Driver Penguin Sticker unlocks from a Certified Result completed
+with an unlocked Penguin mascot selected. Shirts remain the larger reward tier: the Tofu Driver
+`Not Fast. Smooth.` Tee unlocks from a Certified Perfect Pour or high-tier route-context Perfect
+Pour achievement, and the Tofu Driver Penguin Delivery White Tee unlocks from a Certified Result
+completed with an unlocked Penguin mascot selected. If an old save already has a shirt, the matching
+sticker is treated as unlocked so the reward ladder stays coherent. The app must not auto-open
+product links, pass GPS/route/speed/user data to URLs, call Shopify APIs, or imply that Shopify
+verifies any unlock.
 
 Discord/community links are optional parked-use CTAs. They must be hidden by default unless
 configured, never shown during active drive, and never framed as a place to report, identify, shame,
