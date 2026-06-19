@@ -432,21 +432,27 @@ Player-facing rules:
 - Overview should prioritize ready orders and Prep Counter progress; Production owns the station
   capacity explanation
 
-### Overview Goal Stack
+### Overview Glance Mode
 
-Overview Goal Stack V1 is implemented as the compact Overview guidance card. It replaces the single
-overloaded milestone presentation with three lanes:
+Overview Glance Mode V1 is implemented as the compact Overview guidance layer. It replaces the
+single overloaded milestone presentation and visible explanation wall with three lanes:
 
-- Immediate Action: the live bottleneck or next click, using the existing Next Best Action logic.
-- Pinned Near Goal: a stable medium-term target such as the next implemented Dream Build work,
+- Now: the live bottleneck or next click, using the existing Next Best Action logic.
+- Pinned Goal: a stable medium-term target such as the next implemented Dream Build work,
   Showcase/Sponsor opportunity, manager/supplier target, or an explicit current build-track cap.
 - Era Goal: the long-term Net Worth or shop horizon, such as `$100M Net Worth`.
 
-The Pinned Near Goal should update when a meaningful milestone completes, not because Cash crosses
+The Pinned Goal should update when a meaningful milestone completes, not because Cash crosses
 an affordability threshold, the order queue briefly fills, or ETA text changes. If Wheels and
 Exhaust have reached the current implemented cap, the pinned goal should state that the current
 track is complete and that Suspension is future/target-only. Do not add a Suspension purchase
 button or Dream Garage tab until that work is intentionally implemented.
+
+Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
+Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
+controls belong behind Details/Edit controls or in the relevant tab. Counter Service should show a
+single relevant Start or Pause action. Return summaries should be compact and show at most two
+suggested next actions before sending deeper history to Ledger.
 
 The older Next Milestone helper remains useful as the era/horizon source and for early milestones.
 It still shows one relevant shop goal at a time, not the full roadmap.
@@ -2212,8 +2218,8 @@ Offline:
   per-second simulation
 - existing Cash balances are never capped directly; only newly accrued offline production is capped
 - zero-value offline summaries are hidden
-- offline summaries should say `waiting orders` and explain when tofu supply was consumed preparing
-  orders; Counter Service remains active-page-only and does not fulfill offline in V1
+- offline summaries should be compact, say `waiting orders`, mention when tofu was spent on prep,
+  and note that Counter Service remains active-page-only and does not fulfill offline in V1
 - long absences show the saved direct progress window and explain that excess time is capped for
   pacing rather than treating the absence as lost time
 - Rested Shop Time is deferred; future larger caps can come from later franchise/corporate

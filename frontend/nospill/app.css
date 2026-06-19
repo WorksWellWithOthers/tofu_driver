@@ -1285,6 +1285,10 @@
   margin-top: 2px;
 }
 
+.nospill-builder-note-card.is-collapsed {
+  gap: 10px;
+}
+
 .nospill-builder-note-label {
   display: flex;
   align-items: center;
@@ -1417,6 +1421,45 @@
   padding-top: 8px;
   color: #f7d66b !important;
   font-weight: 800;
+}
+
+.nospill-compact-details {
+  border: 1px solid rgba(244, 247, 239, 0.10);
+  border-radius: 8px;
+  padding: 8px 10px;
+  background: rgba(7, 10, 10, 0.28);
+}
+
+.nospill-compact-details summary {
+  cursor: pointer;
+  color: #f7d66b;
+  font-size: 0.76rem;
+  font-weight: 900;
+  list-style-position: inside;
+}
+
+.nospill-compact-details summary:focus-visible {
+  outline: 2px solid #f7d66b;
+  outline-offset: 3px;
+}
+
+.nospill-compact-details p {
+  margin: 7px 0 0;
+  color: #d8e3dc;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.nospill-overview-brief {
+  margin-bottom: 0;
+}
+
+.nospill-overview-details {
+  margin: 8px 0 10px;
+}
+
+.nospill-overview-recent {
+  margin: 10px 0;
 }
 
 .nospill-goal-stack {

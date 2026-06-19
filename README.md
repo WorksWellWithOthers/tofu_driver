@@ -125,10 +125,9 @@ The static app uses hash routing:
   Project Car progression, future Net Worth endgame direction, and balance tests. Tofu Shop is
   idle-first: manual actions teach the loop, repeated labor earns automation exits, and decisions
   rather than clicking speed drive progression.
-- Tofu Garage Overview uses Goal Stack V1: Immediate Action, stable Pinned Near Goal, and Era Goal.
-  This keeps large Net Worth targets visible without hiding whether more implemented Dream Build or
-  shop work exists. Future tracks such as Suspension are target-only until intentionally
-  implemented.
+- Tofu Garage Overview uses Glance Mode V1: Now, stable Pinned Goal, Era Goal, and compact Recent
+  feedback. Long explanations/formulas sit behind Details, saved Builder Notes collapse until
+  edited, and future tracks such as Suspension are target-only until intentionally implemented.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
 - `CORE_GAME_SPINE_AUDIT.md`: evidence audit for what is real versus scaffolding in the current

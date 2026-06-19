@@ -11795,6 +11795,7 @@ function renderCoveredCarTeaserCard(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
   if (!coveredCarTeaserUnlocked(state)) return "";
+  if (dreamBuildProgressVisible(state)) return "";
   const seen = coveredCarTeaserSeen(state);
   if (!seen) {
     return renderIdleCard({
@@ -11807,8 +11808,8 @@ function renderCoveredCarTeaserCard(gameState) {
   }
   return renderIdleCard({
     title: "Behind the Shop",
-    status: "Dream Build: Not ready yet",
-    copy: "An old car waits under a cover. The Tofu Shop is not the destination. It is how the dream starts. Keep growing the garage. The first build comes later.",
+    status: "Covered car",
+    copy: "An old car waits under a cover. The Tofu Shop is how the dream starts.",
     actions: [],
   });
 }
@@ -12021,10 +12022,13 @@ function renderDreamBuildProgressCard(gameState) {
   const progress = dreamBuildProgressSummary(state);
   const nextStep = nextDreamBuildStep(state);
   const projectValue = projectCarValueV1(state);
+  const capReached = dreamBuildImplementedCapReached(state);
   return renderIdleCard({
-    title: "Dream Build Progress",
+    title: "Dream Build",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
-    copy: "The covered build grows through careful garage work. Not faster. Smoother.",
+    copy: capReached
+      ? "Current implemented build track complete. Next Build Track: Suspension, future garage pass."
+      : "Careful garage work adds story value. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
         <div
@@ -12039,9 +12043,13 @@ function renderDreamBuildProgressCard(gameState) {
         </div>
         <small>Wheels · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
         <small>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
-        <small>Next Dream Step: ${escapeHtml(nextStep.title)}${nextStep.future ? " · future" : ""}</small>
-        <small>${escapeHtml(nextStep.copy)}</small>
-        <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}. Net Worth V1 includes ${escapeHtml(netWorthV1FormulaLabel(state))}.</small>
+        <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}</small>
+        <details class="nospill-compact-details">
+          <summary>Dream Build details</summary>
+          <p>Next Dream Step: ${escapeHtml(nextStep.title)}${nextStep.future ? " · future/target-only" : ""}</p>
+          <p>${escapeHtml(nextStep.copy)}</p>
+          <p>Net Worth V1 includes ${escapeHtml(netWorthV1FormulaLabel(state))}.</p>
+        </details>
       </div>
     `,
   });
@@ -12053,6 +12061,26 @@ function renderBuilderNoteCard(gameState) {
   if (!builderNoteVisible(state)) return "";
   const note = builderNoteValue(state);
   const count = Array.from(note).length;
+  const editing = !note || Boolean(appState.builderNoteEditing);
+  if (!editing) {
+    return renderIdleCard({
+      title: "Builder Note",
+      status: "Saved locally",
+      copy: "",
+      extra: `
+        <div class="nospill-builder-note-card is-collapsed">
+          <div class="nospill-builder-note-display" aria-label="Saved Builder Note">
+            <span>Builder Note</span>
+            <strong>${escapeHtml(`"${note}"`)}</strong>
+          </div>
+          <div class="nospill-builder-note-actions">
+            <button type="button" class="nospill-secondary" data-builder-note-action="edit">Edit</button>
+          </div>
+        </div>
+      `,
+      actions: [],
+    });
+  }
   const presetButtons = BUILDER_NOTE_PRESETS.map((preset) => `
     <button
       type="button"
@@ -12169,7 +12197,7 @@ function renderNetWorthCard(gameState) {
   return renderIdleCard({
     title: "Net Worth",
     status: `${formatCashCount(progress.current)} toward $1T`,
-    copy: "Cash can be spent now or invested into careful garage/story value later. Not faster. Smoother.",
+    copy: "Cash, shop growth, garage work, and brand value move the long road.",
     extra: `
       <div class="nospill-afford-progress">
         <div class="nospill-afford-progress-head">
@@ -12182,7 +12210,6 @@ function renderNetWorthCard(gameState) {
         </div>
         ${buildValueRow}
         ${brandValueRow}
-        <small>Formula: ${escapeHtml(netWorthV1FormulaLabel(state))}.</small>
         <div class="nospill-afford-progress-head">
           <span>Current era: Tofu Garage</span>
           <strong>${escapeHtml(`${roundTo(percent, percent < 1 ? 3 : 1)}%`)}</strong>
@@ -12197,6 +12224,11 @@ function renderNetWorthCard(gameState) {
         >
           <span style="width: ${percent}%"></span>
         </div>
+        <details class="nospill-compact-details">
+          <summary>What counts toward Net Worth?</summary>
+          <p>Formula: ${escapeHtml(netWorthV1FormulaLabel(state))}.</p>
+          <p>Cash can be spent now or invested into careful garage/story value later.</p>
+        </details>
       </div>
     `,
   });
@@ -12396,27 +12428,31 @@ function renderCounterServiceCard(state) {
   const progress = counterServiceProgress(state, new Date());
   const income = counterServiceIncomeStatus(state);
   const status = service.running ? "Running" : "Paused";
-  const startDisabled = service.running;
-  const pauseDisabled = !service.running;
   const interval = counterServiceIntervalSeconds(state);
   const batchSize = counterServiceBatchSize(state);
+  const conciseStatus = service.running
+    ? `Running · ${progress.message.replace(/^Counter Service\s*/i, "")}`
+    : "Paused";
+  const blocker = service.running && !income.active ? `Blocked: ${income.text.replace(/^Counter Service\s*/i, "")}` : "";
   return renderIdleCard({
     title: "Counter Service",
-    status,
-    copy: "Regular customers can pick up prepared orders automatically.",
+    status: conciseStatus,
+    copy: service.running
+      ? "Customers hand off prepared orders for Cash."
+      : "Start automatic handoffs when the shop is parked.",
     extra: `
       <div class="nospill-counter-service">
+        <div class="nospill-counter-service-row">
+          <span>Batch</span>
+          <strong>${formatShopCount(batchSize)} order${batchSize === 1 ? "" : "s"}</strong>
+        </div>
         <div class="nospill-counter-service-row">
           <span>Rate</span>
           <strong>1 handoff / ${formatShopCount(interval)} sec</strong>
         </div>
         <div class="nospill-counter-service-row">
-          <span>Batch</span>
-          <strong>${formatShopCount(batchSize)} order${batchSize === 1 ? "" : "s"} / handoff</strong>
-        </div>
-        <div class="nospill-counter-service-row">
-          <span>Priority</span>
-          <strong>${escapeHtml(counterServicePriorityLabel(service.priority))}</strong>
+          <span>Income</span>
+          <strong>${escapeHtml(income.text)}</strong>
         </div>
         <div
           class="nospill-counter-service-bar"
@@ -12428,30 +12464,18 @@ function renderCounterServiceCard(state) {
         >
           <span style="width: ${progress.percent}%"></span>
         </div>
-        <small>${escapeHtml(progress.message)}</small>
-        <small>${escapeHtml(income.text)}</small>
-        ${income.detail ? `<small>${escapeHtml(income.detail)}</small>` : ""}
+        ${blocker ? `<small>${escapeHtml(blocker)}</small>` : ""}
+        <details class="nospill-compact-details">
+          <summary>Counter details</summary>
+          <p>Priority: ${escapeHtml(counterServicePriorityLabel(service.priority))}</p>
+          ${income.detail ? `<p>${escapeHtml(income.detail)}</p>` : ""}
+        </details>
         ${service.lastResult ? `<small>${escapeHtml(service.lastResult)}</small>` : ""}
       </div>
     `,
-    actions: [
-      actionButton(
-        "Start Counter Service",
-        "data-counter-service-action",
-        "start",
-        startDisabled,
-        "nospill-primary",
-        "Counter Service is already running.",
-      ),
-      actionButton(
-        "Pause Counter Service",
-        "data-counter-service-action",
-        "pause",
-        pauseDisabled,
-        "nospill-secondary",
-        "Counter Service is already paused.",
-      ),
-    ],
+    actions: service.running
+      ? [actionButton("Pause Counter Service", "data-counter-service-action", "pause", false, "nospill-secondary")]
+      : [actionButton("Start Counter Service", "data-counter-service-action", "start", false, "nospill-primary")],
   }).replace('class="nospill-idle-card', 'data-counter-service-card="true" class="nospill-idle-card');
 }
 
@@ -13269,14 +13293,29 @@ function renderGoalStackCard(state) {
     <section class="nospill-goal-stack" aria-label="Tofu Garage goal stack">
       <div class="nospill-next-milestone-head">
         <span>Goal Stack</span>
-        <strong>Now · Next · Later</strong>
+        <strong>Glance Mode</strong>
       </div>
       <div class="nospill-goal-stack-grid">
-        ${renderGoalStackItem("Immediate Action", immediate, { compact: true })}
-        ${renderGoalStackItem("Pinned Near Goal", pinned)}
+        ${renderGoalStackItem("Now", immediate, { compact: true })}
+        ${renderGoalStackItem("Pinned Goal", pinned)}
         ${renderGoalStackItem("Era Goal", era)}
       </div>
     </section>
+  `;
+}
+
+function renderOverviewHowItWorks(state, bestOrder, runway, bottleneck) {
+  const bestOrderLine = bestOrder
+    ? `Best current order: ${bestOrder.name} uses ${formatShopCost(bestOrder.tofuRequired)} tofu stock and ${formatShopCount(bestOrder.deliveryOrdersRequired)} ready order${bestOrder.deliveryOrdersRequired === 1 ? "" : "s"}.`
+    : "Keep building Tofu Stock and ready orders to reveal better payouts.";
+  return `
+    <details class="nospill-compact-details nospill-overview-details">
+      <summary>How this works</summary>
+      <p>Current bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
+      <p>Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.</p>
+      <p>Cash buys upgrades. ${escapeHtml(runway.message)}</p>
+      <p>${escapeHtml(bestOrderLine)}</p>
+    </details>
   `;
 }
 
@@ -13284,13 +13323,14 @@ function renderOverviewPanel(state) {
   const bottleneck = currentBottleneck(state);
   const runway = tofuStockRunway(state);
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
+  const recentReward = renderRecentShopRewardCard(state);
   return `
     <h4>Overview</h4>
     ${renderGoalStackCard(state)}
     ${renderTofuShopLivingScene(state)}
-    <p class="nospill-panel-helper">Current Bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
-    <p class="nospill-panel-helper">Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.</p>
-    <p class="nospill-panel-helper">Cash buys upgrades. ${escapeHtml(runway.message)}</p>
+    <p class="nospill-panel-helper nospill-overview-brief">Queue, Cash, and build goals are summarized here. Open Details or the matching tab for deeper controls.</p>
+    ${renderOverviewHowItWorks(state, bestOrder, runway, bottleneck)}
+    ${recentReward ? `<div class="nospill-overview-recent">${recentReward}</div>` : ""}
     <div class="nospill-idle-grid">
       ${renderPreparingOrderCard(state)}
       ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
@@ -13305,7 +13345,6 @@ function renderOverviewPanel(state) {
       ${renderProjectCarValueCard(state)}
       ${renderNetWorthCard(state)}
       ${renderNetWorthMilestoneCard(state)}
-      ${renderRecentShopRewardCard(state)}
       ${renderDriverBonusCard(state)}
       ${renderPassportTeaserCard(state)}
       ${renderStoryTeaserCard()}
@@ -14050,10 +14089,26 @@ function renderTofuShop(gameState = loadGameState()) {
     const offlineSuggestions = hasOfflineEarnings
       ? returningPlayerSuggestedActions(state)
       : [];
+    const compactOffline = [];
+    if (offlineParts.length) compactOffline.push(...offlineParts);
+    if (shop.offlineEarnings && shop.offlineEarnings.queueFull && !compactOffline.includes("queue reached capacity")) {
+      compactOffline.push("queue reached capacity");
+    }
+    if (offlineCapped || offlineExcessHours > 0.01) {
+      compactOffline.push(`capped at ${formatShopCount(offlineCapHours)}h`);
+    }
+    if (!compactOffline.length && offlineHours > 0.01) {
+      compactOffline.push(`${offlineManagedCap ? "Shift Manager saved" : "shop saved"} ${formatShopCount(offlineHours)}h`);
+    }
+    const compactNotes = [];
+    if (offlineTofuConsumed > 0.005 && offlineOrders > 0.005) compactNotes.push("tofu spent on prep");
+    if (offlineCounterPaused && offlineOrders > 0.005) compactNotes.push("Counter Service stays offline");
+    const compactSuggestions = offlineSuggestions.slice(0, 2);
+    const extraSuggestionCount = Math.max(0, offlineSuggestions.length - compactSuggestions.length);
     setTextIfChanged(
       elements.shopOfflineEarnings,
       hasOfflineEarnings
-        ? `While you were away: ${offlineParts.join(", ")}.${offlineNotes.length ? ` ${offlineNotes.join(". ")}.` : ""}${offlineSuggestions.length ? ` Suggested next: ${offlineSuggestions.join("; ")}.` : ""}`
+        ? `While away: ${compactOffline.concat(compactNotes).join(" · ")}${compactSuggestions.length ? ` · Next: ${compactSuggestions.join(" · ")}` : ""}${extraSuggestionCount ? " · View Ledger" : ""}`
         : "",
     );
   }
@@ -15793,6 +15848,11 @@ function handleTofuShopPanelClick(event) {
     return;
   }
   if (target.dataset.builderNoteAction) {
+    if (target.dataset.builderNoteAction === "edit") {
+      appState.builderNoteEditing = true;
+      renderGamePanels(currentGameState());
+      return;
+    }
     const card = target.closest(".nospill-builder-note-card");
     const input = card && card.querySelector ? card.querySelector("[data-builder-note-input]") : null;
     const value = target.dataset.builderNoteAction === "clear" ? "" : (input ? input.value : "");
@@ -15801,6 +15861,7 @@ function handleTofuShopPanelClick(event) {
       setSummaryStatusMessage(result.reason);
       return;
     }
+    appState.builderNoteEditing = false;
     saveGameState(result.gameState);
     renderGamePanels(result.gameState);
     setSummaryStatusMessage(result.note ? "Builder Note saved locally." : "Builder Note cleared.");

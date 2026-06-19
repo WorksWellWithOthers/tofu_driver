@@ -234,8 +234,10 @@ Fix applied:
   repeated full normalization inside the sort path.
 - Net Worth / Showcase milestone priority now yields to urgent queue/stock/counter bottlenecks and
   Manager Desk queue pressure.
-- Overview Goal Stack V1 keeps the Pinned Near Goal stable: live Cash, queue, stock, and ETA changes
+- Overview Glance Mode V1 keeps the Pinned Goal stable: live Cash, queue, stock, and ETA changes
   update progress/copy in place instead of replacing the medium-term target during normal ticks.
+  Long explanations, Net Worth formulas, Dream Build details, and saved Builder Note editing
+  controls are collapsed by default so the active Overview does less visible text churn.
 
 Result:
 

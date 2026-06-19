@@ -50,10 +50,12 @@
 - Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
   progress, the best available order card, and the relevant next station/upgrade so the first loop
   is playable without opening Orders.
-- Tofu Shop Overview now includes Overview Goal Stack V1. It separates Immediate Action, a stable
-  Pinned Near Goal, and the long-term Era Goal so a large Net Worth target does not hide the next
-  meaningful shop or Dream Build target. When the current implemented Dream Build track is capped,
-  the Overview says so directly and labels Suspension as future/target-only.
+- Tofu Shop Overview now uses Overview Glance Mode V1. It separates Now, a stable Pinned Goal, and
+  the long-term Era Goal so a large Net Worth target does not hide the next meaningful shop or Dream
+  Build target. Long explanations/formulas move behind Details, saved Builder Notes collapse until
+  edited, Counter Service shows only the relevant Start/Pause action, and offline summaries stay
+  compact. When the current implemented Dream Build track is capped, the Overview says so directly
+  and labels Suspension as future/target-only.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
@@ -323,8 +325,9 @@ Canonical references:
 13. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
-14. Tune Overview Goal Stack V1, the retained Next Milestone helper, and Station Milestone Boosts
-   V1 against playtest behavior before adding higher station thresholds.
+14. Tune Overview Glance Mode V1, the retained Next Milestone helper, and Station Milestone Boosts
+   V1 against playtest behavior before adding higher station thresholds. Confirm Pinned Goal stays
+   stable and Details remain discoverable on mobile.
 15. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net

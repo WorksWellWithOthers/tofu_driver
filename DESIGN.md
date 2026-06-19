@@ -487,16 +487,19 @@ Current design principles:
   already healthy.
 - Early upgrade cards should show before/after impact, such as a better order-prep cadence or
   higher stock/sec, before asking the player to spend Cash.
-- Overview is the main first-loop play surface. It should include the current bottleneck, the next
-  best action, ready orders, Prep Counter progress, the best available order card, and one relevant
-  station or upgrade. A new player should not need to open Orders to understand or play the first
-  loop.
-- Overview Goal Stack V1 is the current guidance pattern. It separates `Immediate Action` for the
-  live bottleneck, `Pinned Near Goal` for a stable medium-term target, and `Era Goal` for the large
-  Net Worth or shop horizon. The pinned goal should not flip just because Cash, queue fullness, or
-  ETA changes; live state updates copy/progress in place. When the current implemented Dream Build
+- Overview is the main first-loop play surface. It should be glance-first: show what changed, what
+  to do now, what the player is working toward, and what unlocked. A new player should not need to
+  open Orders to understand or play the first loop, but detailed explanations should live behind
+  Details toggles or in Production, Upgrades, Passport, Ledger, and Settings.
+- Overview Glance Mode V1 is the current guidance pattern. It separates `Now` for the live
+  bottleneck, `Pinned Goal` for a stable medium-term target, and `Era Goal` for the large Net Worth
+  or shop horizon. The pinned goal should not flip just because Cash, queue fullness, or ETA
+  changes; live state updates copy/progress in place. When the current implemented Dream Build
   track is complete, the Overview should say so directly and show Suspension only as a future
   target, with no Suspension purchase button or Dream Garage tab.
+- Long Overview explanations, Net Worth formulas, Garage Build formulas, and saved Builder Note
+  editing controls should be collapsed by default. Counter Service should show only the meaningful
+  Start or Pause action, not disabled duplicate buttons.
 - The Tofu Shop Living Scene is a decorative parked Overview panel, not a control surface. It should
   present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
   milestones, while buttons and gameplay decisions remain separate UI. Do not show separate

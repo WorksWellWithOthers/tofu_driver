@@ -2073,7 +2073,7 @@ globalThis.rawAccumulatedRouteFallbackHtml = elements.shopTabPanel.innerHTML;
   assert(!context.settingsPanelHtml.includes('Station Upgrades'));
   assert(!context.ledgerPanelHtml.includes('Tofu Press'));
   assert(!context.ledgerPanelHtml.includes('Station Upgrades'));
-  assert(context.positiveOfflineText.includes('While you were away: +'));
+  assert(context.positiveOfflineText.includes('While away: +'));
   assert(context.positiveOfflineText.includes('tofu stock'));
   assert(context.positiveOfflineText.includes('waiting orders'));
   assert(context.fractionalPrepHtml.includes('Need 1 more Prep Capacity'));
@@ -2222,9 +2222,13 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert.strictEqual(context.funnelPackText, 'Pack Tofu');
   assert(context.funnelPackHelper.includes('Manual packing is a backup'));
   assert(context.funnelFulfillHelper.includes('Counter Service is the normal handoff path'));
-  assert(context.funnelOverviewHtml.includes('Current Bottleneck: Need Cash'));
+  assert(context.funnelOverviewHtml.includes('Goal Stack'));
+  assert(context.funnelOverviewHtml.includes('Now'));
+  assert(context.funnelOverviewHtml.includes('Pinned Goal'));
+  assert(context.funnelOverviewHtml.includes('Era Goal'));
+  assert(context.funnelOverviewHtml.includes('How this works'));
+  assert(context.funnelOverviewHtml.includes('Current bottleneck: Need Cash'));
   assert(context.funnelOverviewHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.'));
-  assert(context.funnelOverviewHtml.includes('Cash buys upgrades.'));
   assert(context.funnelOverviewHtml.includes('Preparing Next Order'));
   assert(context.funnelOverviewHtml.includes('role="progressbar"'));
   assert(context.funnelOverviewHtml.includes('Simple Tofu Box'));
@@ -2234,6 +2238,7 @@ globalThis.funnelStockAfterMax = fulfilled.gameState.shop.tofuStock;
   assert(!context.funnelOverviewHtml.includes('Current Bottleneck: Certified boost available'));
   assert.strictEqual(context.funnelOrdersFallbackTab, 'overview');
   assert(context.funnelOrdersFallbackHtml.includes('Overview'));
+  assert(context.funnelOrdersFallbackHtml.includes('How this works'));
   assert(context.funnelOrdersFallbackHtml.includes('Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.'));
   assert(context.funnelOrdersFallbackHtml.includes('Reward: +$10 from tips, +1 Reputation, +8 Shop XP.'));
   assert(context.funnelOrdersFallbackHtml.includes('Counter Service'));
@@ -3740,9 +3745,8 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert(context.acknowledgedFeedback.includes('Story beat unlocked'));
   assert.strictEqual(context.acknowledgedSeen, true);
   assert(context.acknowledgedIds.includes('dream_build_teaser_v1'));
-  assert(context.acknowledgedCoveredCardHtml.includes('Behind the Shop'));
-  assert(context.acknowledgedCoveredCardHtml.includes('Dream Build: Not ready yet'));
-  assert(context.acknowledgedCoveredCardHtml.includes('The Tofu Shop is not the destination'));
+  assert.strictEqual(context.acknowledgedCoveredCardHtml, '');
+  assert(!context.storyOverviewHtml.includes('Dream Build: Not ready yet'));
   assert(!context.acknowledgedCoveredCardHtml.includes('/static/nospill/images/old_car_out_back_story_splash.webp'));
   assert(!context.acknowledgedCoveredCardHtml.includes('Continue Tofu Shop'));
   assert.strictEqual(context.acknowledgedDreamVisible, true);
@@ -3751,7 +3755,7 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert.strictEqual(context.acknowledgedDreamProgressSummary.completed, 0);
   assert.strictEqual(context.acknowledgedDreamProgressSummary.total, 30);
   assert.strictEqual(context.acknowledgedDreamProgressSummary.percent, 0);
-  assert(context.acknowledgedDreamProgressCard.includes('Dream Build Progress'));
+  assert(context.acknowledgedDreamProgressCard.includes('Dream Build'));
   assert(context.acknowledgedDreamProgressCard.includes('0 / 30 work stages'));
   assert(context.acknowledgedDreamProgressCard.includes('Next Dream Step: Wheels Fund'));
   assert(context.acknowledgedDreamNote.includes('Wheels Fund'));
@@ -3786,7 +3790,7 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert.strictEqual(context.wheelsProgressSummary.completed, 1);
   assert.strictEqual(context.wheelsProgressSummary.total, 30);
   assert.strictEqual(context.wheelsProgressSummary.percent, 3);
-  assert(context.wheelsProgressCardHtml.includes('Dream Build Progress'));
+  assert(context.wheelsProgressCardHtml.includes('Dream Build'));
   assert(context.wheelsProgressCardHtml.includes('1 / 30 work stages'));
   assert(context.wheelsProgressCardHtml.includes('aria-valuenow="1"'));
   assert(context.wheelsProgressCardHtml.includes('aria-valuemax="30"'));
@@ -3900,7 +3904,7 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert.strictEqual(context.sealProgressSummary.completed, 5);
   assert.strictEqual(context.sealProgressSummary.total, 30);
   assert.strictEqual(context.sealProgressSummary.percent, 17);
-  assert(context.sealProgressCardHtml.includes('Dream Build Progress'));
+  assert(context.sealProgressCardHtml.includes('Dream Build'));
   assert(context.sealProgressCardHtml.includes('5 / 30 work stages'));
   assert(context.sealProgressCardHtml.includes('Wheels · Level 3 / 5 · Balanced Fitment'));
   assert(context.sealProgressCardHtml.includes('Exhaust · Level 2 / 5 · Sealed Joints'));
@@ -3948,7 +3952,7 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert.strictEqual(context.tunedProgressSummary.completed, 6);
   assert.strictEqual(context.tunedProgressSummary.total, 30);
   assert.strictEqual(context.tunedProgressSummary.percent, 20);
-  assert(context.tunedProgressCardHtml.includes('Dream Build Progress'));
+  assert(context.tunedProgressCardHtml.includes('Dream Build'));
   assert(context.tunedProgressCardHtml.includes('6 / 30 work stages'));
   assert(context.tunedProgressCardHtml.includes('Wheels · Level 3 / 5 · Balanced Fitment'));
   assert(context.tunedProgressCardHtml.includes('Exhaust · Level 3 / 5 · Tuned Note'));
@@ -4580,8 +4584,8 @@ appState.running = false;
 `, context);
 
   assert(context.nextMilestoneFreshHtml.includes('Goal Stack'));
-  assert(context.nextMilestoneFreshHtml.includes('Immediate Action'));
-  assert(context.nextMilestoneFreshHtml.includes('Pinned Near Goal'));
+  assert(context.nextMilestoneFreshHtml.includes('Now'));
+  assert(context.nextMilestoneFreshHtml.includes('Pinned Goal'));
   assert(context.nextMilestoneFreshHtml.includes('Era Goal'));
   assert(context.nextMilestoneFreshHtml.includes('First Cash Earned'));
   assert(context.nextMilestoneFreshHtml.includes('Simple Tofu Box'));
@@ -4591,7 +4595,7 @@ appState.running = false;
   assert(context.nextMilestoneFreshHtml.includes('nospill-available-badge'));
   assert(context.nextMilestoneFreshHtml.includes('Available'));
   assert(!context.nextMilestoneFreshHtml.includes('Fulfill Simple Tofu Box'));
-  assert(context.nextMilestoneFreshHtml.includes('Current Bottleneck'));
+  assert(context.nextMilestoneFreshHtml.includes('Current bottleneck'));
   assert(!context.nextMilestoneFreshHtml.includes('Net Worth:'));
   assert(!context.nextMilestoneLongRoadHtml.includes('Net Worth:'));
   assert(!context.nextMilestoneLongRoadHtml.includes('Company Value'));
@@ -4798,7 +4802,9 @@ renderTofuShop(${JSON.stringify(fresh)});
 globalThis.counterFreshHtml = elements.shopTabPanel.innerHTML;
 `, context);
   assert(context.counterFreshHtml.includes('Counter Service'));
-  assert(context.counterFreshHtml.includes('Regular customers can pick up prepared orders automatically.'));
+  assert(context.counterFreshHtml.includes('Customers hand off prepared orders for Cash.'));
+  assert(context.counterFreshHtml.includes('Pause Counter Service'));
+  assert(!context.counterFreshHtml.includes('Start Counter Service'));
 
   const freshAuto = JSON.parse(JSON.stringify(fresh));
   freshAuto.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
@@ -4856,11 +4862,11 @@ globalThis.counterUnlockedAction = nextBestAction(${JSON.stringify(unlocked)}, {
 globalThis.counterUnlockedMilestone = nextMilestoneForShop(${JSON.stringify(unlocked)});
 `, context);
   assert(context.counterUnlockedHtml.includes('Counter Service'));
-  assert(context.counterUnlockedHtml.includes('Regular customers can pick up prepared orders automatically.'));
+  assert(context.counterUnlockedHtml.includes('Start automatic handoffs when the shop is parked.'));
   assert(context.counterUnlockedHtml.includes('1 handoff / 10 sec'));
   assert(context.counterUnlockedHtml.includes('Best Available'));
   assert(context.counterUnlockedHtml.includes('Start Counter Service'));
-  assert(context.counterUnlockedHtml.includes('Pause Counter Service'));
+  assert(!context.counterUnlockedHtml.includes('Pause Counter Service'));
   assert.strictEqual(context.counterUnlockedAction.type, 'start_counter_service');
   assert.strictEqual(context.counterUnlockedMilestone.id, 'first_family_tofu_tray');
 
@@ -5576,8 +5582,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(!context.supplierUpgradeHtml.includes('Buy Counter Crew'));
   assert(context.offlineSummaryText.includes('+554K waiting orders'));
   assert(!context.offlineSummaryText.includes('+0 tofu stock'));
-  assert(context.offlineSummaryText.includes('tofu supply was consumed preparing orders'));
-  assert(context.offlineSummaryText.includes('Counter Service does not fulfill offline yet'));
+  assert(context.offlineSummaryText.includes('tofu spent on prep'));
+  assert(context.offlineSummaryText.includes('Counter Service stays offline'));
 
   assert.strictEqual(context.surfaceFromHash('#/shop'), 'shop');
   assert.strictEqual(context.surfaceFromHash('#/garage'), 'shop');
@@ -5585,8 +5591,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619j'));
-  assert(html.includes('/static/nospill/app.css?v=20260619j'));
+  assert(html.includes('/static/nospill/app.js?v=20260619k'));
+  assert(html.includes('/static/nospill/app.css?v=20260619k'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -5824,15 +5830,15 @@ globalThis.generousOfflineSummaryFirst = offlineElements.shopOfflineEarnings.tex
 renderTofuShop(offlineLong);
 globalThis.generousOfflineSummarySecond = offlineElements.shopOfflineEarnings.textContent;
 `, context);
-  assert(context.generousOfflineSummaryFirst.includes('While you were away:'));
-  assert(context.generousOfflineSummaryFirst.includes('longer absences are capped at 24 hours'));
-  assert(context.generousOfflineSummaryFirst.includes('Suggested next:'));
+  assert(context.generousOfflineSummaryFirst.includes('While away:'));
+  assert(context.generousOfflineSummaryFirst.includes('capped at 24h'));
+  assert(context.generousOfflineSummaryFirst.includes('Next:'));
   assert.strictEqual(context.generousOfflineSummaryFirst, context.generousOfflineSummarySecond);
   assert(!context.generousOfflineSummaryFirst.includes('Pack Tofu'));
   assert(!context.generousOfflineSummaryFirst.includes('undefined'));
   assert(!context.generousOfflineSummaryFirst.includes('NaN'));
   assert(!context.generousOfflineSummaryFirst.includes('Infinity'));
-  const suggestions = context.generousOfflineSummaryFirst.split('Suggested next: ')[1].split('.')[0].split('; ');
+  const suggestions = context.generousOfflineSummaryFirst.split('Next: ')[1].split(' · View Ledger')[0].split(' · ');
   assert(suggestions.length <= 3);
 }
 
@@ -6212,8 +6218,8 @@ appState.running = false;
 `, context);
 
   assert(context.freshGoalStackHtml.includes('Goal Stack'));
-  assert(context.freshGoalStackHtml.includes('Immediate Action'));
-  assert(context.freshGoalStackHtml.includes('Pinned Near Goal'));
+  assert(context.freshGoalStackHtml.includes('Now'));
+  assert(context.freshGoalStackHtml.includes('Pinned Goal'));
   assert(context.freshGoalStackHtml.includes('Era Goal'));
   assert(context.freshOverviewHtml.includes('Goal Stack'));
 
@@ -6717,7 +6723,7 @@ globalThis.bulkOfflineText = elements.shopOfflineEarnings.textContent;
   assert(context.bulkUpgradeHtml.includes('0:10'));
   assert(context.bulkStationHtml.includes('Buy Cheapest Station'));
   assert(context.bulkStationHtml.includes('Buy All Affordable Stations'));
-  assert(context.bulkOfflineText.includes('Suggested next:'));
+  assert(context.bulkOfflineText.includes('Next:'));
   assert(!context.bulkOfflineText.includes('Pack Tofu'));
   assert(!context.bulkUpgradeHtml.includes('Route Familiarity'));
   assert(!context.bulkUpgradeHtml.includes('undefined'));
@@ -8196,8 +8202,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619j'));
-  assert(html.includes('/static/nospill/app.css?v=20260619j'));
+  assert(html.includes('/static/nospill/app.js?v=20260619k'));
+  assert(html.includes('/static/nospill/app.css?v=20260619k'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -9715,6 +9721,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-spirit-boost',
     'data-festival-boost',
     'data-covered-car-teaser',
+    'data-counter-service-action',
     'data-dream-build-action',
     'data-rival-challenge',
     'data-license-exam',
