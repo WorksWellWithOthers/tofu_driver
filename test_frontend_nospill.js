@@ -91,6 +91,7 @@ globalThis.classifyCargoBalance = classifyCargoBalance;
 globalThis.classifyConsistency = classifyConsistency;
 globalThis.renderCoachRecap = renderCoachRecap;
 globalThis.failureFlavorForSession = failureFlavorForSession;
+globalThis.storyCardPreviewData = storyCardPreviewData;
 globalThis.applyDailyDeliveryCredit = applyDailyDeliveryCredit;
 globalThis.analyzeRoute = analyzeRoute;
 globalThis.qualificationForRoute = qualificationForRoute;
@@ -5440,8 +5441,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618p'));
-  assert(html.includes('/static/nospill/app.css?v=20260618p'));
+  assert(html.includes('/static/nospill/app.js?v=20260618q'));
+  assert(html.includes('/static/nospill/app.css?v=20260618q'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7466,6 +7467,230 @@ globalThis.cargoCommentaryActiveHtml = elements.cargoCommentaryCard.innerHTML;
   assert(context.cargoCommentaryCanvasText.includes('Cargo Commentary'));
   assert.strictEqual(context.cargoCommentaryActiveHidden, true);
   assert.strictEqual(context.cargoCommentaryActiveHtml, '');
+}
+
+function testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(html.includes('Story Card Preview'));
+  assert(html.includes('id="story-card-preview-section"'));
+  assert(html.includes('id="story-card-preview-caption-box"'));
+  assert(html.indexOf('story-card-preview-section') < html.indexOf('cargo-commentary-section'));
+  assert(html.indexOf('cargo-commentary-section') < html.indexOf('result-story-section'));
+  assert(html.indexOf('result-story-section') < html.indexOf('delivery-summary-title'));
+  assert(css.includes('.nospill-story-card-preview-note.is-generated'));
+  assert(css.includes('.nospill-story-card-preview-note.is-player'));
+  assert(css.includes('flex-wrap: wrap'));
+  assert(source.includes('function storyCardPreviewData'));
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+
+  const context = loadNoSpillContext();
+  const longCaption = 'A'.repeat(90);
+  const captionedSummary = sampleShareSummary({
+    cargoCondition: 54,
+    waterLeft: 54,
+    waterSpilled: 46,
+    storyCaption: longCaption,
+    speed: 80,
+    gps: 'raw',
+    coordinates: '47,-122',
+    exactDistance: 9,
+  });
+  const preview = context.storyCardPreviewData(captionedSummary);
+  assert.strictEqual(preview.status, 'Delivery Complete');
+  assert.strictEqual(preview.cargo, 'Cargo: Soft Tofu');
+  assert.strictEqual(preview.condition, '54.0%');
+  assert.strictEqual(preview.rank, 'Rank: Half Cup Hero');
+  assert(preview.commentary.length > 0);
+  assert.strictEqual(preview.storyCaption, longCaption);
+  assert.strictEqual(preview.footer, 'Not faster. Smoother.');
+
+  const emptyPreview = context.storyCardPreviewData(sampleShareSummary({ storyCaption: '   ' }));
+  assert.strictEqual(emptyPreview.storyCaption, '');
+
+  const practiceCard = context.buildShareCardData(sampleShareSummary({
+    mode: 'basic',
+    qualificationStatus: 'practice',
+    qualificationLabel: 'Practice Only',
+    storyCaption: longCaption,
+  }));
+  assert.strictEqual(practiceCard.challengeName, 'Practice Delivery');
+  assert.strictEqual(practiceCard.storyCaption.length, 90);
+  assert(practiceCard.cargoCommentary.line.length > 0);
+
+  const simulatedCard = context.buildShareCardData(sampleShareSummary({
+    simulated: true,
+    storyCaption: longCaption,
+  }));
+  assert(simulatedCard.challengeName.includes('Simulated'));
+  assert.strictEqual(simulatedCard.storyCaption.length, 90);
+  assert(simulatedCard.cargoCommentary.line.length > 0);
+
+  const shareText = context.buildShareText(captionedSummary, { includeDistanceInShare: true });
+  assert(shareText.includes('Cargo Commentary:'));
+  assert(shareText.includes(`Caption: "${longCaption}"`));
+  assert(!/\b(speed|mph|gps|map|street|trace|location|lat|lon|exact distance)\b/i.test(shareText));
+  assert(!/undefined|NaN|Infinity/.test(shareText));
+
+  const stateBefore = context.defaultGameState();
+  stateBefore.totalXP = 500;
+  stateBefore.shop.tips = 2500000;
+  stateBefore.shop.dreamBuild.wheelsPurchased = true;
+  stateBefore.shop.dreamBuild.wheelsLevel = 3;
+  stateBefore.shop.dreamBuild.exhaustPurchased = true;
+  stateBefore.shop.dreamBuild.exhaustLevel = 5;
+  const summaryBefore = sampleShareSummary({
+    storyCaption: longCaption,
+    deliveryRewards: { gameState: stateBefore, xpGained: 123, shop: { tipsGained: 12, tofuStockGained: 5, reputationGained: 3 } },
+  });
+  const cargoBefore = context.calculateCargoCondition(summaryBefore);
+  const rankBefore = context.displayRankForSession(summaryBefore);
+  const qualifiedBefore = context.isQualifiedSession(summaryBefore);
+  const xpBefore = stateBefore.totalXP;
+  const shopCashBefore = stateBefore.shop.tips;
+  const netWorthBefore = context.netWorthV1(stateBefore);
+  const garageValueBefore = context.projectCarValueV1(stateBefore);
+  context.storyCardPreviewData(summaryBefore);
+  context.buildShareCardData(summaryBefore);
+  assert.strictEqual(context.calculateCargoCondition(summaryBefore), cargoBefore);
+  assert.strictEqual(context.displayRankForSession(summaryBefore), rankBefore);
+  assert.strictEqual(context.isQualifiedSession(summaryBefore), qualifiedBefore);
+  assert.strictEqual(stateBefore.totalXP, xpBefore);
+  assert.strictEqual(stateBefore.shop.tips, shopCashBefore);
+  assert.strictEqual(context.netWorthV1(stateBefore), netWorthBefore);
+  assert.strictEqual(context.projectCarValueV1(stateBefore), garageValueBefore);
+
+  vm.runInContext(`
+function makeNode() {
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: false,
+    value: "",
+    dataset: {},
+    classes: new Set(),
+    listeners: {},
+    focused: false,
+    className: "",
+  };
+  node.classList = {
+    toggle(name, value) {
+      if (value) node.classes.add(name);
+      else node.classes.delete(name);
+    },
+    add(name) { node.classes.add(name); },
+    remove(name) { node.classes.delete(name); },
+    contains(name) { return node.classes.has(name); },
+  };
+  node.addEventListener = function addEventListener(type, handler) {
+    node.listeners[type] = handler;
+  };
+  node.focus = function focusNode() { node.focused = true; };
+  node.querySelector = () => null;
+  node.closest = () => node;
+  return node;
+}
+const fakeCanvas = makeNode();
+fakeCanvas.width = 1080;
+fakeCanvas.height = 1350;
+fakeCanvas.commands = [];
+fakeCanvas.getContext = () => ({
+  clearRect(...args) { fakeCanvas.commands.push(["clearRect", ...args]); },
+  fillRect(...args) { fakeCanvas.commands.push(["fillRect", ...args]); },
+  strokeRect(...args) { fakeCanvas.commands.push(["strokeRect", ...args]); },
+  fillText(...args) { fakeCanvas.commands.push(["fillText", ...args]); },
+  beginPath() {},
+  arc() {},
+  stroke() {},
+  fill() {},
+  measureText(text) { return { width: String(text).length * 14 }; },
+  set fillStyle(value) { fakeCanvas.fillStyle = value; },
+  set strokeStyle(value) { fakeCanvas.strokeStyle = value; },
+  set lineWidth(value) { fakeCanvas.lineWidth = value; },
+  set font(value) { fakeCanvas.font = value; },
+});
+elements = {
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  summaryCharacterCameo: makeNode(),
+  routeContext: makeNode(),
+  routeGrid: makeNode(),
+  summaryGrid: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  coachRecapCard: makeNode(),
+  cupTrailCard: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  storyCardPreviewSection: makeNode(),
+  storyCardPreviewStatus: makeNode(),
+  storyCardPreviewCondition: makeNode(),
+  storyCardPreviewCargo: makeNode(),
+  storyCardPreviewRank: makeNode(),
+  storyCardPreviewCommentary: makeNode(),
+  storyCardPreviewCaptionBox: makeNode(),
+  storyCardPreviewCaption: makeNode(),
+  storyCardPreviewFooter: makeNode(),
+  cargoCommentarySection: makeNode(),
+  cargoCommentaryCard: makeNode(),
+  resultStorySection: makeNode(),
+  resultStoryCaptionInput: makeNode(),
+  resultStoryCount: makeNode(),
+  resultStoryPreview: makeNode(),
+  resultStoryPresetButtons: [],
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+  shareCanvas: fakeCanvas,
+  summaryDiscordCta: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+  landingStatus: makeNode(),
+  summaryStatus: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderSummary({ ...sampleVisualPolishSummary, storyCaption: "<b>Story</b>  tofu" });
+globalThis.storyPreviewHidden = elements.storyCardPreviewSection.classes.has("is-hidden");
+globalThis.storyPreviewStatus = elements.storyCardPreviewStatus.textContent;
+globalThis.storyPreviewCondition = elements.storyCardPreviewCondition.textContent;
+globalThis.storyPreviewCargo = elements.storyCardPreviewCargo.textContent;
+globalThis.storyPreviewRank = elements.storyCardPreviewRank.textContent;
+globalThis.storyPreviewCommentary = elements.storyCardPreviewCommentary.textContent;
+globalThis.storyPreviewCaptionHidden = elements.storyCardPreviewCaptionBox.classes.has("is-hidden");
+globalThis.storyPreviewCaption = elements.storyCardPreviewCaption.textContent;
+globalThis.storyPreviewFooter = elements.storyCardPreviewFooter.textContent;
+globalThis.storyPreviewCardText = fakeCanvas.commands.filter((cmd) => cmd[0] === "fillText").map((cmd) => cmd[1]).join(" ");
+elements.resultStoryCaptionInput.value = "<i>New</i> caption";
+handleResultStoryCaptionInput({ target: elements.resultStoryCaptionInput });
+globalThis.storyPreviewUpdatedCaption = elements.storyCardPreviewCaption.textContent;
+renderSummary({ ...sampleVisualPolishSummary, storyCaption: "" });
+globalThis.storyPreviewEmptyCaptionHidden = elements.storyCardPreviewCaptionBox.classes.has("is-hidden");
+appState.running = true;
+renderStoryCardPreview(appState.lastSummary);
+globalThis.storyPreviewActiveHidden = elements.storyCardPreviewSection.classes.has("is-hidden");
+`, Object.assign(context, { sampleVisualPolishSummary: captionedSummary }));
+
+  assert.strictEqual(context.storyPreviewHidden, false);
+  assert.strictEqual(context.storyPreviewStatus, 'Delivery Complete');
+  assert.strictEqual(context.storyPreviewCondition, '54.0%');
+  assert.strictEqual(context.storyPreviewCargo, 'Cargo: Soft Tofu');
+  assert.strictEqual(context.storyPreviewRank, 'Rank: Half Cup Hero');
+  assert(context.storyPreviewCommentary.length > 0);
+  assert.strictEqual(context.storyPreviewCaptionHidden, false);
+  assert.strictEqual(context.storyPreviewCaption, 'Story tofu');
+  assert.strictEqual(context.storyPreviewUpdatedCaption, 'New caption');
+  assert.strictEqual(context.storyPreviewFooter, 'Not faster. Smoother.');
+  assert(context.storyPreviewCardText.includes('Cargo Commentary'));
+  assert(context.storyPreviewCardText.includes('Story Caption'));
+  assert.strictEqual(context.storyPreviewEmptyCaptionHidden, true);
+  assert.strictEqual(context.storyPreviewActiveHidden, true);
 }
 
 function testLockedMerchLinksAreNotShownBeforeUnlock() {
@@ -9668,7 +9893,8 @@ function testResultScreenShowsGameSummarySections() {
   assert(!summaryHtml.includes('id="summary-grid"'));
   assert(!summaryHtml.includes('id="milestone-output"'));
   assert(!summaryHtml.includes('id="merch-grid"'));
-  assert.strictEqual((summaryHtml.match(/Delivery Complete/g) || []).length, 0);
+  assert(summaryHtml.includes('Story Card Preview'));
+  assert.strictEqual((summaryHtml.match(/Delivery Complete/g) || []).length, 1);
   [
     '"Cargo Condition"',
     '"Driver XP Gained"',
@@ -10106,6 +10332,7 @@ const TESTS = [
   ["testShareConfigAndCardData", testShareConfigAndCardData],
   ["testResultStoryCaptionV1IsLocalSafeAndShareable", testResultStoryCaptionV1IsLocalSafeAndShareable],
   ["testFailureFlavorV1AddsSafeCargoCommentary", testFailureFlavorV1AddsSafeCargoCommentary],
+  ["testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy", testResultCardVisualPolishV1StoryPreviewAndShareCardHierarchy],
   ["testLockedMerchLinksAreNotShownBeforeUnlock", testLockedMerchLinksAreNotShownBeforeUnlock],
   ["testDailyDeliverySelectionAndEvaluation", testDailyDeliverySelectionAndEvaluation],
   ["testRouteTypeClassification", testRouteTypeClassification],

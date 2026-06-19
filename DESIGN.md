@@ -994,6 +994,14 @@ qualification, Driver XP, shop rewards, Net Worth, Garage Build Value, Brand Val
 balance, and it must not include speed, GPS, maps, streets, exact distance, raw motion, backend,
 accounts, uploads, social feeds, or active-drive commentary.
 
+Result Card Visual Polish V1 makes those post-run story pieces read as a compact mini story card.
+The parked result screen now prioritizes result identity, Cargo Commentary, player Story Caption,
+and a local Story Card Preview before deeper recap details. Generated Cargo Commentary and
+player-written Story Caption must remain visually and semantically distinct, and downloaded share
+cards should keep the same hierarchy without adding a full comic editor, stickers, uploads,
+backend sharing, accounts, public profiles, scoring changes, reward changes, economy changes, or
+speed/GPS/map/street data.
+
 Super Cute Collectibles is the current physical merch fulfillment partner. It does not verify scores
 in the current MVP. Future backend unlock tokens, if built, must verify only summarized unlock state
 and must reject simulator/dev/local-only proof.

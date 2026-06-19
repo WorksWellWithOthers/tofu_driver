@@ -602,6 +602,7 @@
 .nospill-cargo-commentary strong {
   color: #f4f7ef;
   line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .nospill-cargo-commentary span {
@@ -614,6 +615,77 @@
   background:
     linear-gradient(180deg, rgba(240, 185, 90, 0.08), transparent 60%),
     #0b0f10;
+}
+
+.nospill-story-card-preview {
+  display: grid;
+  gap: 12px;
+  max-width: 100%;
+  border: 1px solid rgba(244, 247, 239, 0.16);
+  border-radius: 8px;
+  padding: 14px;
+  background:
+    linear-gradient(135deg, rgba(158, 233, 191, 0.10), transparent 44%),
+    linear-gradient(180deg, rgba(244, 247, 239, 0.055), transparent 72%),
+    #0b0f10;
+}
+
+.nospill-story-card-preview-head,
+.nospill-story-card-preview-facts {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nospill-story-card-preview-head span,
+.nospill-story-card-preview-facts span,
+.nospill-story-card-preview-note span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nospill-story-card-preview-head strong {
+  color: #f4f7ef;
+  font-size: clamp(1.7rem, 8vw, 2.8rem);
+  line-height: 1;
+}
+
+.nospill-story-card-preview-facts {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.nospill-story-card-preview-note {
+  display: grid;
+  gap: 6px;
+  border-radius: 8px;
+  padding: 11px;
+  overflow-wrap: anywhere;
+}
+
+.nospill-story-card-preview-note strong {
+  color: #f4f7ef;
+  line-height: 1.35;
+}
+
+.nospill-story-card-preview-note.is-generated {
+  border: 1px solid rgba(158, 233, 191, 0.28);
+  background: rgba(158, 233, 191, 0.055);
+}
+
+.nospill-story-card-preview-note.is-player {
+  border: 1px solid rgba(240, 185, 90, 0.46);
+  background: rgba(240, 185, 90, 0.09);
+}
+
+.nospill-story-card-preview p {
+  margin: 0;
+  color: #9ee9bf;
+  font-weight: 900;
 }
 
 .nospill-coach-recap-card {

@@ -13323,6 +13323,7 @@ function setSummaryMode(mode, options = {}) {
   }
   const hideShare = mode === "shop-order";
   if (elements.shareCardSection) elements.shareCardSection.classList.toggle("is-hidden", hideShare);
+  if (elements.storyCardPreviewSection) elements.storyCardPreviewSection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
   if (elements.resultStorySection) elements.resultStorySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
   if (elements.cargoCommentarySection) elements.cargoCommentarySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
   [
@@ -13533,6 +13534,7 @@ function renderShopOrderResult(result) {
   if (elements.cupTrailCard) elements.cupTrailCard.innerHTML = "";
   if (elements.coachRecapCard) elements.coachRecapCard.innerHTML = "";
   if (elements.cargoCommentaryCard) elements.cargoCommentaryCard.innerHTML = "";
+  if (elements.storyCardPreviewSection) elements.storyCardPreviewSection.classList.add("is-hidden");
   if (elements.summaryCharacterCameo) elements.summaryCharacterCameo.innerHTML = "";
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = result.report || "Shop order complete.";
@@ -13611,6 +13613,40 @@ function renderCargoCommentary(summary = appState.lastSummary) {
   ].filter(Boolean).join("");
 }
 
+function storyCardPreviewData(summary = {}) {
+  const data = buildShareCardData(summary);
+  return {
+    status: data.challengeName,
+    cargo: `Cargo: ${data.cargoLabel}`,
+    condition: data.waterDelivered,
+    rank: `Rank: ${data.rank}`,
+    commentary: data.cargoCommentary && data.cargoCommentary.line ? data.cargoCommentary.line : "",
+    storyCaption: data.storyCaption,
+    footer: data.tagline,
+  };
+}
+
+function renderStoryCardPreview(summary = appState.lastSummary) {
+  const isCupResult = Boolean(summary) && appState.summaryMode === "cup-test" && !appState.running && !appState.calibrating;
+  if (elements.storyCardPreviewSection) {
+    elements.storyCardPreviewSection.classList.toggle("is-hidden", !isCupResult);
+  }
+  if (!isCupResult) return;
+  const data = storyCardPreviewData(summary);
+  if (elements.storyCardPreviewStatus) elements.storyCardPreviewStatus.textContent = data.status;
+  if (elements.storyCardPreviewCondition) elements.storyCardPreviewCondition.textContent = data.condition;
+  if (elements.storyCardPreviewCargo) elements.storyCardPreviewCargo.textContent = data.cargo;
+  if (elements.storyCardPreviewRank) elements.storyCardPreviewRank.textContent = data.rank;
+  if (elements.storyCardPreviewCommentary) elements.storyCardPreviewCommentary.textContent = data.commentary;
+  if (elements.storyCardPreviewFooter) elements.storyCardPreviewFooter.textContent = data.footer;
+  if (elements.storyCardPreviewCaptionBox) {
+    elements.storyCardPreviewCaptionBox.classList.toggle("is-hidden", !data.storyCaption);
+  }
+  if (elements.storyCardPreviewCaption) {
+    elements.storyCardPreviewCaption.textContent = data.storyCaption;
+  }
+}
+
 function currentResultStoryCaption() {
   return sanitizeResultStoryCaption(
     appState.lastSummary && typeof appState.lastSummary.storyCaption === "string"
@@ -13651,6 +13687,7 @@ function applyResultStoryCaption(value) {
   appState.resultStoryCaption = caption;
   if (appState.lastSummary) appState.lastSummary.storyCaption = caption;
   updateResultStoryCaptionUi(appState.lastSummary);
+  renderStoryCardPreview(appState.lastSummary);
   if (appState.lastSummary && appState.summaryMode === "cup-test" && !appState.running && !appState.calibrating) {
     renderShareCanvas(appState.lastSummary);
   }
@@ -13750,6 +13787,7 @@ function renderSummary(summary) {
   renderDeliverySummary(summary);
   renderCargoCommentary(summary);
   updateResultStoryCaptionUi(summary);
+  renderStoryCardPreview(summary);
   renderShareCanvas(summary);
   showView("summary");
 }
@@ -13930,45 +13968,52 @@ function renderShareCanvas(summary) {
 
   context.fillStyle = "#f4f7ef";
   context.font = "900 54px Inter, Arial, sans-serif";
-  context.fillText(data.rank, 118, 470);
+  context.fillText(data.rank, 118, 440);
 
   context.fillStyle = "#bbc7c0";
-  context.font = "700 30px Inter, Arial, sans-serif";
-  context.fillText(`Rank: ${data.rank}`, 118, 560);
-  context.fillText(`License: ${data.driverLicense || "Local Driver"}`, 118, 622);
-  context.fillText(data.shopLevel || "Shop Level 1", 118, 684);
-  context.fillText(`Status: ${data.qualificationStatus}`, 118, 746);
-  let detailY = 808;
+  context.font = "700 28px Inter, Arial, sans-serif";
+  context.fillText(`Cargo: ${data.cargoLabel}`, 118, 520);
+  context.fillText(`Trip Time: ${data.tripTime}`, 118, 580);
+  context.fillText(`Status: ${data.qualificationStatus}`, 118, 640);
+  let detailY = 700;
   if (data.driveShape) {
     context.fillText(`Drive Shape: ${data.driveShape}`, 118, detailY);
-    detailY += 62;
+    detailY += 54;
   }
   if (data.distanceLabel) {
     context.fillText(`Distance: ${data.distanceLabel}`, 118, detailY);
-    detailY += 62;
+    detailY += 54;
   }
 
   const milestone = data.milestone || "No new stamp";
   context.fillStyle = "#f0b95a";
-  context.fillText(`Stamp: ${milestone}`, 118, Math.max(790, detailY + 18));
+  context.fillText(`Stamp: ${milestone}`, 118, Math.max(754, detailY + 18));
 
   if (data.cargoCommentary && data.cargoCommentary.line) {
-    const commentY = data.storyCaption ? 920 : 940;
+    const commentX = 118;
+    const commentY = 805;
+    const commentWidth = 610;
+    const commentHeight = data.storyCaption ? 126 : 150;
+    context.fillStyle = "rgba(158, 233, 191, 0.08)";
+    context.fillRect(commentX, commentY, commentWidth, commentHeight);
+    context.strokeStyle = "rgba(158, 233, 191, 0.48)";
+    context.lineWidth = 3;
+    context.strokeRect(commentX, commentY, commentWidth, commentHeight);
     context.fillStyle = "#9ee9bf";
     context.font = "800 22px Inter, Arial, sans-serif";
-    context.fillText("Cargo Commentary", 118, commentY);
+    context.fillText("Cargo Commentary", commentX + 28, commentY + 38);
     context.fillStyle = "#f4f7ef";
     context.font = "800 26px Inter, Arial, sans-serif";
-    wrappedCanvasLines(context, data.cargoCommentary.line, 575, data.storyCaption ? 1 : 2).forEach((line, index) => {
-      context.fillText(line, 118, commentY + 38 + index * 30);
+    wrappedCanvasLines(context, data.cargoCommentary.line, commentWidth - 56, data.storyCaption ? 2 : 3).forEach((line, index) => {
+      context.fillText(line, commentX + 28, commentY + 78 + index * 30);
     });
   }
 
   if (data.storyCaption) {
     const boxX = 118;
-    const boxY = data.cargoCommentary && data.cargoCommentary.line ? 990 : 910;
-    const boxWidth = 575;
-    const boxHeight = data.cargoCommentary && data.cargoCommentary.line ? 128 : 150;
+    const boxY = data.cargoCommentary && data.cargoCommentary.line ? 955 : 825;
+    const boxWidth = 610;
+    const boxHeight = 160;
     context.fillStyle = "rgba(240, 185, 90, 0.1)";
     context.fillRect(boxX, boxY, boxWidth, boxHeight);
     context.strokeStyle = "rgba(240, 185, 90, 0.62)";
@@ -15266,6 +15311,15 @@ function cacheElements() {
     resultStoryCount: document.getElementById("result-story-count"),
     resultStoryPreview: document.getElementById("result-story-preview"),
     resultStoryPresetButtons: Array.from(document.querySelectorAll("[data-story-caption-preset]")),
+    storyCardPreviewSection: document.getElementById("story-card-preview-section"),
+    storyCardPreviewStatus: document.getElementById("story-card-preview-status"),
+    storyCardPreviewCondition: document.getElementById("story-card-preview-condition"),
+    storyCardPreviewCargo: document.getElementById("story-card-preview-cargo"),
+    storyCardPreviewRank: document.getElementById("story-card-preview-rank"),
+    storyCardPreviewCommentary: document.getElementById("story-card-preview-commentary"),
+    storyCardPreviewCaptionBox: document.getElementById("story-card-preview-caption-box"),
+    storyCardPreviewCaption: document.getElementById("story-card-preview-caption"),
+    storyCardPreviewFooter: document.getElementById("story-card-preview-footer"),
     cargoCommentarySection: document.getElementById("cargo-commentary-section"),
     cargoCommentaryCard: document.getElementById("cargo-commentary-card"),
     shareCardSection: document.getElementById("share-card-section"),
