@@ -11,6 +11,9 @@
 - Gameplay Routes inside Tofu Garage are hidden/deferred for now. The app hash routes above remain
   unchanged, but the Tofu Garage tab row does not show `Routes`, and route-related stations,
   upgrades, Spirit actions, training, and old route-garage actions are not purchasable.
+- Tofu Garage upgrade shelves use stable unlock-based visibility and fixed catalog ordering.
+  Affordability, queue state, stock state, ETA, and maxed state update card copy in place instead
+  of removing/reinserting cards during live ticks.
 - Delivery Driver progression is now separated from Tofu Shop progression: Cup Test runs grant
   Driver XP/Driver Level, while shop orders and Counter Service grant Cash, Reputation, Shop XP,
   Shop Level progress, stamps, and shop resources.

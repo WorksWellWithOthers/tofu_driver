@@ -58,6 +58,18 @@ Tofu Shop is not:
 - a full RPG
 - a system-dump idle game
 
+Upgrade-card visibility rule:
+
+```text
+Unlock status controls visibility.
+Live resource state controls enabled/disabled/progress copy.
+```
+
+Unlocked upgrade cards should remain visible and in fixed section order while Cash, Reputation,
+stock, order queue, affordability, ETA, or temporary usefulness changes. Maxed cards should stay
+visible as Maxed or in a stable completed position. Future/deferred systems should stay hidden
+consistently.
+
 Design statement:
 
 ```text

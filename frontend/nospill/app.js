@@ -4616,10 +4616,14 @@ function isManagerDeskUpgrade(upgrade) {
 
 function managerDeskUnlocked(gameState) {
   const state = normalizeGameState(gameState);
+  const reputationGate = state.shop.reputation >= 1000000
+    || safeNonNegativeInteger(state.shop.lifetimeReputation, 0, SHOP_MAX_RESOURCE) >= 1000000;
+  const levelGate = state.shop.shopLevel >= 100
+    || safeNonNegativeInteger(state.shop.lifetimeReputation, 0, SHOP_MAX_RESOURCE) >= 1000000;
   return safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_crew, 0, 1) > 0
     && shopOrderTypeUnlocked(shopOrderTypeById("catering_crate"), state)
-    && state.shop.shopLevel >= 100
-    && state.shop.reputation >= 1000000;
+    && levelGate
+    && reputationGate;
 }
 
 function coveredCarTeaserUnlockCriteria(state) {
@@ -5345,6 +5349,7 @@ function stationUpgradeRevealReason(upgrade, gameState) {
 function stationUpgradeIsRevealedForState(upgrade, state) {
   const orders = fulfilledShopOrderCount(state);
   if (isDeferredRouteUpgrade(upgrade)) return false;
+  if (safeNonNegativeInteger(state.shop.stationUpgrades[upgrade.id], 0, upgrade.maxLevel) > 0) return true;
   if (upgrade.id === "counter_service_bell") {
     return Boolean(state.stamps.first_10_orders || state.stamps.first_100_tips)
       || fulfilledShopOrderCount(state) >= 10
@@ -5388,7 +5393,8 @@ function stationUpgradeIsRevealedForState(upgrade, state) {
     return managerDeskUnlocked(state);
   }
   if (upgrade.id === "manager_wholesale_pickup") {
-    return safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) > 0;
+    return managerDeskUnlocked(state)
+      || safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) > 0;
   }
   if (upgrade.id === "tofu_press_faster") return (hasFirstShopOrder(state) && isStockBottleneck(state)) || state.shop.stations.tofu_press >= 2;
   if (upgrade.id === "tofu_press_double") return state.shop.stations.tofu_press >= 3 || orders >= 3;
@@ -5457,18 +5463,9 @@ function upgradeRelevanceScore(upgrade, gameState) {
 
 function visibleRelevantStationUpgrades(gameState) {
   const state = normalizeGameState(gameState);
-  const relevanceContext = upgradeRelevanceContextForState(state);
   return STATION_UPGRADES
     .filter((upgrade) => stationUpgradeIsRevealedForState(upgrade, state))
-    .map((upgrade) => ({
-      upgrade,
-      score: upgradeRelevanceScoreForState(upgrade, state, relevanceContext),
-    }))
-    .sort((a, b) => (
-      a.score - b.score
-      || STATION_UPGRADES.indexOf(a.upgrade) - STATION_UPGRADES.indexOf(b.upgrade)
-    ))
-    .map((entry) => entry.upgrade);
+    .sort((a, b) => STATION_UPGRADES.indexOf(a) - STATION_UPGRADES.indexOf(b));
 }
 
 function affordabilityProgress(requirements) {
@@ -5596,6 +5593,12 @@ function stationUpgradeDisabledReason(upgrade, gameState, unlocked, cost, level)
   if (!unlocked) return stationUpgradeRevealReason(upgrade, state);
   if (level >= upgrade.maxLevel) return "Maxed";
   if (appState.running || appState.calibrating) return "Shop actions unlock after you finish and park.";
+  if (
+    upgrade.id === "manager_wholesale_pickup"
+    && safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) < 1
+  ) {
+    return "Hire Shift Manager first.";
+  }
   if (isSupplierUpgrade(upgrade)) {
     const reputationNeeded = Math.max(0, stationUpgradeCostReputation(upgrade, level) - state.shop.reputation);
     return reputationNeeded > 0 ? `Need ${formatShopCost(reputationNeeded)} more Reputation.` : "";

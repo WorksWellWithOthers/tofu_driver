@@ -5270,8 +5270,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260618i'));
-  assert(html.includes('/static/nospill/app.css?v=20260618i'));
+  assert(html.includes('/static/nospill/app.js?v=20260618j'));
+  assert(html.includes('/static/nospill/app.css?v=20260618j'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6065,6 +6065,61 @@ globalThis.managerUpgradeHtml = elements.shopTabPanel.innerHTML;
   assert(context.managerUpgradeHtml.includes('Hire Shift Manager'));
   assert(context.managerUpgradeHtml.includes('$75K + 1M Reputation'));
   assert(context.managerUpgradeHtml.includes('Opens Manager Desk scale'));
+  assert(context.managerUpgradeHtml.includes('Wholesale Pickup'));
+  assert(context.managerUpgradeHtml.indexOf('Hire Shift Manager') < context.managerUpgradeHtml.indexOf('Wholesale Pickup'));
+
+  const managerUnlockedLowCash = JSON.parse(JSON.stringify(state));
+  managerUnlockedLowCash.shop.tips = 81800;
+  managerUnlockedLowCash.shop.reputation = 5000000;
+  managerUnlockedLowCash.shop.deliveryOrders = 250000;
+  managerUnlockedLowCash.shop.tofuStock = 1000000;
+  const lowCashIds = context.visibleRelevantStationUpgrades(managerUnlockedLowCash).map((upgrade) => upgrade.id);
+  assert(lowCashIds.includes('manager_shift_manager'));
+  assert(lowCashIds.includes('manager_wholesale_pickup'));
+  assert(lowCashIds.indexOf('manager_shift_manager') < lowCashIds.indexOf('manager_wholesale_pickup'));
+  const lowCashHtml = context.renderExpandedUpgradePanel(managerUnlockedLowCash);
+  assert(lowCashHtml.includes('Wholesale Pickup'));
+  assert(lowCashHtml.includes('Waiting on Cash'));
+  assert(lowCashHtml.includes('81.8K / 125K'));
+
+  const managerUnlockedEnoughCash = JSON.parse(JSON.stringify(managerUnlockedLowCash));
+  managerUnlockedEnoughCash.shop.tips = 200000;
+  const enoughCashIds = context.visibleRelevantStationUpgrades(managerUnlockedEnoughCash).map((upgrade) => upgrade.id);
+  assert.deepStrictEqual(
+    enoughCashIds.filter((id) => id.startsWith('manager_')),
+    lowCashIds.filter((id) => id.startsWith('manager_')),
+  );
+  assert(context.renderExpandedUpgradePanel(managerUnlockedEnoughCash).includes('Wholesale Pickup'));
+
+  const queueFullIds = context.visibleRelevantStationUpgrades({
+    ...managerUnlockedLowCash,
+    shop: { ...managerUnlockedLowCash.shop, deliveryOrders: context.deliveryOrderQueueCapacity() },
+  }).map((upgrade) => upgrade.id);
+  const queueNotFullIds = context.visibleRelevantStationUpgrades({
+    ...managerUnlockedLowCash,
+    shop: { ...managerUnlockedLowCash.shop, deliveryOrders: 10 },
+  }).map((upgrade) => upgrade.id);
+  const noTofuIds = context.visibleRelevantStationUpgrades({
+    ...managerUnlockedLowCash,
+    shop: { ...managerUnlockedLowCash.shop, tofuStock: 0 },
+  }).map((upgrade) => upgrade.id);
+  assert(queueFullIds.includes('manager_wholesale_pickup'));
+  assert(queueNotFullIds.includes('manager_wholesale_pickup'));
+  assert(noTofuIds.includes('manager_wholesale_pickup'));
+  assert.deepStrictEqual(queueFullIds, queueNotFullIds);
+  assert.deepStrictEqual(queueFullIds, noTofuIds);
+
+  const postHireLowReputation = JSON.parse(JSON.stringify(hired.gameState));
+  postHireLowReputation.shop.tips = 81800;
+  postHireLowReputation.shop.reputation = 250000;
+  postHireLowReputation.shop.lifetimeReputation = 5000000;
+  const postHireHtml = context.renderExpandedUpgradePanel(postHireLowReputation);
+  assert(postHireHtml.includes('Hire Shift Manager Lv 1'));
+  assert(postHireHtml.includes('Maxed'));
+  assert(postHireHtml.includes('Wholesale Pickup'));
+  assert(postHireHtml.indexOf('Hire Shift Manager') < postHireHtml.indexOf('Wholesale Pickup'));
+  assert(!postHireHtml.includes('NaN'));
+  assert(!postHireHtml.includes('Infinity'));
 }
 
 function testTofuGarageBulkBuyingAffordabilityAndUnfoldAudit() {

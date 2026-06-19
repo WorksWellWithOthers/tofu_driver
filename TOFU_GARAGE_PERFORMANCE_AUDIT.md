@@ -103,6 +103,9 @@ Tofu Garage now has explicit high-scale guardrails:
 - Ledger entries are capped.
 - Inline shop feedback is a single compact message, not an unbounded feed.
 - Counter Service messages are batched for multi-order handoffs.
+- Upgrade shelves use unlock-based visibility and fixed ordering. Live affordability, queue,
+  stock, ETA, or maxed-state changes update card copy in place instead of removing/reinserting
+  cards and moving click targets.
 
 These bounds preserve the idle-management decision instead of rewarding unbounded backlog size.
 

@@ -143,6 +143,11 @@ Parked idle surfaces must stay responsive at high shop scale. Live shop ticks sh
 active surface, avoid rebuilding hidden Cup/Crew panels, keep large panels out of `aria-live`
 regions, and use compact bounded feedback instead of repeated full-panel announcements.
 
+Unlocked Tofu Garage cards should not blink in and out during live resource updates. Unlock status
+controls visibility; live Cash, Reputation, stock, queue, cooldown, and ETA changes should update
+enabled/disabled state and progress copy in place. Moving click targets are a UX and performance
+bug, especially on mobile.
+
 ## Analytics Contract
 
 Tofu Driver may use optional PostHog analytics to understand whether visitors reach the Cup Test,
