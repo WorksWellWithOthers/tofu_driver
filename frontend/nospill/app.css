@@ -584,6 +584,38 @@
   display: none;
 }
 
+.nospill-cargo-commentary:empty {
+  display: none;
+}
+
+.nospill-cargo-commentary {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(158, 233, 191, 0.26);
+  border-radius: 8px;
+  padding: 12px;
+  background:
+    linear-gradient(180deg, rgba(158, 233, 191, 0.08), transparent 60%),
+    #0b0f10;
+}
+
+.nospill-cargo-commentary strong {
+  color: #f4f7ef;
+  line-height: 1.35;
+}
+
+.nospill-cargo-commentary span {
+  color: #bbc7c0;
+  line-height: 1.45;
+}
+
+.nospill-cargo-commentary.is-spilled {
+  border-color: rgba(240, 185, 90, 0.34);
+  background:
+    linear-gradient(180deg, rgba(240, 185, 90, 0.08), transparent 60%),
+    #0b0f10;
+}
+
 .nospill-coach-recap-card {
   display: grid;
   gap: 12px;

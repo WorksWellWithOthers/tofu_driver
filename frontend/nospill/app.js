@@ -8228,6 +8228,110 @@ function sanitizeResultStoryCaption(value, maxLength = RESULT_STORY_CAPTION_MAX_
   return Array.from(cleaned).slice(0, maxLength).join("");
 }
 
+function stableFlavorIndex(seed, count) {
+  if (!count) return 0;
+  const text = String(seed || "");
+  let hash = 0;
+  for (let index = 0; index < text.length; index += 1) {
+    hash = ((hash << 5) - hash + text.charCodeAt(index)) | 0;
+  }
+  return Math.abs(hash) % count;
+}
+
+function failureFlavorSeverity(summary = {}) {
+  if (summary.simulated) return "simulated";
+  if (!isQualifiedSession(summary)) return "practice";
+  const cargoCondition = Number(summary.cargoCondition ?? summary.waterLeft ?? 0);
+  if (cargoCondition >= 92) return "great";
+  if (cargoCondition >= 75) return "steady";
+  if (cargoCondition >= 35) return "messy";
+  return "spilled";
+}
+
+function failureFlavorForSession(summary = {}) {
+  const severity = failureFlavorSeverity(summary);
+  const cargoLabel = summary.cargoLabel || cargoTypeProfile(summary.cargoType || summary.difficulty).label;
+  const options = {
+    great: [
+      {
+        line: "The tofu arrived with dignity.",
+        hint: "Gentle changes kept the cargo calm.",
+      },
+      {
+        line: "The cargo made it. The vibes are approved.",
+        hint: "Smooth hands kept the cup happier.",
+      },
+    ],
+    steady: [
+      {
+        line: "Mostly steady. Slightly dramatic.",
+        hint: "The cargo prefers smoother transitions.",
+      },
+      {
+        line: "The cargo made it. The vibes are under review.",
+        hint: "Gentle changes kept the cup happier.",
+      },
+    ],
+    messy: [
+      {
+        line: "The tofu filed a complaint.",
+        hint: "The cargo prefers smoother transitions.",
+      },
+      {
+        line: "A heroic delivery. A dramatic slosh. A learning opportunity.",
+        hint: "Less sudden motion usually helps the tofu settle.",
+      },
+    ],
+    spilled: [
+      {
+        line: "The cup has entered witness protection.",
+        hint: "Try a calmer start next time.",
+      },
+      {
+        line: "The tofu is requesting smoother paperwork next time.",
+        hint: "The cargo prefers smoother transitions.",
+      },
+    ],
+    practice: [
+      {
+        line: "Practice cargo is here to learn, not judge.",
+        hint: "Less sudden motion usually helps the tofu settle.",
+      },
+      {
+        line: "Mika says the cargo survived, but emotionally? Unclear.",
+        hint: "The cargo prefers smoother transitions.",
+      },
+    ],
+    simulated: [
+      {
+        line: "Simulator tofu remains extremely brave.",
+        hint: "Test-mode cargo keeps the story local.",
+      },
+      {
+        line: "The test cargo is pretending this is normal.",
+        hint: "Simulated results stay clearly labeled.",
+      },
+    ],
+  };
+  const choices = options[severity] || options.steady;
+  const seed = [
+    severity,
+    cargoLabel,
+    summary.cargoCondition ?? summary.waterLeft,
+    summary.rank || displayRankForSession(summary),
+    summary.driveShape || summarizeDriveShape(summary),
+    summary.mode || "",
+    summary.harshInputCount || 0,
+  ].join("|");
+  const choice = choices[stableFlavorIndex(seed, choices.length)] || choices[0];
+  return {
+    title: "Cargo Commentary",
+    line: choice.line,
+    hint: choice.hint,
+    severity,
+  };
+}
+
 function getDeviceMotionConstructor() {
   if (typeof window === "undefined") return null;
   return window.DeviceMotionEvent || null;
@@ -13220,6 +13324,7 @@ function setSummaryMode(mode, options = {}) {
   const hideShare = mode === "shop-order";
   if (elements.shareCardSection) elements.shareCardSection.classList.toggle("is-hidden", hideShare);
   if (elements.resultStorySection) elements.resultStorySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
+  if (elements.cargoCommentarySection) elements.cargoCommentarySection.classList.toggle("is-hidden", hideShare || mode !== "cup-test");
   [
     elements.shareButton,
     elements.copyButton,
@@ -13427,6 +13532,7 @@ function renderShopOrderResult(result) {
   }
   if (elements.cupTrailCard) elements.cupTrailCard.innerHTML = "";
   if (elements.coachRecapCard) elements.coachRecapCard.innerHTML = "";
+  if (elements.cargoCommentaryCard) elements.cargoCommentaryCard.innerHTML = "";
   if (elements.summaryCharacterCameo) elements.summaryCharacterCameo.innerHTML = "";
   if (elements.commuteMasteryCopy) {
     elements.commuteMasteryCopy.textContent = result.report || "Shop order complete.";
@@ -13485,6 +13591,24 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function renderCargoCommentary(summary = appState.lastSummary) {
+  const isCupResult = Boolean(summary) && appState.summaryMode === "cup-test" && !appState.running && !appState.calibrating;
+  if (elements.cargoCommentarySection) {
+    elements.cargoCommentarySection.classList.toggle("is-hidden", !isCupResult);
+  }
+  if (!elements.cargoCommentaryCard) return;
+  if (!isCupResult) {
+    elements.cargoCommentaryCard.innerHTML = "";
+    return;
+  }
+  const flavor = failureFlavorForSession(summary);
+  elements.cargoCommentaryCard.className = `nospill-cargo-commentary is-${flavor.severity}`;
+  elements.cargoCommentaryCard.innerHTML = [
+    `<strong>${escapeHtml(flavor.line)}</strong>`,
+    flavor.hint ? `<span>Hint: ${escapeHtml(flavor.hint)}</span>` : "",
+  ].filter(Boolean).join("");
 }
 
 function currentResultStoryCaption() {
@@ -13624,6 +13748,7 @@ function renderSummary(summary) {
   renderMerchPanel(loadClubState());
   renderGamePanels(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderDeliverySummary(summary);
+  renderCargoCommentary(summary);
   updateResultStoryCaptionUi(summary);
   renderShareCanvas(summary);
   showView("summary");
@@ -13715,6 +13840,7 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     summary.deliveryRewards || null,
     summary.deliveryRewards ? summary.deliveryRewards.gameState : null,
   );
+  const cargoCommentary = failureFlavorForSession(summary);
   return {
     title: APP_BRAND,
     challengeName: delivery.status,
@@ -13731,6 +13857,7 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     distanceLabel: "",
     milestone: delivery.stamp || bestUnlockedMilestone(summary),
     dailyStatus: delivery.dailyStatus,
+    cargoCommentary,
     storyCaption: sanitizeResultStoryCaption(summary.storyCaption),
     tagline: TAGLINE_SMOOTHER,
     shirtLine: TAGLINE_CUP,
@@ -13759,6 +13886,9 @@ function buildShareText(summary, config = SHARE_CONFIG) {
   if (data.shopLevel) lines.push(data.shopLevel);
   if (data.deliveryCrew) lines.push(`Delivery Crew: ${data.deliveryCrew}.`);
   if (data.dailyStatus) lines.push(data.dailyStatus);
+  if (data.cargoCommentary && data.cargoCommentary.line) {
+    lines.push(`Cargo Commentary: ${data.cargoCommentary.line}`);
+  }
   if (data.storyCaption) lines.push(`Caption: "${data.storyCaption}"`);
   if (data.distanceLabel) lines.push(`Distance: ${data.distanceLabel}.`);
   const shareConfig = normalizedShareConfig(config);
@@ -13820,13 +13950,25 @@ function renderShareCanvas(summary) {
 
   const milestone = data.milestone || "No new stamp";
   context.fillStyle = "#f0b95a";
-  context.fillText(`Stamp: ${milestone}`, 118, Math.max(790, detailY + 44));
+  context.fillText(`Stamp: ${milestone}`, 118, Math.max(790, detailY + 18));
+
+  if (data.cargoCommentary && data.cargoCommentary.line) {
+    const commentY = data.storyCaption ? 920 : 940;
+    context.fillStyle = "#9ee9bf";
+    context.font = "800 22px Inter, Arial, sans-serif";
+    context.fillText("Cargo Commentary", 118, commentY);
+    context.fillStyle = "#f4f7ef";
+    context.font = "800 26px Inter, Arial, sans-serif";
+    wrappedCanvasLines(context, data.cargoCommentary.line, 575, data.storyCaption ? 1 : 2).forEach((line, index) => {
+      context.fillText(line, 118, commentY + 38 + index * 30);
+    });
+  }
 
   if (data.storyCaption) {
     const boxX = 118;
-    const boxY = 910;
+    const boxY = data.cargoCommentary && data.cargoCommentary.line ? 990 : 910;
     const boxWidth = 575;
-    const boxHeight = 150;
+    const boxHeight = data.cargoCommentary && data.cargoCommentary.line ? 128 : 150;
     context.fillStyle = "rgba(240, 185, 90, 0.1)";
     context.fillRect(boxX, boxY, boxWidth, boxHeight);
     context.strokeStyle = "rgba(240, 185, 90, 0.62)";
@@ -15124,6 +15266,8 @@ function cacheElements() {
     resultStoryCount: document.getElementById("result-story-count"),
     resultStoryPreview: document.getElementById("result-story-preview"),
     resultStoryPresetButtons: Array.from(document.querySelectorAll("[data-story-caption-preset]")),
+    cargoCommentarySection: document.getElementById("cargo-commentary-section"),
+    cargoCommentaryCard: document.getElementById("cargo-commentary-card"),
     shareCardSection: document.getElementById("share-card-section"),
     shareCanvas: document.getElementById("share-canvas"),
     shareButton: document.getElementById("share-button"),

@@ -231,10 +231,10 @@ a driving telemetry product, or an unsafe public-road competition app.
 Tofu Driver should give the player expressive toys, not only linear tasks. The player can then turn
 those toys into personal goals, rituals, screenshots, jokes, and stories.
 
-Current and future toy-like objects include Cup Trail as a safe motion signature, the Tofu Garage
-living scene, Dream Build project-car progress, Delivery Crew characters and cosmetics, Passport
-stamps, share cards, Result Story captions, safe screenshot moments, future shop skins, future
-garage skins, future project car cards, and future comic-style result cards.
+Current and future toy-like objects include Cup Trail as a safe motion signature, Cargo Commentary
+flavor, the Tofu Garage living scene, Dream Build project-car progress, Delivery Crew characters
+and cosmetics, Passport stamps, share cards, Result Story captions, safe screenshot moments, future
+shop skins, future garage skins, future project car cards, and future comic-style result cards.
 
 The toy must stay safe, local, and expressive. It must not depend on speed, GPS, public ranking,
 street identity, or risky driving.
@@ -259,9 +259,10 @@ must unlock slowly. They should clarify the current goal state rather than clutt
 ### Failure Should Be Enjoyable
 
 Failure should feel recoverable and specific. Spilled-cup results can be funny, gentle, and
-cargo-aware. Shop bottlenecks should read as "now you know what to fix," not punishment. Failure
-copy can use humor and character flavor, but it must avoid shame, hostile scoring language,
-legal/safety claims, or pressure to drive harder.
+cargo-aware. Cargo Commentary V1 uses deterministic local flavor on parked post-run result screens
+to make rough outcomes understandable and worth retelling. Shop bottlenecks should read as "now you
+know what to fix," not punishment. Failure copy can use humor and character flavor, but it must
+avoid shame, hostile scoring language, legal/safety claims, or pressure to drive harder.
 
 Most failure should come from missing information, misunderstood systems, resource tradeoffs, or
 choosing a risky plan inside the game. It should not come from twitch skill, reflex precision,
@@ -955,6 +956,7 @@ Default share output may include:
 - Trip Time
 - Drive Shape
 - safe Coach Recap labels
+- local generated Cargo Commentary when safe
 - Driver License
 - Shop Level
 - selected crew flavor when safe
@@ -984,6 +986,13 @@ Result Story Caption V1 is a parked post-run expression tool. It lets the player
 sanitized, local-only caption to the current result/share card. It may appear in copied share text
 and downloaded share-card rendering, but it is not a full comic editor, upload flow, public profile,
 backend feature, or scoring/reward modifier.
+
+Failure Flavor V1 is parked, local generated copy. It adds compact Cargo Commentary to completed Cup
+Test results and share cards, separate from the player's Story Caption. It is deterministic from
+the completed summary, gentle, cargo-centered, and recoverable. It must not change scoring,
+qualification, Driver XP, shop rewards, Net Worth, Garage Build Value, Brand Value, or economy
+balance, and it must not include speed, GPS, maps, streets, exact distance, raw motion, backend,
+accounts, uploads, social feeds, or active-drive commentary.
 
 Super Cute Collectibles is the current physical merch fulfillment partner. It does not verify scores
 in the current MVP. Future backend unlock tokens, if built, must verify only summarized unlock state

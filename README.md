@@ -10,9 +10,9 @@ Garage progression is playable at home without sensors or location.
 
 Cup-first visitors can reach Tofu Garage from the landing page and from parked Cup Test results.
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
-decorative Cup Trail, Daily Delivery Credit, and Coach Recap labels. These are derived from
-summarized motion only and must not expose speed, distance, GPS, maps, street names, route traces,
-or racing/performance-driving technique.
+decorative Cup Trail, Daily Delivery Credit, Coach Recap labels, local Cargo Commentary, and optional
+player Story Captions. These are derived from summarized motion only and must not expose speed,
+distance, GPS, maps, street names, route traces, or racing/performance-driving technique.
 
 Tofu Shop, the first Tofu Garage business, starts with a focused first loop and reveals depth over
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
@@ -98,8 +98,9 @@ The static app uses hash routing:
 - `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: readiness audit for whether Tofu Garage V1 can move toward
   the parked Covered Car / Dream Build teaser
 - `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md`: toy-first, player-expression, failure, needs/maintenance,
-  discovery, black-box, and probability design audit. Result Story Caption V1 is now implemented as
-  local-only post-run result/share-card captioning; broader comic/simulation systems remain future.
+  discovery, black-box, and probability design audit. Result Story Caption V1 and Failure Flavor V1
+  are now implemented as local-only post-run result/share-card story tools; broader comic/simulation
+  systems remain future.
 - `DESIGN.md`: current product canon, safety/privacy contract, future direction
 - `BALANCE_AND_PROGRESSION.md`: implementation reference for Tofu Shop economy, pacing, buttons,
   resources, generators, upgrades, reveal order, bottlenecks, prestige, future Dream Garage /

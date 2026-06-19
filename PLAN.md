@@ -209,12 +209,17 @@
   design transcripts. Its main planning implications are to playtest the first five to ten minutes,
   keep active play and idle progress balanced, automate mastered chores, add small novelty beats
   when repetition begins, and avoid early UI/currency/system overload.
-- `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` now treats Result Story Caption V1 as the first implemented
-  authorship toy and recommends Failure Flavor V1 as the next expression slice.
+- `TOFU_DRIVER_TOY_SIMULATION_AUDIT.md` now treats Result Story Caption V1 and Failure Flavor V1 as
+  implemented post-run story tools and recommends Garage Pride / Build Reflection V1 as the next
+  expression slice.
 - Result Story Caption V1 is implemented on parked post-run Cup Test result screens. It lets the
   player add one sanitized local caption to copied share text and downloaded share cards; it is not
   a full comic editor and does not add uploads, accounts, backend, public profiles, scoring changes,
   reward changes, or economy effects.
+- Failure Flavor V1 is implemented as deterministic local Cargo Commentary on parked post-run Cup
+  Test results and share cards. It keeps player Story Captions separate, uses gentle cargo-centered
+  copy, and does not change scoring, qualification, Driver XP, shop rewards, Net Worth, Garage Build
+  Value, Brand Value, or economy balance.
 - Delivery Log / Ledger is supporting local history, not the primary game surface.
 - Delivery Simulator is hidden by default and is local QA only.
 - Privacy-safe PostHog product analytics is implemented as optional runtime config and no-ops when
@@ -308,7 +313,9 @@ Canonical references:
 25. Confirm custom-domain DNS and certificate status for `tofudriver.com`.
 26. Playtest Result Story Caption V1: check whether the 90-character limit, preset chips, share text,
    and downloaded card caption box feel expressive without cluttering the result screen.
-27. Rename `frontend/nospill/` to a product-native path only as a separate migration.
+27. Playtest Failure Flavor V1: confirm Cargo Commentary feels funny and recoverable for rough
+   outcomes without shaming the player or implying performance-driving coaching.
+28. Rename `frontend/nospill/` to a product-native path only as a separate migration.
 
 Transcript-derived priority ladder:
 
@@ -408,8 +415,8 @@ Deferred until after the First Loop Contract is playtested:
 - Should Qualified Run verification remain share-private by default?
 - What backend, if any, is needed later for earned merch unlock tokens?
 - What moderation policy is required before accepting any user-generated community reports?
-- Does Result Story Caption V1 create enough toy-like expression without requiring public sharing or
-  backend storage?
+- Do Result Story Caption V1 and Failure Flavor V1 create enough toy-like expression without
+  requiring public sharing or backend storage?
 
 ## Non-Goals For The Current Slice
 
