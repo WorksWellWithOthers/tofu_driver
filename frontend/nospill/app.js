@@ -329,7 +329,7 @@ const DRIVER_LICENSES = [
   { minLevel: 30, label: "Delivery Legend" },
 ];
 
-const SHOP_MAX_RESOURCE = 1000000000;
+const SHOP_MAX_RESOURCE = 1000000000000;
 const SHOP_DELIVERY_ORDER_QUEUE_CAP = 1000000;
 const SHOP_OFFLINE_BASE_CAP_HOURS = 24;
 const SHOP_OFFLINE_MANAGED_CAP_HOURS = 72;
@@ -376,7 +376,27 @@ const DREAM_BUILD_SUSPENSION_CORNER_BALANCE_COST = 20000000;
 const DREAM_BUILD_SUSPENSION_CORNER_BALANCE_VALUE = 12000000;
 const DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_COST = 35000000;
 const DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_VALUE = 22000000;
-const DREAM_BUILD_TOTAL_WORK_STAGES = 30;
+const DREAM_BUILD_TIRES_SPORTS_COST = 60000000;
+const DREAM_BUILD_TIRES_SPORTS_VALUE = 35000000;
+const DREAM_BUILD_TIRES_SUMMER_COST = 90000000;
+const DREAM_BUILD_TIRES_SUMMER_VALUE = 55000000;
+const DREAM_BUILD_TIRES_R_COMPOUND_COST = 135000000;
+const DREAM_BUILD_TIRES_R_COMPOUND_VALUE = 85000000;
+const DREAM_BUILD_TIRES_SLICKS_COST = 200000000;
+const DREAM_BUILD_TIRES_SLICKS_VALUE = 130000000;
+const DREAM_BUILD_TIRES_EVENT_SET_COST = 300000000;
+const DREAM_BUILD_TIRES_EVENT_SET_VALUE = 200000000;
+const DREAM_BUILD_BRAKES_PADS_COST = 450000000;
+const DREAM_BUILD_BRAKES_PADS_VALUE = 300000000;
+const DREAM_BUILD_BRAKES_SPORTS_KIT_COST = 675000000;
+const DREAM_BUILD_BRAKES_SPORTS_KIT_VALUE = 450000000;
+const DREAM_BUILD_BRAKES_RACING_KIT_COST = 1000000000;
+const DREAM_BUILD_BRAKES_RACING_KIT_VALUE = 700000000;
+const DREAM_BUILD_BRAKES_CARBON_BIG_KIT_COST = 1500000000;
+const DREAM_BUILD_BRAKES_CARBON_BIG_KIT_VALUE = 1050000000;
+const DREAM_BUILD_BRAKES_CONTROL_PACKAGE_COST = 2250000000;
+const DREAM_BUILD_BRAKES_CONTROL_PACKAGE_VALUE = 1550000000;
+const DREAM_BUILD_TOTAL_WORK_STAGES = 40;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
 const SPONSOR_INQUIRY_CASH_REWARD = 250000;
@@ -3063,6 +3083,8 @@ function defaultShopState() {
       exhaustPurchased: false,
       exhaustLevel: 0,
       suspensionLevel: 0,
+      tiresLevel: 0,
+      brakesLevel: 0,
       builderNote: "",
       firstInvestmentPurchasedAt: "",
       showcaseDisplayPrepared: false,
@@ -3167,6 +3189,10 @@ function normalizeDreamBuild(dreamBuild) {
   const normalizedExhaustLevel = wheelsLevel >= 3 && exhaustPurchased ? clamp(rawExhaustLevel || 1, 1, 5) : 0;
   const rawSuspensionLevel = safeNonNegativeInteger(source.suspensionLevel, 0, 5);
   const suspensionLevel = normalizedExhaustLevel >= 5 ? clamp(rawSuspensionLevel, 0, 5) : 0;
+  const rawTiresLevel = safeNonNegativeInteger(source.tiresLevel, 0, 5);
+  const tiresLevel = suspensionLevel >= 5 ? clamp(rawTiresLevel, 0, 5) : 0;
+  const rawBrakesLevel = safeNonNegativeInteger(source.brakesLevel, 0, 5);
+  const brakesLevel = tiresLevel >= 5 ? clamp(rawBrakesLevel, 0, 5) : 0;
   const knownMilestoneIds = new Set(NET_WORTH_MILESTONES.map((milestone) => milestone.id));
   const netWorthMilestonesReached = Array.isArray(source.netWorthMilestonesReached)
     ? source.netWorthMilestonesReached
@@ -3181,6 +3207,8 @@ function normalizeDreamBuild(dreamBuild) {
     exhaustPurchased: wheelsLevel >= 3 && exhaustPurchased,
     exhaustLevel: normalizedExhaustLevel,
     suspensionLevel,
+    tiresLevel,
+    brakesLevel,
     builderNote: sanitizeBuilderNote(source.builderNote),
     firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
       ? source.firstInvestmentPurchasedAt.slice(0, 40)
@@ -5148,7 +5176,7 @@ function netWorthProgress(gameState) {
   return {
     current,
     goal: NET_WORTH_GOAL,
-    percent: Math.max(0, Math.min(100, (current / NET_WORTH_GOAL) * 100)),
+    percent: clampPercent(Math.round((current / NET_WORTH_GOAL) * 1000) / 10),
   };
 }
 
@@ -5224,6 +5252,14 @@ function dreamBuildSuspensionLevel(gameState) {
   return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.suspensionLevel, 0, 5);
 }
 
+function dreamBuildTiresLevel(gameState) {
+  return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.tiresLevel, 0, 5);
+}
+
+function dreamBuildBrakesLevel(gameState) {
+  return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.brakesLevel, 0, 5);
+}
+
 function dreamBuildInvestmentStarted(gameState) {
   const state = normalizeGameState(gameState);
   const build = state.shop.dreamBuild;
@@ -5232,7 +5268,14 @@ function dreamBuildInvestmentStarted(gameState) {
     || Boolean(build.exhaustPurchased)
     || safeNonNegativeInteger(build.exhaustLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.suspensionLevel, 0, 5) > 0
+    || safeNonNegativeInteger(build.tiresLevel, 0, 5) > 0
+    || safeNonNegativeInteger(build.brakesLevel, 0, 5) > 0
     || Boolean(build.showcaseDisplayPrepared);
+}
+
+function dreamBuildProgressiveValue(level, values) {
+  const count = clamp(safeNonNegativeInteger(level, 0, values.length), 0, values.length);
+  return values.slice(0, count).reduce((total, value) => total + value, 0);
 }
 
 function projectCarValueV1(gameState) {
@@ -5240,6 +5283,8 @@ function projectCarValueV1(gameState) {
   const wheelsLevel = dreamBuildWheelsLevel(state);
   const exhaustLevel = dreamBuildExhaustLevel(state);
   const suspensionLevel = dreamBuildSuspensionLevel(state);
+  const tiresLevel = dreamBuildTiresLevel(state);
+  const brakesLevel = dreamBuildBrakesLevel(state);
   let value = 0;
   if (wheelsLevel >= 3) {
     value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
@@ -5289,6 +5334,20 @@ function projectCarValueV1(gameState) {
   } else if (suspensionLevel >= 1) {
     value += DREAM_BUILD_SUSPENSION_REFRESH_VALUE;
   }
+  value += dreamBuildProgressiveValue(tiresLevel, [
+    DREAM_BUILD_TIRES_SPORTS_VALUE,
+    DREAM_BUILD_TIRES_SUMMER_VALUE,
+    DREAM_BUILD_TIRES_R_COMPOUND_VALUE,
+    DREAM_BUILD_TIRES_SLICKS_VALUE,
+    DREAM_BUILD_TIRES_EVENT_SET_VALUE,
+  ]);
+  value += dreamBuildProgressiveValue(brakesLevel, [
+    DREAM_BUILD_BRAKES_PADS_VALUE,
+    DREAM_BUILD_BRAKES_SPORTS_KIT_VALUE,
+    DREAM_BUILD_BRAKES_RACING_KIT_VALUE,
+    DREAM_BUILD_BRAKES_CARBON_BIG_KIT_VALUE,
+    DREAM_BUILD_BRAKES_CONTROL_PACKAGE_VALUE,
+  ]);
   return value;
 }
 
@@ -5572,6 +5631,176 @@ function nextDreamBuildSuspensionWork(gameState) {
   return dreamBuildSuspensionWorkForLevel(dreamBuildSuspensionLevel(state));
 }
 
+function dreamBuildTiresWorkForLevel(level) {
+  if (level === 0) {
+    return {
+      action: "sports-tire-set",
+      nextLevel: 1,
+      title: "Sports Tire Set",
+      completeTitle: "Sports Tire Set",
+      buttonLabel: "Fit Sports Tires",
+      cost: DREAM_BUILD_TIRES_SPORTS_COST,
+      valueAdded: DREAM_BUILD_TIRES_SPORTS_VALUE,
+      copy: "Move from basic rubber to a proper sports tire set.",
+      detailCopy: "Sports tire compounds introduce the first real grip identity for the build: Hard, Medium, or Soft.",
+      completeCopy: "The build has its first tire identity.",
+      feedback: "Dream Build work complete: Sports Tire Set.",
+    };
+  }
+  if (level === 1) {
+    return {
+      action: "extreme-summer-tires",
+      nextLevel: 2,
+      title: "Extreme Performance Summer Tires",
+      completeTitle: "Extreme Performance Summer Tires",
+      buttonLabel: "Fit Summer Tires",
+      cost: DREAM_BUILD_TIRES_SUMMER_COST,
+      valueAdded: DREAM_BUILD_TIRES_SUMMER_VALUE,
+      copy: "Give the build a sharper warm-weather tire setup.",
+      detailCopy: "Extreme performance summer tires increase grip identity and event fit without changing Cup Test scoring.",
+      completeCopy: "The tire shelf has a sharper warm-weather setup.",
+      feedback: "Dream Build work complete: Extreme Performance Summer Tires.",
+    };
+  }
+  if (level === 2) {
+    return {
+      action: "track-day-r-compounds",
+      nextLevel: 3,
+      title: "Track-Day R-Compound Tires",
+      completeTitle: "Track-Day R-Compound Tires",
+      buttonLabel: "Fit R-Compounds",
+      cost: DREAM_BUILD_TIRES_R_COMPOUND_COST,
+      valueAdded: DREAM_BUILD_TIRES_R_COMPOUND_VALUE,
+      copy: "Add a serious track-day compound for a more focused build identity.",
+      detailCopy: "Track-Day R-compound tires are a fictional garage/event fit upgrade in Tofu Garage.",
+      completeCopy: "The tire shelf now has a focused track-day identity.",
+      feedback: "Dream Build work complete: Track-Day R-Compound Tires.",
+    };
+  }
+  if (level === 3) {
+    return {
+      action: "racing-slicks",
+      nextLevel: 4,
+      title: "Racing Slicks & Semi-Slicks",
+      completeTitle: "Racing Slicks & Semi-Slicks",
+      buttonLabel: "Fit Slicks",
+      cost: DREAM_BUILD_TIRES_SLICKS_COST,
+      valueAdded: DREAM_BUILD_TIRES_SLICKS_VALUE,
+      copy: "Prepare the car for dedicated event tire setups.",
+      detailCopy: "Racing slicks and semi-slicks belong to fictional garage events and build classification.",
+      completeCopy: "The tire shelf is ready for dedicated event language.",
+      feedback: "Dream Build work complete: Racing Slicks & Semi-Slicks.",
+    };
+  }
+  if (level === 4) {
+    return {
+      action: "event-tire-set",
+      nextLevel: 5,
+      title: "Event Tire Set",
+      completeTitle: "Event Tire Set",
+      buttonLabel: "Complete Tire Set",
+      cost: DREAM_BUILD_TIRES_EVENT_SET_COST,
+      valueAdded: DREAM_BUILD_TIRES_EVENT_SET_VALUE,
+      copy: "Complete the tire shelf with event-ready rubber for changing conditions.",
+      detailCopy: "Includes Intermediate, Full Wet, and Dirt tire options as future event-fit language.",
+      completeCopy: "The tire shelf is ready for future event choices.",
+      feedback: "Tires & Rubber complete: Event Tire Set added. Garage Build Value +$200M.",
+    };
+  }
+  return null;
+}
+
+function nextDreamBuildTiresWork(gameState) {
+  const state = normalizeGameState(gameState);
+  if (dreamBuildSuspensionLevel(state) < 5) return null;
+  return dreamBuildTiresWorkForLevel(dreamBuildTiresLevel(state));
+}
+
+function dreamBuildBrakesWorkForLevel(level) {
+  if (level === 0) {
+    return {
+      action: "sports-brake-pads",
+      nextLevel: 1,
+      title: "Sports Brake Pads",
+      completeTitle: "Sports Brake Pads",
+      buttonLabel: "Fit Sports Pads",
+      cost: DREAM_BUILD_BRAKES_PADS_COST,
+      valueAdded: DREAM_BUILD_BRAKES_PADS_VALUE,
+      copy: "Start the brake track with a more serious pad setup.",
+      detailCopy: "Sports, clubsport, and racing pad language maps to fictional control and event-readiness stats.",
+      completeCopy: "The brake track has its first serious setup.",
+      feedback: "Dream Build work complete: Sports Brake Pads.",
+    };
+  }
+  if (level === 1) {
+    return {
+      action: "sports-brake-kit",
+      nextLevel: 2,
+      title: "Sports Brake Kit",
+      completeTitle: "Sports Brake Kit",
+      buttonLabel: "Install Brake Kit",
+      cost: DREAM_BUILD_BRAKES_SPORTS_KIT_COST,
+      valueAdded: DREAM_BUILD_BRAKES_SPORTS_KIT_VALUE,
+      copy: "Upgrade the hardware so the build looks and feels more complete.",
+      detailCopy: "Sports brake kit with slotted or drilled disc language for garage identity and build value.",
+      completeCopy: "The brake hardware now looks like part of the build.",
+      feedback: "Dream Build work complete: Sports Brake Kit.",
+    };
+  }
+  if (level === 2) {
+    return {
+      action: "racing-brake-kit",
+      nextLevel: 3,
+      title: "Racing Brake Kit",
+      completeTitle: "Racing Brake Kit",
+      buttonLabel: "Install Racing Brakes",
+      cost: DREAM_BUILD_BRAKES_RACING_KIT_COST,
+      valueAdded: DREAM_BUILD_BRAKES_RACING_KIT_VALUE,
+      copy: "Add a racing brake package for future event fit.",
+      detailCopy: "Racing brake kit, braided lines, and high-boiling-point brake fluid become fictional garage build details.",
+      completeCopy: "The brake package has future event-fit detail.",
+      feedback: "Dream Build work complete: Racing Brake Kit.",
+    };
+  }
+  if (level === 3) {
+    return {
+      action: "carbon-ceramic-big-brake-kit",
+      nextLevel: 4,
+      title: "Carbon Ceramic Big Brake Kit",
+      completeTitle: "Carbon Ceramic Big Brake Kit",
+      buttonLabel: "Install Big Brakes",
+      cost: DREAM_BUILD_BRAKES_CARBON_BIG_KIT_COST,
+      valueAdded: DREAM_BUILD_BRAKES_CARBON_BIG_KIT_VALUE,
+      copy: "Move into high-end brake hardware that changes the car's presence.",
+      detailCopy: "Carbon ceramic big brake kit with multi-piston caliper language for collector appeal and event fit.",
+      completeCopy: "The brake hardware changes the car's presence.",
+      feedback: "Dream Build work complete: Carbon Ceramic Big Brake Kit.",
+    };
+  }
+  if (level === 4) {
+    return {
+      action: "brake-balance-control-package",
+      nextLevel: 5,
+      title: "Brake Balance & Control Package",
+      completeTitle: "Brake Balance & Control Package",
+      buttonLabel: "Complete Brake Setup",
+      cost: DREAM_BUILD_BRAKES_CONTROL_PACKAGE_COST,
+      valueAdded: DREAM_BUILD_BRAKES_CONTROL_PACKAGE_VALUE,
+      copy: "Finish the control package with the final brake-system details.",
+      detailCopy: "Brake balance controller, high-end lines/fluid, and control hardware complete the fictional Brakes & Control track.",
+      completeCopy: "The control package is complete.",
+      feedback: "Brakes & Control complete: Brake Balance & Control Package added. Garage Build Value +$1.55B.",
+    };
+  }
+  return null;
+}
+
+function nextDreamBuildBrakesWork(gameState) {
+  const state = normalizeGameState(gameState);
+  if (dreamBuildTiresLevel(state) < 5) return null;
+  return dreamBuildBrakesWorkForLevel(dreamBuildBrakesLevel(state));
+}
+
 function dreamBuildWheelsStatusLabel(level) {
   if (level >= 5) return "Collector Finish";
   if (level >= 4) return "Showpiece Fitment";
@@ -5599,6 +5828,24 @@ function dreamBuildSuspensionStatusLabel(level) {
   return "Not started";
 }
 
+function dreamBuildTiresStatusLabel(level) {
+  if (level >= 5) return "Event Tire Set";
+  if (level >= 4) return "Racing Slicks & Semi-Slicks";
+  if (level >= 3) return "Track-Day R-Compound Tires";
+  if (level >= 2) return "Extreme Performance Summer Tires";
+  if (level >= 1) return "Sports Tire Set";
+  return "Stock Tires";
+}
+
+function dreamBuildBrakesStatusLabel(level) {
+  if (level >= 5) return "Brake Balance & Control Package";
+  if (level >= 4) return "Carbon Ceramic Big Brake Kit";
+  if (level >= 3) return "Racing Brake Kit";
+  if (level >= 2) return "Sports Brake Kit";
+  if (level >= 1) return "Sports Brake Pads";
+  return "Stock Brakes";
+}
+
 function dreamBuildProgressVisible(gameState) {
   const state = normalizeGameState(gameState);
   return dreamBuildWheelsPurchased(state) || (coveredCarTeaserSeen(state) && dreamInvestmentTargetVisible(state));
@@ -5609,7 +5856,9 @@ function dreamBuildProgressSummary(gameState) {
   const wheelsLevel = dreamBuildWheelsLevel(state);
   const exhaustLevel = dreamBuildExhaustLevel(state);
   const suspensionLevel = dreamBuildSuspensionLevel(state);
-  const completed = clamp(wheelsLevel + exhaustLevel + suspensionLevel, 0, DREAM_BUILD_TOTAL_WORK_STAGES);
+  const tiresLevel = dreamBuildTiresLevel(state);
+  const brakesLevel = dreamBuildBrakesLevel(state);
+  const completed = clamp(wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel, 0, DREAM_BUILD_TOTAL_WORK_STAGES);
   return {
     completed,
     total: DREAM_BUILD_TOTAL_WORK_STAGES,
@@ -5620,6 +5869,10 @@ function dreamBuildProgressSummary(gameState) {
     exhaustStatus: dreamBuildExhaustStatusLabel(exhaustLevel),
     suspensionLevel,
     suspensionStatus: dreamBuildSuspensionStatusLabel(suspensionLevel),
+    tiresLevel,
+    tiresStatus: dreamBuildTiresStatusLabel(tiresLevel),
+    brakesLevel,
+    brakesStatus: dreamBuildBrakesStatusLabel(brakesLevel),
   };
 }
 
@@ -5673,11 +5926,33 @@ function nextDreamBuildStep(gameState) {
   if (suspensionWork) {
     return { title: suspensionWork.title, copy: suspensionWork.copy, future: false };
   }
+  const tiresWork = nextDreamBuildTiresWork(state);
+  if (tiresWork) {
+    return { title: tiresWork.title, copy: tiresWork.copy, future: false };
+  }
+  const brakesWork = nextDreamBuildBrakesWork(state);
+  if (brakesWork) {
+    return { title: brakesWork.title, copy: brakesWork.copy, future: false };
+  }
+  if (dreamBuildBrakesLevel(state) >= 5) {
+    return {
+      title: "Induction & Cooling",
+      copy: "Brakes & Control is complete. Induction & Cooling comes in a future garage pass.",
+      future: true,
+    };
+  }
+  if (dreamBuildTiresLevel(state) >= 5) {
+    return {
+      title: "Brakes & Control",
+      copy: "The Tires & Rubber track is complete. Brakes & Control is next.",
+      future: false,
+    };
+  }
   if (dreamBuildSuspensionLevel(state) >= 5) {
     return {
       title: "Tires & Rubber",
-      copy: "The Suspension track is complete. Tires & Rubber comes in a future garage pass.",
-      future: true,
+      copy: "The Suspension track is complete. Tires & Rubber is next.",
+      future: false,
     };
   }
   return {
@@ -5791,6 +6066,60 @@ function buyDreamBuildSuspension(action, gameState, options = {}) {
   }
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
   next.shop.dreamBuild.suspensionLevel = work.nextLevel;
+  next.shop.counterService.lastResult = work.feedback;
+  return {
+    ok: true,
+    reason: "",
+    feedback: work.feedback,
+    work,
+    gameState: addLedgerEntry(next, "story", work.feedback),
+  };
+}
+
+function buyDreamBuildTires(action, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  if (dreamBuildSuspensionLevel(next) < 5) {
+    return { ok: false, reason: "Finish the Suspension track before starting Tires & Rubber.", gameState: next };
+  }
+  const work = nextDreamBuildTiresWork(next);
+  if (!work || work.action !== action) {
+    return { ok: false, reason: "That Tires & Rubber work is not available yet.", gameState: next };
+  }
+  if (cashBalance(next) < work.cost) {
+    return { ok: false, reason: `Need ${formatCash(work.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
+  next.shop.dreamBuild.tiresLevel = work.nextLevel;
+  next.shop.counterService.lastResult = work.feedback;
+  return {
+    ok: true,
+    reason: "",
+    feedback: work.feedback,
+    work,
+    gameState: addLedgerEntry(next, "story", work.feedback),
+  };
+}
+
+function buyDreamBuildBrakes(action, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  if (dreamBuildTiresLevel(next) < 5) {
+    return { ok: false, reason: "Finish the Tires & Rubber track before starting Brakes & Control.", gameState: next };
+  }
+  const work = nextDreamBuildBrakesWork(next);
+  if (!work || work.action !== action) {
+    return { ok: false, reason: "That Brakes & Control work is not available yet.", gameState: next };
+  }
+  if (cashBalance(next) < work.cost) {
+    return { ok: false, reason: `Need ${formatCash(work.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
+  next.shop.dreamBuild.brakesLevel = work.nextLevel;
   next.shop.counterService.lastResult = work.feedback;
   return {
     ok: true,
@@ -11101,6 +11430,8 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildWheelsWork(state)
     && !nextDreamBuildExhaustWork(state)
     && !nextDreamBuildSuspensionWork(state)
+    && !nextDreamBuildTiresWork(state)
+    && !nextDreamBuildBrakesWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -11124,6 +11455,8 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildWheelsWork(state)
     && !nextDreamBuildExhaustWork(state)
     && !nextDreamBuildSuspensionWork(state)
+    && !nextDreamBuildTiresWork(state)
+    && !nextDreamBuildBrakesWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -11274,6 +11607,28 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const tiresWork = nextDreamBuildTiresWork(state);
+      if (tiresWork) {
+        const ready = cashBalance(state) >= tiresWork.cost;
+        return {
+          type: ready ? "buy_dream_tires_work" : "dream_investment_target",
+          title: ready ? `Next: ${tiresWork.buttonLabel}` : `Next: Grow Cash for ${tiresWork.title}`,
+          copy: ready ? tiresWork.copy : `${tiresWork.title} is the next Tires & Rubber work when the shop can fund it.`,
+          buttonLabel: tiresWork.buttonLabel,
+          disabled: false,
+        };
+      }
+      const brakesWork = nextDreamBuildBrakesWork(state);
+      if (brakesWork) {
+        const ready = cashBalance(state) >= brakesWork.cost;
+        return {
+          type: ready ? "buy_dream_brakes_work" : "dream_investment_target",
+          title: ready ? `Next: ${brakesWork.buttonLabel}` : `Next: Grow Cash for ${brakesWork.title}`,
+          copy: ready ? brakesWork.copy : `${brakesWork.title} is the next Brakes & Control work when the shop can fund it.`,
+          buttonLabel: brakesWork.buttonLabel,
+          disabled: false,
+        };
+      }
       const showcase = showcasePrepStatus(state);
       if (showcase.unlocked && !showcase.prepared && !urgentShopBottleneckBeforeShowcase(state)) {
         const ready = showcase.affordable;
@@ -11310,7 +11665,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "Tires & Rubber comes in a future garage pass.",
+        copy: "Induction & Cooling comes in a future garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -12073,6 +12428,39 @@ function renderCoveredCarTeaserCard(gameState) {
   });
 }
 
+function renderDreamBuildTrackWorkCard(state, options) {
+  const work = options.work;
+  const canAfford = cashBalance(state) >= work.cost;
+  const missing = Math.max(0, work.cost - cashBalance(state));
+  return renderIdleCard({
+    title: options.title,
+    status: `Level ${formatShopCount(options.level)} / 5 · ${options.statusLabel}`,
+    copy: `${work.copy} Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up. These are fictional Tofu Garage upgrades, not Cup Test scoring changes.`,
+    extra: `
+      <div class="nospill-afford-progress">
+        <div class="nospill-afford-progress-head">
+          <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+          <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+        </div>
+        <small>Next Work: ${escapeHtml(work.title)}</small>
+        <small>Cost: ${escapeHtml(formatCash(work.cost))} Cash · Build Value added: +${escapeHtml(formatCashCount(work.valueAdded))}</small>
+        <small>${escapeHtml(work.copy)}</small>
+        ${work.detailCopy ? `<details class="nospill-compact-details"><summary>${escapeHtml(options.detailsLabel)}</summary><p>${escapeHtml(work.detailCopy)}</p></details>` : ""}
+        ${!canAfford ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
+      </div>
+    `,
+    actions: canAfford ? [
+      actionButton(
+        work.buttonLabel,
+        "data-dream-build-action",
+        work.action,
+        false,
+        "nospill-primary",
+      ),
+    ] : [],
+  });
+}
+
 function renderDreamInvestmentTargetCard(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -12162,49 +12550,46 @@ function renderDreamInvestmentTargetCard(gameState) {
     }
     const suspensionWork = nextDreamBuildSuspensionWork(state);
     if (suspensionWork) {
-      const canAffordSuspensionWork = cashBalance(state) >= suspensionWork.cost;
-      const missing = Math.max(0, suspensionWork.cost - cashBalance(state));
-      const suspensionLevel = dreamBuildSuspensionLevel(state);
-      return renderIdleCard({
+      return renderDreamBuildTrackWorkCard(state, {
         title: "Suspension",
-        status: `Level ${formatShopCount(suspensionLevel)} / 5 · ${dreamBuildSuspensionStatusLabel(suspensionLevel)}`,
-        copy: `${suspensionWork.copy} Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up. This is careful garage work, not a speed upgrade.`,
-        extra: `
-          <div class="nospill-afford-progress">
-            <div class="nospill-afford-progress-head">
-              <span>${GARAGE_BUILD_VALUE_LABEL}</span>
-              <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
-            </div>
-            <small>Next Work: ${escapeHtml(suspensionWork.title)}</small>
-            <small>Cost: ${escapeHtml(formatCash(suspensionWork.cost))} Cash · Build Value added: +${escapeHtml(formatCashCount(suspensionWork.valueAdded))}</small>
-            <small>${escapeHtml(suspensionWork.copy)}</small>
-            ${suspensionWork.detailCopy ? `<details class="nospill-compact-details"><summary>Suspension details</summary><p>${escapeHtml(suspensionWork.detailCopy)}</p></details>` : ""}
-            ${!canAffordSuspensionWork ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
-          </div>
-        `,
-        actions: canAffordSuspensionWork ? [
-          actionButton(
-            suspensionWork.buttonLabel,
-            "data-dream-build-action",
-            suspensionWork.action,
-            false,
-            "nospill-primary",
-          ),
-        ] : [],
+        level: dreamBuildSuspensionLevel(state),
+        statusLabel: dreamBuildSuspensionStatusLabel(dreamBuildSuspensionLevel(state)),
+        work: suspensionWork,
+        detailsLabel: "Suspension details",
       });
     }
-    if (dreamBuildSuspensionLevel(state) >= 5) {
+    const tiresWork = nextDreamBuildTiresWork(state);
+    if (tiresWork) {
+      return renderDreamBuildTrackWorkCard(state, {
+        title: "Tires & Rubber",
+        level: dreamBuildTiresLevel(state),
+        statusLabel: dreamBuildTiresStatusLabel(dreamBuildTiresLevel(state)),
+        work: tiresWork,
+        detailsLabel: "Tire details",
+      });
+    }
+    const brakesWork = nextDreamBuildBrakesWork(state);
+    if (brakesWork) {
+      return renderDreamBuildTrackWorkCard(state, {
+        title: "Brakes & Control",
+        level: dreamBuildBrakesLevel(state),
+        statusLabel: dreamBuildBrakesStatusLabel(dreamBuildBrakesLevel(state)),
+        work: brakesWork,
+        detailsLabel: "Brake details",
+      });
+    }
+    if (dreamBuildBrakesLevel(state) >= 5) {
       return renderIdleCard({
-        title: "Suspension",
-        status: "Level 5 / 5 · Showcase Stance",
-        copy: "Suspension Complete. The suspension track is complete.",
+        title: "Brakes & Control",
+        status: "Level 5 / 5 · Brake Balance & Control Package",
+        copy: "Brakes & Control Complete. The control package is complete.",
         extra: `
           <div class="nospill-afford-progress">
             <div class="nospill-afford-progress-head">
               <span>${GARAGE_BUILD_VALUE_LABEL}</span>
               <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
             </div>
-            <small>Next Build Track: Tires &amp; Rubber</small>
+            <small>Next Build Track: Induction &amp; Cooling</small>
             <small>Future garage pass.</small>
           </div>
         `,
@@ -12334,11 +12719,11 @@ function renderDreamBuildProgressCard(gameState) {
   const projectValue = projectCarValueV1(state);
   const capReached = dreamBuildImplementedCapReached(state);
   return renderIdleCard({
-    title: "Dream Build",
+    title: "Core Build Progress",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: capReached
-      ? "Suspension track complete. Next Build Track: Tires & Rubber, future garage pass."
-      : "Careful garage work adds story value. Not faster. Smoother.",
+      ? "Brakes & Control complete. Next Build Track: Induction & Cooling, future garage pass."
+      : "Fictional garage work adds build value without changing Cup Test scoring. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
         <div
@@ -12354,6 +12739,8 @@ function renderDreamBuildProgressCard(gameState) {
         <small>Wheels · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
         <small>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
         <small>Suspension · Level ${escapeHtml(formatShopCount(progress.suspensionLevel))} / 5 · ${escapeHtml(progress.suspensionStatus)}</small>
+        <small>Tires &amp; Rubber · Level ${escapeHtml(formatShopCount(progress.tiresLevel))} / 5 · ${escapeHtml(progress.tiresStatus)}</small>
+        <small>Brakes &amp; Control · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}</small>
         <details class="nospill-compact-details">
           <summary>Dream Build details</summary>
@@ -12372,6 +12759,8 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
   if (!dreamBuildInvestmentStarted(state)) return "";
   const progress = dreamBuildProgressSummary(state);
   const suspensionLabel = progress.suspensionLevel > 0 ? progress.suspensionStatus : "Next";
+  const tiresLabel = progress.tiresLevel > 0 ? progress.tiresStatus : dreamBuildSuspensionLevel(state) >= 5 ? "Next" : "Future";
+  const brakesLabel = progress.brakesLevel > 0 ? progress.brakesStatus : dreamBuildTiresLevel(state) >= 5 ? "Next" : "Future";
   return renderIdleCard({
     title: "Dream Build",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
@@ -12381,6 +12770,8 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
         <small>Wheels: ${escapeHtml(progress.wheelsStatus)}</small>
         <small>Exhaust: ${escapeHtml(progress.exhaustStatus)}</small>
         <small>Suspension: ${escapeHtml(suspensionLabel)}</small>
+        <small>Tires: ${escapeHtml(tiresLabel)}</small>
+        <small>Brakes: ${escapeHtml(brakesLabel)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))}</small>
       </div>
     `,
@@ -12396,23 +12787,42 @@ function renderDreamBuildTracksCard(gameState) {
   if (!dreamBuildInvestmentStarted(state)) return "";
   const progress = dreamBuildProgressSummary(state);
   const suspensionWork = nextDreamBuildSuspensionWork(state);
+  const tiresWork = nextDreamBuildTiresWork(state);
+  const brakesWork = nextDreamBuildBrakesWork(state);
   const suspensionLine = dreamBuildExhaustLevel(state) < 5
     ? "Future Track · Complete the current implemented build track first."
     : suspensionWork
       ? `Next Work: ${suspensionWork.title} · ${formatCash(suspensionWork.cost)} Cash · +${formatCashCount(suspensionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Tires & Rubber, future garage pass.";
+      : "Complete · Next Build Track: Tires & Rubber.";
+  const tiresLine = dreamBuildSuspensionLevel(state) < 5
+    ? "Future Track · Complete Suspension & Chassis Geometry first."
+    : tiresWork
+      ? `Next Work: ${tiresWork.title} · ${formatCash(tiresWork.cost)} Cash · +${formatCashCount(tiresWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+      : "Complete · Next Build Track: Brakes & Control.";
+  const brakesLine = dreamBuildTiresLevel(state) < 5
+    ? "Future Track · Complete Tires & Rubber first."
+    : brakesWork
+      ? `Next Work: ${brakesWork.title} · ${formatCash(brakesWork.cost)} Cash · +${formatCashCount(brakesWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+      : "Complete · Next Build Track: Induction & Cooling, future garage pass.";
   return renderIdleCard({
     title: "Work Tracks",
     status: "Current build",
     copy: "One part, then careful work levels. No duplicate part-buying loop.",
     extra: `
       <div class="nospill-afford-progress">
-        <small><strong>Wheels</strong> · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
+        <small><strong>Wheels &amp; Fitment</strong> · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
         <small>Future: Showpiece Fitment, Collector Finish</small>
-        <small><strong>Exhaust</strong> · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
+        <small><strong>Exhaust &amp; Airflow</strong> · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
         <small>${progress.exhaustLevel >= 5 ? "Complete" : "Keep working the current Exhaust step."}</small>
-        <small><strong>Suspension</strong> · Level ${escapeHtml(formatShopCount(progress.suspensionLevel))} / 5 · ${escapeHtml(progress.suspensionStatus)}</small>
+        <small><strong>Suspension &amp; Chassis Geometry</strong> · Level ${escapeHtml(formatShopCount(progress.suspensionLevel))} / 5 · ${escapeHtml(progress.suspensionStatus)}</small>
         <small>${escapeHtml(suspensionLine)}</small>
+        <small><strong>Tires &amp; Rubber</strong> · Level ${escapeHtml(formatShopCount(progress.tiresLevel))} / 5 · ${escapeHtml(progress.tiresStatus)}</small>
+        <small>${escapeHtml(tiresLine)}</small>
+        <small><strong>Brakes &amp; Control</strong> · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</small>
+        <small>${escapeHtml(brakesLine)}</small>
+        <small><strong>Induction &amp; Cooling</strong> · Future Track</small>
+        <small><strong>Drivetrain &amp; Transmission</strong> · Future Track</small>
+        <small><strong>Aero, Styling &amp; Weight Reduction</strong> · Future Track</small>
       </div>
     `,
   });
@@ -12427,12 +12837,21 @@ function renderFutureGarageManagementCard() {
   });
 }
 
-function renderGarageTuningCatalogPreviewCard() {
+function garageTuningCatalogFocusLabel(gameState) {
+  const state = normalizeGameState(gameState);
+  if (dreamBuildBrakesLevel(state) >= 5) return "Induction & Cooling, future";
+  if (dreamBuildTiresLevel(state) >= 5 || dreamBuildBrakesLevel(state) > 0) return "Brakes & Control";
+  if (dreamBuildSuspensionLevel(state) >= 5 || dreamBuildTiresLevel(state) > 0) return "Tires & Rubber";
+  return "Suspension & Chassis Geometry";
+}
+
+function renderGarageTuningCatalogPreviewCard(gameState) {
   if (appState.running || appState.calibrating) return "";
+  const focus = garageTuningCatalogFocusLabel(gameState);
   return renderIdleCard({
     title: "Garage Tuning Catalog",
     status: "Future catalog",
-    copy: "Authentic tuning parts unlock across future garage eras. Current focus: Suspension & Chassis Geometry.",
+    copy: `Authentic tuning parts unlock across future garage eras. Current focus: ${focus}.`,
     extra: `
       <details class="nospill-compact-details">
         <summary>Catalog categories</summary>
@@ -12463,7 +12882,7 @@ function renderDreamBuildPanel(gameState) {
       ${renderDreamInvestmentTargetCard(state)}
       ${renderProjectCarValueCard(state)}
       ${renderBuilderNoteCard(state)}
-      ${renderGarageTuningCatalogPreviewCard()}
+      ${renderGarageTuningCatalogPreviewCard(state)}
       ${renderFutureGarageManagementCard()}
     </div>
   `;
@@ -12550,6 +12969,12 @@ function dreamInvestmentReturningNote(gameState) {
     if (work && cashBalance(state) >= work.cost) return `Dream Build work is ready: ${work.title}`;
     const exhaustWork = nextDreamBuildExhaustWork(state);
     if (exhaustWork && cashBalance(state) >= exhaustWork.cost) return `Dream Build work is ready: ${exhaustWork.title}`;
+    const suspensionWork = nextDreamBuildSuspensionWork(state);
+    if (suspensionWork && cashBalance(state) >= suspensionWork.cost) return `Dream Build work is ready: ${suspensionWork.title}`;
+    const tiresWork = nextDreamBuildTiresWork(state);
+    if (tiresWork && cashBalance(state) >= tiresWork.cost) return `Dream Build work is ready: ${tiresWork.title}`;
+    const brakesWork = nextDreamBuildBrakesWork(state);
+    if (brakesWork && cashBalance(state) >= brakesWork.cost) return `Dream Build work is ready: ${brakesWork.title}`;
     const sponsor = sponsorInquiryStatus(state);
     if (sponsor.unlocked && !sponsor.accepted) return "Sponsor Inquiry available";
     const showcase = showcasePrepStatus(state);
@@ -12899,7 +13324,7 @@ function nextMilestoneProgress(current, required) {
   return {
     current: Math.min(safeCurrent, safeRequired),
     required: safeRequired,
-    percent: clampPercent((safeCurrent / safeRequired) * 100),
+    percent: clampPercent(Math.round((safeCurrent / safeRequired) * 1000) / 10),
   };
 }
 
@@ -13162,6 +13587,30 @@ function nextMilestoneForShop(gameState) {
           guidance: suspensionWork.copy,
         };
       }
+      const tiresWork = nextDreamBuildTiresWork(state);
+      if (tiresWork) {
+        const progress = nextMilestoneProgress(cashBalance(state), tiresWork.cost);
+        return {
+          id: tiresWork.action,
+          name: tiresWork.title,
+          progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
+          percent: progress.percent,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(tiresWork.valueAdded)}`,
+          guidance: tiresWork.copy,
+        };
+      }
+      const brakesWork = nextDreamBuildBrakesWork(state);
+      if (brakesWork) {
+        const progress = nextMilestoneProgress(cashBalance(state), brakesWork.cost);
+        return {
+          id: brakesWork.action,
+          name: brakesWork.title,
+          progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
+          percent: progress.percent,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(brakesWork.valueAdded)}`,
+          guidance: brakesWork.copy,
+        };
+      }
       const showcase = showcasePrepStatus(state);
       if (showcase.unlocked && !showcase.prepared) {
         const progress = nextMilestoneProgress(cashBalance(state), showcase.cost);
@@ -13205,7 +13654,7 @@ function nextMilestoneForShop(gameState) {
         progressText: `${formatShopCount(buildProgress.completed)} / ${formatShopCount(buildProgress.total)} work stages`,
         percent: buildProgress.percent || nextTarget.percent,
         reward: "First smooth garage-build path",
-        guidance: "Next Dream Step: Tires & Rubber. Future garage work; keep growing Cash.",
+        guidance: "Next Dream Step: Induction & Cooling. Future garage work; keep growing Cash.",
       };
     }
     return {
@@ -13404,6 +13853,9 @@ function goalStackTargetForAction(action) {
     || action.type === "buy_dream_wheels_work"
     || action.type === "buy_dream_exhaust"
     || action.type === "buy_dream_exhaust_work"
+    || action.type === "buy_dream_suspension_work"
+    || action.type === "buy_dream_tires_work"
+    || action.type === "buy_dream_brakes_work"
     || action.type === "dream_investment_target"
     || action.type === "prepare_showcase"
     || action.type === "showcase_prep_target"
@@ -13423,7 +13875,11 @@ function goalStackCta(label, target) {
 
 function dreamBuildImplementedCapReached(gameState) {
   const state = normalizeGameState(gameState);
-  return dreamBuildWheelsLevel(state) >= 3 && dreamBuildExhaustLevel(state) >= 5 && dreamBuildSuspensionLevel(state) >= 5;
+  return dreamBuildWheelsLevel(state) >= 3
+    && dreamBuildExhaustLevel(state) >= 5
+    && dreamBuildSuspensionLevel(state) >= 5
+    && dreamBuildTiresLevel(state) >= 5
+    && dreamBuildBrakesLevel(state) >= 5;
 }
 
 function pinnedNearGoalForShop(gameState) {
@@ -13502,16 +13958,50 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
-    if (dreamBuildSuspensionLevel(state) >= 5) {
+    const tiresWork = nextDreamBuildTiresWork(state);
+    if (tiresWork) {
+      return {
+        id: tiresWork.action,
+        title: tiresWork.title,
+        body: tiresWork.nextLevel === 1
+          ? "Next build track is ready."
+          : "Continue the Tires & Rubber track.",
+        progressCurrent: cashBalance(state),
+        progressTarget: tiresWork.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(tiresWork.cost)} Cash`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(tiresWork.valueAdded)}`,
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    const brakesWork = nextDreamBuildBrakesWork(state);
+    if (brakesWork) {
+      return {
+        id: brakesWork.action,
+        title: brakesWork.title,
+        body: brakesWork.nextLevel === 1
+          ? "Next build track is ready."
+          : "Continue the Brakes & Control track.",
+        progressCurrent: cashBalance(state),
+        progressTarget: brakesWork.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(brakesWork.cost)} Cash`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(brakesWork.valueAdded)}`,
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    if (dreamBuildBrakesLevel(state) >= 5) {
       const progress = dreamBuildProgressSummary(state);
       return {
-        id: "dream_build_suspension_complete",
-        title: "Suspension complete",
-        body: "Next Build Track: Tires & Rubber, future garage pass.",
+        id: "dream_build_brakes_complete",
+        title: "Brakes & Control complete",
+        body: "Next Build Track: Induction & Cooling, future garage pass.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
-        progressLabel: `Suspension: ${progress.suspensionStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Tires & Rubber is future/target-only",
+        progressLabel: `Brakes: ${progress.brakesStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Induction & Cooling is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -13522,13 +14012,13 @@ function pinnedNearGoalForShop(gameState) {
       return {
         id: "dream_build_current_cap",
         title: "Dream Build Status",
-        body: "Current implemented build track complete. Next Work: Ride Height Set. Coming in a future garage pass.",
+        body: "Current implemented core build track complete. Next Build Track: Induction & Cooling. Coming in a future garage pass.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
-        progressLabel: `Wheels: ${progress.wheelsStatus} · Exhaust: ${progress.exhaustStatus} · Suspension: ${progress.suspensionStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Ride Height Set is future/target-only",
-        ctaLabel: "View Dream Build",
-        ctaTarget: "dream-build",
+        progressLabel: `Wheels: ${progress.wheelsStatus} · Exhaust: ${progress.exhaustStatus} · Suspension: ${progress.suspensionStatus} · Tires: ${progress.tiresStatus} · Brakes: ${progress.brakesStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Induction & Cooling is future/target-only",
+        ctaLabel: "",
+        ctaTarget: "",
         isFutureOnly: true,
       };
     }
@@ -16190,6 +16680,42 @@ function handleDreamBuildSuspension(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleDreamBuildTires(action) {
+  const result = buyDreamBuildTires(action, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = dreamBuildTabUnlocked(result.gameState) ? "dream_build" : "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
+function handleDreamBuildBrakes(action) {
+  const result = buyDreamBuildBrakes(action, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = dreamBuildTabUnlocked(result.gameState) ? "dream_build" : "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -16372,6 +16898,22 @@ function handleTofuShopPanelClick(event) {
       || target.dataset.dreamBuildAction === "showcase-stance"
     ) {
       handleDreamBuildSuspension(target.dataset.dreamBuildAction);
+    } else if (
+      target.dataset.dreamBuildAction === "sports-tire-set"
+      || target.dataset.dreamBuildAction === "extreme-summer-tires"
+      || target.dataset.dreamBuildAction === "track-day-r-compounds"
+      || target.dataset.dreamBuildAction === "racing-slicks"
+      || target.dataset.dreamBuildAction === "event-tire-set"
+    ) {
+      handleDreamBuildTires(target.dataset.dreamBuildAction);
+    } else if (
+      target.dataset.dreamBuildAction === "sports-brake-pads"
+      || target.dataset.dreamBuildAction === "sports-brake-kit"
+      || target.dataset.dreamBuildAction === "racing-brake-kit"
+      || target.dataset.dreamBuildAction === "carbon-ceramic-big-brake-kit"
+      || target.dataset.dreamBuildAction === "brake-balance-control-package"
+    ) {
+      handleDreamBuildBrakes(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
     } else if (target.dataset.dreamBuildAction === "accept-sponsor-inquiry") {
@@ -16946,7 +17488,7 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildExhaust(work.action);
     } else {
-      setSummaryStatusMessage("Tires & Rubber comes in a future garage pass.");
+      setSummaryStatusMessage("Suspension is the next build track.");
     }
     return;
   }
@@ -16955,7 +17497,25 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildSuspension(work.action);
     } else {
-      setSummaryStatusMessage("Tires & Rubber comes in a future garage pass.");
+      setSummaryStatusMessage("Tires & Rubber is the next build track.");
+    }
+    return;
+  }
+  if (actionType === "buy_dream_tires_work") {
+    const work = nextDreamBuildTiresWork(currentGameState());
+    if (work) {
+      handleDreamBuildTires(work.action);
+    } else {
+      setSummaryStatusMessage("Brakes & Control is the next build track.");
+    }
+    return;
+  }
+  if (actionType === "buy_dream_brakes_work") {
+    const work = nextDreamBuildBrakesWork(currentGameState());
+    if (work) {
+      handleDreamBuildBrakes(work.action);
+    } else {
+      setSummaryStatusMessage("Induction & Cooling comes in a future garage pass.");
     }
     return;
   }

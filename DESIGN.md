@@ -663,19 +663,24 @@ Design rules:
 - Exhaust V1 implements Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped, and Showcase
   Finish.
 - Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It holds
-  Wheels, Exhaust, Suspension, Dream Build Progress, Garage Build Value, Builder Note, and
-  future-only garage management notes so the Overview does not become a full build dashboard. It
-  may show a collapsed Garage Tuning Catalog category preview, but the full parts list lives in
-  `TOFU_GARAGE_TUNING_CATALOG.md`.
+  Wheels, Exhaust, Suspension, Tires & Rubber, Brakes & Control, Dream Build Progress, Garage Build
+  Value, Builder Note, and future-only garage management notes so the Overview does not become a
+  full build dashboard. It may show a collapsed Garage Tuning Catalog category preview, but the
+  full parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
 - Suspension Track Completion V1 is implemented after Exhaust Level 5. Suspension Refreshed,
   Ride Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add Garage
-  Build Value, advance Dream Build Progress to `13 / 30`, and are framed as fictional garage/story
-  value, not speed or real-world vehicle advice. Tires & Rubber remains future/target-only.
-- Dream Build Progress V1 summarizes the project as `6 parts x 5 levels = 30 work stages`.
-  Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension levels;
-  the implemented maximum is `13 / 30` after Balanced Fitment, Showcase Finish, and Showcase
-  Stance. Wheels levels 4-5, Tires & Rubber, Brakes, Turbo Kit, Stage Tune, completed-build
-  events, and full Dream Garage remain future.
+  Build Value, and are framed as fictional garage/story value, not speed or real-world vehicle
+  advice.
+- Tires & Rubber Track V1 is implemented after Suspension Level 5. Sports Tire Set, Extreme
+  Performance Summer Tires, Track-Day R-Compound Tires, Racing Slicks & Semi-Slicks, and Event
+  Tire Set cost Cash, add `+$505M Garage Build Value`, and advance Core Build Progress to `18 / 40`.
+- Brakes & Control Track V1 is implemented after Tires Level 5. Sports Brake Pads, Sports Brake
+  Kit, Racing Brake Kit, Carbon Ceramic Big Brake Kit, and Brake Balance & Control Package cost
+  Cash, add `+$4.05B Garage Build Value`, and advance Core Build Progress to `23 / 40`.
+- Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
+  Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
+  and Brakes levels. Induction & Cooling, Drivetrain & Transmission, Aero/Styling/Weight
+  Reduction, completed-build events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -750,19 +755,19 @@ Implemented Suspension V1 values:
 | 4 | Corner Balance | `$20M` | `+$12M` (`$27.725M` with Wheels level 3 and Exhaust level 5) |
 | 5 | Showcase Stance | `$35M` | `+$22M` (`$49.725M` with Wheels level 3 and Exhaust level 5) |
 
-Wheels levels 4-5, Tires & Rubber, full Dream Garage, completed-build events, Auction, Showcase,
-and Collector Offer remain future.
+Wheels levels 4-5, Induction & Cooling, full Dream Garage, completed-build events, Auction,
+Showcase, and Collector Offer remain future.
 
-Dream Build Progress V1:
+Core Build Progress V2:
 
 ```text
-Dream Build Progress = Wheels Level + Exhaust Level + implemented Suspension Level + future part levels
-Planned build size = 6 parts x 5 levels = 30 work stages
+Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + future core track levels
+Planned core build size = 8 tracks x 5 levels = 40 work stages
 ```
 
-The Dream Build tab may show current Wheels, Exhaust, and Suspension labels, the next dream step,
-Garage Build Value, Builder Note, and compact future track notes. It must not add future part
-purchase buttons, Car Management, or a full Dream Garage surface.
+The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, and Brakes labels, the
+next dream step, Garage Build Value, Builder Note, and compact future track notes. It must not add
+future Induction, Drivetrain, Aero purchase buttons, Car Management, or a full Dream Garage surface.
 
 Avoid:
 

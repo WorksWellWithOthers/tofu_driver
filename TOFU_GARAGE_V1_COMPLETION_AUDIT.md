@@ -66,9 +66,9 @@ or car assets.
 | First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, and starts `$25K Garage Build Value` without a Dream Garage tab or full parts inventory. |
 | Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Garage Build Value to `$65K`; Balanced Fitment costs `$150K` and raises Garage Build Value to `$150K`; levels 4-5 remain future. |
 | Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Garage Build Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note costs `$600K` and raises it to `$825K`; Heat Wrapped costs `$1.1M` and raises it to `$1.475M`; Showcase Finish costs `$2M` and raises it to `$2.725M`. |
-| Dream Build Tab V1 + Suspension Track Completion V1 | Implemented | Earned Dream Build tab appears after the build starts; Suspension levels 1-5 unlock after Exhaust level 5, cost `$4M`, `$7.5M`, `$12M`, `$20M`, and `$35M`, add `+$47M Garage Build Value`, and keep Tires & Rubber future-only. |
+| Dream Build Tab V1 + Suspension/Tires/Brakes Tracks | Implemented | Earned Dream Build tab appears after the build starts; Suspension levels 1-5 unlock after Exhaust level 5, Tires & Rubber levels 1-5 unlock after Suspension level 5, and Brakes & Control levels 1-5 unlock after Tires level 5. |
 | Tofu Garage Tuning Catalog V1 | Implemented docs + preview | `TOFU_GARAGE_TUNING_CATALOG.md` is the canonical future parts source; Dream Build tab shows a collapsed category-only preview and does not dump the full list into Overview. |
-| Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + implemented Suspension Level against `30` planned work stages; current maximum is `13 / 30`; Tires & Rubber and later tracks remain locked/deferred. |
+| Core Build Progress V2 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level against `40` planned core work stages; current maximum is `23 / 40`; Induction & Cooling and later tracks remain locked/deferred. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
@@ -186,12 +186,14 @@ Current code status:
 - Dream Build Tab V1 gives the build its own earned parked surface after the first real build work
   starts, keeping detailed car content out of the Overview by default.
 - Suspension Track Completion V1 implements Suspension Refreshed, Ride Height Set, Alignment
-  Dialed, Corner Balance, and Showcase Stance after Exhaust Level 5. The track costs up to `$78.5M`
-  total, adds `+$47M Garage Build Value`, and keeps Tires & Rubber future/target-only.
+  Dialed, Corner Balance, and Showcase Stance after Exhaust Level 5. Tires & Rubber Track V1 then
+  adds Sports Tire Set through Event Tire Set, and Brakes & Control Track V1 adds Sports Brake Pads
+  through Brake Balance & Control Package.
 - Tofu Garage Tuning Catalog V1 documents authentic future parts vocabulary for the standalone
   garage game. Runtime only previews category names in a collapsed Dream Build card.
-- Dream Build Progress V1 shows the project as `30` planned work stages. Current implemented stages
-  are Wheels levels 1-3, Exhaust levels 1-5, and Suspension levels 1-5.
+- Core Build Progress V2 shows the project as `40` planned core work stages. Current implemented
+  stages are Wheels levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, and
+  Brakes levels 1-5, for a current maximum of `23 / 40`.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 
@@ -219,10 +221,11 @@ budgets, and any Car Asset Value-facing accounting.
 6. Playtest Covered Car / Dream Build Teaser V1 as a parked-only story transition.
 7. Playtest First Dream Build Investment Purchase V1: verify the `$50K` Wheels purchase and `$25K`
    Garage Build Value tradeoff is clear without feeling like full Dream Garage.
-8. Playtest Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream Build Progress V1
-   before any broader part system. Parts should be purchased once, then improved through levels.
-9. Playtest Suspension Track Completion V1 after the completed Exhaust track; keep Tires & Rubber
-   target-only until this slice is proven.
+8. Playtest Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Core Build Progress V2
+   alongside the implemented Suspension, Tires, and Brakes tracks. Parts should be purchased once,
+   then improved through levels.
+9. Playtest Suspension, Tires & Rubber, and Brakes & Control after the completed Exhaust track;
+   keep Induction & Cooling target-only until this slice is proven.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.

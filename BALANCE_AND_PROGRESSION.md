@@ -394,10 +394,14 @@ Examples:
   authentic tuner vocabulary as fictional game language, not real installation advice.
 - Suspension Track Completion V1 proves the third part track after Exhaust Level 5. Suspension
   levels 1-5 cost Cash, add Garage Build Value, and are fictional garage/story value, not speed or
-  real-world vehicle advice. Tires & Rubber remains future/target-only.
-- Dream Build Progress V1 summarizes current build completion as work stages. The planned V1 build
-  size is 30 stages: six part tracks times five levels. Current implemented stages are Wheels
-  levels 1-3, Exhaust levels 1-5, and Suspension level 1.
+  real-world vehicle advice.
+- Tires & Rubber Track V1 and Brakes & Control Track V1 extend the standalone garage build after
+  Suspension Level 5. Tires levels 1-5 add `+$505M Garage Build Value`; Brakes levels 1-5 add
+  `+$4.05B Garage Build Value`. They are fictional garage/event-fit upgrades and do not affect
+  Don't Spill the Cup scoring, certification, route proof, or Driver XP.
+- Core Build Progress V2 summarizes current build completion as work stages. The planned core
+  build size is 40 stages: eight tracks times five levels. Current implemented stages are Wheels
+  levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, and Brakes levels 1-5.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -452,8 +456,9 @@ single overloaded milestone presentation and visible explanation wall with three
 
 The Pinned Goal should update when a meaningful milestone completes, not because Cash crosses
 an affordability threshold, the order queue briefly fills, or ETA text changes. After Exhaust Level
-5, it may point through the implemented Suspension track. After Suspension Level 5, Tires & Rubber
-is shown as the next future/target-only build track.
+5, it may point through the implemented Suspension track. After Suspension Level 5, it points
+through Tires & Rubber; after Tires Level 5, it points through Brakes & Control. After Brakes Level
+5, Induction & Cooling is shown as the next future/target-only build track.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -493,7 +498,8 @@ Rules:
   If Cash is already at `$50K`, it may show `Buy Wheels`. After Wheels are purchased, it may show
   Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`,
   `Seal Joints`, `Tuned Note`, `Heat Wrapped`, or `Showcase Finish` when no urgent shop goal is
-  more useful. After Exhaust level 5, Suspension remains target-only/future.
+  more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, and Brakes
+  & Control. After Brakes level 5, Induction & Cooling remains target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1534,20 +1540,22 @@ Readiness, Collector Appeal, Race Class, Garage Reputation, Brand Value, prize p
 future car-management outcomes. They must not affect Don't Spill the Cup scoring, certification,
 route-context achievements, Perfect Pour proof, Driver XP, real-driving rewards, or share proof.
 
-Dream Build Progress V1:
+Core Build Progress V2:
 
 | Progress Input | Implemented Runtime Contribution |
 | --- | --- |
 | Wheels Level | `0-3` current runtime stages |
 | Exhaust Level | `0-5` current runtime stages |
-| Suspension Level | `0-1` current runtime stages |
-| Brakes | future locked track |
-| Turbo Kit | future locked track |
-| Stage Tune | future locked track |
+| Suspension Level | `0-5` current runtime stages |
+| Tires & Rubber Level | `0-5` current runtime stages |
+| Brakes & Control Level | `0-5` current runtime stages |
+| Induction & Cooling | future locked track |
+| Drivetrain & Transmission | future locked track |
+| Aero, Styling & Weight Reduction | future locked track |
 
-The progress denominator is `30` planned work stages. After Balanced Fitment, Showcase Finish, and
-Showcase Stance, Suspension Track Completion V1 raises the current implemented maximum to `13 / 30`.
-Tires & Rubber remains target-only/future.
+The progress denominator is `40` planned core work stages. After Balanced Fitment, Showcase Finish,
+Showcase Stance, Event Tire Set, and Brake Balance & Control Package, the current implemented
+maximum is `23 / 40`. Induction & Cooling remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
 

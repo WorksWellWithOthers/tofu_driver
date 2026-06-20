@@ -310,8 +310,10 @@ Use more authentic language for Suspension while keeping runtime purchases narro
 - Level 4: Corner Balance. Fully customizable coilover setup and chassis geometry.
 - Level 5: Showcase Stance. Final geometry, bracing, fitment, and presentation.
 
-Suspension Track Completion V1 implements Levels 1-5. Tires & Rubber is the next future build
-track and should be pulled from this catalog only when that runtime slice is intentionally scoped.
+Suspension Track Completion V1 implements Levels 1-5. Tires & Rubber Track V1 and Brakes & Control
+Track V1 are now implemented as the next runtime slices. Induction & Cooling is the next future
+build track and should be pulled from this catalog only when that runtime slice is intentionally
+scoped.
 
 ## Future Runtime Guidance
 
