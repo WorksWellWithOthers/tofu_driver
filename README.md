@@ -140,7 +140,9 @@ The static app uses hash routing:
   operational card, one compact build-status card, and Recent/While Away feedback. Long
   explanations/formulas sit behind keyed Details that stay open across live ticks, saved Builder
   Notes collapse until edited, and detailed Dream Build work moves into the earned Dream Build tab.
-  The Suspension
+  Action Choice Board V1 adds compact next-choice cards for Cash Conversion, Dream Build progress,
+  and contextual Ledger activity; Dream Build no longer shows shop/offline footer logs. The
+  Suspension
   track is implemented through Showcase Stance; Tires & Rubber, Brakes & Control, Induction &
   Cooling, Drivetrain & Transmission, and Aero/Styling/Weight Reduction are implemented through
   their Level 5 completions; Final Detail and Shakedown Complete now finish the first core build at

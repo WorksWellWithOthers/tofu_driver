@@ -5059,6 +5059,40 @@ function counterContractStatus(contract, gameState) {
   };
 }
 
+function cashConversionBacklogStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const readyOrders = readyDeliveryOrders(state.shop);
+  const queueCapacity = deliveryOrderQueueCapacity();
+  const queueFull = readyOrders >= queueCapacity;
+  const queueNearFull = readyOrders >= Math.max(1000, Math.floor(queueCapacity * 0.9));
+  const highStock = safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE) >= 1000;
+  const counterRunning = isCounterServiceUnlocked(state) && Boolean(state.shop.counterService && state.shop.counterService.running);
+  const counterPaused = isCounterServiceUnlocked(state) && !counterRunning;
+  const contract = nextCounterContract(state);
+  const contractState = contract ? counterContractStatus(contract, state) : null;
+  const contractRelevant = Boolean(
+    contract
+    && contractState
+    && contractState.unlocked
+    && state.shop.reputation >= contract.costReputation
+    && (queueFull || (queueNearFull && highStock)),
+  );
+  const bottleneck = Boolean((queueFull || (queueNearFull && highStock)) && readyOrders > 0);
+  return {
+    readyOrders,
+    queueCapacity,
+    queueFull,
+    queueNearFull,
+    highStock,
+    counterRunning,
+    counterPaused,
+    contract,
+    contractState,
+    contractRelevant,
+    bottleneck,
+  };
+}
+
 function buyCounterContract(contractId, gameState, options = {}) {
   let next = normalizeGameState(gameState);
   if (options.activeDrive || appState.running || appState.calibrating) {
@@ -8429,6 +8463,47 @@ function renderAffordabilityProgress(progress) {
       </div>
       <small>${escapeHtml(progress.text)}${progress.etaText ? ` · ${escapeHtml(progress.etaText)}` : ""}</small>
     </div>
+  `;
+}
+
+function cashAffordabilityProgress(gameState, requiredCash) {
+  const state = normalizeGameState(gameState);
+  const required = safeNonNegativeNumber(requiredCash, 0, SHOP_MAX_RESOURCE);
+  return affordabilityProgress([
+    {
+      label: "Cash",
+      current: cashBalance(state),
+      required,
+      perSecond: counterServiceIncomeStatus(state).tipsPerMinute / 60,
+    },
+  ]);
+}
+
+function renderCashProgressBar(gameState, requiredCash, label = "Cash") {
+  const state = normalizeGameState(gameState);
+  const required = safeNonNegativeNumber(requiredCash, 0, SHOP_MAX_RESOURCE);
+  if (required <= 0) return "";
+  const current = cashBalance(state);
+  const percent = clampPercent((Math.min(current, required) / Math.max(1, required)) * 100);
+  const progress = cashAffordabilityProgress(state, required);
+  const missing = Math.max(0, required - current);
+  return `
+    <div class="nospill-afford-progress-head">
+      <span>${escapeHtml(label)}</span>
+      <strong>${formatShopCount(percent)}%</strong>
+    </div>
+    <div
+      class="nospill-afford-progress-bar"
+      role="progressbar"
+      aria-label="${escapeHtml(`${label} progress`)}"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="${percent}"
+    >
+      <span style="width: ${percent}%"></span>
+    </div>
+    <small>${escapeHtml(formatCashCount(current))} / ${escapeHtml(formatCashCount(required))} Cash${missing > 0 ? ` · Need ${escapeHtml(formatCash(missing))} more Cash.` : " · ready"}</small>
+    ${progress.etaText && missing > 0 ? `<small>${escapeHtml(progress.etaText)} at current shop income</small>` : ""}
   `;
 }
 
@@ -13229,6 +13304,7 @@ function nextBestAction(gameState, options = {}) {
   const managerCandidate = nextManagerDeskUpgrade(state, false);
   const contractCandidate = nextCounterContract(state);
   const contractStatus = contractCandidate ? counterContractStatus(contractCandidate, state) : null;
+  const cashBacklog = cashConversionBacklogStatus(state);
   const stockMilestone = nextVisibleStationMilestone(state, { stationIds: ["tofu_press"] });
   const prepMilestone = nextVisibleStationMilestone(state, { stationIds: ["prep_counter", "delivery_shelf"] });
   const reputationMilestone = nextVisibleStationMilestone(state, { stationIds: ["shop_sign"] });
@@ -13395,9 +13471,9 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
-  if (shopUnlocked && readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity()) {
-    const counterRunning = isCounterServiceUnlocked(state) && state.shop.counterService.running;
-    const counterPaused = isCounterServiceUnlocked(state) && !state.shop.counterService.running;
+  if (shopUnlocked && (cashBacklog.queueFull || cashBacklog.contractRelevant)) {
+    const counterRunning = cashBacklog.counterRunning;
+    const counterPaused = cashBacklog.counterPaused;
     const contractAvailable = Boolean(contractCandidate && contractStatus && contractStatus.unlocked);
     const counterCopy = counterPaused
       ? "The order queue is full. Start Counter Service to turn ready orders into Cash."
@@ -13824,13 +13900,14 @@ function nextBestAction(gameState, options = {}) {
         disabled: false,
       };
     }
+    const wheelsReady = target.ready && coveredCarTeaserSeen(state);
     return {
-      type: target.ready ? "buy_dream_wheels" : "dream_investment_target",
-      title: target.ready ? "Next: Buy Wheels" : "Next: Grow Cash for Wheels",
-      copy: target.ready
+      type: wheelsReady ? "buy_dream_wheels" : "dream_investment_target",
+      title: wheelsReady ? "Next: Buy Wheels" : "Next: Grow Cash for Wheels",
+      copy: wheelsReady
         ? "Start the dream build with the first real part."
         : "The shop is funding the first Dream Build investment.",
-      buttonLabel: target.ready ? "Buy Wheels" : "View Wheels Fund",
+      buttonLabel: wheelsReady ? "Buy Wheels" : "View Wheels Fund",
       disabled: false,
     };
   }
@@ -14658,7 +14735,6 @@ function renderCoveredCarTeaserCard(gameState) {
 function renderDreamBuildTrackWorkCard(state, options) {
   const work = options.work;
   const canAfford = cashBalance(state) >= work.cost;
-  const missing = Math.max(0, work.cost - cashBalance(state));
   const status = options.statusOverride || `Level ${formatShopCount(options.level)} / ${formatShopCount(options.totalLevels || 5)} · ${options.statusLabel}`;
   return renderIdleCard({
     title: options.title,
@@ -14672,9 +14748,9 @@ function renderDreamBuildTrackWorkCard(state, options) {
         </div>
         <small>Next Work: ${escapeHtml(work.title)}</small>
         <small>Cost: ${escapeHtml(formatCash(work.cost))} Cash · Build Value added: +${escapeHtml(formatCashCount(work.valueAdded))}</small>
+        ${renderCashProgressBar(state, work.cost)}
         <small>${escapeHtml(work.copy)}</small>
         ${work.detailCopy ? compactDetails(`dream_build_${work.action}_details`, options.detailsLabel, `<p>${escapeHtml(work.detailCopy)}</p>`) : ""}
-        ${!canAfford ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
       </div>
     `,
     actions: canAfford ? [
@@ -14719,6 +14795,7 @@ function renderDreamInvestmentTargetCard(gameState) {
             </div>
             <small>Next Work: ${escapeHtml(work.title)}</small>
             <small>Cost: ${escapeHtml(formatCash(work.cost))} Cash · Value added: +${escapeHtml(formatCashCount(work.valueAdded))}</small>
+            ${renderCashProgressBar(state, work.cost)}
             <small>${escapeHtml(work.copy)}</small>
           </div>
         `,
@@ -14760,8 +14837,8 @@ function renderDreamInvestmentTargetCard(gameState) {
             </div>
             <small>${isPurchase ? "Next Dream Part" : "Next Work"}: ${escapeHtml(exhaustWork.title)}</small>
             <small>Cost: ${escapeHtml(formatCash(exhaustWork.cost))} Cash · ${exhaustWork.action === "heat-wrap" || exhaustWork.action === "showcase-finish" ? "Build Value added" : "Value added"}: +${escapeHtml(formatCashCount(exhaustWork.valueAdded))}</small>
+            ${renderCashProgressBar(state, exhaustWork.cost)}
             <small>${escapeHtml(exhaustWork.copy)}</small>
-            ${!canAffordExhaustWork ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
           </div>
         `,
         actions: canAffordExhaustWork ? [
@@ -15081,6 +15158,83 @@ function renderDreamInvestmentTargetCard(gameState) {
     actions: target.ready && coveredCarTeaserSeen(state)
       ? [actionButton("Buy Wheels", "data-dream-build-action", "buy-wheels", false, "nospill-primary")]
       : [],
+  });
+}
+
+function nextDreamBuildActionTarget(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!dreamInvestmentTargetVisible(state)) return null;
+  const target = dreamInvestmentTargetProgress(state);
+  if (!target.purchased) {
+    if (!coveredCarTeaserSeen(state)) return null;
+    return {
+      section: "Dream Build",
+      track: "Wheels & Fitment",
+      title: "Buy Wheels",
+      action: "buy-wheels",
+      buttonLabel: "Buy Wheels",
+      cost: target.required,
+      valueAdded: DREAM_BUILD_WHEELS_VALUE,
+      copy: "Start the covered build with its first real part.",
+      nextTrack: "Wheels & Fitment",
+      laterTracks: "Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Aero",
+    };
+  }
+  const candidates = [
+    ["Wheels & Fitment", nextDreamBuildWheelsWork(state), "Exhaust & Airflow", "Suspension, Tires, Brakes, Induction, Drivetrain, Aero"],
+    ["Exhaust & Airflow", nextDreamBuildExhaustWork(state), "Suspension & Chassis Geometry", "Tires & Rubber, Brakes & Control, Induction & Cooling, Drivetrain, Aero"],
+    ["Suspension & Chassis Geometry", nextDreamBuildSuspensionWork(state), "Tires & Rubber", "Brakes & Control, Induction & Cooling, Drivetrain, Aero"],
+    ["Tires & Rubber", nextDreamBuildTiresWork(state), "Brakes & Control", "Induction & Cooling, Drivetrain, Aero"],
+    ["Brakes & Control", nextDreamBuildBrakesWork(state), "Induction & Cooling", "Drivetrain, Aero"],
+    ["Induction & Cooling", nextDreamBuildInductionWork(state), "Drivetrain & Transmission", "Aero"],
+    ["Drivetrain & Transmission", nextDreamBuildDrivetrainWork(state), "Aero, Styling & Weight Reduction", "Final Detail & Shakedown"],
+    ["Aero, Styling & Weight Reduction", nextDreamBuildAeroWork(state), "Final Detail & Shakedown", "Final completion"],
+    ["Final Detail & Shakedown", nextDreamBuildFinalWork(state), "First Complete Build", "Future garage passes"],
+  ];
+  for (const [track, work, nextTrack, laterTracks] of candidates) {
+    if (work) {
+      return {
+        section: "Dream Build",
+        track,
+        title: work.title,
+        action: work.action,
+        buttonLabel: work.buttonLabel,
+        cost: work.cost,
+        valueAdded: work.valueAdded,
+        copy: work.copy,
+        nextTrack,
+        laterTracks,
+      };
+    }
+  }
+  return null;
+}
+
+function renderBuildChoicePreviewCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!dreamBuildProgressVisible(state)) return "";
+  const target = nextDreamBuildActionTarget(state);
+  const current = target ? target.title : dreamBuildFinalBuildLevel(state) >= 2 ? "First Complete Build" : nextDreamBuildStep(state).title;
+  const nextTrack = target ? target.nextTrack : dreamBuildFinalBuildLevel(state) >= 2 ? "Car Management" : "Future garage pass";
+  const later = target ? target.laterTracks : "Second car and full garage systems";
+  return renderIdleCard({
+    title: "Build Choices",
+    status: target ? "Focused path" : "Future planning",
+    copy: target
+      ? `Current build path is focused on ${target.track}. ${target.nextTrack} unlocks after this track is ready.`
+      : "The first build path is complete. Future passes add broader garage choices.",
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>Current: ${escapeHtml(current)}</small>
+        <small>Next Track: ${escapeHtml(nextTrack)}</small>
+        <small>Later: ${escapeHtml(later)}</small>
+        ${compactDetails("dream_build_choice_preview", "Why this path is focused", `
+          <p>Current car work unfolds one focused track at a time so each part layer has a clear target.</p>
+          <p>Future design should consider parallel build-track choices so players can choose between grip, control, power, and style paths.</p>
+        `)}
+      </div>
+    `,
   });
 }
 
@@ -15846,6 +16000,7 @@ function renderDreamBuildPanel(gameState) {
     <div class="nospill-idle-grid">
       ${renderDreamBuildProgressCard(state)}
       ${renderDreamInvestmentTargetCard(state)}
+      ${renderBuildChoicePreviewCard(state)}
       ${renderDreamBuildTracksCard(state)}
       ${renderBuilderNoteCard(state)}
       ${compactDetails("dream_build_garage_events", "Garage Events", renderGarageEventBoardCard(state) || "<p>Garage Event Board appears after the build reaches its event-ready threshold.</p>")}
@@ -17065,14 +17220,14 @@ function carManagementPinnedGoal(gameState) {
 function pinnedNearGoalForShop(gameState) {
   const state = normalizeGameState(gameState);
   if (appState.running || appState.calibrating) return null;
-  const readyOrders = readyDeliveryOrders(state.shop);
+  const cashBacklog = cashConversionBacklogStatus(state);
   const contract = nextCounterContract(state);
   const contractState = contract ? counterContractStatus(contract, state) : null;
   if (
     contract
     && contractState
     && contractState.unlocked
-    && readyOrders >= deliveryOrderQueueCapacity()
+    && cashBacklog.contractRelevant
     && state.shop.reputation >= contract.costReputation
   ) {
     const cashReady = state.shop.tips >= contract.costTips;
@@ -17666,12 +17821,119 @@ function renderGoalStackCard(state) {
   `;
 }
 
+function actionChoiceResourceLine(label, current, required, formatter) {
+  const safeCurrent = safeNonNegativeNumber(current, 0, SHOP_MAX_RESOURCE);
+  const safeRequired = safeNonNegativeNumber(required, 0, SHOP_MAX_RESOURCE);
+  const ready = safeRequired <= 0 || safeCurrent >= safeRequired;
+  const percent = safeRequired > 0
+    ? clampPercent((Math.min(safeCurrent, safeRequired) / Math.max(1, safeRequired)) * 100)
+    : 100;
+  return `
+    <small>${escapeHtml(label)}: ${escapeHtml(formatter(safeCurrent))} / ${escapeHtml(formatter(safeRequired))} · ${ready ? "ready" : `${formatShopCount(percent)}%`}</small>
+  `;
+}
+
+function renderActionChoiceCard({ title, status, copy, extra = "", actions = [] }) {
+  return renderIdleCard({
+    title,
+    status,
+    copy,
+    extra,
+    actions,
+  });
+}
+
+function renderActionChoiceBoard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!isShopDiscovered(state)) return "";
+  const cards = [];
+  const backlog = cashConversionBacklogStatus(state);
+  if (backlog.contract && backlog.contractState && backlog.contractState.unlocked && backlog.contractRelevant) {
+    const contract = backlog.contract;
+    const status = backlog.contractState;
+    const orderType = shopOrderTypeById(contract.unlockOrderTypeId);
+    const missingCash = Math.max(0, contract.costTips - state.shop.tips);
+    const missingRep = Math.max(0, contract.costReputation - state.shop.reputation);
+    cards.push(renderActionChoiceCard({
+      title: "Cash Conversion",
+      status: contract.name,
+      copy: status.canBuy ? "Ready" : "Spend Reputation to unlock bigger Cash handoffs.",
+      extra: `
+        <div class="nospill-afford-progress">
+          <small>Cost: ${escapeHtml(formatCash(contract.costTips))} Cash + ${escapeHtml(formatShopCount(contract.costReputation))} Reputation</small>
+          <small>Reward: ${escapeHtml(orderType.name)} · Counter Service batch floor ${escapeHtml(formatShopCount(contract.batchFloor))}</small>
+          ${actionChoiceResourceLine("Cash", state.shop.tips, contract.costTips, formatCashCount)}
+          ${actionChoiceResourceLine("Reputation", state.shop.reputation, contract.costReputation, formatShopCount)}
+          ${missingCash > 0 ? `<small>Need ${escapeHtml(formatCash(missingCash))} more Cash.</small>` : ""}
+          ${missingRep > 0 ? `<small>Need ${escapeHtml(formatShopCount(missingRep))} more Reputation.</small>` : ""}
+        </div>
+      `,
+      actions: status.canBuy ? [
+        actionButton(contract.buttonLabel, "data-counter-contract", contract.id, false, "nospill-primary"),
+      ] : [],
+    }));
+  }
+
+  const dreamTarget = nextDreamBuildActionTarget(state);
+  if (dreamTarget) {
+    const canAfford = cashBalance(state) >= dreamTarget.cost;
+    cards.push(renderActionChoiceCard({
+      title: "Dream Build",
+      status: dreamTarget.title,
+      copy: dreamTarget.copy,
+      extra: `
+        <div class="nospill-afford-progress">
+          ${renderCashProgressBar(state, dreamTarget.cost)}
+          <small>Reward: ${GARAGE_BUILD_VALUE_LABEL} +${escapeHtml(formatCashCount(dreamTarget.valueAdded))}</small>
+        </div>
+      `,
+      actions: canAfford ? [
+        actionButton(dreamTarget.buttonLabel, "data-dream-build-action", dreamTarget.action, false, "nospill-primary"),
+      ] : [],
+    }));
+  }
+
+  const offline = state.shop.offlineEarnings || {};
+  const hasOffline = Boolean(
+    Number(offline.tofuStock || 0) > 0.005
+    || Number(offline.deliveryOrders || 0) > 0.005
+    || Number(offline.tips || 0) > 0.005
+    || Number(offline.cappedHours || 0) > 0.01
+    || offline.capped
+  );
+  if (hasOffline && hasMeaningfulLedgerHistory(state)) {
+    cards.push(renderActionChoiceCard({
+      title: "Recent Activity",
+      status: "While away summary available",
+      copy: "Open the Ledger for the detailed activity log.",
+      actions: [
+        actionButton("View Ledger", "data-shop-tab", "ledger", false, "nospill-secondary"),
+      ],
+    }));
+  }
+
+  if (!cards.length) return "";
+  return `
+    <section class="nospill-action-choice-board" aria-label="Action choices">
+      <div class="nospill-next-milestone-head">
+        <span>Action Choices</span>
+        <strong>Choose how to push the next few minutes forward.</strong>
+      </div>
+      <div class="nospill-idle-grid">
+        ${cards.slice(0, 3).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderOverviewOperationalCard(state) {
   const prep = orderPrepProgress(state);
   const rates = getShopGeneratorRates(state);
   const income = counterServiceIncomeStatus(state);
+  const backlog = cashConversionBacklogStatus(state);
   const queueFull = deliveryOrderQueueSpace(state.shop) < 1;
-  const counterRunning = Boolean(state.shop.counterService && state.shop.counterService.running);
+  const counterRunning = backlog.counterRunning;
   const waitingForStock = counterRunning && state.shop.deliveryOrders > 0 && state.shop.tofuStock < 1;
   const waitingForOrders = counterRunning && state.shop.deliveryOrders < 1;
   const status = queueFull
@@ -17683,7 +17945,7 @@ function renderOverviewOperationalCard(state) {
         : "Shop moving";
   const copy = queueFull
     ? counterRunning
-      ? "Queue full. Counter Service is already clearing prepared orders. Counter Contracts can turn the backlog into Cash faster."
+      ? "You have stock and ready orders. Counter Service is clearing them, but bigger contracts turn the backlog into Cash faster."
       : "Queue full. Start Counter Service to turn ready orders into Cash."
     : waitingForStock
       ? "Counter Service is waiting for tofu stock."
@@ -17692,7 +17954,7 @@ function renderOverviewOperationalCard(state) {
         : "Tofu Stock, ready orders, and Counter Service are summarized here.";
   const prepCapacityLine = `${formatShopCount(state.shop.prepSlots)} slots open · ${formatShopCount(getPrepSlotMax(state.shop))} max`;
   const prepCapacityMeaning = state.shop.prepSlots > 0
-    ? "Prepared-order storage is not currently the bottleneck."
+    ? "Prepared-order storage is not the bottleneck right now."
     : "Prep Capacity is recovering before more station purchases.";
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
   return renderIdleCard({
@@ -17706,6 +17968,7 @@ function renderOverviewOperationalCard(state) {
         <small>Tofu Stock/sec: +${escapeHtml(formatShopRate(rates.tofuPressPerSecond))}/sec</small>
         <small>Prep Capacity: ${escapeHtml(prepCapacityLine)}</small>
         <small>${escapeHtml(prepCapacityMeaning)}</small>
+        ${queueFull ? "<small>Ready-order queue is full. Counter Service and Counter Contracts are the Cash conversion path.</small>" : ""}
         ${compactDetails("overview_order_details", "How orders work", `
           <p>Prepared orders fill the Delivery Orders queue. When that queue is full, Counter Service and Counter Contracts are the Cash conversion path.</p>
           <p>Prep Capacity is the recovering expansion pool used to add more production stations. It is not prepared-order storage and not a manual recharge button.</p>
@@ -17756,6 +18019,7 @@ function renderOverviewPanel(state) {
   return `
     <h4>Overview</h4>
     ${renderGoalStackCard(state)}
+    ${renderActionChoiceBoard(state)}
     ${renderTofuShopLivingScene(state)}
     ${recentReward ? `<div class="nospill-overview-recent">${recentReward}</div>` : ""}
     <div class="nospill-idle-grid">
@@ -18294,6 +18558,16 @@ function renderShopSettingsPanel(state) {
 
 function currentBottleneck(gameState) {
   const state = normalizeGameState(gameState);
+  const cashBacklog = cashConversionBacklogStatus(state);
+  if (cashBacklog.bottleneck) {
+    return {
+      id: "cash_conversion",
+      label: "Cash conversion bottleneck",
+      action: cashBacklog.contractRelevant
+        ? "You have stock and ready orders. Counter Contracts turn the backlog into Cash faster."
+        : "Counter Service is the Cash conversion path for prepared orders.",
+    };
+  }
   const prep = orderPrepProgress(state);
   const runway = tofuStockRunway(state);
   const bestOrder = bestFulfillableShopOrderType(state);
@@ -18448,6 +18722,10 @@ function renderTofuShop(gameState = loadGameState()) {
     setTextIfChanged(elements.shopInlineResult, appState.shopInlineResult || "");
   }
   if (elements.shopOfflineEarnings) {
+    const showOfflineSummary = appState.shopTab === "overview" && !appState.running && !appState.calibrating;
+    if (elements.shopOfflineEarnings.classList && elements.shopOfflineEarnings.classList.toggle) {
+      elements.shopOfflineEarnings.classList.toggle("is-hidden", !showOfflineSummary);
+    }
     const offlineTofu = Number(shop.offlineEarnings && shop.offlineEarnings.tofuStock || 0);
     const offlineOrders = Number(shop.offlineEarnings && shop.offlineEarnings.deliveryOrders || 0);
     const offlineTips = Number(shop.offlineEarnings && shop.offlineEarnings.tips || 0);
@@ -18521,11 +18799,11 @@ function renderTofuShop(gameState = loadGameState()) {
     if (offlineCounterPaused && offlineOrders > 0.005) compactNotes.push("Counter Service stays offline");
     const compactSuggestions = offlineSuggestions.slice(0, 2);
     const showLedgerCta = hasOfflineEarnings && (compactSuggestions.length > 0 || hasMeaningfulLedgerHistory(state));
-    const offlineText = hasOfflineEarnings
+    const offlineText = hasOfflineEarnings && showOfflineSummary
       ? `While away: ${compactOffline.concat(compactNotes).join(" · ")}${compactSuggestions.length ? ` · Next: ${compactSuggestions.join(" · ")}` : ""}${showLedgerCta ? " · View Ledger" : ""}`
       : "";
-    const offlineHtml = hasOfflineEarnings
-      ? `While away: ${escapeHtml(compactOffline.concat(compactNotes).join(" · "))}${compactSuggestions.length ? ` · Next: ${escapeHtml(compactSuggestions.join(" · "))}` : ""}${showLedgerCta ? ` <button type="button" class="nospill-link-button" data-shop-tab="ledger">View Ledger</button>` : ""}`
+    const offlineHtml = hasOfflineEarnings && showOfflineSummary
+      ? `While away: ${escapeHtml(compactOffline.concat(compactNotes).join(" · "))}${compactSuggestions.length ? ` · Next: ${escapeHtml(compactSuggestions.join(" · "))}` : ""}${showLedgerCta ? ` <button type="button" class="nospill-secondary nospill-inline-ledger" data-shop-tab="ledger">View Ledger</button>` : ""}`
       : "";
     setTextIfChanged(elements.shopOfflineEarnings, offlineText);
     if (elements.shopOfflineEarnings.querySelector && elements.shopOfflineEarnings.innerHTML !== offlineHtml) {

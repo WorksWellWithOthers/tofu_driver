@@ -551,6 +551,14 @@ Current design principles:
   feedback. Prep/order math, Counter Service detail, Net Worth formulas, showcase/sponsor/passport
   detail, and optional boost copy belong behind Details or in their specific tabs. Details open
   state is runtime UI state and should survive live shop ticks without localStorage persistence.
+- Action Choice Board V1 now sits immediately after Goal Stack as the compact answer to "what can I
+  press or wait for next?" It shows up to three stable cards, such as Cash Conversion through a
+  Counter Contract, the current Dream Build target with Cash progress, and contextual recent
+  activity. It must not duplicate full tab contents or show dead buttons.
+- Queue-full and cash-conversion states use stable recommendation categories. `Clear the Order
+  Queue` remains the Now title while Counter Service is already running, and high-stock/high-order
+  saves with an available Counter Contract should pin that contract instead of flip-flopping with
+  Dream Build work every tick.
 - The Tofu Shop Living Scene is a decorative parked Overview panel, not a control surface. It should
   present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
   milestones, while buttons and gameplay decisions remain separate UI. Do not show separate
@@ -687,6 +695,10 @@ Design rules:
   Rubber, Brakes & Control, Induction & Cooling, Drivetrain, Aero, Garage Event Board, tuning
   catalog, and future-only management copy stay behind Details so the tab feels like a car screen
   rather than documentation. The full parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
+- Dream Build does not render shop/offline footer logs. While-away summaries and Ledger CTAs belong
+  to Overview/Ledger. Active work cards show concrete Cash progress and missing Cash; Build Choices
+  previews the focused current path, next track, and later tracks without implementing parallel
+  part-track choice yet.
 - Suspension Track Completion V1 is implemented after Exhaust Level 5. Suspension Refreshed,
   Ride Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add Garage
   Build Value, and are framed as fictional garage/story value, not speed or real-world vehicle

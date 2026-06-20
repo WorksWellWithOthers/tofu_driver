@@ -60,6 +60,10 @@
   recommendations mention upgrades only when a visible implemented upgrade is actually available.
   Detailed car work lives in the earned Dream Build tab, and future-only build steps stay labeled
   without dead buttons.
+- Action Choice Board V1 is implemented under Goal Stack. It shows stable next-choice cards for
+  Cash Conversion, the current Dream Build target, and contextual recent activity. Dream Build
+  active work cards now show Cash progress bars/missing Cash, and Dream Build no longer inherits
+  shop/offline footer logs.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
@@ -388,7 +392,8 @@ Canonical references:
    usefulness.
 15. Tune Overview Glance Mode V1, the retained Next Milestone helper, and Station Milestone Boosts
    V1 against playtest behavior before adding higher station thresholds. Confirm Pinned Goal stays
-   stable, Details remain discoverable on mobile, and Goal Stack copy stays honest without dead CTAs.
+   stable, Details remain discoverable on mobile, Action Choice Board cards remain useful without
+   becoming a second dashboard, and Goal Stack copy stays honest without dead CTAs.
 16. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
@@ -490,6 +495,8 @@ Future endgame/business sequence:
 2. Stabilize and tune the First Loop Contract.
 3. Tune Overview Goal Stack V1, Supplier Contracts, Counter Service/Managed Shop V1, and Station
    Milestone Boosts V1 before adding more station thresholds.
+   Future Dream Build planning should consider parallel build-track choices so players can choose
+   between grip, control, power, and style paths once the current focused path has proven readable.
 4. Keep `tips` as flavor copy for order rewards while Cash remains the only player-facing liquid
    money balance.
 5. Tune Net Worth V1 reveal timing and first `$1M` Showcase Interest timing; the $1T goal does not

@@ -146,6 +146,7 @@ globalThis.counterContractById = counterContractById;
 globalThis.counterContractPurchased = counterContractPurchased;
 globalThis.counterContractStatus = counterContractStatus;
 globalThis.nextCounterContract = nextCounterContract;
+globalThis.cashConversionBacklogStatus = cashConversionBacklogStatus;
 globalThis.buyCounterContract = buyCounterContract;
 globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
 globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
@@ -201,6 +202,9 @@ globalThis.dreamBuildProgressSummary = dreamBuildProgressSummary;
 globalThis.renderDreamBuildProgressCard = renderDreamBuildProgressCard;
 globalThis.renderDreamBuildOverviewSummaryCard = renderDreamBuildOverviewSummaryCard;
 globalThis.renderDreamBuildPanel = renderDreamBuildPanel;
+globalThis.renderActionChoiceBoard = renderActionChoiceBoard;
+globalThis.renderBuildChoicePreviewCard = renderBuildChoicePreviewCard;
+globalThis.renderOverviewPanel = renderOverviewPanel;
 globalThis.renderGarageTuningCatalogPreviewCard = renderGarageTuningCatalogPreviewCard;
 globalThis.sanitizeBuilderNote = sanitizeBuilderNote;
 globalThis.builderNoteVisible = builderNoteVisible;
@@ -4140,9 +4144,13 @@ function dreamMakeNode() {
 const dreamElements = {
   shopTabList: dreamMakeNode(),
   shopTabPanel: dreamMakeNode(),
+  shopInlineResult: dreamMakeNode(),
+  shopOfflineEarnings: dreamMakeNode(),
 };
 elements.shopTabList = dreamElements.shopTabList;
 elements.shopTabPanel = dreamElements.shopTabPanel;
+elements.shopInlineResult = dreamElements.shopInlineResult;
+elements.shopOfflineEarnings = dreamElements.shopOfflineEarnings;
 
 const fresh = defaultGameState();
 renderShopTabs(fresh);
@@ -4159,6 +4167,24 @@ globalThis.dreamWheelsTabUnlocked = dreamBuildTabUnlocked(wheels);
 appState.shopTab = "dream_build";
 renderShopTabs(wheels);
 globalThis.dreamWheelsPanelHtml = elements.shopTabPanel.innerHTML;
+
+const dreamOfflineState = normalizeGameState(wheels);
+dreamOfflineState.shop.offlineEarnings = {
+  tofuStock: 196000000,
+  deliveryOrders: 175,
+  tips: 0,
+  cappedHours: 2,
+};
+appState.shopTab = "dream_build";
+appState.shopInlineResult = "Wholesale Pickup cleared 50 waiting orders.";
+renderTofuShop(dreamOfflineState);
+globalThis.dreamOfflinePanelHtml = elements.shopTabPanel.innerHTML;
+globalThis.dreamOfflineFooterText = elements.shopOfflineEarnings.textContent;
+globalThis.dreamOfflineFooterHtml = elements.shopOfflineEarnings.innerHTML;
+appState.shopTab = "overview";
+renderTofuShop(dreamOfflineState);
+globalThis.overviewOfflineFooterText = elements.shopOfflineEarnings.textContent;
+globalThis.overviewOfflineFooterHtml = elements.shopOfflineEarnings.innerHTML;
 
 appState.running = true;
 renderShopTabs(wheels);
@@ -4660,6 +4686,16 @@ appState.running = false;
   assert(context.dreamWheelsPanelHtml.includes('Wheels'));
   assert(context.dreamWheelsPanelHtml.includes('Exhaust'));
   assert(context.dreamWheelsPanelHtml.includes('Suspension'));
+  assert(context.dreamWheelsPanelHtml.includes('Build Choices'));
+  assert(!context.dreamOfflinePanelHtml.includes('Wholesale Pickup cleared 50 waiting orders.'));
+  assert(!context.dreamOfflinePanelHtml.includes('While away:'));
+  assert(!context.dreamOfflinePanelHtml.includes('View Ledger'));
+  assert.strictEqual(context.dreamOfflineFooterText, '');
+  assert.strictEqual(context.dreamOfflineFooterHtml, '');
+  assert(context.overviewOfflineFooterText.includes('While away:'));
+  assert(context.overviewOfflineFooterText.includes('View Ledger'));
+  assert(context.overviewOfflineFooterHtml.includes('nospill-secondary nospill-inline-ledger'));
+  assert(context.overviewOfflineFooterHtml.includes('data-shop-tab="ledger"'));
   assert(!context.dreamActiveTabsHtml.includes('data-shop-tab="dream_build"'));
   assert.strictEqual(context.dreamActivePanelHtml, '');
 
@@ -4674,6 +4710,8 @@ appState.running = false;
   assert(context.suspensionLowCardHtml.includes('Next Work: Suspension Refreshed'));
   assert(context.suspensionLowCardHtml.includes('Cost: $4M Cash'));
   assert(context.suspensionLowCardHtml.includes('Build Value added: +$2M'));
+  assert(context.suspensionLowCardHtml.includes('$1.5M / $4M Cash'));
+  assert(context.suspensionLowCardHtml.includes('38%'));
   assert(context.suspensionLowCardHtml.includes('Need $2.5M more Cash.'));
   assert(!context.suspensionLowCardHtml.includes('Refresh Suspension</button>'));
   assert.strictEqual(context.suspensionLowProgress.completed, 8);
@@ -5167,7 +5205,7 @@ appState.running = false;
   assert.strictEqual(context.queueFullPausedAction.title, 'Next: Clear the Order Queue');
   assert(context.queueFullPausedAction.copy.includes('Start Counter Service'));
   assert.strictEqual(context.queueFullPausedPrep.message, 'Order queue full. Start Counter Service to clear prepared orders.');
-  assert(context.queueFullRunningOverview.includes('Prepared-order storage is not currently the bottleneck.'));
+  assert(context.queueFullRunningOverview.includes('Prepared-order storage is not the bottleneck right now.'));
   assert(!context.queueFullRunningPrep.message.includes('Next order is 0% prepared'));
 
   assert(context.dreamOverviewSummary.includes('Open Dream Build'));
@@ -7288,8 +7326,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620g'));
-  assert(html.includes('/static/nospill/app.css?v=20260620g'));
+  assert(html.includes('/static/nospill/app.js?v=20260620h'));
+  assert(html.includes('/static/nospill/app.css?v=20260620h'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -7334,17 +7372,58 @@ function testHighScaleCounterContractsV1() {
   assert.strictEqual(context.counterServiceBatchSize(userLike), 25);
   assert.strictEqual(context.counterContractStatus(context.counterContractById('wholesale_counter_contract'), userLike).unlocked, true);
   assert.strictEqual(context.counterContractStatus(context.counterContractById('wholesale_counter_contract'), userLike).canBuy, false);
+  assert.strictEqual(context.cashConversionBacklogStatus(userLike).contractRelevant, true);
+  assert.strictEqual(context.currentBottleneck(userLike).label, 'Cash conversion bottleneck');
   const userLikeAction = context.nextBestAction(userLike);
   assert.strictEqual(userLikeAction.title, 'Next: Clear the Order Queue');
+  assert.notStrictEqual(userLikeAction.title, 'Next: Let Counter Service work');
   assert(userLikeAction.copy.includes('Bigger contracts can convert ready orders into Cash faster'));
   const userLikePinned = context.pinnedNearGoalForShop(userLike);
   assert.strictEqual(userLikePinned.title, 'Grow Cash for Wholesale Counter Contract');
   assert(userLikePinned.body.includes('Reputation is ready'));
   const userLikePrep = context.orderPrepProgress(userLike);
   assert.strictEqual(userLikePrep.message, 'Order queue full. Counter Service is clearing prepared orders.');
+  const userLikeOverview = context.renderOverviewPanel(userLike);
+  assert(userLikeOverview.includes('Action Choices'));
+  assert(userLikeOverview.includes('Cash Conversion'));
+  assert(userLikeOverview.includes('Wholesale Counter Contract'));
+  assert(userLikeOverview.includes('Cash: $154K / $250K'));
+  assert(userLikeOverview.includes('Reputation: 7.18M / 5M'));
+  assert(userLikeOverview.includes('Prepared-order storage is not the bottleneck right now.'));
+  assert(userLikeOverview.includes('Counter Service and Counter Contracts are the Cash conversion path.'));
+
+  const playtestChoice = JSON.parse(JSON.stringify(userLike));
+  playtestChoice.shop.tips = 1650000;
+  playtestChoice.shop.dreamBuild.wheelsPurchased = true;
+  playtestChoice.shop.dreamBuild.wheelsLevel = 3;
+  playtestChoice.shop.dreamBuild.exhaustPurchased = true;
+  playtestChoice.shop.dreamBuild.exhaustLevel = 5;
+  const playtestAction = context.nextBestAction(playtestChoice);
+  const playtestPinned = context.pinnedNearGoalForShop(playtestChoice);
+  const playtestOverview = context.renderOverviewPanel(playtestChoice);
+  const playtestDreamPanel = context.renderDreamBuildPanel(playtestChoice);
+  assert.strictEqual(playtestAction.title, 'Next: Clear the Order Queue');
+  assert.notStrictEqual(playtestAction.title, 'Next: Let Counter Service work');
+  assert.strictEqual(playtestPinned.title, 'Wholesale Counter Contract');
+  assert.notStrictEqual(playtestPinned.title, 'Suspension Refreshed');
+  assert(playtestOverview.includes('Action Choices'));
+  assert(playtestOverview.includes('Cash Conversion'));
+  assert(playtestOverview.includes('Wholesale Counter Contract'));
+  assert(playtestOverview.includes('Sign Wholesale Contract'));
+  assert(playtestOverview.includes('Dream Build'));
+  assert(playtestOverview.includes('Suspension Refreshed'));
+  assert(playtestOverview.includes('$1.65M / $4M Cash'));
+  assert(playtestOverview.includes('41%'));
+  assert(playtestOverview.indexOf('Cash Conversion') < playtestOverview.indexOf('Dream Build'));
+  assert(playtestDreamPanel.includes('Build Choices'));
+  assert(playtestDreamPanel.includes('Current: Suspension Refreshed'));
+  assert(playtestDreamPanel.includes('Next Track: Tires &amp; Rubber'));
+  assert(playtestDreamPanel.includes('Current build path is focused on Suspension &amp; Chassis Geometry'));
 
   const wholesaleReady = JSON.parse(JSON.stringify(userLike));
   wholesaleReady.shop.tips = 250000;
+  const wholesaleReadyOverview = context.renderOverviewPanel(wholesaleReady);
+  assert(wholesaleReadyOverview.includes('Sign Wholesale Contract'));
   const wholesale = context.buyCounterContract('wholesale_counter_contract', wholesaleReady, { activeDrive: false });
   assert.strictEqual(wholesale.ok, true);
   assert.strictEqual(wholesale.gameState.shop.tips, 0);
@@ -7352,6 +7431,7 @@ function testHighScaleCounterContractsV1() {
   assert.strictEqual(context.counterContractPurchased(wholesale.gameState, 'wholesale_counter_contract'), true);
   assert.strictEqual(context.shopOrderTypeUnlocked(context.shopOrderTypeById('wholesale_case'), wholesale.gameState), true);
   assert.strictEqual(context.counterServiceBatchSize(wholesale.gameState), 100);
+  assert.notStrictEqual(context.pinnedNearGoalForShop(wholesale.gameState).title, 'Wholesale Counter Contract');
   assert.strictEqual(context.counterServiceOrderType(wholesale.gameState).id, 'wholesale_case');
   const wholesaleOrder = context.fulfillShopOrders(wholesale.gameState, 1, {
     activeDrive: false,
@@ -7469,8 +7549,8 @@ globalThis.activeContractPanelHtml = elements.shopTabPanel.innerHTML;
   assert(context.counterContractsHtml.includes('Wholesale Counter Contract'));
   assert(context.counterContractsHtml.includes('Reputation signs larger parked shop contracts'));
   assert(context.counterContractsHtml.includes('Sign Wholesale Contract'));
-  assert(context.counterContractOverviewHtml.includes('Counter Contracts can turn the backlog into Cash faster'));
-  assert(context.counterContractOverviewHtml.includes('Prepared-order storage is not currently the bottleneck'));
+  assert(context.counterContractOverviewHtml.includes('bigger contracts turn the backlog into Cash faster'));
+  assert(context.counterContractOverviewHtml.includes('Prepared-order storage is not the bottleneck right now'));
   assert(context.counterContractOverviewHtml.includes('Counter Service and Counter Contracts are the Cash conversion path'));
   assert(!context.activeContractPanelHtml.includes('Sign Wholesale Contract'));
 
@@ -8661,6 +8741,7 @@ offlineState.shop.offlineEarnings = {
   counterServicePaused: true,
   cappedHours: 2,
 };
+appState.shopTab = "overview";
 renderTofuShop(offlineState);
 globalThis.bulkOfflineText = elements.shopOfflineEarnings.textContent;
 `, context);
@@ -10163,8 +10244,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620g'));
-  assert(html.includes('/static/nospill/app.css?v=20260620g'));
+  assert(html.includes('/static/nospill/app.js?v=20260620h'));
+  assert(html.includes('/static/nospill/app.css?v=20260620h'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -11684,6 +11765,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-festival-boost',
     'data-covered-car-teaser',
     'data-counter-service-action',
+    'data-counter-contract',
     'data-dream-build-action',
     'data-garage-event',
     'data-car-assignment-start',

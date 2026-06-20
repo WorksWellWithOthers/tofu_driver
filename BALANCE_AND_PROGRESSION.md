@@ -495,6 +495,16 @@ Reduction. After Aero Level 5, it points through Final Detail and Shakedown Comp
 first complete build, it points through Car Management assignment states: available, active,
 ready to collect, and first-car-managed.
 
+Action Choice Board V1 adds a compact choice layer under Goal Stack. It may show Cash Conversion,
+the current Dream Build work, and Recent Activity, but it should stay capped at three stable cards.
+It is not a replacement for the tab surfaces. Dream Build active work cards should show concrete
+Cash progress, missing Cash, and ETA only when current shop income makes that ETA meaningful.
+Dream Build should not inherit shop/offline footer logs; those belong in Overview/Ledger.
+
+Build Choice Preview is a readability bridge only. It names the focused current path, next track,
+and later tracks. A future balance pass should consider parallel build-track choice between grip,
+control, power, and style paths after the current focused path has been playtested.
+
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
 controls belong behind Details/Edit controls or in the relevant tab. Counter Service should show a

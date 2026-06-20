@@ -235,6 +235,14 @@
   text-decoration: none;
 }
 
+.nospill-inline-ledger {
+  display: inline-flex;
+  min-height: 34px;
+  margin-left: 8px;
+  padding: 7px 10px;
+  vertical-align: middle;
+}
+
 .nospill-section {
   display: grid;
   gap: 12px;

@@ -93,6 +93,12 @@ Garage Build Value, and Builder Note content. After Carbon Body & Roll Cage, it 
 and Shakedown as the last two local core build steps; after Shakedown it points to Car Management
 as the first managed-car loop.
 
+Action Choice Board V1 now sits between Goal Stack and the rest of Overview. It gives the current
+few-minute choices a visible place: Cash Conversion through Counter Contracts, the current Dream
+Build target with Cash progress, and contextual recent activity when useful. Dream Build no longer
+inherits shop/offline footer logs, and Build Choice Preview names the focused current track plus
+future tracks without implementing parallel build-track choice yet.
+
 Car Management V1 now unlocks after First Complete Build, snapshots the completed car locally, and
 adds one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and
 Closed-Course Exhibition Booking. Assignment rewards grant local Cash, Brand Value, and Garage

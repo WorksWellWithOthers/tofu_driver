@@ -245,6 +245,10 @@ Fix applied:
   Garage Build Value, and Builder Note rendering in an earned parked tab instead of expanding the
   Overview dashboard. Queue-full Now copy and Prep Counter headlines use stable categories so live
   ticks do not alternate between equivalent recommendation strings.
+- Action Choice Board V1 adds at most three bounded Overview cards after Goal Stack. It reuses
+  existing Counter Contract and Dream Build handlers, shows scalar progress bars, and keeps
+  shop/offline Ledger feedback out of the Dream Build tab. It adds no timers, storage growth,
+  network calls, or new economy loops.
 - Car Management V1 keeps completed-car use bounded: one active parked assignment, timestamp-based
   offline progress, explicit collection before rewards, capped assignment history, no service
   worker/background timer, and no network calls. Assignment explainability renders only the
