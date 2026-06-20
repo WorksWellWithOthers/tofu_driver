@@ -789,20 +789,20 @@ Implemented Suspension V1 values:
 | 4 | Corner Balance | `$20M` | `+$12M` (`$27.725M` with Wheels level 3 and Exhaust level 5) |
 | 5 | Showcase Stance | `$35M` | `+$22M` (`$49.725M` with Wheels level 3 and Exhaust level 5) |
 
-Wheels levels 4-5, Final Detail & Shakedown, full Dream Garage,
-completed-build events, Auction, Showcase, and Collector Offer remain future.
+Wheels levels 4-5, full Dream Garage, repeatable completed-build events, Auction, Showcase, and
+Collector Offer remain future. Final Detail and Shakedown Complete are implemented as the last two
+local core build steps.
 
 Core Build Progress V2:
 
 ```text
-Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level + future final detail stages
-Planned core build size = 8 tracks x 5 levels = 40 work stages
+Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level + Final Build Level
+Planned core build size = 40 work stages
 ```
 
-The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, Brakes, Induction, and
-Drivetrain/Aero labels, the next dream step, Garage Build Value, Builder Note, and compact future
-track notes. It must not add Final Detail/Shakedown purchase buttons, Car Management, or a full
-Dream Garage surface.
+The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, Brakes, Induction,
+Drivetrain, Aero, and Final Build labels, the next dream step, Garage Build Value, Builder Note,
+and compact future track notes. It must not add Car Management or a full Dream Garage surface.
 
 Avoid:
 
