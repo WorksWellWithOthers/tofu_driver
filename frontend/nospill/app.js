@@ -368,6 +368,14 @@ const DREAM_BUILD_EXHAUST_SHOWCASE_FINISH_COST = 2000000;
 const DREAM_BUILD_EXHAUST_SHOWCASE_FINISH_VALUE = 1250000;
 const DREAM_BUILD_SUSPENSION_REFRESH_COST = 4000000;
 const DREAM_BUILD_SUSPENSION_REFRESH_VALUE = 2000000;
+const DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_COST = 7500000;
+const DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_VALUE = 4000000;
+const DREAM_BUILD_SUSPENSION_ALIGNMENT_COST = 12000000;
+const DREAM_BUILD_SUSPENSION_ALIGNMENT_VALUE = 7000000;
+const DREAM_BUILD_SUSPENSION_CORNER_BALANCE_COST = 20000000;
+const DREAM_BUILD_SUSPENSION_CORNER_BALANCE_VALUE = 12000000;
+const DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_COST = 35000000;
+const DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_VALUE = 22000000;
 const DREAM_BUILD_TOTAL_WORK_STAGES = 30;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
@@ -5261,7 +5269,24 @@ function projectCarValueV1(gameState) {
   if (state.shop.dreamBuild.showcaseDisplayPrepared) {
     value += SHOWCASE_PREP_VALUE;
   }
-  if (suspensionLevel >= 1) {
+  if (suspensionLevel >= 5) {
+    value += DREAM_BUILD_SUSPENSION_REFRESH_VALUE
+      + DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_VALUE
+      + DREAM_BUILD_SUSPENSION_ALIGNMENT_VALUE
+      + DREAM_BUILD_SUSPENSION_CORNER_BALANCE_VALUE
+      + DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_VALUE;
+  } else if (suspensionLevel >= 4) {
+    value += DREAM_BUILD_SUSPENSION_REFRESH_VALUE
+      + DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_VALUE
+      + DREAM_BUILD_SUSPENSION_ALIGNMENT_VALUE
+      + DREAM_BUILD_SUSPENSION_CORNER_BALANCE_VALUE;
+  } else if (suspensionLevel >= 3) {
+    value += DREAM_BUILD_SUSPENSION_REFRESH_VALUE
+      + DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_VALUE
+      + DREAM_BUILD_SUSPENSION_ALIGNMENT_VALUE;
+  } else if (suspensionLevel >= 2) {
+    value += DREAM_BUILD_SUSPENSION_REFRESH_VALUE + DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_VALUE;
+  } else if (suspensionLevel >= 1) {
     value += DREAM_BUILD_SUSPENSION_REFRESH_VALUE;
   }
   return value;
@@ -5478,6 +5503,66 @@ function dreamBuildSuspensionWorkForLevel(level) {
       feedback: "Dream Build work complete: Suspension Refreshed.",
     };
   }
+  if (level === 1) {
+    return {
+      action: "ride-height-set",
+      nextLevel: 2,
+      title: "Ride Height Set",
+      completeTitle: "Ride Height Set",
+      buttonLabel: "Set Ride Height",
+      cost: DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_COST,
+      valueAdded: DREAM_BUILD_SUSPENSION_RIDE_HEIGHT_VALUE,
+      copy: "Height-adjustable sports suspension gives the build its first deliberate stance.",
+      detailCopy: "Includes height-adjustable sports suspension and basic ride-height setup.",
+      completeCopy: "The build has its first deliberate stance.",
+      feedback: "Dream Build work complete: Ride Height Set.",
+    };
+  }
+  if (level === 2) {
+    return {
+      action: "alignment-dialed",
+      nextLevel: 3,
+      title: "Alignment Dialed",
+      completeTitle: "Alignment Dialed",
+      buttonLabel: "Dial Alignment",
+      cost: DREAM_BUILD_SUSPENSION_ALIGNMENT_COST,
+      valueAdded: DREAM_BUILD_SUSPENSION_ALIGNMENT_VALUE,
+      copy: "Dial in the alignment so the car feels intentional instead of assembled.",
+      detailCopy: "Uses adjustable control arms, camber/toe arms, and upgraded sway-bar setup.",
+      completeCopy: "The suspension setup is starting to feel intentional.",
+      feedback: "Dream Build work complete: Alignment Dialed.",
+    };
+  }
+  if (level === 3) {
+    return {
+      action: "corner-balance",
+      nextLevel: 4,
+      title: "Corner Balance",
+      completeTitle: "Corner Balance",
+      buttonLabel: "Corner Balance",
+      cost: DREAM_BUILD_SUSPENSION_CORNER_BALANCE_COST,
+      valueAdded: DREAM_BUILD_SUSPENSION_CORNER_BALANCE_VALUE,
+      copy: "Balance the chassis so the build starts feeling like a complete machine.",
+      detailCopy: "Uses fully customizable coilovers, damping setup, chassis geometry, and corner-balance work.",
+      completeCopy: "The chassis feels like one complete build now.",
+      feedback: "Dream Build work complete: Corner Balance.",
+    };
+  }
+  if (level === 4) {
+    return {
+      action: "showcase-stance",
+      nextLevel: 5,
+      title: "Showcase Stance",
+      completeTitle: "Showcase Stance",
+      buttonLabel: "Finish Suspension",
+      cost: DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_COST,
+      valueAdded: DREAM_BUILD_SUSPENSION_SHOWCASE_STANCE_VALUE,
+      copy: "Finish the stance, bracing, and presentation so the suspension track feels complete.",
+      detailCopy: "Final geometry, bracing, fitment, sway-bar detail, and chassis presentation.",
+      completeCopy: "The suspension track is complete.",
+      feedback: "Suspension complete: Showcase Stance added. Garage Build Value +$22M.",
+    };
+  }
   return null;
 }
 
@@ -5588,10 +5673,10 @@ function nextDreamBuildStep(gameState) {
   if (suspensionWork) {
     return { title: suspensionWork.title, copy: suspensionWork.copy, future: false };
   }
-  if (dreamBuildSuspensionLevel(state) >= 1) {
+  if (dreamBuildSuspensionLevel(state) >= 5) {
     return {
-      title: "Ride Height Set",
-      copy: "Ride Height Set comes in a future garage pass. Keep growing Cash and Net Worth.",
+      title: "Tires & Rubber",
+      copy: "The Suspension track is complete. Tires & Rubber comes in a future garage pass.",
       future: true,
     };
   }
@@ -11183,11 +11268,9 @@ function nextBestAction(gameState, options = {}) {
         const ready = cashBalance(state) >= suspensionWork.cost;
         return {
           type: ready ? "buy_dream_suspension_work" : "dream_investment_target",
-          title: ready ? "Next: Refresh Suspension" : "Next: Grow Cash for Suspension Refreshed",
-          copy: ready
-            ? "Start the next build track with a better foundation."
-            : "Refresh the suspension when the shop can fund it.",
-          buttonLabel: "Refresh Suspension",
+          title: ready ? `Next: ${suspensionWork.buttonLabel}` : `Next: Grow Cash for ${suspensionWork.title}`,
+          copy: ready ? suspensionWork.copy : `${suspensionWork.title} is the next Suspension work when the shop can fund it.`,
+          buttonLabel: suspensionWork.buttonLabel,
           disabled: false,
         };
       }
@@ -11227,7 +11310,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "Ride Height Set comes in a future garage pass.",
+        copy: "Tires & Rubber comes in a future garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -12095,6 +12178,7 @@ function renderDreamInvestmentTargetCard(gameState) {
             <small>Next Work: ${escapeHtml(suspensionWork.title)}</small>
             <small>Cost: ${escapeHtml(formatCash(suspensionWork.cost))} Cash · Build Value added: +${escapeHtml(formatCashCount(suspensionWork.valueAdded))}</small>
             <small>${escapeHtml(suspensionWork.copy)}</small>
+            ${suspensionWork.detailCopy ? `<details class="nospill-compact-details"><summary>Suspension details</summary><p>${escapeHtml(suspensionWork.detailCopy)}</p></details>` : ""}
             ${!canAffordSuspensionWork ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
           </div>
         `,
@@ -12109,18 +12193,18 @@ function renderDreamInvestmentTargetCard(gameState) {
         ] : [],
       });
     }
-    if (dreamBuildSuspensionLevel(state) >= 1) {
+    if (dreamBuildSuspensionLevel(state) >= 5) {
       return renderIdleCard({
         title: "Suspension",
-        status: "Level 1 / 5 · Suspension Refreshed",
-        copy: "The build sits on a better foundation.",
+        status: "Level 5 / 5 · Showcase Stance",
+        copy: "Suspension Complete. The suspension track is complete.",
         extra: `
           <div class="nospill-afford-progress">
             <div class="nospill-afford-progress-head">
               <span>${GARAGE_BUILD_VALUE_LABEL}</span>
               <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
             </div>
-            <small>Next Work: Ride Height Set</small>
+            <small>Next Build Track: Tires &amp; Rubber</small>
             <small>Future garage pass.</small>
           </div>
         `,
@@ -12253,7 +12337,7 @@ function renderDreamBuildProgressCard(gameState) {
     title: "Dream Build",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: capReached
-      ? "Current implemented build track complete. Next Work: Ride Height Set, future garage pass."
+      ? "Suspension track complete. Next Build Track: Tires & Rubber, future garage pass."
       : "Careful garage work adds story value. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
@@ -12316,7 +12400,7 @@ function renderDreamBuildTracksCard(gameState) {
     ? "Future Track · Complete the current implemented build track first."
     : suspensionWork
       ? `Next Work: ${suspensionWork.title} · ${formatCash(suspensionWork.cost)} Cash · +${formatCashCount(suspensionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Next Work: Ride Height Set · Future garage pass.";
+      : "Complete · Next Build Track: Tires & Rubber, future garage pass.";
   return renderIdleCard({
     title: "Work Tracks",
     status: "Current build",
@@ -12348,7 +12432,7 @@ function renderGarageTuningCatalogPreviewCard() {
   return renderIdleCard({
     title: "Garage Tuning Catalog",
     status: "Future catalog",
-    copy: "Authentic tuning parts unlock across future garage eras. Current focus: Suspension.",
+    copy: "Authentic tuning parts unlock across future garage eras. Current focus: Suspension & Chassis Geometry.",
     extra: `
       <details class="nospill-compact-details">
         <summary>Catalog categories</summary>
@@ -13121,7 +13205,7 @@ function nextMilestoneForShop(gameState) {
         progressText: `${formatShopCount(buildProgress.completed)} / ${formatShopCount(buildProgress.total)} work stages`,
         percent: buildProgress.percent || nextTarget.percent,
         reward: "First smooth garage-build path",
-        guidance: "Next Dream Step: Ride Height Set. Future garage work; keep growing Cash.",
+        guidance: "Next Dream Step: Tires & Rubber. Future garage work; keep growing Cash.",
       };
     }
     return {
@@ -13339,7 +13423,7 @@ function goalStackCta(label, target) {
 
 function dreamBuildImplementedCapReached(gameState) {
   const state = normalizeGameState(gameState);
-  return dreamBuildWheelsLevel(state) >= 3 && dreamBuildExhaustLevel(state) >= 5 && dreamBuildSuspensionLevel(state) >= 1;
+  return dreamBuildWheelsLevel(state) >= 3 && dreamBuildExhaustLevel(state) >= 5 && dreamBuildSuspensionLevel(state) >= 5;
 }
 
 function pinnedNearGoalForShop(gameState) {
@@ -13397,13 +13481,18 @@ function pinnedNearGoalForShop(gameState) {
     }
     const suspensionWork = nextDreamBuildSuspensionWork(state);
     if (suspensionWork) {
-      const ready = cashBalance(state) >= suspensionWork.cost;
       return {
         id: suspensionWork.action,
-        title: ready ? "Refresh Suspension" : "Grow Cash for Suspension Refreshed",
-        body: ready
-          ? "Next build track is ready. Refresh the worn suspension so the build has a solid foundation."
-          : suspensionWork.copy,
+        title: suspensionWork.title,
+        body: suspensionWork.nextLevel === 2
+          ? "Next suspension work is ready."
+          : suspensionWork.nextLevel === 3
+            ? "Dial in the suspension setup."
+            : suspensionWork.nextLevel === 4
+              ? "Balance the chassis."
+              : suspensionWork.nextLevel === 5
+                ? "Finish the suspension track."
+                : "Next build track is ready.",
         progressCurrent: cashBalance(state),
         progressTarget: suspensionWork.cost,
         progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(suspensionWork.cost)} Cash`,
@@ -13413,16 +13502,16 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
-    if (dreamBuildSuspensionLevel(state) >= 1) {
+    if (dreamBuildSuspensionLevel(state) >= 5) {
       const progress = dreamBuildProgressSummary(state);
       return {
-        id: "dream_build_suspension_started",
-        title: "Suspension started",
-        body: "Suspension Refreshed is complete. Ride Height Set comes in a future garage pass.",
+        id: "dream_build_suspension_complete",
+        title: "Suspension complete",
+        body: "Next Build Track: Tires & Rubber, future garage pass.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
         progressLabel: `Suspension: ${progress.suspensionStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Ride Height Set is future/target-only",
+        reward: "Tires & Rubber is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -16275,7 +16364,13 @@ function handleTofuShopPanelClick(event) {
       handleBuyDreamBuildWheels();
     } else if (target.dataset.dreamBuildAction === "buy-exhaust" || target.dataset.dreamBuildAction === "seal-joints" || target.dataset.dreamBuildAction === "tuned-note" || target.dataset.dreamBuildAction === "heat-wrap" || target.dataset.dreamBuildAction === "showcase-finish") {
       handleDreamBuildExhaust(target.dataset.dreamBuildAction);
-    } else if (target.dataset.dreamBuildAction === "suspension-refreshed") {
+    } else if (
+      target.dataset.dreamBuildAction === "suspension-refreshed"
+      || target.dataset.dreamBuildAction === "ride-height-set"
+      || target.dataset.dreamBuildAction === "alignment-dialed"
+      || target.dataset.dreamBuildAction === "corner-balance"
+      || target.dataset.dreamBuildAction === "showcase-stance"
+    ) {
       handleDreamBuildSuspension(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
@@ -16851,7 +16946,7 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildExhaust(work.action);
     } else {
-      setSummaryStatusMessage("Ride Height Set comes in a future garage pass.");
+      setSummaryStatusMessage("Tires & Rubber comes in a future garage pass.");
     }
     return;
   }
@@ -16860,7 +16955,7 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildSuspension(work.action);
     } else {
-      setSummaryStatusMessage("Ride Height Set comes in a future garage pass.");
+      setSummaryStatusMessage("Tires & Rubber comes in a future garage pass.");
     }
     return;
   }

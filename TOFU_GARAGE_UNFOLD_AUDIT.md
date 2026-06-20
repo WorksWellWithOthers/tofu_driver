@@ -76,7 +76,7 @@ Current latest unfold:
 Covered Car / Dream Build Teaser V1 -> First Dream Build Investment Purchase V1 ->
 Wheels Work Levels V1 -> Exhaust Purchase + Work Level V1 -> Dream Build Progress V1 ->
 Net Worth Milestone Ladder V1 -> Showcase Interest / Showcase Prep V1 -> Sponsor Inquiry V1 ->
-Overview Glance Mode V1 -> Dream Build Tab V1 -> Suspension Level 1 V1 ->
+Overview Glance Mode V1 -> Dream Build Tab V1 -> Suspension Track Completion V1 ->
 Tofu Garage Tuning Catalog V1.
 ```
 
@@ -84,7 +84,7 @@ Overview Glance Mode V1 does not add a new resource or system. It clarifies the 
 separating live `Now`, stable `Pinned Goal`, and long-term `Era Goal`, while moving long formulas
 and explanations behind Details controls. After the build starts, the earned Dream Build tab holds
 the detailed Wheels, Exhaust, Suspension, Garage Build Value, and Builder Note content. After
-Suspension Refreshed, it tells the player that Ride Height Set is future/target-only.
+Showcase Stance, it tells the player that Tires & Rubber is future/target-only.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
@@ -95,7 +95,7 @@ separate.
 Later:
 
 ```text
-Ride Height Set target preview -> Wheels levels 4-5 or Suspension levels 2-5 -> recurring sponsor
+Tires & Rubber target preview -> Wheels levels 4-5 or Brakes & Control -> recurring sponsor
 package design -> completed-build event design -> Keep / Show / Auction choice -> full Net Worth
 accounting.
 ```

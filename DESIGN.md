@@ -667,15 +667,15 @@ Design rules:
   future-only garage management notes so the Overview does not become a full build dashboard. It
   may show a collapsed Garage Tuning Catalog category preview, but the full parts list lives in
   `TOFU_GARAGE_TUNING_CATALOG.md`.
-- Suspension Level 1 V1 is implemented after Exhaust Level 5. Suspension Refreshed costs `$4M`
-  Cash, adds `+$2M Garage Build Value`, advances Dream Build Progress to `9 / 30`, and is framed
-  as fictional garage/story value, not speed or real-world vehicle advice. Ride Height Set and
-  later Suspension levels remain future/target-only.
+- Suspension Track Completion V1 is implemented after Exhaust Level 5. Suspension Refreshed,
+  Ride Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add Garage
+  Build Value, advance Dream Build Progress to `13 / 30`, and are framed as fictional garage/story
+  value, not speed or real-world vehicle advice. Tires & Rubber remains future/target-only.
 - Dream Build Progress V1 summarizes the project as `6 parts x 5 levels = 30 work stages`.
-  Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension level;
-  the implemented maximum is `9 / 30` after Balanced Fitment, Showcase Finish, and Suspension
-  Refreshed. Wheels levels 4-5, later Suspension levels, Brakes, Turbo Kit, Stage Tune,
-  completed-build events, and full Dream Garage remain future.
+  Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension levels;
+  the implemented maximum is `13 / 30` after Balanced Fitment, Showcase Finish, and Showcase
+  Stance. Wheels levels 4-5, Tires & Rubber, Brakes, Turbo Kit, Stage Tune, completed-build
+  events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -745,9 +745,13 @@ Implemented Suspension V1 values:
 | Suspension Level | Work | Cash Cost | Project Car Value |
 | --- | --- | --- | --- |
 | 1 | Suspension Refreshed | `$4M` | `+$2M` (`$4.725M` with Wheels level 3 and Exhaust level 5) |
+| 2 | Ride Height Set | `$7.5M` | `+$4M` (`$8.725M` with Wheels level 3 and Exhaust level 5) |
+| 3 | Alignment Dialed | `$12M` | `+$7M` (`$15.725M` with Wheels level 3 and Exhaust level 5) |
+| 4 | Corner Balance | `$20M` | `+$12M` (`$27.725M` with Wheels level 3 and Exhaust level 5) |
+| 5 | Showcase Stance | `$35M` | `+$22M` (`$49.725M` with Wheels level 3 and Exhaust level 5) |
 
-Wheels levels 4-5, Suspension levels 2-5, full Dream Garage, completed-build events, Auction,
-Showcase, and Collector Offer remain future.
+Wheels levels 4-5, Tires & Rubber, full Dream Garage, completed-build events, Auction, Showcase,
+and Collector Offer remain future.
 
 Dream Build Progress V1:
 

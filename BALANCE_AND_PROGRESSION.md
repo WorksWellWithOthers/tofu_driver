@@ -392,9 +392,9 @@ Examples:
 - Tofu Garage now has a canonical standalone tuning catalog in
   `TOFU_GARAGE_TUNING_CATALOG.md`. It is source material for future Dream Build tracks and uses
   authentic tuner vocabulary as fictional game language, not real installation advice.
-- Suspension Level 1 V1 proves the third part track after Exhaust Level 5. Suspension Refreshed
-  costs `$4M Cash`, adds `+$2M Garage Build Value`, and is fictional garage/story value, not speed
-  or real-world vehicle advice.
+- Suspension Track Completion V1 proves the third part track after Exhaust Level 5. Suspension
+  levels 1-5 cost Cash, add Garage Build Value, and are fictional garage/story value, not speed or
+  real-world vehicle advice. Tires & Rubber remains future/target-only.
 - Dream Build Progress V1 summarizes current build completion as work stages. The planned V1 build
   size is 30 stages: six part tracks times five levels. Current implemented stages are Wheels
   levels 1-3, Exhaust levels 1-5, and Suspension level 1.
@@ -452,8 +452,8 @@ single overloaded milestone presentation and visible explanation wall with three
 
 The Pinned Goal should update when a meaningful milestone completes, not because Cash crosses
 an affordability threshold, the order queue briefly fills, or ETA text changes. After Exhaust Level
-5, it may point to Suspension Refreshed as the next implemented build work. After Suspension Level
-1, Ride Height Set and later build work remain future/target-only until intentionally implemented.
+5, it may point through the implemented Suspension track. After Suspension Level 5, Tires & Rubber
+is shown as the next future/target-only build track.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -1506,12 +1506,16 @@ Implemented Exhaust Purchase + Work Level V1:
 | 4 | Heat Wrapped | `$1.1M` | `$1.475M` with Wheels level 3 | Implemented |
 | 5 | Showcase Finish | `$2M` | `$2.725M` with Wheels level 3 | Implemented |
 
-Implemented Suspension Level 1 V1:
+Implemented Suspension Track Completion V1:
 
 | Suspension Level | State / Work | Cash Cost | Project Car Value Total | Runtime Status |
 | --- | --- | --- | --- | --- |
 | 0 | Not Started | none | `$2.725M` with Wheels level 3 and Exhaust level 5 | Implemented as post-Exhaust target state |
 | 1 | Suspension Refreshed | `$4M` | `$4.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
+| 2 | Ride Height Set | `$7.5M` | `$8.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
+| 3 | Alignment Dialed | `$12M` | `$15.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
+| 4 | Corner Balance | `$20M` | `$27.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
+| 5 | Showcase Stance | `$35M` | `$49.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
 
 Planned Suspension vocabulary:
 
@@ -1541,9 +1545,9 @@ Dream Build Progress V1:
 | Turbo Kit | future locked track |
 | Stage Tune | future locked track |
 
-The progress denominator is `30` planned work stages. After Balanced Fitment and Showcase Finish,
-Suspension Refreshed raises the current implemented maximum to `9 / 30`. Ride Height Set and later
-Suspension levels remain target-only/future.
+The progress denominator is `30` planned work stages. After Balanced Fitment, Showcase Finish, and
+Showcase Stance, Suspension Track Completion V1 raises the current implemented maximum to `13 / 30`.
+Tires & Rubber remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
 

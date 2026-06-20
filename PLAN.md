@@ -222,14 +222,14 @@
   Race Class, Collector Appeal, Garage Reputation, Brand Value, prize potential, and
   car-management outcomes, but never Don't Spill the Cup scoring, certification, route-context
   achievements, Driver XP, or real-world proof.
-- Suspension Level 1 V1 is implemented after Exhaust Level 5. Suspension Refreshed costs `$4M Cash`,
-  adds `+$2M Garage Build Value`, and advances Dream Build Progress to `9 / 30`. Ride Height Set,
-  later Suspension work, full parts inventory, completed build events, Car Management, and full
-  valuation remain future.
-- Dream Build Progress V1 counts current work stages as Wheels Level plus Exhaust Level plus the
-  implemented Suspension level against a planned `30` stage build, shows current part labels, points
-  to the next dream step, and keeps future tracks locked/deferred. Goal Stack also uses this status
-  as the stable mid-term target so players know whether more implemented car work exists.
+- Suspension Track Completion V1 is implemented after Exhaust Level 5. Suspension Refreshed, Ride
+  Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add a combined
+  `+$47M Garage Build Value`, and advance Dream Build Progress to `13 / 30`. Tires & Rubber, full
+  parts inventory, completed build events, Car Management, and full valuation remain future.
+- Dream Build Progress V1 counts current work stages as Wheels Level plus Exhaust Level plus
+  Suspension Level against a planned `30` stage build, shows current part labels, points to the
+  next dream step, and keeps future tracks locked/deferred. Goal Stack also uses this status as the
+  stable mid-term target so players know whether more implemented car work exists.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -332,12 +332,12 @@ Canonical references:
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
 11. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, Dream
-   Build Tab V1, Suspension Level 1, and Dream Build Progress V1: confirm the `$50K` Wheels Fund is
-   hidden on fresh saves, Exhaust stays hidden until Wheels level 3, Buy Exhaust/Tuned Note/Heat
-   Wrapped/Showcase Finish appear only when affordable and stable, the Dream Build tab appears only
-   after build start, Suspension Refreshed appears only after Exhaust Level 5, Garage Build Value
-   and `9 / 30` progress totals stay clear, Ride Height Set remains future-only, and urgent shop
-   bottlenecks still win.
+   Build Tab V1, Suspension Track Completion V1, and Dream Build Progress V1: confirm the `$50K`
+   Wheels Fund is hidden on fresh saves, Exhaust stays hidden until Wheels level 3,
+   Buy Exhaust/Tuned Note/Heat Wrapped/Showcase Finish appear only when affordable and stable, the
+   Dream Build tab appears only after build start, Suspension work appears in stable order after
+   Exhaust Level 5, Garage Build Value and `13 / 30` progress totals stay clear, Tires & Rubber
+   remains future-only, and urgent shop bottlenecks still win.
 12. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
    `$1M` timing, Showcase Prep affordability, Sponsor reward pacing, one-time feedback, Brand Value
    visibility, and that urgent shop bottlenecks still override distant Net Worth goals.
@@ -414,20 +414,19 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 Future Dream Garage milestone sequence:
 
 1. Verify Dream Build Tab V1, Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work
-   Level V1, Suspension Level 1 V1, and Dream Build Progress V1:
+   Level V1, Suspension Track Completion V1, and Dream Build Progress V1:
    `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
    Fitted, `$375K` Sealed Joints, `$600K` Tuned Note, `$1.1M` Heat Wrapped, `$2M` Showcase Finish,
-   `$4M` Suspension Refreshed, `9 / 30` progress, Garage Build Value totals, persistence, and
+   `$4M` Suspension Refreshed, `$7.5M` Ride Height Set, `$12M` Alignment Dialed, `$20M` Corner
+   Balance, `$35M` Showcase Stance, `13 / 30` progress, Garage Build Value totals, persistence, and
    priority rules.
-2. Implement Suspension Levels 2-5 gradually with authentic detail copy from
-   `TOFU_GARAGE_TUNING_CATALOG.md`.
-3. Add Tires & Rubber as the next standalone track.
-4. Add Brakes & Control after tire identity is clear.
-5. Design the first parked event/showcase loop.
-6. Implement Car Management V1 only after the first part tracks are fun.
-7. Add multiple cars.
-8. Add the next era unlock.
-9. Much later connect completed builds to business expansion, collector networks, and scalable
+2. Add Tires & Rubber as the next standalone track.
+3. Add Brakes & Control after tire identity is clear.
+4. Design the first parked event/showcase loop.
+5. Implement Car Management V1 only after the first part tracks are fun.
+6. Add multiple cars.
+7. Add the next era unlock.
+8. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car events are not immediate scope. Keep Showcase, Closed-Course Exhibition, Auction,
