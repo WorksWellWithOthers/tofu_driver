@@ -491,6 +491,9 @@ const SECOND_BAY_OPEN_REPUTATION_COST = 250;
 const SECOND_PROJECT_CAR_COST = 1000000000000;
 const SECOND_PROJECT_CAR_REPUTATION_COST = 500;
 const SECOND_PROJECT_CAR_GARAGE_VALUE = 750000000000;
+const SECOND_CAR_DIRECTION_WORK_COST = 2000000000000;
+const SECOND_CAR_DIRECTION_WORK_REPUTATION_COST = 250;
+const SECOND_CAR_DIRECTION_WORK_VALUE = 1250000000000;
 const SECOND_CAR_BUILD_DIRECTIONS = [
   {
     id: "showcase_build",
@@ -528,6 +531,43 @@ const SECOND_CAR_BUILD_DIRECTIONS = [
     future: "Future bonuses: Collector Appeal, Garage Build Value, prestige paths.",
   },
 ];
+const SECOND_CAR_DIRECTION_WORK_PACKAGES = {
+  showcase_build: {
+    name: "Presentation Package",
+    buttonLabel: "Start Presentation Package",
+    copy: "Begin the second car as a presence-first build with finish, stance, and visual identity.",
+    detail: "Early focus: wheels, stance, exterior finish, panel fitment, aero details, lighting presence, and presentation quality.",
+    future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+  },
+  track_build: {
+    name: "Event Prep Package",
+    buttonLabel: "Start Event Prep",
+    copy: "Begin the second car as a closed-course event build with serious hardware and event fit.",
+    detail: "Early focus: R-compounds, brake cooling, safety prep, aero balance, drivetrain response, and event setup.",
+    future: "Future path: Garage Reputation, event rewards, Race Class.",
+  },
+  drift_build: {
+    name: "Angle Setup Package",
+    buttonLabel: "Start Angle Setup",
+    copy: "Begin the second car as a style-heavy exhibition build with angle, smoke, and attitude.",
+    detail: "Early focus: steering angle adapters, hydraulic handbrake, differential setup, cooling, tire wear, and visual style.",
+    future: "Future path: Style, sponsor appeal, exhibition rewards.",
+  },
+  rally_build: {
+    name: "Gravel Prep Package",
+    buttonLabel: "Start Gravel Prep",
+    copy: "Begin the second car as a rough-surface build with weather, grip, and resilience in mind.",
+    detail: "Early focus: dirt tires, wet tires, suspension travel, underbody protection, cooling, reliability, and recovery prep.",
+    future: "Future path: Reliability, weather fit, special event access.",
+  },
+  restoration_build: {
+    name: "Restoration Foundation",
+    buttonLabel: "Start Restoration",
+    copy: "Begin the second car as a craftsmanship build focused on history, documentation, and long-term value.",
+    detail: "Early focus: chassis refresh, new body planning, engine health, documentation, interior detail, and clean presentation.",
+    future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+  },
+};
 const CAR_ASSIGNMENTS = [
   {
     id: "showcase_rotation",
@@ -3011,6 +3051,8 @@ function defaultSecondCarProjectState() {
     buildDirection: null,
     buildDirectionSelectedAt: null,
     directionLocked: false,
+    directionWorkLevel: 0,
+    directionWorkCompletedAt: null,
   };
 }
 
@@ -3569,6 +3611,43 @@ function secondCarBuildDirectionById(directionId) {
   return SECOND_CAR_BUILD_DIRECTIONS.find((direction) => direction.id === directionId) || null;
 }
 
+function secondCarDirectionWorkPackageById(directionId) {
+  return SECOND_CAR_DIRECTION_WORK_PACKAGES[directionId] || null;
+}
+
+function secondCarDirectionWorkStatus(gameState) {
+  const state = gameState && gameState.shop && gameState.carManagement
+    ? gameState
+    : normalizeGameState(gameState);
+  const project = state.carManagement && state.carManagement.secondCarProject
+    ? state.carManagement.secondCarProject
+    : defaultSecondCarProjectState();
+  const direction = secondCarBuildDirectionById(project.buildDirection);
+  const work = direction ? secondCarDirectionWorkPackageById(direction.id) : null;
+  const reputation = garageReputationV1(state);
+  const cash = cashBalance(state);
+  return {
+    project,
+    direction,
+    work,
+    acquired: Boolean(project.acquired),
+    directionSelected: Boolean(direction && project.directionLocked),
+    complete: Boolean(project.directionWorkLevel >= 1),
+    cash,
+    reputation,
+    canComplete: Boolean(
+      project.acquired
+      && direction
+      && project.directionLocked
+      && project.directionWorkLevel < 1
+      && cash >= SECOND_CAR_DIRECTION_WORK_COST
+      && reputation >= SECOND_CAR_DIRECTION_WORK_REPUTATION_COST
+    ),
+    missingCash: Math.max(0, SECOND_CAR_DIRECTION_WORK_COST - cash),
+    missingReputation: Math.max(0, SECOND_CAR_DIRECTION_WORK_REPUTATION_COST - reputation),
+  };
+}
+
 function createCurrentCarSnapshot(gameState, currentCar = {}) {
   const state = gameState && typeof gameState === "object" ? gameState : { shop: defaultShopState() };
   const build = state.shop && state.shop.dreamBuild ? state.shop.dreamBuild : defaultShopState().dreamBuild;
@@ -3655,6 +3734,12 @@ function normalizeSecondCarProject(value, gameState) {
   const direction = acquired && typeof source.buildDirection === "string"
     ? secondCarBuildDirectionById(source.buildDirection)
     : null;
+  const directionWorkLevel = direction
+    ? Math.max(0, Math.min(1, safeNonNegativeInteger(source.directionWorkLevel, 0, 1)))
+    : 0;
+  const minimumGarageValue = acquired
+    ? SECOND_PROJECT_CAR_GARAGE_VALUE + (directionWorkLevel >= 1 ? SECOND_CAR_DIRECTION_WORK_VALUE : 0)
+    : 0;
   return {
     ...defaults,
     bayUnlocked,
@@ -3670,13 +3755,20 @@ function normalizeSecondCarProject(value, gameState) {
     stage,
     builderNote: sanitizeBuilderNote(source.builderNote || ""),
     garageBuildValue: acquired
-      ? safeNonNegativeInteger(source.garageBuildValue, SECOND_PROJECT_CAR_GARAGE_VALUE, SHOP_MAX_RESOURCE)
+      ? Math.max(
+          minimumGarageValue,
+          safeNonNegativeInteger(source.garageBuildValue, minimumGarageValue, SHOP_MAX_RESOURCE),
+        )
       : 0,
     buildDirection: direction ? direction.id : null,
     buildDirectionSelectedAt: direction && typeof source.buildDirectionSelectedAt === "string"
       ? source.buildDirectionSelectedAt.slice(0, 40)
       : null,
     directionLocked: Boolean(direction),
+    directionWorkLevel,
+    directionWorkCompletedAt: directionWorkLevel >= 1 && typeof source.directionWorkCompletedAt === "string"
+      ? source.directionWorkCompletedAt.slice(0, 40)
+      : null,
   };
 }
 
@@ -6762,6 +6854,55 @@ function selectSecondCarBuildDirection(directionId, gameState, options = {}) {
   next.shop.counterService.lastResult = feedback;
   next = addLedgerEntry(next, "story", feedback);
   return { ok: true, reason: "", feedback, direction, gameState: next };
+}
+
+function completeSecondCarDirectionWork(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Second Car Work can be completed while parked after the drive.", gameState: next };
+  }
+  if (!carManagementUnlocked(next)) {
+    return { ok: false, reason: "Complete the first build to unlock Car Management.", gameState: next };
+  }
+  const status = secondCarDirectionWorkStatus(next);
+  if (!status.acquired) {
+    return { ok: false, reason: "Acquire the Second Project Car before starting second-car work.", gameState: next };
+  }
+  if (!status.directionSelected || !status.direction || !status.work) {
+    return { ok: false, reason: "Choose a Build Direction before starting second-car work.", gameState: next };
+  }
+  if (status.complete) {
+    return { ok: false, reason: `${status.work.name} is already complete.`, gameState: next };
+  }
+  if (cashBalance(next) < SECOND_CAR_DIRECTION_WORK_COST) {
+    return { ok: false, reason: `Need ${formatCash(SECOND_CAR_DIRECTION_WORK_COST - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  if (garageReputationV1(next) < SECOND_CAR_DIRECTION_WORK_REPUTATION_COST) {
+    return { ok: false, reason: `Need ${formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST - garageReputationV1(next))} more Garage Reputation.`, gameState: next };
+  }
+  const spend = spendGarageReputation(next, SECOND_CAR_DIRECTION_WORK_REPUTATION_COST);
+  if (!spend.ok) {
+    return { ok: false, reason: `Need ${formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST)} Garage Reputation.`, gameState: next };
+  }
+  next = spend.gameState;
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  const project = secondCarProjectState(next);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - SECOND_CAR_DIRECTION_WORK_COST, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.secondCarProject = {
+    ...project,
+    directionWorkLevel: 1,
+    directionWorkCompletedAt: now,
+    garageBuildValue: Math.max(
+      SECOND_PROJECT_CAR_GARAGE_VALUE + SECOND_CAR_DIRECTION_WORK_VALUE,
+      safeNonNegativeInteger(project.garageBuildValue, SECOND_PROJECT_CAR_GARAGE_VALUE, SHOP_MAX_RESOURCE) + SECOND_CAR_DIRECTION_WORK_VALUE,
+    ),
+  };
+  const feedback = `${status.work.name} complete: +${formatCashCount(SECOND_CAR_DIRECTION_WORK_VALUE)} ${GARAGE_BUILD_VALUE_LABEL}.`;
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  next = syncNetWorthMilestones(next).gameState;
+  return { ok: true, reason: "", feedback, direction: status.direction, work: status.work, gameState: next };
 }
 
 function sponsorInquiryStatus(gameState) {
@@ -13195,10 +13336,22 @@ function nextCarManagementAction(gameState) {
           disabled: false,
         };
       }
+      const workStatus = secondCarDirectionWorkStatus(state);
+      if (workStatus.work && !workStatus.complete) {
+        return {
+          type: workStatus.canComplete ? "complete_second_car_work" : "car_management_target",
+          title: workStatus.canComplete ? "Next: Start Second Car Work" : "Next: Grow Cash for Second Car Work",
+          copy: workStatus.canComplete
+            ? `Begin the ${selected.title} direction with ${workStatus.work.name}.`
+            : "Garage Reputation and Cash fund the first direction package.",
+          buttonLabel: workStatus.canComplete ? workStatus.work.buttonLabel : "View Car Management",
+          disabled: false,
+        };
+      }
       return {
         type: "car_management_target",
-        title: "Next: Second Car Direction Locked",
-        copy: `${selected.title} will guide future second-car work tracks.`,
+        title: "Next: Second Car Work Started",
+        copy: "Future second-car tracks come in a later garage pass.",
         buttonLabel: "View Car Management",
         disabled: false,
       };
@@ -15906,6 +16059,66 @@ function renderSecondCarDirectionCard(gameState) {
   });
 }
 
+function renderSecondCarWorkCard(gameState) {
+  const state = normalizeGameState(gameState);
+  const status = secondCarDirectionWorkStatus(state);
+  if (!status.acquired) {
+    return renderIdleCard({
+      title: "Second Car Work",
+      status: "Locked",
+      copy: "Acquire the Second Project Car first.",
+      locked: true,
+    });
+  }
+  if (!status.directionSelected || !status.direction || !status.work) {
+    return renderIdleCard({
+      title: "Second Car Work",
+      status: "Waiting for direction",
+      copy: "Choose a Build Direction first.",
+      locked: true,
+    });
+  }
+  if (status.complete) {
+    return renderIdleCard({
+      title: "Second Car Work",
+      status: "First work complete",
+      copy: `${status.work.name} complete.`,
+      extra: `
+        <div class="nospill-afford-progress">
+          <small>${escapeHtml(status.direction.title)} · first direction work complete.</small>
+          <small>Future ${escapeHtml(status.direction.title)} levels come in a later garage pass.</small>
+          <small>The first completed build stays managed. The second car is becoming a new project identity.</small>
+        </div>
+      `,
+    });
+  }
+  const missingLines = [
+    status.missingCash > 0 ? `Need ${formatCash(status.missingCash)} more Cash.` : "",
+    status.missingReputation > 0 ? `Need ${formatShopCount(status.missingReputation)} more Garage Reputation.` : "",
+  ].filter(Boolean);
+  const disabledReason = missingLines.join(" ");
+  return renderIdleCard({
+    title: "Second Car Work",
+    status: `${status.direction.title} · ${status.work.name}`,
+    copy: status.work.copy,
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>Cost: ${escapeHtml(formatCash(SECOND_CAR_DIRECTION_WORK_COST))} Cash + ${escapeHtml(formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST))} Garage Reputation</small>
+        <small>${GARAGE_BUILD_VALUE_LABEL}: +${escapeHtml(formatCashCount(SECOND_CAR_DIRECTION_WORK_VALUE))}</small>
+        <small>${missingLines.length ? escapeHtml(missingLines.join(" ")) : "Ready"}</small>
+      </div>
+      <details data-details-key="second_car_work_${escapeHtml(status.direction.id)}">
+        <summary>Direction work details</summary>
+        <p>${escapeHtml(status.work.detail)}</p>
+        <p>${escapeHtml(status.work.future)}</p>
+      </details>
+    `,
+    actions: [
+      actionButton(status.work.buttonLabel, "data-second-car-work", status.direction.id, !status.canComplete, "nospill-primary", disabledReason),
+    ],
+  });
+}
+
 function renderCarManagementPanel(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -15940,6 +16153,7 @@ function renderCarManagementPanel(gameState) {
       ${renderCarManagementLoopChecklist(state)}
       ${renderSecondBayCard(state)}
       ${renderSecondCarDirectionCard(state)}
+      ${renderSecondCarWorkCard(state)}
       ${renderCarManagementHistory(state)}
       ${CAR_ASSIGNMENTS.map((assignment) => renderCarAssignmentCard(assignment, state)).join("")}
     </div>
@@ -15958,8 +16172,12 @@ function carManagementOverviewSummary(gameState) {
   const secondBay = secondBayStatus(state);
   if (secondBay.acquired) {
     const selected = secondCarBuildDirectionById(secondBay.project.buildDirection);
+    const work = selected ? secondCarDirectionWorkPackageById(selected.id) : null;
+    if (selected && secondBay.project.directionWorkLevel >= 1) {
+      return `Second Car: ${selected.title} · first work complete. Future tracks coming.`;
+    }
     return selected
-      ? `Second Project Car: ${selected.title}. Future tracks coming.`
+      ? `Second Car: ${selected.title} · ${work ? work.name : "first package"} next.`
       : "Second Project Car acquired. Choose its build direction.";
   }
   if (secondBay.bayOpened) return "Second Bay open. Second Project Car available.";
@@ -17042,6 +17260,7 @@ function goalStackTargetForAction(action) {
     action.type === "start_car_assignment"
     || action.type === "collect_car_assignment"
     || action.type === "car_assignment_active"
+    || action.type === "complete_second_car_work"
     || action.type === "car_management_target"
   ) {
     return "car-management";
@@ -17109,10 +17328,28 @@ function carManagementPinnedGoal(gameState) {
           isFutureOnly: false,
         };
       }
+      const workStatus = secondCarDirectionWorkStatus(state);
+      if (workStatus.work && !workStatus.complete) {
+        const canComplete = workStatus.canComplete;
+        return {
+          id: "second_car_first_work",
+          title: canComplete ? "Start Second Car Work" : "Grow Cash for Second Car Work",
+          body: canComplete
+            ? `Begin the ${selected.title} direction with ${workStatus.work.name}.`
+            : "Garage Reputation and Cash fund the first direction package.",
+          progressCurrent: Math.min(cashBalance(state), SECOND_CAR_DIRECTION_WORK_COST),
+          progressTarget: SECOND_CAR_DIRECTION_WORK_COST,
+          progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(SECOND_CAR_DIRECTION_WORK_COST)} Cash · ${formatShopCount(workStatus.reputation)} / ${formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST)} Garage Reputation`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(SECOND_CAR_DIRECTION_WORK_VALUE)}`,
+          ctaLabel: "",
+          ctaTarget: "",
+          isFutureOnly: false,
+        };
+      }
       return {
-        id: "second_car_direction_locked",
-        title: "Second Car Direction Locked",
-        body: "Second-car build tracks come in a future garage pass.",
+        id: "second_car_work_started",
+        title: "Second Car Work Started",
+        body: "Future second-car tracks come in a later garage pass.",
         progressCurrent: 1,
         progressTarget: 1,
         progressLabel: selected.title,
@@ -20642,6 +20879,24 @@ function handleSecondCarDirection(directionId) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleSecondCarDirectionWork() {
+  const result = completeSecondCarDirectionWork(currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "car_management";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -20982,6 +21237,10 @@ function handleTofuShopPanelClick(event) {
   }
   if (target.dataset.secondCarDirection) {
     handleSecondCarDirection(target.dataset.secondCarDirection);
+    return;
+  }
+  if (target.dataset.secondCarWork) {
+    handleSecondCarDirectionWork();
     return;
   }
   const actionMap = [
@@ -21580,6 +21839,10 @@ function handleNextBestAction() {
   }
   if (actionType === "acquire_second_project_car") {
     handleSecondCarProjectAction("acquire");
+    return;
+  }
+  if (actionType === "complete_second_car_work") {
+    handleSecondCarDirectionWork();
     return;
   }
   if (actionType === "car_assignment_active" || actionType === "car_management_target") {

@@ -154,8 +154,10 @@ The static app uses hash routing:
   Garage Reputation threshold, then lets the player acquire a Second Project Car shell as a
   future-track target. Second Car Identity / Build Direction V1 adds locked Showcase, Track, Drift,
   Rally, and Restoration direction choices after shell acquisition without economy or Cup Test
-  effects. Multiple active cars, auctions, collector offers, backend, uploads, and network calls
-  remain future.
+  effects. Second Car First Track V1 adds one direction-specific first package after that choice,
+  costing `$2T Cash + 250 Garage Reputation` and adding `+$1.25T Garage Build Value`. Multiple
+  active cars, full second-car tracks, auctions, collector offers, backend, uploads, and network
+  calls remain future.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
 - `CORE_GAME_SPINE_AUDIT.md`: evidence audit for what is real versus scaffolding in the current

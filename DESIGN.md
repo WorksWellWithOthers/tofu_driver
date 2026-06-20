@@ -745,6 +745,12 @@ Design rules:
   Restoration Build. The choice adds identity and future tuning direction only: no Cash, Brand
   Value, Garage Reputation, Garage Build Value, Net Worth, Cup Test scoring, certification, uploads,
   or network effects.
+- Second Car First Track V1 unlocks after the Second Project Car has a locked Build Direction. It
+  adds one direction-specific first work package: Presentation Package, Event Prep Package, Angle
+  Setup Package, Gravel Prep Package, or Restoration Foundation. The package costs `$2T Cash + 250
+  Garage Reputation`, adds `+$1.25T Garage Build Value`, and remains a single local parked step.
+  Full second-car tracks, second-car assignments, fleet controls, auctions, sell/collector offers,
+  backend, uploads, and network play remain future.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
@@ -754,8 +760,9 @@ Design rules:
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
   Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion. Car Management V1
   follows the first complete build, and Second Bay V1 adds a rolling-shell bridge toward the next
-  project. Second-car build tracks, repeatable event expansion, full multi-car management, auctions,
-  and collector offers remain future.
+  project. Second Car First Track V1 adds only the first direction-specific package after identity
+  selection. Full second-car build tracks, repeatable event expansion, full multi-car management,
+  auctions, and collector offers remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.

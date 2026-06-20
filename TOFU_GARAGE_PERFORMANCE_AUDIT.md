@@ -260,6 +260,10 @@ Fix applied:
 - Second Car Identity / Build Direction V1 adds one sanitized enum-like field and timestamp to the
   existing second-car object. It renders five static option cards only after the rolling shell is
   acquired and adds no timers, fleet arrays, reward loops, or network behavior.
+- Second Car First Track V1 adds two bounded scalar fields to that same second-car object:
+  `directionWorkLevel` and `directionWorkCompletedAt`. It renders one current direction work card,
+  stores no history, adds no timers, no fleet array, no second-car assignment loop, and no network
+  behavior.
 - High-Scale Counter Contracts V1 keeps late-game handoffs scalar and bounded. Wholesale Case,
   Event Catering Load, and Venue Supply Contract are larger order bundles, not per-order object
   queues; Counter Service batch floors rise to 100/250/1000 only through parked contracts, and

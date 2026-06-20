@@ -329,6 +329,13 @@ Second Car Identity / Build Direction V1 gives that rolling shell a locked futur
 new tracks exist: Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build. These
 directions are future stat/flavor hooks only and do not grant immediate economy rewards.
 
+Second Car First Track V1 is the first runtime use of those identity hooks. After a direction is
+locked, the second car can complete one direction-specific first work package: Presentation Package,
+Event Prep Package, Angle Setup Package, Gravel Prep Package, or Restoration Foundation. Each uses
+authentic tuning vocabulary as fictional garage flavor, costs `$2T Cash + 250 Garage Reputation`,
+adds `+$1.25T Garage Build Value`, and does not add full second-car tracks, assignments, fleet
+management, backend, uploads, or network calls.
+
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
 progress, Garage Build Value, Brand Value, and Garage Reputation. It stays separate from Car

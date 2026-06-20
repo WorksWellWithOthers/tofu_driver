@@ -1696,6 +1696,21 @@ This is narrative/strategic setup only: it grants no Cash, Brand Value, Garage R
 Build Value, or Net Worth change. Second Car Build Tracks remain future-only. There is no second-car
 assignment system or fleet management in V1.
 
+Implemented Second Car First Track V1 values:
+
+| Build Direction | First Work Package | Cash Cost | Garage Reputation Cost | Garage Build Value |
+| --- | --- | --- | --- | --- |
+| Showcase Build | Presentation Package | `$2T` | `250` | `+$1.25T` |
+| Track Build | Event Prep Package | `$2T` | `250` | `+$1.25T` |
+| Drift Build | Angle Setup Package | `$2T` | `250` | `+$1.25T` |
+| Rally Build | Gravel Prep Package | `$2T` | `250` | `+$1.25T` |
+| Restoration Build | Restoration Foundation | `$2T` | `250` | `+$1.25T` |
+
+This is one local parked step after direction selection. It spends Garage Reputation using the same
+spendable convention as Second Bay, adds Garage Build Value through the existing component, and does
+not grant Cash, Brand Value, Garage Reputation, assignments, Cup Test rewards, or formula changes.
+Full second-car tracks remain future-only.
+
 Possible level effects:
 
 - Cash decreases.

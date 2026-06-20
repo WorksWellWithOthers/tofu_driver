@@ -167,14 +167,19 @@ globalThis.renderNetWorthCard = renderNetWorthCard;
 globalThis.brandValueV1 = brandValueV1;
 globalThis.garageEventBrandValueV1 = garageEventBrandValueV1;
 globalThis.garageReputationV1 = garageReputationV1;
+globalThis.carManagementBrandValueV1 = carManagementBrandValueV1;
 globalThis.SECOND_CAR_BUILD_DIRECTIONS = SECOND_CAR_BUILD_DIRECTIONS;
+globalThis.SECOND_CAR_DIRECTION_WORK_PACKAGES = SECOND_CAR_DIRECTION_WORK_PACKAGES;
 globalThis.secondCarBuildDirectionById = secondCarBuildDirectionById;
+globalThis.secondCarDirectionWorkPackageById = secondCarDirectionWorkPackageById;
+globalThis.secondCarDirectionWorkStatus = secondCarDirectionWorkStatus;
 globalThis.garageEventBoardStatus = garageEventBoardStatus;
 globalThis.garageEventRequirementStatus = garageEventRequirementStatus;
 globalThis.nextGarageEvent = nextGarageEvent;
 globalThis.nextAvailableGarageEvent = nextAvailableGarageEvent;
 globalThis.completeGarageEvent = completeGarageEvent;
 globalThis.selectSecondCarBuildDirection = selectSecondCarBuildDirection;
+globalThis.completeSecondCarDirectionWork = completeSecondCarDirectionWork;
 globalThis.renderGarageEventBoardCard = renderGarageEventBoardCard;
 globalThis.nextNetWorthMilestone = nextNetWorthMilestone;
 globalThis.netWorthMilestoneReached = netWorthMilestoneReached;
@@ -5579,13 +5584,47 @@ globalThis.trackDirectionReload = normalizeGameState(JSON.parse(JSON.stringify(t
 globalThis.trackDirectionSecondSelect = selectSecondCarBuildDirection("showcase_build", trackDirectionState, { activeDrive: false });
 globalThis.trackDirectionAssignmentStart = startCarAssignment("showcase_rotation", trackDirectionState, { activeDrive: false, now: "2026-06-20T19:00:00.000Z" });
 globalThis.trackDirectionActiveCarId = trackDirectionAssignmentStart.gameState.carManagement.activeAssignment && trackDirectionAssignmentStart.gameState.carManagement.activeAssignment.carId;
+const invalidWorkLevelImport = normalizeGameState(JSON.parse(JSON.stringify(trackDirectionState)));
+invalidWorkLevelImport.carManagement.secondCarProject.directionWorkLevel = 99;
+globalThis.invalidWorkLevelImport = normalizeGameState(invalidWorkLevelImport);
+const workLowCashState = normalizeGameState(JSON.parse(JSON.stringify(trackDirectionState)));
+workLowCashState.shop.tips = 1000000;
+workLowCashState.carManagement.garageReputation = 249;
+globalThis.workLowCashPanel = renderCarManagementPanel(workLowCashState);
+globalThis.workLowCashResult = completeSecondCarDirectionWork(workLowCashState, { activeDrive: false, now: "2026-06-20T19:05:00.000Z" });
+const workReadyState = normalizeGameState(JSON.parse(JSON.stringify(trackDirectionState)));
+workReadyState.shop.tips = 3000000000000;
+workReadyState.carManagement.garageReputation = 250;
+globalThis.workValueBefore = projectCarValueV1(workReadyState);
+globalThis.workCashBefore = cashBalance(workReadyState);
+globalThis.workBrandBefore = brandValueV1(workReadyState);
+globalThis.workCarBrandBefore = carManagementBrandValueV1(workReadyState);
+globalThis.workRepBefore = garageReputationV1(workReadyState);
+globalThis.workNetWorthBefore = netWorthV1(workReadyState);
+globalThis.secondWorkComplete = completeSecondCarDirectionWork(workReadyState, { activeDrive: false, now: "2026-06-20T19:10:00.000Z" });
+globalThis.secondWorkState = secondWorkComplete.gameState;
+globalThis.secondWorkPanel = renderCarManagementPanel(secondWorkState);
+globalThis.secondWorkOverview = carManagementOverviewSummary(secondWorkState);
+globalThis.secondWorkPinned = pinnedNearGoalForShop(secondWorkState);
+globalThis.secondWorkAction = nextBestAction(secondWorkState);
+globalThis.secondWorkValue = projectCarValueV1(secondWorkState);
+globalThis.secondWorkFormula = cashBalance(secondWorkState) + tofuBusinessValue(secondWorkState) + projectCarValueV1(secondWorkState) + brandValueV1(secondWorkState);
+globalThis.secondWorkNetWorth = netWorthV1(secondWorkState);
+globalThis.secondWorkAgain = completeSecondCarDirectionWork(secondWorkState, { activeDrive: false, now: "2026-06-20T19:11:00.000Z" });
+globalThis.secondWorkReload = normalizeGameState(JSON.parse(JSON.stringify(secondWorkState)));
+globalThis.secondWorkAssignmentStart = startCarAssignment("showcase_rotation", secondWorkState, { activeDrive: false, now: "2026-06-20T19:12:00.000Z" });
+globalThis.secondWorkActiveCarId = secondWorkAssignmentStart.gameState.carManagement.activeAssignment && secondWorkAssignmentStart.gameState.carManagement.activeAssignment.carId;
 globalThis.directionResults = Object.fromEntries(SECOND_CAR_BUILD_DIRECTIONS.map((direction) => {
   const fixture = normalizeGameState(secondProjectState);
   const result = selectSecondCarBuildDirection(direction.id, fixture, { activeDrive: false, now: "2026-06-20T18:45:00.000Z" });
+  const panel = renderCarManagementPanel(result.gameState);
+  const work = secondCarDirectionWorkPackageById(direction.id);
   return [direction.id, {
     ok: result.ok,
     buildDirection: result.gameState.carManagement.secondCarProject.buildDirection,
     directionLocked: result.gameState.carManagement.secondCarProject.directionLocked,
+    workName: work && work.name,
+    workPanelIncludesName: work ? panel.includes(work.name) : false,
     cash: cashBalance(result.gameState),
     brand: brandValueV1(result.gameState),
     carBrand: carManagementBrandValueV1(result.gameState),
@@ -5597,6 +5636,7 @@ globalThis.directionResults = Object.fromEntries(SECOND_CAR_BUILD_DIRECTIONS.map
 }));
 globalThis.invalidDirectionSelect = selectSecondCarBuildDirection("not_real", secondProjectState, { activeDrive: false });
 globalThis.activeDirectionSelect = selectSecondCarBuildDirection("showcase_build", secondProjectState, { activeDrive: true });
+globalThis.activeSecondCarWork = completeSecondCarDirectionWork(workReadyState, { activeDrive: true });
 globalThis.activeSecondBayOpen = openSecondBay(secondBayCashReady, { activeDrive: true });
 const longHistoryState = normalizeGameState(allAssignmentsState);
 longHistoryState.carManagement.assignmentHistory = [
@@ -5764,21 +5804,51 @@ appState.running = false;
   assert(context.trackDirectionPanel.includes('Track Build'));
   assert(context.trackDirectionPanel.includes('Locked for V1'));
   assert(context.trackDirectionPanel.includes('Future second-car work tracks will follow this identity.'));
+  assert(context.trackDirectionPanel.includes('Second Car Work'));
+  assert(context.trackDirectionPanel.includes('Event Prep Package'));
+  assert(context.trackDirectionPanel.includes('Cost: $2T Cash + 250 Garage Reputation'));
+  assert(context.trackDirectionPanel.includes('Garage Build Value: +$1.25T'));
   assert(!context.trackDirectionPanel.includes('Choose Showcase Build'));
   assert(!context.trackDirectionPanel.includes('Change Direction'));
-  assert.strictEqual(context.trackDirectionOverview, 'Second Project Car: Track Build. Future tracks coming.');
-  assert.strictEqual(context.trackDirectionPinned.title, 'Second Car Direction Locked');
-  assert.strictEqual(context.trackDirectionAction.title, 'Next: Second Car Direction Locked');
+  assert.strictEqual(context.trackDirectionOverview, 'Second Car: Track Build · Event Prep Package next.');
+  assert.strictEqual(context.trackDirectionPinned.title, 'Grow Cash for Second Car Work');
+  assert.strictEqual(context.trackDirectionAction.title, 'Next: Grow Cash for Second Car Work');
   assert.strictEqual(context.trackDirectionReload.carManagement.secondCarProject.buildDirection, 'track_build');
   assert.strictEqual(context.trackDirectionSecondSelect.ok, false);
   assert(context.trackDirectionSecondSelect.reason.includes('already locked'));
   assert.strictEqual(context.trackDirectionAssignmentStart.ok, true);
   assert.strictEqual(context.trackDirectionActiveCarId, 'first_complete_build');
+  assert.strictEqual(context.invalidWorkLevelImport.carManagement.secondCarProject.directionWorkLevel, 1);
+  assert(context.workLowCashPanel.includes('Need $2T more Cash.'));
+  assert(context.workLowCashPanel.includes('Need 1 more Garage Reputation.'));
+  assert.strictEqual(context.workLowCashResult.ok, false);
+  assert(context.workLowCashResult.reason.includes('Need'));
+  assert.strictEqual(context.secondWorkComplete.ok, true);
+  assert.strictEqual(context.secondWorkComplete.feedback, 'Event Prep Package complete: +$1.25T Garage Build Value.');
+  assert.strictEqual(context.secondWorkState.carManagement.secondCarProject.directionWorkLevel, 1);
+  assert(context.secondWorkState.carManagement.secondCarProject.directionWorkCompletedAt);
+  assert.strictEqual(context.secondWorkValue, context.workValueBefore + 1250000000000);
+  assert.strictEqual(context.cashBalance(context.secondWorkState), context.workCashBefore - 2000000000000);
+  assert.strictEqual(context.brandValueV1(context.secondWorkState), context.workBrandBefore);
+  assert.strictEqual(context.carManagementBrandValueV1(context.secondWorkState), context.workCarBrandBefore);
+  assert.strictEqual(context.garageReputationV1(context.secondWorkState), context.workRepBefore - 250);
+  assert.strictEqual(context.secondWorkNetWorth, context.secondWorkFormula);
+  assert(context.secondWorkPanel.includes('Event Prep Package complete.'));
+  assert(context.secondWorkPanel.includes('Future Track Build levels come in a later garage pass.'));
+  assert.strictEqual(context.secondWorkOverview, 'Second Car: Track Build · first work complete. Future tracks coming.');
+  assert.strictEqual(context.secondWorkPinned.title, 'Second Car Work Started');
+  assert.strictEqual(context.secondWorkAction.title, 'Next: Second Car Work Started');
+  assert.strictEqual(context.secondWorkAgain.ok, false);
+  assert(context.secondWorkAgain.reason.includes('already complete'));
+  assert.strictEqual(context.secondWorkReload.carManagement.secondCarProject.directionWorkLevel, 1);
+  assert.strictEqual(context.secondWorkAssignmentStart.ok, true);
+  assert.strictEqual(context.secondWorkActiveCarId, 'first_complete_build');
   for (const directionId of context.secondCarDirectionIds) {
     const result = context.directionResults[directionId];
     assert.strictEqual(result.ok, true);
     assert.strictEqual(result.buildDirection, directionId);
     assert.strictEqual(result.directionLocked, true);
+    assert.strictEqual(result.workPanelIncludesName, true);
     assert.strictEqual(result.cash, context.secondDirectionBeforeCash);
     assert.strictEqual(result.brand, context.secondDirectionBeforeBrand);
     assert.strictEqual(result.carBrand, context.secondDirectionBeforeCarBrand);
@@ -5791,6 +5861,8 @@ appState.running = false;
   assert(context.invalidDirectionSelect.reason.includes('not available'));
   assert.strictEqual(context.activeDirectionSelect.ok, false);
   assert(context.activeDirectionSelect.reason.includes('parked') || context.activeDirectionSelect.reason.includes('after the drive'));
+  assert.strictEqual(context.activeSecondCarWork.ok, false);
+  assert(context.activeSecondCarWork.reason.includes('parked') || context.activeSecondCarWork.reason.includes('after the drive'));
   assert.strictEqual(context.activeSecondBayOpen.ok, false);
   assert(context.activeSecondBayOpen.reason.includes('parked') || context.activeSecondBayOpen.reason.includes('after the drive'));
   assert(context.longHistoryPanel.includes('Recent Assignment Results'));
@@ -7326,8 +7398,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620h'));
-  assert(html.includes('/static/nospill/app.css?v=20260620h'));
+  assert(html.includes('/static/nospill/app.js?v=20260620i'));
+  assert(html.includes('/static/nospill/app.css?v=20260620i'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -10244,8 +10316,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620h'));
-  assert(html.includes('/static/nospill/app.css?v=20260620h'));
+  assert(html.includes('/static/nospill/app.js?v=20260620i'));
+  assert(html.includes('/static/nospill/app.css?v=20260620i'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -11772,6 +11844,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-car-assignment-collect',
     'data-second-car-action',
     'data-second-car-direction',
+    'data-second-car-work',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',

@@ -117,6 +117,12 @@ Second Car Identity / Build Direction V1 adds a one-time locked direction after 
 Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build. It is identity setup
 only and does not add second-car tracks, assignments, fleet controls, or economy rewards.
 
+Second Car First Track V1 adds the first actual second-car work step after that identity choice.
+Each direction gets one package name and flavor hook, shares the same `$2T Cash + 250 Garage
+Reputation` cost, and adds `+$1.25T Garage Build Value`. It confirms the shell is becoming a
+project without adding five-level direction trees, second-car assignments, full fleet management, or
+market systems.
+
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
 preview only. Authentic tuner terms are allowed in Tofu Garage as fictional game vocabulary, while
