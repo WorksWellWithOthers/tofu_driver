@@ -1144,7 +1144,7 @@ visible as an optional certified boost, but it should not override the normal sh
 | --- | --- | --- | --- | --- |
 | Fresh shop, first order not complete | First automatic handoff | Watch Counter Service | Take Cup Test as optional boost | Manual Fulfill Shop Order as primary |
 | Ready Orders >= 1 and Cash is low | Need Cash | Let Counter Service work | Take Cup Test as optional boost | Buy Tofu Press as primary if stock is healthy |
-| Ready Orders >= 2 | Convert work to Cash | Upgrade or run Counter Service | View Orders / Manual Backup | Manual single-order spam |
+| Ready Orders >= 2 | Convert work to Cash | Run Counter Service; mention a Counter Service upgrade only when one is visible and implemented | View Orders / Manual Backup | Manual single-order spam or dead upgrade prompts |
 | No ready orders, order prep in progress | Preparing Delivery Order | Wait for Prep Counter | Pack Tofu only if stock is low | Certified boost as bottleneck |
 | High Tofu Stock, slow order prep | Prep Counter throughput | Buy Prep Counter or Buy Tidy Packaging if affordable; otherwise wait for Prep Counter | Tofu Press available with `not urgent` copy | Buy Tofu Press as dominant action |
 | Low Tofu Stock runway, early shop | Low Tofu Stock | Buy Tofu Press | Manual Pack Tofu only as emergency backup | Buy Prep Counter if it will starve immediately |

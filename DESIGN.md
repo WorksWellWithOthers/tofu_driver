@@ -496,6 +496,10 @@ Current design principles:
   changes; live state updates copy/progress in place. When the current implemented Dream Build
   track is complete, the Overview should say so directly and show Suspension only as a future
   target, with no Suspension purchase button or Dream Garage tab.
+- The Goal Stack is mostly informational. CTA buttons should appear there only when they perform a
+  concrete useful action; future-only goals and informational Net Worth horizons should not get dead
+  buttons. Recommendation copy must not mention upgrades unless a real, visible, implemented
+  upgrade exists in the current UI.
 - Long Overview explanations, Net Worth formulas, Garage Build formulas, and saved Builder Note
   editing controls should be collapsed by default. Counter Service should show only the meaningful
   Start or Pause action, not disabled duplicate buttons.

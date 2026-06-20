@@ -10841,31 +10841,20 @@ function nextBestAction(gameState, options = {}) {
     };
   }
   if (shopUnlocked && readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity()) {
-    if (managerUpgrade) {
-      return {
-        type: "buy_upgrade",
-        title: `Next: Buy ${managerUpgrade.name}`,
-        copy: "The order queue is full. Manager Desk upgrades turn managed-shop reputation into more throughput.",
-        buttonLabel: "View Upgrades",
-        disabled: false,
-        upgradeId: managerUpgrade.id,
-      };
-    }
-    if (managerCandidate) {
-      return {
-        type: "buy_upgrade",
-        title: `Next: Save for ${managerCandidate.name}`,
-        copy: "The order queue is full. Manager Desk is the next shop layer after Counter Crew and supplier scale.",
-        buttonLabel: "View Upgrades",
-        disabled: false,
-        upgradeId: managerCandidate.id,
-      };
-    }
+    const counterRunning = isCounterServiceUnlocked(state) && state.shop.counterService.running;
+    const counterPaused = isCounterServiceUnlocked(state) && !state.shop.counterService.running;
+    const counterCopy = counterPaused
+      ? "The order queue is full. Start Counter Service to turn ready orders into Cash."
+      : counterRunning && counterUpgrade
+        ? "The order queue is full. A visible Counter Service upgrade can improve throughput."
+        : counterRunning
+          ? "The order queue is full. Counter Service is already clearing it."
+          : "The order queue is full. Use the visible shop controls to turn ready orders into Cash.";
     return {
       type: "queue_full",
       title: "Next: Clear the Order Queue",
-      copy: "The order queue is full. Upgrade or start Counter Service so prepared orders become Cash before the shop makes more.",
-      buttonLabel: isCounterServiceUnlocked(state) ? "View Counter Service" : "View Upgrades",
+      copy: counterCopy,
+      buttonLabel: counterPaused ? "Start Counter Service" : "Queue Full",
       disabled: false,
     };
   }
@@ -13053,7 +13042,7 @@ function goalStackTargetForAction(action) {
 
 function goalStackCta(label, target) {
   if (!label || !target) return "";
-  return actionButton(label, "data-goal-stack-target", target, false, "nospill-secondary");
+  return "";
 }
 
 function dreamBuildImplementedCapReached(gameState) {

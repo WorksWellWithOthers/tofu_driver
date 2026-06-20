@@ -54,8 +54,10 @@
   the long-term Era Goal so a large Net Worth target does not hide the next meaningful shop or Dream
   Build target. Long explanations/formulas move behind Details, saved Builder Notes collapse until
   edited, Counter Service shows only the relevant Start/Pause action, and offline summaries stay
-  compact. When the current implemented Dream Build track is capped, the Overview says so directly
-  and labels Suspension as future/target-only.
+  compact. Goal Stack buttons are suppressed unless they perform a concrete useful action, queue-full
+  copy stays stable, and recommendations mention upgrades only when a visible implemented upgrade is
+  actually available. When the current implemented Dream Build track is capped, the Overview says so
+  directly and labels Suspension as future/target-only.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
@@ -331,7 +333,7 @@ Canonical references:
    usefulness.
 14. Tune Overview Glance Mode V1, the retained Next Milestone helper, and Station Milestone Boosts
    V1 against playtest behavior before adding higher station thresholds. Confirm Pinned Goal stays
-   stable and Details remain discoverable on mobile.
+   stable, Details remain discoverable on mobile, and Goal Stack copy stays honest without dead CTAs.
 15. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
