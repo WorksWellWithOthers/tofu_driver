@@ -70,7 +70,7 @@ or car assets.
 | Tofu Garage Tuning Catalog V1 | Implemented docs + preview | `TOFU_GARAGE_TUNING_CATALOG.md` is the canonical future parts source; Dream Build tab shows a collapsed category-only preview and does not dump the full list into Overview. |
 | Core Build Progress V2 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level + Final Build Level against `40` planned core work stages; current maximum is `40 / 40` after Shakedown Complete. |
 | Garage Event Board V1 | Implemented | Unlocks in the Dream Build tab at `$100M Net Worth` plus Tires & Rubber Level 5; Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector Preview are one-time parked fictional events with local Cash, Brand Value, Garage Reputation, and badge rewards. |
-| Car Management V1 | Implemented | Unlocks after First Complete Build; creates one local managed-car snapshot and supports one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and Closed-Course Exhibition Booking. |
+| Car Management V1 + Assignment Explainability V1 | Implemented | Unlocks after First Complete Build; creates one local managed-car snapshot and supports one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and Closed-Course Exhibition Booking. Assignment cards show state labels, concrete cost/reward previews, active/ready states, capped recent history, and first-loop checklist closure. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
@@ -202,8 +202,9 @@ Current code status:
   and Shakedown Complete, for a current maximum of `40 / 40`.
 - Garage Event Board V1 makes the first `$100M` garage-era reward real once Tires & Rubber Level 5
   is complete. It is one-time and parked-only; Car Management V1 is now the separate completed-car
-  assignment loop. Repeatable event boards, multiple cars, collector offers, and auctions remain
-  future.
+  assignment loop with explicit assignment states, reward previews, ready-to-collect feedback, and
+  capped history. Repeatable event boards, second car purchase, multiple cars, collector offers,
+  and auctions remain future.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 

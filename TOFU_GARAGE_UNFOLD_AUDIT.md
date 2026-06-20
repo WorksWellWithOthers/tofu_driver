@@ -96,7 +96,9 @@ as the first managed-car loop.
 Car Management V1 now unlocks after First Complete Build, snapshots the completed car locally, and
 adds one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and
 Closed-Course Exhibition Booking. Assignment rewards grant local Cash, Brand Value, and Garage
-Reputation only when collected. Multiple cars, auctions, collector offers, and repeatable board
+Reputation only when collected. Assignment Explainability V1 makes the loop legible with state
+labels, cost/reward previews, ready-to-collect copy, a first-loop checklist, and capped recent
+history. Multiple cars, second car purchase, auctions, collector offers, and repeatable board
 expansion remain future.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
