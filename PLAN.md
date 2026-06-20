@@ -212,13 +212,18 @@
   and adds `$125K Garage Build Value`; Seal Joints costs `$375K Cash` and adds another `$200K`;
   Tuned Note costs `$600K Cash` and adds another `$350K`; Heat Wrapped costs `$1.1M Cash` and adds
   another `$650K`; Showcase Finish costs `$2M Cash`, adds another `$1.25M`, and completes the
-  current Exhaust track. Suspension remains target-only/future, with no Dream Garage tab, full
-  parts inventory, completed build events, or full valuation.
-- Dream Build Progress V1 is implemented as a compact Overview card. It counts current work stages
-  as Wheels Level plus Exhaust Level against a planned `30` stage build, shows current Wheels and
-  Exhaust labels, points to the next dream step, and keeps future tracks locked/deferred. Goal Stack
-  also uses this status as the stable mid-term target so players know whether more implemented car
-  work exists.
+  current Exhaust track.
+- Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It carries
+  detailed Wheels, Exhaust, Suspension, Dream Build Progress, Garage Build Value, and Builder Note
+  content so the Overview can stay compact.
+- Suspension Level 1 V1 is implemented after Exhaust Level 5. Suspension Refreshed costs `$4M Cash`,
+  adds `+$2M Garage Build Value`, and advances Dream Build Progress to `9 / 30`. Ride Height Set,
+  later Suspension work, full parts inventory, completed build events, Car Management, and full
+  valuation remain future.
+- Dream Build Progress V1 counts current work stages as Wheels Level plus Exhaust Level plus the
+  implemented Suspension level against a planned `30` stage build, shows current part labels, points
+  to the next dream step, and keeps future tracks locked/deferred. Goal Stack also uses this status
+  as the stable mid-term target so players know whether more implemented car work exists.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -320,11 +325,13 @@ Canonical references:
 10. Playtest Covered Car / Dream Build Teaser V1 in high-progress saves: confirm the card unlocks
    after Manager Desk / Wholesale Pickup progress, Next Milestone points to it once, Next Best
    Action yields to urgent stock/queue/upgrade bottlenecks, and the seen state persists.
-11. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, and Dream
-   Build Progress V1: confirm the `$50K` Wheels Fund is hidden on fresh saves, Exhaust stays hidden
-   until Wheels level 3, Buy Exhaust/Tuned Note/Heat Wrapped/Showcase Finish appear only when
-   affordable and stable, Garage Build Value and `8 / 30` progress totals stay clear, Suspension remains target-only,
-   and urgent shop bottlenecks still win.
+11. Playtest First Dream Build Investment Purchase V1, Exhaust Purchase + Work Level V1, Dream
+   Build Tab V1, Suspension Level 1, and Dream Build Progress V1: confirm the `$50K` Wheels Fund is
+   hidden on fresh saves, Exhaust stays hidden until Wheels level 3, Buy Exhaust/Tuned Note/Heat
+   Wrapped/Showcase Finish appear only when affordable and stable, the Dream Build tab appears only
+   after build start, Suspension Refreshed appears only after Exhaust Level 5, Garage Build Value
+   and `9 / 30` progress totals stay clear, Ride Height Set remains future-only, and urgent shop
+   bottlenecks still win.
 12. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
    `$1M` timing, Showcase Prep affordability, Sponsor reward pacing, one-time feedback, Brand Value
    visibility, and that urgent shop bottlenecks still override distant Net Worth goals.
@@ -400,12 +407,15 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
-1. Verify Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Dream
+1. Verify Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work Level V1, Suspension
+   Level 1 V1, and Dream
    Build Progress V1:
    `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
    Fitted, `$375K` Sealed Joints, `$600K` Tuned Note, `$1.1M` Heat Wrapped, `$2M` Showcase Finish,
-   `8 / 30` progress, Garage Build Value totals, persistence, and priority rules.
-2. Playtest whether the next slice should add Suspension target/action design or return to Wheels levels 4-5.
+   `$4M` Suspension Refreshed, `9 / 30` progress, Garage Build Value totals, persistence, and
+   priority rules.
+2. Playtest whether the next slice should add Ride Height Set, Wheels levels 4-5, or another
+   parked garage expression/status layer.
 3. Refine Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
 4. Refine Garage Build Value from careful work levels after the first two tracks feel clear.
 5. Design the first completed-build event threshold and event choice requirements.

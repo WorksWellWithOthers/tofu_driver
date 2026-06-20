@@ -387,9 +387,14 @@ Examples:
 - Exhaust Purchase + Work Level V1 proves the second part track with Exhaust Fitted, Sealed
   Joints, Tuned Note, Heat Wrapped, and Showcase Finish. Future car parts reduce Cash but may
   increase Car Asset Value and unlock future opportunities.
+- Dream Build Tab V1 appears after the build starts and holds detailed car work, Garage Build
+  Value, Dream Build Progress, and Builder Note content outside the glance-first Overview.
+- Suspension Level 1 V1 proves the third part track after Exhaust Level 5. Suspension Refreshed
+  costs `$4M Cash`, adds `+$2M Garage Build Value`, and is fictional garage/story value, not speed
+  or real-world vehicle advice.
 - Dream Build Progress V1 summarizes current build completion as work stages. The planned V1 build
   size is 30 stages: six part tracks times five levels. Current implemented stages are Wheels
-  levels 1-3 and Exhaust levels 1-5.
+  levels 1-3, Exhaust levels 1-5, and Suspension level 1.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -443,10 +448,9 @@ single overloaded milestone presentation and visible explanation wall with three
 - Era Goal: the long-term Net Worth or shop horizon, such as `$100M Net Worth`.
 
 The Pinned Goal should update when a meaningful milestone completes, not because Cash crosses
-an affordability threshold, the order queue briefly fills, or ETA text changes. If Wheels and
-Exhaust have reached the current implemented cap, the pinned goal should state that the current
-track is complete and that Suspension is future/target-only. Do not add a Suspension purchase
-button or Dream Garage tab until that work is intentionally implemented.
+an affordability threshold, the order queue briefly fills, or ETA text changes. After Exhaust Level
+5, it may point to Suspension Refreshed as the next implemented build work. After Suspension Level
+1, Ride Height Set and later build work remain future/target-only until intentionally implemented.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -1499,19 +1503,27 @@ Implemented Exhaust Purchase + Work Level V1:
 | 4 | Heat Wrapped | `$1.1M` | `$1.475M` with Wheels level 3 | Implemented |
 | 5 | Showcase Finish | `$2M` | `$2.725M` with Wheels level 3 | Implemented |
 
+Implemented Suspension Level 1 V1:
+
+| Suspension Level | State / Work | Cash Cost | Project Car Value Total | Runtime Status |
+| --- | --- | --- | --- | --- |
+| 0 | Not Started | none | `$2.725M` with Wheels level 3 and Exhaust level 5 | Implemented as post-Exhaust target state |
+| 1 | Suspension Refreshed | `$4M` | `$4.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
+
 Dream Build Progress V1:
 
 | Progress Input | Implemented Runtime Contribution |
 | --- | --- |
 | Wheels Level | `0-3` current runtime stages |
 | Exhaust Level | `0-5` current runtime stages |
-| Suspension | future locked track |
+| Suspension Level | `0-1` current runtime stages |
 | Brakes | future locked track |
 | Turbo Kit | future locked track |
 | Stage Tune | future locked track |
 
 The progress denominator is `30` planned work stages. After Balanced Fitment and Showcase Finish,
-the current implemented maximum is `8 / 30`. Suspension remains target-only/future.
+Suspension Refreshed raises the current implemented maximum to `9 / 30`. Ride Height Set and later
+Suspension levels remain target-only/future.
 
 Each level is an investment, not a direct cash printer.
 

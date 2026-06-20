@@ -493,9 +493,9 @@ Current design principles:
 - Overview Glance Mode V1 is the current guidance pattern. It separates `Now` for the live
   bottleneck, `Pinned Goal` for a stable medium-term target, and `Era Goal` for the large Net Worth
   or shop horizon. The pinned goal should not flip just because Cash, queue fullness, or ETA
-  changes; live state updates copy/progress in place. When the current implemented Dream Build
-  track is complete, the Overview should say so directly and show Suspension only as a future
-  target, with no Suspension purchase button or Dream Garage tab.
+  changes; live state updates copy/progress in place. Once Dream Build starts, detailed car work
+  belongs in the earned Dream Build tab so the Overview can stay compact. Future-only build steps
+  should be labeled as future/target-only with no dead purchase buttons.
 - The Goal Stack is mostly informational. CTA buttons should appear there only when they perform a
   concrete useful action; future-only goals and informational Net Worth horizons should not get dead
   buttons. Recommendation copy must not mention upgrades unless a real, visible, implemented
@@ -632,10 +632,18 @@ Design rules:
   Wheels, and Balanced Fitment. Level 4 Showpiece Fitment and Level 5 Collector Finish remain
   future.
 - Exhaust V1 implements Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped, and Showcase
-  Finish. Suspension remains future/target-only.
+  Finish.
+- Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It holds
+  Wheels, Exhaust, Suspension, Dream Build Progress, Garage Build Value, Builder Note, and
+  future-only garage management notes so the Overview does not become a full build dashboard.
+- Suspension Level 1 V1 is implemented after Exhaust Level 5. Suspension Refreshed costs `$4M`
+  Cash, adds `+$2M Garage Build Value`, advances Dream Build Progress to `9 / 30`, and is framed
+  as fictional garage/story value, not speed or real-world vehicle advice. Ride Height Set and
+  later Suspension levels remain future/target-only.
 - Dream Build Progress V1 summarizes the project as `6 parts x 5 levels = 30 work stages`.
-  Current runtime progress is Wheels level plus Exhaust level; the implemented maximum is `8 / 30`
-  after Balanced Fitment and Showcase Finish. Suspension, Brakes, Turbo Kit, Stage Tune,
+  Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension level;
+  the implemented maximum is `9 / 30` after Balanced Fitment, Showcase Finish, and Suspension
+  Refreshed. Wheels levels 4-5, later Suspension levels, Brakes, Turbo Kit, Stage Tune,
   completed-build events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
@@ -701,19 +709,25 @@ Implemented Exhaust V1 values:
 | 4 | Heat Wrapped | `$1.1M` | `+$650K` (`$1.475M` with Wheels level 3) |
 | 5 | Showcase Finish | `$2M` | `+$1.25M` (`$2.725M` with Wheels level 3) |
 
-Wheels levels 4-5, Suspension, full Dream Garage, completed-build events, Auction, Showcase, and
-Collector Offer remain future.
+Implemented Suspension V1 values:
+
+| Suspension Level | Work | Cash Cost | Project Car Value |
+| --- | --- | --- | --- |
+| 1 | Suspension Refreshed | `$4M` | `+$2M` (`$4.725M` with Wheels level 3 and Exhaust level 5) |
+
+Wheels levels 4-5, Suspension levels 2-5, full Dream Garage, completed-build events, Auction,
+Showcase, and Collector Offer remain future.
 
 Dream Build Progress V1:
 
 ```text
-Dream Build Progress = Wheels Level + Exhaust Level + future part levels
+Dream Build Progress = Wheels Level + Exhaust Level + implemented Suspension Level + future part levels
 Planned build size = 6 parts x 5 levels = 30 work stages
 ```
 
-The progress card may show current Wheels and Exhaust labels, the next dream step, Project Car
-Value, and a compact note that more build tracks unlock later. It must not add future part purchase
-buttons or a Dream Garage tab.
+The Dream Build tab may show current Wheels, Exhaust, and Suspension labels, the next dream step,
+Garage Build Value, Builder Note, and compact future track notes. It must not add future part
+purchase buttons, Car Management, or a full Dream Garage surface.
 
 Avoid:
 

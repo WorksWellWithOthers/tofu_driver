@@ -237,7 +237,9 @@ Fix applied:
 - Overview Glance Mode V1 keeps the Pinned Goal stable: live Cash, queue, stock, and ETA changes
   update progress/copy in place instead of replacing the medium-term target during normal ticks.
   Long explanations, Net Worth formulas, Dream Build details, and saved Builder Note editing
-  controls are collapsed by default so the active Overview does less visible text churn.
+  controls are collapsed by default so the active Overview does less visible text churn. Dream Build
+  Tab V1 keeps detailed Wheels, Exhaust, Suspension, Garage Build Value, and Builder Note rendering
+  in an earned parked tab instead of expanding the Overview dashboard.
 
 Result:
 

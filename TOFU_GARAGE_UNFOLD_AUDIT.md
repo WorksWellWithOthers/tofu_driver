@@ -81,14 +81,16 @@ Overview Glance Mode V1.
 
 Overview Glance Mode V1 does not add a new resource or system. It clarifies the current unfold by
 separating live `Now`, stable `Pinned Goal`, and long-term `Era Goal`, while moving long formulas
-and explanations behind Details controls. When Wheels and Exhaust are complete, it tells the player
-that the current implemented Dream Build track is capped and that Suspension is future/target-only.
+and explanations behind Details controls. After the build starts, the earned Dream Build tab holds
+the detailed Wheels, Exhaust, Suspension, Garage Build Value, and Builder Note content. After
+Suspension Refreshed, it tells the player that Ride Height Set is future/target-only.
 
 Later:
 
 ```text
-Suspension target preview -> Wheels levels 4-5 or Suspension design -> recurring sponsor package
-design -> completed-build event design -> Keep / Show / Auction choice -> full Net Worth accounting.
+Ride Height Set target preview -> Wheels levels 4-5 or Suspension levels 2-5 -> recurring sponsor
+package design -> completed-build event design -> Keep / Show / Auction choice -> full Net Worth
+accounting.
 ```
 
 Avoid for now:

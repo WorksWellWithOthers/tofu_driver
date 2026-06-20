@@ -175,9 +175,13 @@ globalThis.renderSponsorInquiryCard = renderSponsorInquiryCard;
 globalThis.acceptSponsorInquiry = acceptSponsorInquiry;
 globalThis.dreamBuildWheelsLevel = dreamBuildWheelsLevel;
 globalThis.dreamBuildExhaustLevel = dreamBuildExhaustLevel;
+globalThis.dreamBuildSuspensionLevel = dreamBuildSuspensionLevel;
+globalThis.dreamBuildTabUnlocked = dreamBuildTabUnlocked;
 globalThis.dreamBuildProgressVisible = dreamBuildProgressVisible;
 globalThis.dreamBuildProgressSummary = dreamBuildProgressSummary;
 globalThis.renderDreamBuildProgressCard = renderDreamBuildProgressCard;
+globalThis.renderDreamBuildOverviewSummaryCard = renderDreamBuildOverviewSummaryCard;
+globalThis.renderDreamBuildPanel = renderDreamBuildPanel;
 globalThis.sanitizeBuilderNote = sanitizeBuilderNote;
 globalThis.builderNoteVisible = builderNoteVisible;
 globalThis.builderNoteValue = builderNoteValue;
@@ -186,6 +190,7 @@ globalThis.renderBuilderNoteCard = renderBuilderNoteCard;
 globalThis.nextDreamBuildStep = nextDreamBuildStep;
 globalThis.nextDreamBuildWheelsWork = nextDreamBuildWheelsWork;
 globalThis.nextDreamBuildExhaustWork = nextDreamBuildExhaustWork;
+globalThis.nextDreamBuildSuspensionWork = nextDreamBuildSuspensionWork;
 globalThis.dreamInvestmentTargetVisible = dreamInvestmentTargetVisible;
 globalThis.dreamInvestmentTargetProgress = dreamInvestmentTargetProgress;
 globalThis.renderDreamInvestmentTargetCard = renderDreamInvestmentTargetCard;
@@ -193,6 +198,7 @@ globalThis.dreamInvestmentReturningNote = dreamInvestmentReturningNote;
 globalThis.buyDreamBuildWheels = buyDreamBuildWheels;
 globalThis.buyDreamBuildWheelsWork = buyDreamBuildWheelsWork;
 globalThis.buyDreamBuildExhaust = buyDreamBuildExhaust;
+globalThis.buyDreamBuildSuspension = buyDreamBuildSuspension;
 globalThis.addLedgerEntry = addLedgerEntry;
 globalThis.packTofu = packTofu;
 globalThis.fulfillShopOrder = fulfillShopOrder;
@@ -4050,18 +4056,17 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert.strictEqual(context.showcaseFinishProgressSummary.percent, 27);
   assert(context.showcaseFinishProgressCardHtml.includes('8 / 30 work stages'));
   assert(context.showcaseFinishProgressCardHtml.includes('Exhaust · Level 5 / 5 · Showcase Finish'));
-  assert(context.showcaseFinishProgressCardHtml.includes('Next Dream Step: Suspension · future'));
-  assert(context.showcaseFinishProgressCardHtml.includes('Suspension comes in a future Dream Garage pass'));
+  assert(context.showcaseFinishProgressCardHtml.includes('Next Dream Step: Suspension Refreshed'));
+  assert(context.showcaseFinishProgressCardHtml.includes('Refresh the worn suspension so the build has a solid foundation.'));
   assert(context.showcaseFinishProgressCardHtml.includes('Garage Build Value: $2.73M'));
-  assert(context.showcaseFinishCardHtml.includes('Exhaust'));
-  assert(context.showcaseFinishCardHtml.includes('Level 5 / 5 · Showcase Finish'));
-  assert(context.showcaseFinishCardHtml.includes('Complete'));
-  assert(context.showcaseFinishCardHtml.includes('The exhaust track is complete. It looks intentional from end to end.'));
-  assert(context.showcaseFinishCardHtml.includes('Next Build Track: Suspension'));
-  assert(context.showcaseFinishCardHtml.includes('Future Dream Garage pass.'));
+  assert(context.showcaseFinishCardHtml.includes('Suspension'));
+  assert(context.showcaseFinishCardHtml.includes('Level 0 / 5 · Not started'));
+  assert(context.showcaseFinishCardHtml.includes('Next Work: Suspension Refreshed'));
+  assert(context.showcaseFinishCardHtml.includes('Cost: $4M Cash'));
+  assert(context.showcaseFinishCardHtml.includes('Build Value added: +$2M'));
   assert(!context.showcaseFinishCardHtml.includes('Finish Exhaust</button>'));
   assert(!context.showcaseFinishCardHtml.includes('Buy Suspension'));
-  assert(!context.showcaseFinishCardHtml.includes('Suspension</button>'));
+  assert(!context.showcaseFinishCardHtml.includes('Ride Height Set</button>'));
   assert(!context.showcaseFinishCardHtml.includes('Auction'));
   assert(!context.showcaseFinishCardHtml.includes('Collector Offer'));
   assert.strictEqual(context.showcaseFinishDreamNote, 'Showcase Prep is affordable');
@@ -4095,6 +4100,184 @@ globalThis.activeDreamBuildProgressCard = renderDreamBuildProgressCard(tunedResu
   assert(css.includes('.nospill-shop-tab-list button.is-newly-revealed'));
   assert(css.includes('.nospill-tab-badge'));
   assert(!css.includes('.nospill-shop-tabs button.is-revealed'));
+}
+
+function testDreamBuildTabAndSuspensionWorkV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function dreamMakeNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+const dreamElements = {
+  shopTabList: dreamMakeNode(),
+  shopTabPanel: dreamMakeNode(),
+};
+elements.shopTabList = dreamElements.shopTabList;
+elements.shopTabPanel = dreamElements.shopTabPanel;
+
+const fresh = defaultGameState();
+renderShopTabs(fresh);
+globalThis.dreamFreshTabsHtml = elements.shopTabList.innerHTML;
+globalThis.dreamFreshPanelHtml = renderDreamBuildPanel(fresh);
+globalThis.dreamFreshTabUnlocked = dreamBuildTabUnlocked(fresh);
+
+const wheels = normalizeGameState(fresh);
+wheels.shop.dreamBuild.wheelsPurchased = true;
+wheels.shop.dreamBuild.wheelsLevel = 1;
+renderShopTabs(wheels);
+globalThis.dreamWheelsTabsHtml = elements.shopTabList.innerHTML;
+globalThis.dreamWheelsTabUnlocked = dreamBuildTabUnlocked(wheels);
+appState.shopTab = "dream_build";
+renderShopTabs(wheels);
+globalThis.dreamWheelsPanelHtml = elements.shopTabPanel.innerHTML;
+
+appState.running = true;
+renderShopTabs(wheels);
+globalThis.dreamActiveTabsHtml = elements.shopTabList.innerHTML;
+globalThis.dreamActivePanelHtml = renderDreamBuildPanel(wheels);
+appState.running = false;
+
+const exhaustFour = normalizeGameState(wheels);
+exhaustFour.shop.dreamBuild.wheelsLevel = 3;
+exhaustFour.shop.dreamBuild.exhaustPurchased = true;
+exhaustFour.shop.dreamBuild.exhaustLevel = 4;
+exhaustFour.shop.tips = 10000000;
+globalThis.suspensionBeforeExhaustFive = nextDreamBuildSuspensionWork(exhaustFour);
+globalThis.exhaustFourDreamPanel = renderDreamBuildPanel(exhaustFour);
+globalThis.exhaustFourSuspensionResult = buyDreamBuildSuspension("suspension-refreshed", exhaustFour, { activeDrive: false });
+
+const exhaustFiveLow = normalizeGameState(exhaustFour);
+exhaustFiveLow.shop.dreamBuild.exhaustLevel = 5;
+exhaustFiveLow.shop.tips = 1500000;
+exhaustFiveLow.shop.tofuStock = 1000000;
+exhaustFiveLow.shop.deliveryOrders = 0;
+exhaustFiveLow.shop.lifetimeDeliveryOrders = 10000;
+exhaustFiveLow.shop.lifetimeTips = Math.max(exhaustFiveLow.shop.lifetimeTips, 10000000);
+exhaustFiveLow.shop.wholesalePickupsCompleted = 1;
+exhaustFiveLow.shop.prepSlots = 0;
+Object.keys(exhaustFiveLow.shop.stations).forEach((id) => { exhaustFiveLow.shop.stations[id] = 1000; });
+Object.keys(exhaustFiveLow.shop.stationUpgrades).forEach((id) => { exhaustFiveLow.shop.stationUpgrades[id] = 100; });
+globalThis.suspensionLowWork = nextDreamBuildSuspensionWork(exhaustFiveLow);
+globalThis.suspensionLowCardHtml = renderDreamInvestmentTargetCard(exhaustFiveLow);
+globalThis.suspensionLowPanelHtml = renderDreamBuildPanel(exhaustFiveLow);
+globalThis.suspensionLowProgress = dreamBuildProgressSummary(exhaustFiveLow);
+globalThis.suspensionLowPinned = pinnedNearGoalForShop(exhaustFiveLow);
+globalThis.suspensionLowAction = nextBestAction(exhaustFiveLow);
+
+const exhaustFiveLowTick = normalizeGameState(exhaustFiveLow);
+exhaustFiveLowTick.shop.tips = 2500000;
+globalThis.suspensionLowTickPinned = pinnedNearGoalForShop(exhaustFiveLowTick);
+
+const exhaustFiveReady = normalizeGameState(exhaustFiveLow);
+exhaustFiveReady.shop.tips = 5000000;
+globalThis.suspensionReadyCardHtml = renderDreamInvestmentTargetCard(exhaustFiveReady);
+globalThis.suspensionReadyPanelHtml = renderDreamBuildPanel(exhaustFiveReady);
+globalThis.suspensionReadyPinned = pinnedNearGoalForShop(exhaustFiveReady);
+globalThis.suspensionReadyAction = nextBestAction(exhaustFiveReady);
+globalThis.suspensionPurchase = buyDreamBuildSuspension("suspension-refreshed", exhaustFiveReady, { activeDrive: false, now: "2026-06-19T12:00:00.000Z" });
+globalThis.suspensionCashAfter = suspensionPurchase.gameState.shop.tips;
+globalThis.suspensionLevelAfter = dreamBuildSuspensionLevel(suspensionPurchase.gameState);
+globalThis.suspensionProjectValueAfter = projectCarValueV1(suspensionPurchase.gameState);
+globalThis.suspensionNetWorthAfter = netWorthV1(suspensionPurchase.gameState);
+globalThis.suspensionFormulaNetWorth = cashBalance(suspensionPurchase.gameState) + tofuBusinessValue(suspensionPurchase.gameState) + projectCarValueV1(suspensionPurchase.gameState) + brandValueV1(suspensionPurchase.gameState);
+globalThis.suspensionProgressAfter = dreamBuildProgressSummary(suspensionPurchase.gameState);
+globalThis.suspensionAfterCardHtml = renderDreamInvestmentTargetCard(suspensionPurchase.gameState);
+globalThis.suspensionAfterPanelHtml = renderDreamBuildPanel(suspensionPurchase.gameState);
+globalThis.suspensionAfterPinned = pinnedNearGoalForShop(suspensionPurchase.gameState);
+globalThis.suspensionAfterAction = nextBestAction(suspensionPurchase.gameState);
+globalThis.secondSuspensionPurchase = buyDreamBuildSuspension("suspension-refreshed", suspensionPurchase.gameState, { activeDrive: false });
+globalThis.activeSuspensionPurchase = buyDreamBuildSuspension("suspension-refreshed", exhaustFiveReady, { activeDrive: true });
+
+appState.shopTab = "overview";
+globalThis.dreamOverviewSummary = renderOverviewPanel(suspensionPurchase.gameState);
+globalThis.dreamSummaryCard = renderDreamBuildOverviewSummaryCard(suspensionPurchase.gameState);
+`, context);
+
+  assert.strictEqual(context.dreamFreshTabUnlocked, false);
+  assert(!context.dreamFreshTabsHtml.includes('data-shop-tab="dream_build"'));
+  assert(context.dreamFreshPanelHtml.includes('Dream Build unlocks after the covered build starts.'));
+  assert.strictEqual(context.dreamWheelsTabUnlocked, true);
+  assert(context.dreamWheelsTabsHtml.includes('data-shop-tab="dream_build"'));
+  assert(context.dreamWheelsPanelHtml.includes('Dream Build'));
+  assert(context.dreamWheelsPanelHtml.includes('Work Tracks'));
+  assert(context.dreamWheelsPanelHtml.includes('Wheels'));
+  assert(context.dreamWheelsPanelHtml.includes('Exhaust'));
+  assert(context.dreamWheelsPanelHtml.includes('Suspension'));
+  assert(!context.dreamActiveTabsHtml.includes('data-shop-tab="dream_build"'));
+  assert.strictEqual(context.dreamActivePanelHtml, '');
+
+  assert.strictEqual(context.suspensionBeforeExhaustFive, null);
+  assert(context.exhaustFourDreamPanel.includes('Future Track'));
+  assert.strictEqual(context.exhaustFourSuspensionResult.ok, false);
+  assert(context.exhaustFourSuspensionResult.reason.includes('Finish the Exhaust track'));
+
+  assert.strictEqual(context.suspensionLowWork.title, 'Suspension Refreshed');
+  assert(context.suspensionLowCardHtml.includes('Suspension'));
+  assert(context.suspensionLowCardHtml.includes('Level 0 / 5 · Not started'));
+  assert(context.suspensionLowCardHtml.includes('Next Work: Suspension Refreshed'));
+  assert(context.suspensionLowCardHtml.includes('Cost: $4M Cash'));
+  assert(context.suspensionLowCardHtml.includes('Build Value added: +$2M'));
+  assert(context.suspensionLowCardHtml.includes('Need $2.5M more Cash.'));
+  assert(!context.suspensionLowCardHtml.includes('Refresh Suspension</button>'));
+  assert.strictEqual(context.suspensionLowProgress.completed, 8);
+  assert.strictEqual(context.suspensionLowProgress.suspensionLevel, 0);
+  assert.strictEqual(context.suspensionLowPinned.id, 'suspension-refreshed');
+  assert.strictEqual(context.suspensionLowPinned.title, 'Grow Cash for Suspension Refreshed');
+  assert.strictEqual(context.suspensionLowTickPinned.title, 'Grow Cash for Suspension Refreshed');
+  assert.strictEqual(context.suspensionLowAction.title, 'Next: Grow Cash for Suspension Refreshed');
+
+  assert(context.suspensionReadyCardHtml.includes('Refresh Suspension'));
+  assert(!context.suspensionReadyCardHtml.includes('Need $'));
+  assert.strictEqual(context.suspensionReadyPinned.title, 'Refresh Suspension');
+  assert.strictEqual(context.suspensionReadyAction.type, 'buy_dream_suspension_work');
+  assert.strictEqual(context.suspensionReadyAction.buttonLabel, 'Refresh Suspension');
+  assert.strictEqual(context.suspensionPurchase.ok, true);
+  assert.strictEqual(context.suspensionPurchase.feedback, 'Dream Build work complete: Suspension Refreshed.');
+  assert.strictEqual(context.suspensionCashAfter, 1000000);
+  assert.strictEqual(context.suspensionLevelAfter, 1);
+  assert.strictEqual(context.suspensionProjectValueAfter, 4725000);
+  assert(context.suspensionNetWorthAfter <= context.suspensionFormulaNetWorth);
+  assert(context.suspensionNetWorthAfter >= context.suspensionProjectValueAfter);
+  assert.strictEqual(context.suspensionProgressAfter.completed, 9);
+  assert.strictEqual(context.suspensionProgressAfter.total, 30);
+  assert(context.suspensionAfterCardHtml.includes('Suspension Refreshed'));
+  assert(context.suspensionAfterCardHtml.includes('Next Work: Ride Height Set'));
+  assert(context.suspensionAfterCardHtml.includes('Future garage pass.'));
+  assert(!context.suspensionAfterCardHtml.includes('Ride Height Set</button>'));
+  assert.strictEqual(context.suspensionAfterPinned.id, 'dream_build_suspension_started');
+  assert(context.suspensionAfterPinned.body.includes('Ride Height Set comes in a future garage pass'));
+  assert.notStrictEqual(context.suspensionAfterAction.type, 'buy_dream_suspension_work');
+  assert.strictEqual(context.secondSuspensionPurchase.ok, false);
+  assert.strictEqual(context.activeSuspensionPurchase.ok, false);
+
+  assert(context.suspensionAfterPanelHtml.includes('Current Build'));
+  assert(context.suspensionAfterPanelHtml.includes('Garage Build Value'));
+  assert(context.suspensionAfterPanelHtml.includes('Builder Note'));
+  assert(context.suspensionAfterPanelHtml.includes('Future Garage Management'));
+  assert(!context.suspensionAfterPanelHtml.includes('Buy Ride Height Set'));
+  assert(!context.suspensionAfterPanelHtml.includes('Car Management'));
+  assert(!context.suspensionAfterPanelHtml.includes('Auction'));
+  assert(!context.suspensionAfterPanelHtml.includes('race'));
+
+  assert(context.dreamOverviewSummary.includes('Open Dream Build'));
+  assert(context.dreamOverviewSummary.includes('data-shop-tab="dream_build"'));
+  assert(context.dreamOverviewSummary.includes('Suspension: Suspension Refreshed'));
+  assert(!context.dreamOverviewSummary.includes('data-builder-note-preset'));
+  assert(!context.dreamOverviewSummary.includes('Future Garage Management'));
+  assert(context.dreamSummaryCard.includes('9 / 30 work stages'));
+  assert(!context.dreamOverviewSummary.includes('undefined'));
+  assert(!context.dreamOverviewSummary.includes('NaN'));
+  assert(!context.dreamOverviewSummary.includes('Infinity'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -5591,8 +5774,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619m'));
-  assert(html.includes('/static/nospill/app.css?v=20260619m'));
+  assert(html.includes('/static/nospill/app.js?v=20260619n'));
+  assert(html.includes('/static/nospill/app.css?v=20260619n'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -6260,11 +6443,9 @@ appState.running = false;
   assert(context.queueFullWithCounterUpgradeImmediate.includes('A visible Counter Service upgrade can improve throughput.'));
   assert(!context.queueOpenImmediate.includes('Clear the Order Queue'));
 
-  assert.strictEqual(context.capPinned.id, 'dream_build_current_cap');
-  assert(context.capGoalHtml.includes('Current implemented build track complete'));
-  assert(context.capGoalHtml.includes('Next Build Track: Suspension'));
-  assert(context.capGoalHtml.includes('future garage pass'));
-  assert(context.capGoalHtml.includes('Future'));
+  assert.strictEqual(context.capPinned.id, 'suspension-refreshed');
+  assert(context.capGoalHtml.includes('Grow Cash for Suspension Refreshed') || context.capGoalHtml.includes('Refresh Suspension'));
+  assert(context.capGoalHtml.includes('Garage Build Value +$2M'));
   assert(context.capGoalHtml.includes('$100M Net Worth'));
   assert.strictEqual(context.capEra.id, 'net_worth_100m');
   assert(context.capEra.percent > 0 && context.capEra.percent < 100);
@@ -6273,7 +6454,7 @@ appState.running = false;
   assert(!context.capGoalHtml.includes('data-goal-stack-target="dream-build"'));
   assert(!context.capGoalHtml.includes('data-goal-stack-target="net-worth"'));
   assert(!context.capGoalHtml.includes('Buy Suspension'));
-  assert(!context.capGoalHtml.includes('data-dream-build-action="suspension"'));
+  assert(!context.capGoalHtml.includes('data-dream-build-action="ride-height"'));
   assert(!context.capOverviewHtml.includes('data-shop-tab="dream-garage"'));
   assert(!context.capOverviewHtml.includes('data-surface-target="dream-garage"'));
   assert(!context.capOverviewHtml.includes('Routes'));
@@ -8249,8 +8430,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619m'));
-  assert(html.includes('/static/nospill/app.css?v=20260619m'));
+  assert(html.includes('/static/nospill/app.js?v=20260619n'));
+  assert(html.includes('/static/nospill/app.css?v=20260619n'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -9756,6 +9937,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
   const delegatedAttrs = [
     'data-surface-target',
     'data-goal-stack-target',
+    'data-shop-tab',
     'data-shop-station',
     'data-shop-station-max',
     'data-fulfill-orders',
@@ -11719,6 +11901,7 @@ const TESTS = [
   ["testGameProgressPersistsAcrossReloadSimulation", testGameProgressPersistsAcrossReloadSimulation],
   ["testResetExportAndImportProgressAreScopedAndValidated", testResetExportAndImportProgressAreScopedAndValidated],
   ["testTofuShopStatePackIdleAndUpgradeRules", testTofuShopStatePackIdleAndUpgradeRules],
+  ["testDreamBuildTabAndSuspensionWorkV1", testDreamBuildTabAndSuspensionWorkV1],
   ["testLiveIdleTickAndShopButtonReliability", testLiveIdleTickAndShopButtonReliability],
   ["testExpandedIdleShopLayerMechanics", testExpandedIdleShopLayerMechanics],
   ["testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault", testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault],
