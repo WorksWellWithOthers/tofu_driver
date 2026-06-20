@@ -419,7 +419,9 @@ Examples:
   adds one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and
   Closed-Course Exhibition Booking. Assignment entry costs and Cash/Brand Value rewards are based
   on the car value at completion; Garage Reputation rewards unlock later assignments. Rewards are
-  local and collected explicitly.
+  local and collected explicitly. Car Management Assignment Explainability V1 makes each assignment
+  show a state label, cost, duration, concrete reward preview, net-Cash line, ready-to-collect
+  state, first-loop checklist, and compact recent history.
 - Core Build Progress V2 summarizes current build completion as work stages. The planned core
   build size is 40 stages. Current implemented stages are Wheels levels 1-3, Exhaust levels 1-5,
   Suspension levels 1-5, Tires levels 1-5, Brakes levels 1-5, Induction levels 1-5, Drivetrain
@@ -1662,7 +1664,8 @@ Implemented Car Management V1 assignment values:
 | Closed-Course Exhibition Booking | `60m` | `1%` of car value at completion | `3%` Cash, `2%` Brand Value, `+150` Garage Reputation |
 
 Only one Car Management assignment can be active at a time. Assignment rewards are not granted
-until the player collects them, and assignment history is capped.
+until the player collects them, and assignment history is capped. The tab shows the last three
+assignment results by default and treats Garage Event Board as the separate one-time event board.
 
 Possible level effects:
 

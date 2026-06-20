@@ -716,9 +716,12 @@ Design rules:
   snapshot and adds a parked assignment board for Showcase Rotation, Sponsor Demo Day, and
   Closed-Course Exhibition Booking. Assignments use one active timer at a time, cost Cash based on
   the completed car value, and grant local Cash, Brand Value, and Garage Reputation only when
-  collected. Assignment history is capped and stored locally; it is not a public profile,
-  leaderboard, route proof, or Cup Test result. Multiple cars, auctions, sell offers, collector
-  offers, and repeatable board expansion remain future.
+  collected. Assignment cards show explicit Locked, Available, Active, Ready to collect, and
+  Completed before states with concrete cost, duration, reward preview, and net-Cash copy. The
+  Car Management tab also shows managed car status, a first-loop checklist, and the last three
+  assignment results while keeping stored history capped. Assignment history is local; it is not a
+  public profile, leaderboard, route proof, or Cup Test result. Multiple cars, auctions, sell
+  offers, collector offers, and repeatable board expansion remain future.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,

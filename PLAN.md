@@ -247,8 +247,10 @@
 - Car Management V1 is implemented after First Complete Build. It creates one local managed-car
   snapshot and adds one-active-assignment parked timers for Showcase Rotation, Sponsor Demo Day,
   and Closed-Course Exhibition Booking. Rewards are collected explicitly as Cash, Brand Value, and
-  Garage Reputation. Multiple cars, auctions, collector/sell offers, backend/uploads, and network
-  calls remain future.
+  Garage Reputation. Assignment Explainability V1 adds visible assignment states, cost/reward
+  previews, active progress, ready-to-collect copy, a first-loop checklist, and compact recent
+  history. Multiple cars, auctions, collector/sell offers, backend/uploads, and network calls
+  remain future.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
   planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
@@ -455,8 +457,8 @@ Future Dream Garage milestone sequence:
    Upgrade, Big Turbo Kit, Anti-Lag & Cooling Package, Drivetrain through `$135B` Sequential
    Transmission Package, Aero through `$1T` Carbon Body & Roll Cage, Final Detail, Shakedown
    Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
-2. Playtest Car Management V1 assignment durations/rewards and whether one active assignment is
-   enough for the first completed car.
+2. Playtest Car Management V1 assignment durations/rewards, readable state labels, first-loop
+   closure, and whether one active assignment is enough for the first completed car.
 3. Design the next parked event/showcase expansion loop without replacing the existing one-car
    assignment board.
 4. Add multiple cars.

@@ -6294,6 +6294,37 @@ function carAssignmentResultText(assignment, economics) {
   return `${assignment.title} complete: +${formatCashCount(economics.cashReward)} Cash, +${formatCashCount(economics.brandValueReward)} Brand Value, +${formatShopCount(economics.garageReputationReward)} Garage Reputation.`;
 }
 
+function carAssignmentRewardPreviewLine(economics) {
+  return `Rewards: +${formatCashCount(economics.cashReward)} Cash, +${formatCashCount(economics.brandValueReward)} Brand Value, +${formatShopCount(economics.garageReputationReward)} Garage Reputation`;
+}
+
+function carAssignmentNetCashLine(economics) {
+  const netCash = safeNonNegativeInteger(economics.cashReward - economics.entryCost, 0, SHOP_MAX_RESOURCE);
+  return `Net Cash: +${formatCashCount(netCash)} after entry cost`;
+}
+
+function carAssignmentProgressPercent(activeAssignment, remainingMs) {
+  const duration = safeNonNegativeInteger(activeAssignment && activeAssignment.durationMs, 0, 24 * 60 * 60 * 1000);
+  if (!duration) return 0;
+  const elapsed = Math.max(0, duration - safeNonNegativeInteger(remainingMs, 0, duration));
+  return Math.max(0, Math.min(100, Math.round((elapsed / duration) * 100)));
+}
+
+function carAssignmentUnlockRequirementLabel(assignmentOrId) {
+  const assignment = typeof assignmentOrId === "string"
+    ? carAssignmentById(assignmentOrId)
+    : assignmentOrId;
+  if (!assignment) return "Unknown Car Management assignment.";
+  if (assignment.id === "showcase_rotation") return "First Complete Build required.";
+  if (assignment.id === "sponsor_demo_day") {
+    return "Complete Showcase Rotation once and reach 25 Garage Reputation.";
+  }
+  if (assignment.id === "closed_course_exhibition_booking") {
+    return "Complete Sponsor Demo Day once and reach 100 Garage Reputation.";
+  }
+  return "Future Car Management assignment.";
+}
+
 function startCarAssignment(assignmentId, gameState, options = {}) {
   let next = normalizeGameState(gameState);
   if (options.activeDrive || appState.running || appState.calibrating) {
@@ -15041,14 +15072,27 @@ function renderManagedCarCard(gameState) {
   const currentCar = state.carManagement && state.carManagement.currentCar;
   if (!currentCar) return "";
   const note = sanitizeBuilderNote(currentCar.builderNote);
+  const activeStatus = activeCarAssignmentStatus(state);
+  const statusLabel = activeStatus.assignment
+    ? activeStatus.ready ? "Ready to collect" : "On assignment"
+    : "Available";
+  const assignmentLine = activeStatus.assignment
+    ? `<small>Current Assignment: ${escapeHtml(activeStatus.assignment.title)}</small>`
+    : "";
+  const returnsLine = activeStatus.assignment && !activeStatus.ready
+    ? `<small>Returns in: ${escapeHtml(formatAssignmentDuration(activeStatus.remainingMs))}</small>`
+    : "";
   return renderIdleCard({
-    title: currentCar.name || "First Complete Build",
+    title: "Managed Car",
     status: `Core Build Complete · ${escapeHtml(currentCar.coreProgressAtCompletion || "40 / 40")}`,
-    copy: "The first completed build is now a managed garage asset.",
+    copy: currentCar.name || "First Complete Build",
     extra: `
       <div class="nospill-afford-progress">
         <small>${GARAGE_BUILD_VALUE_LABEL} at completion: ${escapeHtml(formatCashCount(currentCar.buildValueAtCompletion))}</small>
-        <small>Builder Note: ${escapeHtml(note ? `"${note}"` : "No Builder Note saved.")}</small>
+        <small>Builder Note: ${escapeHtml(note ? `"${note}"` : "None saved")}</small>
+        <small>Status: ${escapeHtml(statusLabel)}</small>
+        ${assignmentLine}
+        ${returnsLine}
         <small>Car Management is fictional Tofu Garage gameplay and does not affect Don't Spill the Cup.</small>
       </div>
     `,
@@ -15063,6 +15107,8 @@ function renderCarAssignmentCard(assignment, gameState) {
   const active = activeStatus.assignment && activeStatus.assignment.id === assignment.id;
   const anotherActive = Boolean(activeStatus.assignment && activeStatus.assignment.id !== assignment.id);
   const completions = carAssignmentCompletions(state, assignment.id);
+  const rewardPreview = carAssignmentRewardPreviewLine(economics);
+  const netCashPreview = carAssignmentNetCashLine(economics);
   const canStart = requirement.unlocked
     && !activeStatus.assignment
     && cashBalance(state) >= economics.entryCost
@@ -15076,41 +15122,112 @@ function renderCarAssignmentCard(assignment, gameState) {
         ? `Need ${formatCash(economics.entryCost - cashBalance(state))} more Cash.`
         : "";
   if (active) {
+    const progress = activeStatus.ready ? 100 : carAssignmentProgressPercent(activeStatus.active, activeStatus.remainingMs);
+    const preview = activeStatus.active && activeStatus.active.rewardPreview
+      ? {
+        cashReward: safeNonNegativeInteger(activeStatus.active.rewardPreview.cashReward, economics.cashReward, SHOP_MAX_RESOURCE),
+        brandValueReward: safeNonNegativeInteger(activeStatus.active.rewardPreview.brandValueReward, economics.brandValueReward, SHOP_MAX_RESOURCE),
+        garageReputationReward: safeNonNegativeInteger(activeStatus.active.rewardPreview.garageReputationReward, economics.garageReputationReward, SHOP_MAX_RESOURCE),
+      }
+      : economics;
     return renderIdleCard({
       title: assignment.title,
       status: activeStatus.ready
         ? "Ready to collect"
-        : `In progress · ${formatAssignmentDuration(activeStatus.remainingMs)} remaining`,
-      copy: assignment.copy,
+        : "Active",
+      copy: activeStatus.ready
+        ? `${assignment.title} complete. Rewards are waiting.`
+        : `One assignment at a time. The car is currently at ${assignment.title}.`,
       extra: `
         <div class="nospill-afford-progress">
-          <small>Reward: +${escapeHtml(formatCashCount(economics.cashReward))} Cash · +${escapeHtml(formatCashCount(economics.brandValueReward))} Brand Value · +${escapeHtml(formatShopCount(economics.garageReputationReward))} Garage Reputation</small>
-          <small>One active assignment at a time.</small>
+          <small>State: ${activeStatus.ready ? "Ready to collect" : "Active"}</small>
+          ${activeStatus.ready ? "" : `<small>Returns in ${escapeHtml(formatAssignmentDuration(activeStatus.remainingMs))} · ${escapeHtml(formatShopCount(progress))}% complete</small>`}
+          <div class="nospill-afford-progress-bar" aria-label="Assignment progress"><span style="width:${escapeHtml(String(progress))}%"></span></div>
+          <small>Rewards waiting: +${escapeHtml(formatCashCount(preview.cashReward))} Cash · +${escapeHtml(formatCashCount(preview.brandValueReward))} Brand Value · +${escapeHtml(formatShopCount(preview.garageReputationReward))} Garage Reputation</small>
         </div>
       `,
       actions: [
-        actionButton("Collect", "data-car-assignment-collect", assignment.id, !activeStatus.ready, "nospill-primary", `Ready in ${formatAssignmentDuration(activeStatus.remainingMs)}.`),
+        actionButton("Collect Rewards", "data-car-assignment-collect", assignment.id, !activeStatus.ready, "nospill-primary", `Ready in ${formatAssignmentDuration(activeStatus.remainingMs)}.`),
       ],
     });
   }
+  const stateLabel = requirement.unlocked
+    ? completions > 0 ? "Completed before · Available again" : "Available"
+    : "Locked";
+  const statusLabel = requirement.unlocked
+    ? stateLabel
+    : "Locked";
+  const affordabilityLine = requirement.unlocked
+    ? cashBalance(state) >= economics.entryCost ? "Ready" : `Need ${formatCash(economics.entryCost - cashBalance(state))} more Cash.`
+    : carAssignmentUnlockRequirementLabel(assignment);
+  const actions = requirement.unlocked && !anotherActive
+    ? [actionButton(assignment.buttonLabel, "data-car-assignment-start", assignment.id, !canStart, "nospill-primary", disabledReason)]
+    : [];
   return renderIdleCard({
     title: assignment.title,
-    status: requirement.unlocked
-      ? `${formatAssignmentDuration(assignment.durationMs)} · ${formatCash(economics.entryCost)} entry`
-      : "Locked",
-    copy: requirement.unlocked ? assignment.copy : requirement.reason,
+    status: statusLabel,
+    copy: requirement.unlocked ? assignment.copy : carAssignmentUnlockRequirementLabel(assignment),
     locked: !requirement.unlocked,
     extra: `
       <div class="nospill-afford-progress">
-        <small>Completions: ${escapeHtml(formatShopCount(completions))}</small>
-        <small>Reward: +${escapeHtml(formatCashCount(economics.cashReward))} Cash · +${escapeHtml(formatCashCount(economics.brandValueReward))} Brand Value · +${escapeHtml(formatShopCount(economics.garageReputationReward))} Garage Reputation</small>
-        <small>Entry cost and rewards use the car's ${GARAGE_BUILD_VALUE_LABEL} at completion.</small>
+        <small>State: ${escapeHtml(stateLabel)}</small>
+        <small>Cost: ${escapeHtml(formatCash(economics.entryCost))} Cash</small>
+        <small>Duration: ${escapeHtml(formatAssignmentDuration(assignment.durationMs))}</small>
+        <small>${escapeHtml(rewardPreview)}</small>
+        <small>${escapeHtml(netCashPreview)}</small>
+        <small>${escapeHtml(affordabilityLine)}</small>
+        ${completions > 0 ? `<small>Completed ${escapeHtml(formatShopCount(completions))} ${completions === 1 ? "time" : "times"}</small>` : ""}
+        ${anotherActive ? "<small>Another assignment is active. Start buttons pause until the car returns.</small>" : ""}
       </div>
     `,
-    actions: [
-      actionButton(assignment.buttonLabel, "data-car-assignment-start", assignment.id, !canStart, "nospill-primary", disabledReason),
-    ],
+    actions,
   });
+}
+
+function renderCarManagementLoopChecklist(gameState) {
+  const state = normalizeGameState(gameState);
+  const complete = allCarAssignmentsCompletedOnce(state);
+  const rows = CAR_ASSIGNMENTS.map((assignment) => {
+    const done = carAssignmentCompletions(state, assignment.id) >= 1;
+    return `
+      <label class="nospill-checkline">
+        <input type="checkbox" disabled ${done ? "checked" : ""}>
+        <span>${escapeHtml(assignment.title)}</span>
+      </label>
+    `;
+  }).join("");
+  return `
+    <section class="nospill-idle-card" data-car-management-loop>
+      <header>
+        <strong>${complete ? "First Car Management Loop Complete" : "First Car Management Loop"}</strong>
+        <small>${formatShopCount(CAR_ASSIGNMENTS.filter((assignment) => carAssignmentCompletions(state, assignment.id) >= 1).length)} / ${formatShopCount(CAR_ASSIGNMENTS.length)}</small>
+      </header>
+      <div class="nospill-checklist">${rows}</div>
+      <small>${complete
+        ? "The first completed build is now a managed garage asset. Next: Second Car, future garage pass."
+        : "Complete each assignment once to prove the first managed-car loop."}</small>
+    </section>
+  `;
+}
+
+function renderCarManagementHistory(gameState) {
+  const state = normalizeGameState(gameState);
+  const history = (state.carManagement && Array.isArray(state.carManagement.assignmentHistory))
+    ? state.carManagement.assignmentHistory.slice(0, 3)
+    : [];
+  if (!history.length) return "";
+  const rows = history.map((result) => `
+    <small>${escapeHtml(result.title || "Assignment")} · +${escapeHtml(formatCashCount(result.cashReward))} Cash · +${escapeHtml(formatShopCount(result.garageReputationReward))} Rep</small>
+  `).join("");
+  return `
+    <section class="nospill-idle-card" data-car-management-history>
+      <header>
+        <strong>Recent Assignment Results</strong>
+        <small>Last ${formatShopCount(history.length)}</small>
+      </header>
+      <div class="nospill-afford-progress">${rows}</div>
+    </section>
+  `;
 }
 
 function renderCarManagementPanel(gameState) {
@@ -15126,9 +15243,6 @@ function renderCarManagementPanel(gameState) {
   const lastLine = last
     ? `<p class="nospill-panel-helper">Recent: ${escapeHtml(last.title)} complete.</p>`
     : "";
-  const loopComplete = allCarAssignmentsCompletedOnce(state)
-    ? `<p class="nospill-panel-helper"><strong>First Car Management Loop Complete</strong> · The first completed build is now a managed garage asset. Future updates will add repeatable boards, multiple cars, collector offers, and larger garage operations.</p>`
-    : "";
   return `
     <h4>Car Management</h4>
     <p class="nospill-panel-helper">Send the completed build to parked fictional assignments. Assignments earn Cash, Brand Value, and Garage Reputation.</p>
@@ -15143,10 +15257,12 @@ function renderCarManagementPanel(gameState) {
         <div class="nospill-afford-progress">
           <small>Managed Brand Value: ${escapeHtml(formatCashCount(carManagementBrandValueV1(state)))}</small>
           <small>One active assignment at a time. Rewards are granted only when collected.</small>
+          <small>Garage Event Board is the one-time event progression board. Car Management is ongoing use of the completed car as a managed asset.</small>
         </div>
         ${lastLine}
-        ${loopComplete}
       </section>
+      ${renderCarManagementLoopChecklist(state)}
+      ${renderCarManagementHistory(state)}
       ${CAR_ASSIGNMENTS.map((assignment) => renderCarAssignmentCard(assignment, state)).join("")}
     </div>
   `;
@@ -15161,7 +15277,9 @@ function carManagementOverviewSummary(gameState) {
       ? `${active.assignment.title} ready to collect.`
       : `${active.assignment.title} in progress · ${formatAssignmentDuration(active.remainingMs)} remaining.`;
   }
-  if (allCarAssignmentsCompletedOnce(state)) return "First car management loop complete.";
+  if (allCarAssignmentsCompletedOnce(state)) {
+    return "First car management loop complete. Second car comes in a future garage pass.";
+  }
   const nextAssignment = nextAvailableCarAssignment(state);
   return nextAssignment ? `${nextAssignment.title} available.` : "Assignments preparing.";
 }
@@ -16291,11 +16409,11 @@ function carManagementPinnedGoal(gameState) {
     return {
       id: "first_car_managed",
       title: "First car managed",
-      body: "Future garage pass: multiple cars and deeper Car Management.",
+      body: "Second car comes in a future garage pass.",
       progressCurrent: CAR_ASSIGNMENTS.length,
       progressTarget: CAR_ASSIGNMENTS.length,
       progressLabel: `${formatShopCount(CAR_ASSIGNMENTS.length)} / ${formatShopCount(CAR_ASSIGNMENTS.length)} assignments introduced`,
-      reward: "Future multiple-car garage systems",
+      reward: "Future second car",
       ctaLabel: "",
       ctaTarget: "",
       isFutureOnly: true,
