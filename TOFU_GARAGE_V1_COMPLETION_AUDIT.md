@@ -235,10 +235,10 @@ budgets, and any Car Asset Value-facing accounting.
    alongside the implemented Suspension, Tires, Brakes, Induction, Drivetrain, Aero, and First
    Complete Build steps.
    Parts should be purchased once, then improved through levels.
-9. Playtest Final Detail and Shakedown pacing after Aero Level 5; keep Car Management target-only
-   until the completed-build handoff is proven.
-10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
-   Exhibition, Auction, or Collector Offer outcomes.
+9. Playtest Final Detail and Shakedown pacing after Aero Level 5 alongside Car Management V1's
+   one-car assignment loop.
+10. Design the next completed-build expansion before implementing multiple cars, repeatable event
+   boards, auctions, collector-sale offers, or broader business outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.
 12. Keep Net Worth V1 as Cash + Tofu Business Value + Garage Build Value + Brand Value until full
    valuation has a coherent accounting model.

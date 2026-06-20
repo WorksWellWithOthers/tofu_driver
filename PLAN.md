@@ -457,14 +457,17 @@ Future Dream Garage milestone sequence:
    Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
 2. Playtest Car Management V1 assignment durations/rewards and whether one active assignment is
    enough for the first completed car.
-3. Design the next parked event/showcase expansion loop.
+3. Design the next parked event/showcase expansion loop without replacing the existing one-car
+   assignment board.
 4. Add multiple cars.
 5. Add the next era unlock.
 6. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
-Completed-car events are not immediate scope. Keep Showcase, Closed-Course Exhibition, Auction,
-Collector Offer, and business expansion documented until the Dream Build part-level loop is fun.
+Completed-car management has a V1 loop now: Showcase Rotation, Sponsor Demo Day, and
+Closed-Course Exhibition Booking use the first completed car as a local managed asset. Keep
+auctions, collector-sale offers, multiple cars, repeatable event boards, and business expansion
+documented as future systems until this one-car loop is playtested.
 
 Future endgame/business sequence:
 
