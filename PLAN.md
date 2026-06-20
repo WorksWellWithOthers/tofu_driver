@@ -466,18 +466,19 @@ Future Dream Garage milestone sequence:
    closure, and whether one active assignment is enough for the first completed car.
 3. Playtest Second Bay costs, Garage Reputation spending, and whether the Rolling Shell future-only
    state is enough closure before second-car build tracks.
-4. Design the next parked event/showcase expansion loop without replacing the existing one-car
+4. Design Second Car Build Tracks V1 as a separate project-car build loop, not fleet management.
+5. Design the next parked event/showcase expansion loop without replacing the existing one-car
    assignment board.
-5. Add second-car build tracks.
-6. Add multiple-car management only after the second project build loop works.
-7. Add the next era unlock.
-8. Much later connect completed builds to business expansion, collector networks, and scalable
+6. Add second-car build tracks.
+7. Add multiple-car management only after the second project build loop works.
+8. Add the next era unlock.
+9. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car management has a V1 loop now: Showcase Rotation, Sponsor Demo Day, and
 Closed-Course Exhibition Booking use the first completed car as a local managed asset. Keep
-auctions, collector-sale offers, multiple cars, repeatable event boards, and business expansion
-documented as future systems until this one-car loop is playtested.
+auctions, collector-sale offers, full multi-car management, repeatable event boards, and business
+expansion documented as future systems until this one-car loop and Second Bay bridge are playtested.
 
 Future endgame/business sequence:
 

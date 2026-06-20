@@ -98,8 +98,9 @@ adds one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day
 Closed-Course Exhibition Booking. Assignment rewards grant local Cash, Brand Value, and Garage
 Reputation only when collected. Assignment Explainability V1 makes the loop legible with state
 labels, cost/reward previews, ready-to-collect copy, a first-loop checklist, and capped recent
-history. Multiple cars, second car purchase, auctions, collector offers, and repeatable board
-expansion remain future.
+history. Second Car Project / Second Bay V1 now opens a second bay and acquires a rolling shell
+after the first loop. Full multi-car management, second-car build tracks, auctions, collector
+offers, and repeatable board expansion remain future.
 
 Second Car Project / Second Bay V1 is now the bridge after that first loop: complete all three
 assignments, reach/spend Garage Reputation, open Second Bay, and acquire a Second Project Car as a

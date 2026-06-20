@@ -733,11 +733,12 @@ Design rules:
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
   Garage Reputation, and badge rewards; it stays separate from Car Management and does not add
   multiple cars, auctions, collector-sale offers, public profiles, or networked play.
-- Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
+- Core Build Progress V2 summarizes the first car as `8 tracks x 5 levels = 40 work stages`.
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
   Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion. Car Management V1
-  follows the first complete build; repeatable event expansion, multiple cars, auctions, and
-  collector offers remain future.
+  follows the first complete build, and Second Bay V1 adds a rolling-shell bridge toward the next
+  project. Second-car build tracks, repeatable event expansion, full multi-car management, auctions,
+  and collector offers remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.

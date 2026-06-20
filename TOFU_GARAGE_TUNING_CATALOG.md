@@ -316,8 +316,9 @@ and First Complete Build V1 are now implemented as runtime slices. Final Detail 
 Complete finish the first core build at `40 / 40`; Car Management V1 now uses the completed car in
 one-active-assignment parked showcase/demo/exhibition loops. Assignment Explainability V1 adds
 state labels, concrete cost/reward previews, ready-to-collect copy, a first-loop checklist, and
-capped recent history. Multiple cars, second car purchase, and repeatable event board expansion
-remain future.
+capped recent history. Second Car Project / Second Bay V1 implements the first rolling-shell bridge
+toward another build. Full multi-car management, second-car build tracks, and repeatable event board
+expansion remain future.
 
 Second Car Project / Second Bay V1 now adds the first bridge toward multiple cars: after the first
 assignment loop and Garage Reputation threshold, the player can open a second bay and acquire a

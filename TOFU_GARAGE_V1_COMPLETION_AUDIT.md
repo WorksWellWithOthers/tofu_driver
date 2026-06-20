@@ -204,8 +204,9 @@ Current code status:
 - Garage Event Board V1 makes the first `$100M` garage-era reward real once Tires & Rubber Level 5
   is complete. It is one-time and parked-only; Car Management V1 is now the separate completed-car
   assignment loop with explicit assignment states, reward previews, ready-to-collect feedback, and
-  capped history. Repeatable event boards, second car purchase, multiple cars, collector offers,
-  and auctions remain future.
+  capped history. Second Car Project / Second Bay V1 adds the first post-loop expansion by opening
+  a second project bay and acquiring a rolling shell. Repeatable event boards, second-car build
+  tracks, full multi-car management, collector offers, and auctions remain future.
 - Second Car Project / Second Bay V1 implements the first post-loop expansion step without full
   fleet management. Second Bay and the rolling shell are local-only Tofu Garage progression, and
   the first completed car remains the only assignment car.
