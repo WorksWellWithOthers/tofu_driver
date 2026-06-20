@@ -79,6 +79,10 @@
 - Supplier Contract V1 is implemented as the high-midgame Tofu Stock relief path. Soy Supplier
   Contract, Morning Soy Delivery, and Bulk Soy Delivery spend Reputation to add Tofu Stock/sec, so a
   stock-blocked managed shop has an idle-management answer instead of manual Pack Tofu.
+- High-Scale Counter Contracts V1 is implemented as the late parked shop Cash-conversion path.
+  Wholesale Counter Contract, Catering Account, and Event Vendor Contract spend Cash plus
+  Reputation to unlock Wholesale Case, Event Catering Load, and Venue Supply Contract order types
+  and raise Counter Service batch floors to 100, 250, and 1000.
 - Counter Service batch size is a maximum: if a full batch cannot run the highest-value order, it
   can partially fulfill that tier and fall back to smaller affordable orders without making
   resources negative.
@@ -330,11 +334,13 @@ Canonical references:
    and Shop Sign are clear.
 5. Continue visual QA on first-loop reveal: verify Overview stays focused, Production remains the
    station support panel, and advanced systems stay hidden until earned.
-6. Playtest Counter Service, Supplier Contracts, Manager Desk V1, and Managed Shop V1: confirm First
+6. Playtest Counter Service, Supplier Contracts, Manager Desk V1, High-Scale Counter Contracts V1,
+   and Managed Shop V1: confirm First
    10 Orders is the right unlock, the 10/8/6/4 second interval ladder and 2/5/10/25 batch ladder
    feel helpful without deleting choices, Supplier Contracts relieve high-midgame stock traps
-   without becoming infinite, Wholesale Pickup clears capped queues without becoming passive
-   offline income, and active-page-only automation does not skip pacing.
+   without becoming infinite, Counter Contracts make high-Reputation/high-backlog saves identify
+   Cash conversion instead of Prep Capacity as the bottleneck, Wholesale Pickup clears capped queues
+   without becoming passive offline income, and active-page-only automation does not skip pacing.
 7. Profile/playtest high-midgame Tofu Garage after the performance guardrails: verify the order
    queue cap feels like a useful Counter Service/Manager Desk bottleneck, 24-hour/72-hour offline
    caps feel fair after a sleep/workday or a few missed days, offline summaries stay compact, no
@@ -502,6 +508,8 @@ Deferred until after the First Loop Contract is playtested:
 - Tofu Stock is an ingredient/runway resource, not the purchase currency.
 - Cash is the current player-facing liquid currency, with tips as flavor for order income.
 - Starter Counter Service is the early money-conversion action.
+- High-scale Counter Contracts are the late money-conversion action when stock, ready orders, and
+  Reputation are ahead of Cash.
 - Counter Service blocked copy should identify the actual missing resource and show a Tofu Stock
   ETA when the press is refilling the next handoff.
 - Don't Spill the Cup is optional for ordinary Tofu Shop progression.

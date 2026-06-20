@@ -504,6 +504,41 @@ const PREP_COUNTER_BASE_ORDERS_PER_SECOND = 1 / 40;
 const SHOP_ORDER_TIPS_REWARD = 10;
 const SHOP_ORDER_REPUTATION_REWARD = 1;
 const SHOP_ORDER_XP_REWARD = 8;
+const COUNTER_CONTRACTS = [
+  {
+    id: "wholesale_counter_contract",
+    name: "Wholesale Counter Contract",
+    buttonLabel: "Sign Wholesale Contract",
+    costTips: 250000,
+    costReputation: 5000000,
+    batchFloor: 100,
+    unlockOrderTypeId: "wholesale_case",
+    copy: "Turn the busy counter into a wholesale handoff lane.",
+    lockedCopy: "Unlocks after Shift Manager is active and Counter Service reaches batch 25.",
+  },
+  {
+    id: "catering_account",
+    name: "Catering Account",
+    buttonLabel: "Open Catering Account",
+    costTips: 2500000,
+    costReputation: 12000000,
+    batchFloor: 250,
+    unlockOrderTypeId: "event_catering_load",
+    copy: "Move from walk-up handoffs into recurring catering work.",
+    lockedCopy: "Sign the Wholesale Counter Contract first.",
+  },
+  {
+    id: "event_vendor_contract",
+    name: "Event Vendor Contract",
+    buttonLabel: "Sign Event Vendor Contract",
+    costTips: 25000000,
+    costReputation: 35000000,
+    batchFloor: 1000,
+    unlockOrderTypeId: "venue_supply_contract",
+    copy: "Let the shop supply larger parked events and vendor tables.",
+    lockedCopy: "Open the Catering Account first.",
+  },
+];
 const SHOP_ORDER_TYPES = [
   {
     id: "simple_tofu_box",
@@ -548,6 +583,39 @@ const SHOP_ORDER_TYPES = [
     reputation: 25,
     xp: 260,
     purpose: "mid-game stock sink",
+  },
+  {
+    id: "wholesale_case",
+    name: "Wholesale Case",
+    unlock: "after Wholesale Counter Contract",
+    tofuRequired: 1000,
+    deliveryOrdersRequired: 25,
+    tips: 6500,
+    reputation: 150,
+    xp: 1500,
+    purpose: "high-scale wholesale handoff",
+  },
+  {
+    id: "event_catering_load",
+    name: "Event Catering Load",
+    unlock: "after Catering Account",
+    tofuRequired: 10000,
+    deliveryOrdersRequired: 250,
+    tips: 100000,
+    reputation: 2000,
+    xp: 20000,
+    purpose: "high-scale catering handoff",
+  },
+  {
+    id: "venue_supply_contract",
+    name: "Venue Supply Contract",
+    unlock: "after Event Vendor Contract",
+    tofuRequired: 100000,
+    deliveryOrdersRequired: 2500,
+    tips: 1500000,
+    reputation: 20000,
+    xp: 250000,
+    purpose: "high-scale venue supply handoff",
   },
 ];
 const CERTIFIED_BOOST_HOURS = 2;
@@ -3226,6 +3294,7 @@ function defaultShopState() {
       lastResult: "",
       lifetimeHandoffs: 0,
     },
+    counterContracts: normalizeCounterContracts({}),
     offlineEarnings: {
       tofuStock: 0,
       deliveryOrders: 0,
@@ -3378,6 +3447,17 @@ function normalizeGarageEvents(garageEvents) {
   };
 }
 
+function normalizeCounterContracts(counterContracts) {
+  const source = counterContracts && typeof counterContracts === "object" ? counterContracts : {};
+  const purchasedIds = Array.isArray(source.purchasedIds)
+    ? source.purchasedIds
+        .filter((id) => typeof id === "string" && COUNTER_CONTRACTS.some((contract) => contract.id === id))
+        .filter((id, index, ids) => ids.indexOf(id) === index)
+        .slice(0, COUNTER_CONTRACTS.length)
+    : [];
+  return { purchasedIds };
+}
+
 function normalizeUpgradeLevels(upgrades) {
   const source = upgrades && typeof upgrades === "object" ? upgrades : {};
   return Object.fromEntries(
@@ -3525,6 +3605,7 @@ function normalizeShopState(shop) {
     lastGeneratorTickAt:
       typeof source.lastGeneratorTickAt === "string" ? source.lastGeneratorTickAt : "",
     counterService: normalizeCounterService(source.counterService),
+    counterContracts: normalizeCounterContracts(source.counterContracts),
     offlineEarnings: {
       tofuStock: safeNonNegativeInteger(
         source.offlineEarnings && source.offlineEarnings.tofuStock,
@@ -4637,6 +4718,109 @@ function getShopOrderTypes() {
   return SHOP_ORDER_TYPES.map((orderType) => ({ ...orderType }));
 }
 
+function counterContractById(contractId) {
+  return COUNTER_CONTRACTS.find((contract) => contract.id === contractId) || null;
+}
+
+function counterContractPurchased(gameState, contractId) {
+  const state = normalizeGameState(gameState);
+  return Boolean(state.shop.counterContracts && state.shop.counterContracts.purchasedIds.includes(contractId));
+}
+
+function counterContractForOrderType(orderTypeId) {
+  return COUNTER_CONTRACTS.find((contract) => contract.unlockOrderTypeId === orderTypeId) || null;
+}
+
+function counterContractPrerequisitesMet(contract, gameState) {
+  const state = normalizeGameState(gameState);
+  if (!contract) return false;
+  if (contract.id === "wholesale_counter_contract") {
+    return safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) > 0
+      && counterServiceBatchSizeWithoutContracts(state) >= 25;
+  }
+  if (contract.id === "catering_account") {
+    return counterContractPurchased(state, "wholesale_counter_contract");
+  }
+  if (contract.id === "event_vendor_contract") {
+    return counterContractPurchased(state, "catering_account");
+  }
+  return false;
+}
+
+function counterContractLockedReason(contract, gameState) {
+  const state = normalizeGameState(gameState);
+  if (!contract) return "Contract unavailable.";
+  if (counterContractPrerequisitesMet(contract, state)) return "";
+  return contract.lockedCopy;
+}
+
+function nextCounterContract(gameState) {
+  const state = normalizeGameState(gameState);
+  return COUNTER_CONTRACTS.find((contract) => !counterContractPurchased(state, contract.id)) || null;
+}
+
+function counterContractStatus(contract, gameState) {
+  const state = normalizeGameState(gameState);
+  const purchased = Boolean(contract && counterContractPurchased(state, contract.id));
+  const unlocked = Boolean(contract && !purchased && counterContractPrerequisitesMet(contract, state));
+  const missingCash = contract ? Math.max(0, contract.costTips - state.shop.tips) : 0;
+  const missingReputation = contract ? Math.max(0, contract.costReputation - state.shop.reputation) : 0;
+  const disabledReasons = [];
+  if (!contract) disabledReasons.push("Contract unavailable.");
+  if (contract && !purchased && !unlocked) disabledReasons.push(counterContractLockedReason(contract, state));
+  if (missingCash > 0) disabledReasons.push(`Need ${formatCash(missingCash)} more Cash`);
+  if (missingReputation > 0) disabledReasons.push(`Need ${formatShopCost(missingReputation)} more Reputation`);
+  return {
+    purchased,
+    unlocked,
+    canBuy: unlocked && missingCash <= 0 && missingReputation <= 0 && !appState.running && !appState.calibrating,
+    disabledReason: purchased ? "Signed" : disabledReasons.join(" and "),
+    missingCash,
+    missingReputation,
+    progress: contract ? affordabilityProgress([
+      {
+        label: "Cash",
+        current: state.shop.tips,
+        required: contract.costTips,
+        perSecond: counterServiceIncomeStatus(state).tipsPerMinute / 60,
+      },
+      {
+        label: "Reputation",
+        current: state.shop.reputation,
+        required: contract.costReputation,
+        perSecond: getShopGeneratorRates(state).passiveReputationPerSecond,
+      },
+    ]) : null,
+  };
+}
+
+function buyCounterContract(contractId, gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Counter Contracts unlock after you finish and park.", gameState: next };
+  }
+  const contract = counterContractById(contractId);
+  if (!contract) return { ok: false, reason: "Counter Contract unavailable.", gameState: next };
+  const status = counterContractStatus(contract, next);
+  if (status.purchased) return { ok: false, reason: "Counter Contract already signed.", gameState: next, contract };
+  if (!status.unlocked) return { ok: false, reason: counterContractLockedReason(contract, next), gameState: next, contract };
+  if (next.shop.tips < contract.costTips) return { ok: false, reason: `Need ${formatCash(status.missingCash)} more Cash.`, gameState: next, contract };
+  if (next.shop.reputation < contract.costReputation) return { ok: false, reason: `Need ${formatShopCost(status.missingReputation)} more Reputation.`, gameState: next, contract };
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - contract.costTips);
+  next.shop.reputation = safeNonNegativeInteger(next.shop.reputation - contract.costReputation);
+  next.shop.shopLevel = getShopLevel(next.shop.reputation);
+  next.shop.counterContracts.purchasedIds = [...next.shop.counterContracts.purchasedIds, contract.id].slice(0, COUNTER_CONTRACTS.length);
+  next.shop.counterService.lastResult = `${contract.name} signed. Counter Service batch floor is now ${formatShopCount(contract.batchFloor)}.`;
+  next = addLedgerEntry(next, "upgrade", `${contract.name} signed.`);
+  return {
+    ok: true,
+    reason: "",
+    gameState: next,
+    contract,
+    feedback: `${contract.name} signed: ${shopOrderTypeById(contract.unlockOrderTypeId).name} unlocked · Counter Service batch floor ${formatShopCount(contract.batchFloor)}.`,
+  };
+}
+
 function shopOrderTypeUnlocked(orderType, gameState) {
   const state = normalizeGameState(gameState);
   const fulfilled = fulfilledShopOrderCount(state);
@@ -4649,6 +4833,8 @@ function shopOrderTypeUnlocked(orderType, gameState) {
       && state.shop.reputation >= 250
       && state.shop.shopLevel >= 25;
   }
+  const contract = counterContractForOrderType(orderType.id);
+  if (contract) return counterContractPurchased(state, contract.id);
   return false;
 }
 
@@ -4668,14 +4854,16 @@ function shopOrderUnlockReason(orderType) {
   if (orderType.id === "family_tofu_tray") return "Unlocks after 5 fulfilled orders or Shop Level 2.";
   if (orderType.id === "festival_bento") return "Unlocks after 25 fulfilled orders or 50 Reputation.";
   if (orderType.id === "catering_crate") return "Unlocks after 100 fulfilled orders, 250 Reputation, and Shop Level 25.";
+  const contract = counterContractForOrderType(orderType.id);
+  if (contract) return `Unlocks after ${contract.name}.`;
   return "Available immediately.";
 }
 
 function maxFulfillableShopOrderQuantity(gameState, orderType) {
   const state = normalizeGameState(gameState);
   const readyOrders = readyDeliveryOrders(state.shop);
-  const orderCost = Math.max(1, safeNonNegativeInteger(orderType && orderType.deliveryOrdersRequired, 1, 100));
-  const tofuCost = Math.max(0, safeNonNegativeInteger(orderType && orderType.tofuRequired, 0, 100000));
+  const orderCost = Math.max(1, safeNonNegativeInteger(orderType && orderType.deliveryOrdersRequired, 1, 100000));
+  const tofuCost = Math.max(0, safeNonNegativeInteger(orderType && orderType.tofuRequired, 0, 10000000));
   const maxByOrders = Math.floor(readyOrders / orderCost);
   const maxByTofu = tofuCost > 0
     ? Math.floor(safeNonNegativeNumber(state.shop.tofuStock, 0, SHOP_MAX_RESOURCE) / tofuCost)
@@ -7709,7 +7897,7 @@ function fulfillShopOrders(gameState, requestedQuantity = 1, options = {}) {
   const maxQuantity = maxFulfillableShopOrderQuantity(next, orderType);
   const quantity = requestedQuantity === "max"
     ? maxQuantity
-    : Math.max(1, safeNonNegativeInteger(requestedQuantity, 1, 100));
+    : Math.max(1, safeNonNegativeInteger(requestedQuantity, 1, 100000));
   const deliveryOrdersUsed = quantity * orderType.deliveryOrdersRequired;
   const tofuUsed = quantity * orderType.tofuRequired;
   if (quantity < 1 || maxQuantity < quantity || readyOrders < deliveryOrdersUsed || next.shop.tofuStock < tofuUsed) {
@@ -7823,13 +8011,34 @@ function counterServiceIntervalSeconds(gameState) {
   return COUNTER_SERVICE_HANDOFF_SECONDS;
 }
 
-function counterServiceBatchSize(gameState) {
+function counterServiceBatchSizeWithoutContracts(gameState) {
   const state = normalizeGameState(gameState);
   if (safeNonNegativeInteger(state.shop.stationUpgrades.manager_shift_manager, 0, 1) > 0) return 25;
   if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_crew, 0, 1) > 0) return 10;
   if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_window, 0, 1) > 0) return 5;
   if (safeNonNegativeInteger(state.shop.stationUpgrades.counter_service_register, 0, 1) > 0) return 2;
   return 1;
+}
+
+function counterServiceBatchSize(gameState) {
+  const state = normalizeGameState(gameState);
+  const baseBatch = counterServiceBatchSizeWithoutContracts(state);
+  const contractFloor = COUNTER_CONTRACTS
+    .filter((contract) => counterContractPurchased(state, contract.id))
+    .reduce((max, contract) => Math.max(max, contract.batchFloor), 0);
+  return Math.max(baseBatch, contractFloor);
+}
+
+function counterServicePriorityOrderIds(gameState) {
+  const state = normalizeGameState(gameState);
+  const highScale = ["venue_supply_contract", "event_catering_load", "wholesale_case"];
+  return [
+    ...highScale.filter((orderTypeId) => shopOrderTypeUnlocked(shopOrderTypeById(orderTypeId), state)),
+    "catering_crate",
+    "festival_bento",
+    "family_tofu_tray",
+    "simple_tofu_box",
+  ];
 }
 
 function wholesalePickupUnlocked(gameState) {
@@ -7853,7 +8062,7 @@ function counterServiceOrderType(gameState) {
   const priority = state.shop.counterService.priority || "best_available";
   const candidates = priority === "simple_only"
     ? ["simple_tofu_box"]
-    : ["catering_crate", "festival_bento", "family_tofu_tray", "simple_tofu_box"];
+    : counterServicePriorityOrderIds(state);
   return candidates
     .map((orderTypeId) => shopOrderTypeById(orderTypeId))
     .find((orderType) => (
@@ -7910,7 +8119,7 @@ function counterServiceCandidateOrderTypes(gameState) {
   const priority = state.shop.counterService.priority || "best_available";
   const candidateIds = priority === "simple_only"
     ? ["simple_tofu_box"]
-    : ["catering_crate", "festival_bento", "family_tofu_tray", "simple_tofu_box"];
+    : counterServicePriorityOrderIds(state);
   return candidateIds
     .map((orderTypeId) => shopOrderTypeById(orderTypeId))
     .filter((orderType) => orderType && shopOrderTypeUnlocked(orderType, state));
@@ -12159,6 +12368,8 @@ function nextBestAction(gameState, options = {}) {
   const supplierCandidate = nextSupplierUpgrade(state, false);
   const managerUpgrade = nextManagerDeskUpgrade(state, true);
   const managerCandidate = nextManagerDeskUpgrade(state, false);
+  const contractCandidate = nextCounterContract(state);
+  const contractStatus = contractCandidate ? counterContractStatus(contractCandidate, state) : null;
   const stockMilestone = nextVisibleStationMilestone(state, { stationIds: ["tofu_press"] });
   const prepMilestone = nextVisibleStationMilestone(state, { stationIds: ["prep_counter", "delivery_shelf"] });
   const reputationMilestone = nextVisibleStationMilestone(state, { stationIds: ["shop_sign"] });
@@ -12318,11 +12529,14 @@ function nextBestAction(gameState, options = {}) {
   if (shopUnlocked && readyDeliveryOrders(state.shop) >= deliveryOrderQueueCapacity()) {
     const counterRunning = isCounterServiceUnlocked(state) && state.shop.counterService.running;
     const counterPaused = isCounterServiceUnlocked(state) && !state.shop.counterService.running;
+    const contractAvailable = Boolean(contractCandidate && contractStatus && contractStatus.unlocked);
     const counterCopy = counterPaused
       ? "The order queue is full. Start Counter Service to turn ready orders into Cash."
       : counterRunning && counterUpgrade
         ? "The order queue is full. A visible Counter Service upgrade can improve throughput."
-        : counterRunning
+      : contractAvailable
+        ? "The order queue is full. Counter Service is already clearing it. Bigger contracts can convert ready orders into Cash faster."
+      : counterRunning
           ? "The order queue is full. Counter Service is already clearing it."
           : "The order queue is full. Use the visible shop controls to turn ready orders into Cash.";
     return {
@@ -13176,6 +13390,67 @@ function renderStationUpgradeCard(upgrade, gameState) {
     extra: unlocked ? renderAffordabilityProgress(afford.progress) : "",
     actions: [actionButton(actionLabel, "data-station-upgrade", upgrade.id, !canBuy, "nospill-secondary", disabledReason)],
   });
+}
+
+function renderCounterContractCard(contract, gameState) {
+  const state = normalizeGameState(gameState);
+  const status = counterContractStatus(contract, state);
+  const orderType = shopOrderTypeById(contract.unlockOrderTypeId);
+  const activeDrive = appState.running || appState.calibrating;
+  if (status.purchased) {
+    return renderIdleCard({
+      title: contract.name,
+      status: "Signed",
+      copy: `${orderType.name} unlocked. Counter Service batch floor: ${formatShopCount(contract.batchFloor)}. Reputation is used to sign larger shop contracts.`,
+      actions: [],
+    });
+  }
+  const unlocked = status.unlocked;
+  return renderIdleCard({
+    title: contract.name,
+    status: unlocked
+      ? `Cost: ${formatCash(contract.costTips)} Cash + ${formatShopCost(contract.costReputation)} Reputation`
+      : "Locked",
+    copy: unlocked
+      ? `${contract.copy} Unlocks ${orderType.name} and raises Counter Service batch floor to ${formatShopCount(contract.batchFloor)}.`
+      : counterContractLockedReason(contract, state),
+    locked: !unlocked,
+    extra: unlocked ? renderAffordabilityProgress(status.progress) : "",
+    actions: activeDrive ? [] : [
+      actionButton(
+        contract.buttonLabel,
+        "data-counter-contract",
+        contract.id,
+        !status.canBuy,
+        "nospill-secondary",
+        status.disabledReason || "Not enough Cash or Reputation.",
+      ),
+    ],
+  });
+}
+
+function renderCounterContractsPanel(state) {
+  const visible = COUNTER_CONTRACTS.filter((contract, index) => (
+    counterContractPurchased(state, contract.id)
+    || counterContractPrerequisitesMet(contract, state)
+    || index === 0
+    || counterContractPurchased(state, COUNTER_CONTRACTS[index - 1].id)
+  ));
+  return `
+    <section class="nospill-spirit-section" aria-label="Counter contracts">
+      <h5>Counter Contracts</h5>
+      <p class="nospill-panel-helper">Reputation signs larger parked shop contracts. Bigger contracts unlock larger order types and Counter Service batch floors; they do not affect Cup Test scoring.</p>
+      <div class="nospill-idle-grid">
+        ${visible.map((contract) => renderCounterContractCard(contract, state)).join("")}
+        ${counterContractPurchased(state, "event_vendor_contract") ? renderIdleCard({
+          title: "Future Contract Expansion",
+          status: "Future",
+          copy: "Future contract expansion will support Car Management and larger garage-era events.",
+          locked: true,
+        }) : ""}
+      </div>
+    </section>
+  `;
 }
 
 function renderDeliveryWall(gameState = loadGameState()) {
@@ -15348,6 +15623,32 @@ function dreamBuildImplementedCapReached(gameState) {
 function pinnedNearGoalForShop(gameState) {
   const state = normalizeGameState(gameState);
   if (appState.running || appState.calibrating) return null;
+  const readyOrders = readyDeliveryOrders(state.shop);
+  const contract = nextCounterContract(state);
+  const contractState = contract ? counterContractStatus(contract, state) : null;
+  if (
+    contract
+    && contractState
+    && contractState.unlocked
+    && readyOrders >= deliveryOrderQueueCapacity()
+    && state.shop.reputation >= contract.costReputation
+  ) {
+    const cashReady = state.shop.tips >= contract.costTips;
+    return {
+      id: contract.id,
+      title: cashReady ? contract.name : `Grow Cash for ${contract.name}`,
+      body: cashReady
+        ? "Spend Reputation to unlock bigger Cash handoffs."
+        : "Reputation is ready. Cash is the short wait.",
+      progressCurrent: state.shop.tips,
+      progressTarget: contract.costTips,
+      progressLabel: `${formatCashCount(state.shop.tips)} / ${formatCashCount(contract.costTips)} Cash · ${formatShopCount(state.shop.reputation)} / ${formatShopCount(contract.costReputation)} Reputation`,
+      reward: `${shopOrderTypeById(contract.unlockOrderTypeId).name} · Counter Service batch floor ${formatShopCount(contract.batchFloor)}`,
+      ctaLabel: "",
+      ctaTarget: "",
+      isFutureOnly: false,
+    };
+  }
   if (dreamInvestmentTargetVisible(state)) {
     const target = dreamInvestmentTargetProgress(state);
     if (!target.purchased) {
@@ -15938,7 +16239,7 @@ function renderOverviewOperationalCard(state) {
         : "Shop moving";
   const copy = queueFull
     ? counterRunning
-      ? "Queue full. Counter Service is already clearing prepared orders."
+      ? "Queue full. Counter Service is already clearing prepared orders. Counter Contracts can turn the backlog into Cash faster."
       : "Queue full. Start Counter Service to turn ready orders into Cash."
     : waitingForStock
       ? "Counter Service is waiting for tofu stock."
@@ -15962,7 +16263,7 @@ function renderOverviewOperationalCard(state) {
         <small>Prep Capacity: ${escapeHtml(prepCapacityLine)}</small>
         <small>${escapeHtml(prepCapacityMeaning)}</small>
         ${compactDetails("overview_order_details", "How orders work", `
-          <p>Prepared orders fill the Delivery Orders queue. When that queue is full, Counter Service is the normal way to clear space.</p>
+          <p>Prepared orders fill the Delivery Orders queue. When that queue is full, Counter Service and Counter Contracts are the Cash conversion path.</p>
           <p>Prep Capacity is the recovering expansion pool used to add more production stations. It is not prepared-order storage and not a manual recharge button.</p>
           <p>Current prep state: ${escapeHtml(prep.message)}</p>
           ${bestOrder ? `<p>Best current order: ${escapeHtml(bestOrder.name)} uses ${escapeHtml(formatShopCost(bestOrder.tofuRequired))} tofu stock and ${escapeHtml(formatShopCount(bestOrder.deliveryOrdersRequired))} ready order${bestOrder.deliveryOrdersRequired === 1 ? "" : "s"}.</p>` : ""}
@@ -16375,6 +16676,7 @@ function renderExpandedUpgradePanel(state) {
   return `
     <h4>Station Upgrades</h4>
     <p class="nospill-panel-helper">Station upgrades are separate modifiers. Stations are bought in Production; upgrades improve what owned stations do.</p>
+    ${renderCounterContractsPanel(state)}
     ${renderBulkBuyCard(
       "Bulk Upgrade Purchases",
       cheapestUpgrade
@@ -18822,6 +19124,13 @@ function handleTofuShopPanelClick(event) {
     const [kind, mode] = target.dataset.bulkBuy.split(":");
     const result = buyBulkShopItems(currentGameState(), kind, mode);
     saveShopActionResult(result, result.ok ? result.message : "");
+    return;
+  }
+  if (target.dataset.counterContract) {
+    const result = buyCounterContract(target.dataset.counterContract, currentGameState(), {
+      activeDrive: appState.running || appState.calibrating,
+    });
+    saveShopActionResult(result, result.ok ? result.feedback : "");
     return;
   }
   if (target.dataset.spiritGeneratorBulk) {

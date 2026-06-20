@@ -988,19 +988,39 @@ of. An upgrade is a named modifier that changes a station. UI should not use one
 - Produces: automatic fulfilled-order rewards while the page is open
 - Consumes: ready Delivery Orders and the Tofu Stock required by the selected order type
 - Base production rate: 1 handoff / 10 seconds
-- Priority: Best Available, ordered Festival Bento -> Family Tofu Tray -> Simple Tofu Box
+- Priority: Best Available, ordered from the largest unlocked supplied contract order down through
+  Catering Crate, Festival Bento, Family Tofu Tray, and Simple Tofu Box
 - Milestone thresholds: Order Bell after unlock, Wider Counter after Order Bell and 20 fulfilled
   orders, Pickup Routine after Wider Counter and First Family Tofu Tray, Second Register after
   Pickup Routine and 25 fulfilled orders, Pickup Window after Second Register and 100 fulfilled
   orders, and Counter Crew after Pickup Window plus 1K fulfilled orders or strong Reputation
 - Associated upgrades: Order Bell, Wider Counter, Pickup Routine, Second Register, Pickup Window,
-  and Counter Crew; future stock reserve and priority tuning remain documented only
+  Counter Crew, Manager Desk, and High-Scale Counter Contracts; future stock reserve and priority
+  tuning remain documented only
 - Urgent when: prepared orders are ready or the starter shop needs a visible automatic handoff
 - Less urgent when: the player is solving a stock/prep bottleneck before the next handoff can run
 - Expected first use: immediately on a fresh save
 - V1 runtime behavior: starts running on fresh saves, can be started/paused from Overview, runs only while parked and
   the page is open, shows income or blocked-state copy, and never auto-fulfills offline
 - Status: V1 implemented / needs playtest tuning
+
+#### High-Scale Counter Contracts
+
+- Stable ids: `wholesale_counter_contract`, `catering_account`, `event_vendor_contract`
+- Labels: `Wholesale Counter Contract`, `Catering Account`, `Event Vendor Contract`
+- Unlock condition: Manager Desk / Shift Manager scale and Counter Service batch 25 for the first
+  contract, then each prior contract
+- Costs: `$250K + 5M Reputation`, `$2.5M + 12M Reputation`, `$25M + 35M Reputation`
+- Produces: larger Counter Service batch floors and larger order types
+- Batch floors: 100, 250, 1000
+- Order types: Wholesale Case, Event Catering Load, Venue Supply Contract
+- Urgent when: Tofu Stock and ready orders are ahead, Reputation is high, Cash is low, and Counter
+  Service batch 25 is the Cash conversion bottleneck
+- Less urgent when: the shop is stock-blocked, order-prep-blocked, or Reputation is below the
+  contract cost
+- V1 runtime behavior: parked-only contract purchases, aggregate high-scale handoffs, no offline
+  auto-fulfillment, and no Cup Test scoring/certification/Driver XP/merch/formula effects
+- Status: V1 implemented / needs late-game pacing playtest
 
 #### Regular Customers
 
@@ -1181,6 +1201,7 @@ visible as an optional certified boost, but it should not override the normal sh
 | Fresh shop, first order not complete | First automatic handoff | Watch Counter Service | Take Cup Test as optional boost | Manual Fulfill Shop Order as primary |
 | Ready Orders >= 1 and Cash is low | Need Cash | Let Counter Service work | Take Cup Test as optional boost | Buy Tofu Press as primary if stock is healthy |
 | Ready Orders >= 2 | Convert work to Cash | Run Counter Service; mention a Counter Service upgrade only when one is visible and implemented | View Orders / Manual Backup | Manual single-order spam or dead upgrade prompts |
+| High stock + high ready orders + high Reputation + low Cash at batch 25 | Cash conversion bottleneck | Sign or grow Cash for the next Counter Contract | Let Counter Service keep running | Prep Capacity as the bottleneck |
 | No ready orders, order prep in progress | Preparing Delivery Order | Wait for Prep Counter | Pack Tofu only if stock is low | Certified boost as bottleneck |
 | High Tofu Stock, slow order prep | Prep Counter throughput | Buy Prep Counter or Buy Tidy Packaging if affordable; otherwise wait for Prep Counter | Tofu Press available with `not urgent` copy | Buy Tofu Press as dominant action |
 | Low Tofu Stock runway, early shop | Low Tofu Stock | Buy Tofu Press | Manual Pack Tofu only as emergency backup | Buy Prep Counter if it will starve immediately |
@@ -2187,6 +2208,12 @@ Starter first-loop balance sheet:
 | bulk_soy_delivery | Bulk Soy Delivery | Managed Shop | Morning Soy Delivery and Shop Level 100 | 200K Reputation | Reputation | flat | 200000 | 1.0 | +2000 Tofu Stock/sec support | high-midgame plateau | after managed-shop scale | Catering Crate/Counter Crew stock demand | Buy Bulk Soy Delivery | unsolvable stock trap | Shop only, no new currency | Implemented V1 |
 | manager_shift_manager | Hire Shift Manager | Manager Desk | Counter Crew, Catering Crate, Shop Level 100, 1M Reputation | $75K + 1M Reputation | Cash + Reputation | flat | 75000 | 1.0 | Counter Service batch 10 -> 25 | high-midgame | after current Counter Service path is maxed | Queue full at managed-shop scale | Buy Hire Shift Manager | new tab/franchise jump | Parked-only, no new currency | Implemented V1 |
 | manager_wholesale_pickup | Wholesale Pickup | Manager Desk | Hire Shift Manager | $125K + 1.5M Reputation | Cash + Reputation | flat | 125000 | 1.0 | Clears up to 50 waiting orders per handoff when queue is effectively full and tofu is supplied | high-midgame | after Shift Manager | Capped order queue becomes useful throughput | Buy Wholesale Pickup | per-order backlog growth | Active-page-only scalar batch, no offline fulfillment | Implemented V1 |
+| wholesale_counter_contract | Wholesale Counter Contract | Late Shop Contracts | Shift Manager active and Counter Service batch 25 | $250K + 5M Reputation | Cash + Reputation | flat | 250000 | 1.0 | Counter Service batch floor 100; unlocks Wholesale Case | late managed shop | short Cash wait in high-Reputation saves | Cash conversion too slow | Sign Wholesale Contract | batch 25 plateau | Parked-only, no Cup Test effect | Implemented V1 |
+| wholesale_case | Wholesale Case | Late Shop Contracts | Wholesale Counter Contract | 1,000 stock + 25 ready orders | Tofu Stock, Delivery Orders | flat | 1000 stock | 1.0 | +$6.5K Cash, +150 Reputation, +1.5K Shop XP | after Wholesale Contract | when supplied | Larger automatic handoff | Counter Service Best Available | smaller order grind | Shop only | Implemented V1 |
+| catering_account | Catering Account | Late Shop Contracts | Wholesale Counter Contract | $2.5M + 12M Reputation | Cash + Reputation | flat | 2500000 | 1.0 | Counter Service batch floor 250; unlocks Event Catering Load | late managed shop | after Wholesale Contract | Bigger Cash conversion | Open Catering Account | batch 100 plateau | Parked-only, no Cup Test effect | Implemented V1 |
+| event_catering_load | Event Catering Load | Late Shop Contracts | Catering Account | 10,000 stock + 250 ready orders | Tofu Stock, Delivery Orders | flat | 10000 stock | 1.0 | +$100K Cash, +2K Reputation, +20K Shop XP | after Catering Account | when supplied | Catering-scale handoff | Counter Service Best Available | Wholesale-only pacing | Shop only | Implemented V1 |
+| event_vendor_contract | Event Vendor Contract | Late Shop Contracts | Catering Account | $25M + 35M Reputation | Cash + Reputation | flat | 25000000 | 1.0 | Counter Service batch floor 1000; unlocks Venue Supply Contract | late managed shop | after Catering Account | Venue-scale Cash conversion | Sign Event Vendor Contract | batch 250 plateau | Parked-only, no Cup Test effect | Implemented V1 |
+| venue_supply_contract | Venue Supply Contract | Late Shop Contracts | Event Vendor Contract | 100,000 stock + 2,500 ready orders | Tofu Stock, Delivery Orders | flat | 100000 stock | 1.0 | +$1.5M Cash, +20K Reputation, +250K Shop XP | after Event Vendor Contract | when supplied | Large backlog conversion | Counter Service Best Available | Catering-only pacing | Shop only | Implemented V1 |
 | local_delivery_license | Local Delivery License | First License | plateau requirements met | confirmation accepted | progress reset | requirements | 0 | 1.0 | Reset selected shop progress; grant 1 to 3 Stars | 4 to 6 hours | at plateau | Long-term plateau | Take License Exam | first run loop | No real driving requirement | Placeholder |
 
 ## Implementation Slices
@@ -2242,9 +2269,10 @@ progression contract.
 | Tidy Packaging / Double Labels | Implemented | station upgrade catalog/tests | named Prep Counter modifiers; Tidy Packaging is the first visible bottleneck-solving upgrade when order prep is slow, costs $20, and shows a before/after prep-rate preview | tune exact feel after playtesting |
 | Delivery Shelf | Implemented | station unlock, purchase, Prep Counter boost | first support station improves order throughput | tune cost/reveal timing |
 | Shop Sign | Implemented | station unlock, purchase, order Reputation boost | first Reputation support station improves fulfilled-order reputation | tune cost/reveal timing |
-| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts running on fresh saves, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, and adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
+| Counter Service / Managed Shop | Implemented | state, Overview card, active-page tick, upgrade cards, tests | starts running on fresh saves, auto-fulfills Best Available orders every 10 seconds while parked/open, reports income/blocked status, improves to 8/6/4 second handoffs, adds 2/5/10 order batches through Second Register, Pickup Window, and Counter Crew, then uses Counter Contract batch floors 100/250/1000; batch size is a maximum and can fall back to smaller affordable order types | tune rates and future priority upgrades after playtesting |
 | Supplier Contracts | Implemented | Reputation-cost station upgrades, rates, Next Best Action, tests | Soy Supplier Contract, Morning Soy Delivery, and Bulk Soy Delivery add Tofu Stock/sec as a high-midgame Reputation sink so Counter Service stock blocks are solved through management, not manual Pack Tofu | tune Reputation costs and stock/sec support after playtesting |
 | Manager Desk V1 | Implemented | Manager Desk station upgrades, Next Milestone/Next Best Action, Counter Service scalar batch processing, tests | Hire Shift Manager raises Counter Service batch size to 25; Wholesale Pickup clears capped waiting-order batches when supplied without adding a new tab, franchise mode, or per-order objects | tune costs, queue threshold, and whether a later dedicated manager surface is needed |
+| High-Scale Counter Contracts V1 | Implemented | Counter Contract state, upgrade panel, high-scale order types, Counter Service batch floors, Goal Stack copy, tests | Wholesale Counter Contract, Catering Account, and Event Vendor Contract spend Cash plus Reputation to unlock Wholesale Case, Event Catering Load, and Venue Supply Contract, raising Counter Service batch floors to 100/250/1000 for late Cash conversion | tune costs and rewards against First Complete Build pacing |
 | Routes | Deferred/scaffolding | route catalog retained, active tab/actions gated off | future fictional route cards cannot be purchased/played yet | keep hidden until Routes have a clear shop/Dream Build purpose |
 | Crew automation | Placeholder | crew roles/hire helpers | counts and surface exist | real assignment/automation loop later |
 | Garage | Partial | garage upgrades/helpers | fictional upgrades exist | clarify pacing and effects |

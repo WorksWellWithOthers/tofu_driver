@@ -139,8 +139,14 @@ globalThis.tofuStockRunway = tofuStockRunway;
 globalThis.clampPercent = clampPercent;
 globalThis.nextMilestoneForShop = nextMilestoneForShop;
 globalThis.renderNextMilestoneCard = renderNextMilestoneCard;
+globalThis.pinnedNearGoalForShop = pinnedNearGoalForShop;
 globalThis.getShopOrderTypes = getShopOrderTypes;
 globalThis.shopOrderTypeUnlocked = shopOrderTypeUnlocked;
+globalThis.counterContractById = counterContractById;
+globalThis.counterContractPurchased = counterContractPurchased;
+globalThis.counterContractStatus = counterContractStatus;
+globalThis.nextCounterContract = nextCounterContract;
+globalThis.buyCounterContract = buyCounterContract;
 globalThis.maxFulfillableShopOrderQuantity = maxFulfillableShopOrderQuantity;
 globalThis.bestFulfillableShopOrderType = bestFulfillableShopOrderType;
 globalThis.calculateOfflineShopEarnings = calculateOfflineShopEarnings;
@@ -6872,8 +6878,197 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620b'));
-  assert(html.includes('/static/nospill/app.css?v=20260620b'));
+  assert(html.includes('/static/nospill/app.js?v=20260620c'));
+  assert(html.includes('/static/nospill/app.css?v=20260620c'));
+}
+
+function testHighScaleCounterContractsV1() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  function contractReadyState() {
+    const state = context.defaultGameState();
+    state.shop.tofuStock = 524000000;
+    state.shop.deliveryOrders = 1000000;
+    state.shop.tips = 154000;
+    state.shop.reputation = 7180000;
+    state.shop.shopLevel = context.getShopLevel(state.shop.reputation);
+    state.shop.lifetimeDeliveryOrders = 1000000;
+    state.shop.lifetimeTips = 5000000;
+    state.shop.lifetimeReputation = 7180000;
+    state.shop.prepSlots = 964;
+    state.shop.counterService.running = true;
+    state.shop.counterService.lastHandoffAt = '2026-06-15T12:00:00.000Z';
+    state.shop.stations.tofu_press = 20;
+    state.shop.stations.prep_counter = 20;
+    state.shop.stations.delivery_shelf = 20;
+    state.shop.stations.shop_sign = 20;
+    state.shop.stationUpgrades.counter_service_bell = 1;
+    state.shop.stationUpgrades.counter_service_wide = 1;
+    state.shop.stationUpgrades.counter_service_routine = 1;
+    state.shop.stationUpgrades.counter_service_register = 1;
+    state.shop.stationUpgrades.counter_service_window = 1;
+    state.shop.stationUpgrades.counter_service_crew = 1;
+    state.shop.stationUpgrades.manager_shift_manager = 1;
+    state.shop.stationUpgrades.manager_wholesale_pickup = 1;
+    return context.normalizeGameState(state);
+  }
+
+  const locked = context.defaultGameState();
+  locked.shop.tips = 1000000;
+  locked.shop.reputation = 10000000;
+  assert.strictEqual(context.counterContractStatus(context.counterContractById('wholesale_counter_contract'), locked).unlocked, false);
+  assert.strictEqual(context.shopOrderTypeUnlocked(context.shopOrderTypeById('wholesale_case'), locked), false);
+
+  const userLike = contractReadyState();
+  assert.strictEqual(context.counterServiceBatchSize(userLike), 25);
+  assert.strictEqual(context.counterContractStatus(context.counterContractById('wholesale_counter_contract'), userLike).unlocked, true);
+  assert.strictEqual(context.counterContractStatus(context.counterContractById('wholesale_counter_contract'), userLike).canBuy, false);
+  const userLikeAction = context.nextBestAction(userLike);
+  assert.strictEqual(userLikeAction.title, 'Next: Clear the Order Queue');
+  assert(userLikeAction.copy.includes('Bigger contracts can convert ready orders into Cash faster'));
+  const userLikePinned = context.pinnedNearGoalForShop(userLike);
+  assert.strictEqual(userLikePinned.title, 'Grow Cash for Wholesale Counter Contract');
+  assert(userLikePinned.body.includes('Reputation is ready'));
+  const userLikePrep = context.orderPrepProgress(userLike);
+  assert.strictEqual(userLikePrep.message, 'Order queue full. Counter Service is clearing prepared orders.');
+
+  const wholesaleReady = JSON.parse(JSON.stringify(userLike));
+  wholesaleReady.shop.tips = 250000;
+  const wholesale = context.buyCounterContract('wholesale_counter_contract', wholesaleReady, { activeDrive: false });
+  assert.strictEqual(wholesale.ok, true);
+  assert.strictEqual(wholesale.gameState.shop.tips, 0);
+  assert.strictEqual(wholesale.gameState.shop.reputation, 2180000);
+  assert.strictEqual(context.counterContractPurchased(wholesale.gameState, 'wholesale_counter_contract'), true);
+  assert.strictEqual(context.shopOrderTypeUnlocked(context.shopOrderTypeById('wholesale_case'), wholesale.gameState), true);
+  assert.strictEqual(context.counterServiceBatchSize(wholesale.gameState), 100);
+  assert.strictEqual(context.counterServiceOrderType(wholesale.gameState).id, 'wholesale_case');
+  const wholesaleOrder = context.fulfillShopOrders(wholesale.gameState, 1, {
+    activeDrive: false,
+    orderTypeId: 'wholesale_case',
+  });
+  assert.strictEqual(wholesaleOrder.ok, true);
+  assert.strictEqual(wholesaleOrder.tofuUsed, 1000);
+  assert.strictEqual(wholesaleOrder.deliveryOrdersUsed, 25);
+  assert.strictEqual(wholesaleOrder.tipsGained, 6500);
+  assert.strictEqual(wholesaleOrder.reputationGained >= 150, true);
+  assert.strictEqual(wholesaleOrder.shopXpGained, 1500);
+
+  const cateringReady = JSON.parse(JSON.stringify(wholesale.gameState));
+  cateringReady.shop.tips = 2500000;
+  cateringReady.shop.reputation = 12000000;
+  const catering = context.buyCounterContract('catering_account', cateringReady, { activeDrive: false });
+  assert.strictEqual(catering.ok, true);
+  assert.strictEqual(context.shopOrderTypeUnlocked(context.shopOrderTypeById('event_catering_load'), catering.gameState), true);
+  assert.strictEqual(context.counterServiceBatchSize(catering.gameState), 250);
+  assert.strictEqual(context.counterServiceOrderType(catering.gameState).id, 'event_catering_load');
+  const cateringOrder = context.fulfillShopOrders(catering.gameState, 1, {
+    activeDrive: false,
+    orderTypeId: 'event_catering_load',
+  });
+  assert.strictEqual(cateringOrder.ok, true);
+  assert.strictEqual(cateringOrder.tofuUsed, 10000);
+  assert.strictEqual(cateringOrder.deliveryOrdersUsed, 250);
+  assert.strictEqual(cateringOrder.tipsGained, 100000);
+  assert.strictEqual(cateringOrder.shopXpGained, 20000);
+
+  const vendorReady = JSON.parse(JSON.stringify(catering.gameState));
+  vendorReady.shop.tips = 25000000;
+  vendorReady.shop.reputation = 35000000;
+  const vendor = context.buyCounterContract('event_vendor_contract', vendorReady, { activeDrive: false });
+  assert.strictEqual(vendor.ok, true);
+  assert.strictEqual(context.shopOrderTypeUnlocked(context.shopOrderTypeById('venue_supply_contract'), vendor.gameState), true);
+  assert.strictEqual(context.counterServiceBatchSize(vendor.gameState), 1000);
+  assert.strictEqual(context.counterServiceOrderType(vendor.gameState).id, 'venue_supply_contract');
+  const venueOrder = context.fulfillShopOrders(vendor.gameState, 1, {
+    activeDrive: false,
+    orderTypeId: 'venue_supply_contract',
+  });
+  assert.strictEqual(venueOrder.ok, true);
+  assert.strictEqual(venueOrder.tofuUsed, 100000);
+  assert.strictEqual(venueOrder.deliveryOrdersUsed, 2500);
+  assert.strictEqual(venueOrder.tipsGained, 1500000);
+  assert.strictEqual(venueOrder.shopXpGained, 250000);
+
+  const noStock = JSON.parse(JSON.stringify(vendor.gameState));
+  noStock.shop.tofuStock = 500;
+  assert.notStrictEqual(context.counterServiceOrderType(noStock).id, 'venue_supply_contract');
+  const noOrders = JSON.parse(JSON.stringify(vendor.gameState));
+  noOrders.shop.deliveryOrders = 100;
+  assert.notStrictEqual(context.counterServiceOrderType(noOrders).id, 'venue_supply_contract');
+
+  const preview = context.counterServiceBatchPreview(vendor.gameState);
+  assert.strictEqual(preview.lastOrderType.id, 'venue_supply_contract');
+  assert(preview.tips >= 1500000);
+  assert(context.counterServiceIncomeStatus(vendor.gameState).text.includes('batch'));
+
+  const activeReject = context.buyCounterContract('wholesale_counter_contract', wholesaleReady, { activeDrive: true });
+  assert.strictEqual(activeReject.ok, false);
+  assert(activeReject.reason.includes('park'));
+
+  vm.runInContext(`
+function contractNode() {
+  const node = { textContent: "", innerHTML: "", disabled: null, dataset: {}, classListValue: null, value: "" };
+  node.classList = { toggle(_className, hidden) { node.classListValue = Boolean(hidden); } };
+  node.querySelector = () => null;
+  return node;
+}
+elements = {
+  shopLevelBadge: contractNode(),
+  shopTofuStock: contractNode(),
+  shopDeliveryOrders: contractNode(),
+  shopTips: contractNode(),
+  shopReputation: contractNode(),
+  shopLevelProgress: contractNode(),
+  shopIdleRate: contractNode(),
+  shopOrderRate: contractNode(),
+  shopTipsRate: contractNode(),
+  shopReputationRate: contractNode(),
+  shopSpiritRate: contractNode(),
+  shopPrepStatus: contractNode(),
+  shopPrepSlots: contractNode(),
+  shopReach: contractNode(),
+  shopSpirit: contractNode(),
+  shopLicenseStars: contractNode(),
+  shopBuyMultiplier: contractNode(),
+  packTofuButton: contractNode(),
+  fulfillShopOrderButton: contractNode(),
+  packTofuHelper: contractNode(),
+  fulfillShopOrderHelper: contractNode(),
+  shopTabList: contractNode(),
+  shopTabPanel: contractNode(),
+  shopInlineResult: contractNode(),
+  shopOfflineEarnings: contractNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+appState.surface = "shop";
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(wholesaleReady)});
+globalThis.counterContractsHtml = elements.shopTabPanel.innerHTML;
+appState.shopTab = "overview";
+renderTofuShop(${JSON.stringify(userLike)});
+globalThis.counterContractOverviewHtml = elements.shopTabPanel.innerHTML;
+appState.running = true;
+appState.shopTab = "upgrades";
+renderTofuShop(${JSON.stringify(wholesaleReady)});
+globalThis.activeContractTabsHtml = elements.shopTabList.innerHTML;
+globalThis.activeContractPanelHtml = elements.shopTabPanel.innerHTML;
+`, context);
+  assert(context.counterContractsHtml.includes('Counter Contracts'));
+  assert(context.counterContractsHtml.includes('Wholesale Counter Contract'));
+  assert(context.counterContractsHtml.includes('Reputation signs larger parked shop contracts'));
+  assert(context.counterContractsHtml.includes('Sign Wholesale Contract'));
+  assert(context.counterContractOverviewHtml.includes('Counter Contracts can turn the backlog into Cash faster'));
+  assert(context.counterContractOverviewHtml.includes('Prepared-order storage is not currently the bottleneck'));
+  assert(context.counterContractOverviewHtml.includes('Counter Service and Counter Contracts are the Cash conversion path'));
+  assert(!context.activeContractPanelHtml.includes('Sign Wholesale Contract'));
+
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  assert(!/fetch\s*\(/.test(source));
+  assert(!/XMLHttpRequest/.test(source));
+  assert(!/sendBeacon/.test(source));
+  assert(!/upload/i.test(source));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -9558,8 +9753,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620b'));
-  assert(html.includes('/static/nospill/app.css?v=20260620b'));
+  assert(html.includes('/static/nospill/app.js?v=20260620c'));
+  assert(html.includes('/static/nospill/app.css?v=20260620c'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -12989,6 +13184,7 @@ const TESTS = [
   ["testCounterServiceV1AutomatesEarnedShopHandoffs", testCounterServiceV1AutomatesEarnedShopHandoffs],
   ["testCounterServicePolishStatsUpgradesAndSpiritPanel", testCounterServicePolishStatsUpgradesAndSpiritPanel],
   ["testTofuGarageHighMidgameSupplyBottleneckBalance", testTofuGarageHighMidgameSupplyBottleneckBalance],
+  ["testHighScaleCounterContractsV1", testHighScaleCounterContractsV1],
   ["testTofuGarageRoutesSurfaceIsDeferred", testTofuGarageRoutesSurfaceIsDeferred],
   ["testTofuGarageGenerousOfflineProgressV1", testTofuGarageGenerousOfflineProgressV1],
   ["testTofuGarageNetWorthMilestonesAndShowcaseInterestV1", testTofuGarageNetWorthMilestonesAndShowcaseInterestV1],

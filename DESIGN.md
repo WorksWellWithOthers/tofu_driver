@@ -92,6 +92,12 @@ Preview. These events resolve instantly in V1, cost Cash, and can grant Cash, Br
 Reputation, and local event badges. They are not full Car Management, repeatable event timers,
 multiple cars, auctions, sell/prestige choices, backend play, or public sharing.
 
+High-Scale Counter Contracts V1 is the late parked shop bridge from small counter orders into
+wholesale, catering, and event-vendor handoffs. Reputation can now sign larger Counter Contracts
+that unlock bigger shop order types and raise Counter Service batch floors. This is a Tofu Garage
+Cash-conversion system only; it does not change Cup Test scoring, certification, route proof,
+Driver XP, merch unlocks, Brand Value formula, Garage Build Value formula, or Net Worth formula.
+
 Boundary rule:
 
 ```text

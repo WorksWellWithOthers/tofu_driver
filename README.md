@@ -31,7 +31,9 @@ Tofu Shop, the first Tofu Garage business, starts with a focused first loop and 
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
 system uses a local Discovery Fanfare so progression moments are visible without exposing the full
 future roadmap. Midgame supply pressure is handled through parked management decisions such as
-Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking. Shop
+Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking.
+Late-game Cash conversion uses Reputation-funded Counter Contracts to unlock Wholesale Case, Event
+Catering Load, and Venue Supply Contract handoffs with larger Counter Service batch floors. Shop
 Spirit includes capped permanent Spirit Generators, Activate-style instant boosts, and a parked
 `Buy All Affordable` control for permanent Spirit Generators only; it does not trigger instant
 boosts, timed effects, tokens, driving rewards, or networked systems.
