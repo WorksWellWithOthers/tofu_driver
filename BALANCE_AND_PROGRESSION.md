@@ -403,6 +403,10 @@ Examples:
   completion. Levels 1-5 add `+$35.25B Garage Build Value`, advance Core Build Progress to
   `28 / 40`, and use authentic intercooler, boost control, turbo, anti-lag, and cooling-package
   language as fictional Tofu Garage progression only.
+- Drivetrain & Transmission Track V1 unlocks after Induction & Cooling Level 5. Levels 1-5 add
+  `+$300B Garage Build Value`, advance Core Build Progress to `33 / 40`, and use authentic clutch,
+  limited-slip differential, driveshaft, gearbox, and sequential-transmission language as fictional
+  Tofu Garage progression only.
 - Garage Event Board V1 is the first parked event bridge after Tires & Rubber Level 5 and `$100M`
   Net Worth. It lives in the Dream Build tab, resolves events instantly in V1, and grants defined
   local Cash, Brand Value, Garage Reputation, and local badge rewards. It does not create repeatable
@@ -468,8 +472,9 @@ an affordability threshold, the order queue briefly fills, or ETA text changes. 
 5, it may point through the implemented Suspension track. After Suspension Level 5, it points
 through Tires & Rubber. After Tires Level 5, it can point to the Garage Event Board when an event
 is available, otherwise through Brakes & Control. After Brakes Level 5 and Local Showcase are
-complete, it points through Induction & Cooling. After Induction Level 5, Drivetrain & Transmission
-is shown as the next future/target-only build track.
+complete, it points through Induction & Cooling. After Induction Level 5, it points through
+Drivetrain & Transmission. After Drivetrain Level 5, Aero, Styling & Weight Reduction is shown as
+the next future/target-only build track.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -510,8 +515,8 @@ Rules:
   Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`,
   `Seal Joints`, `Tuned Note`, `Heat Wrapped`, or `Showcase Finish` when no urgent shop goal is
   more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, Brakes &
-  Control, and Induction & Cooling. After Induction level 5, Drivetrain & Transmission remains
-  target-only/future.
+  Control, Induction & Cooling, and Drivetrain & Transmission. After Drivetrain level 5, Aero,
+  Styling & Weight Reduction remains target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1562,12 +1567,13 @@ Core Build Progress V2:
 | Tires & Rubber Level | `0-5` current runtime stages |
 | Brakes & Control Level | `0-5` current runtime stages |
 | Induction & Cooling Level | `0-5` current runtime stages after Brakes Level 5 plus Local Showcase |
-| Drivetrain & Transmission | future locked track |
+| Drivetrain & Transmission Level | `0-5` current runtime stages after Induction Level 5 |
 | Aero, Styling & Weight Reduction | future locked track |
 
 The progress denominator is `40` planned core work stages. After Balanced Fitment, Showcase Finish,
-Showcase Stance, Event Tire Set, Brake Balance & Control Package, and Anti-Lag & Cooling Package,
-the current implemented maximum is `28 / 40`. Drivetrain & Transmission remains target-only/future.
+Showcase Stance, Event Tire Set, Brake Balance & Control Package, Anti-Lag & Cooling Package, and
+Sequential Transmission Package, the current implemented maximum is `33 / 40`. Aero, Styling &
+Weight Reduction remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
 
@@ -1580,6 +1586,16 @@ Implemented Induction & Cooling V1 values:
 | 3 | Hybrid Turbo Upgrade | `$8B` | `+$6B` |
 | 4 | Big Turbo Kit | `$12B` | `+$9B` |
 | 5 | Anti-Lag & Cooling Package | `$18B` | `+$14B` |
+
+Implemented Drivetrain & Transmission V1 values:
+
+| Drivetrain Level | Work | Cash Cost | Garage Build Value |
+| --- | --- | --- | --- |
+| 1 | Sports Clutch & Flywheel | `$27B` | `+$20B` |
+| 2 | Limited-Slip Differential | `$40B` | `+$32B` |
+| 3 | Carbon Driveshaft & Axles | `$60B` | `+$50B` |
+| 4 | Custom Gearbox | `$90B` | `+$78B` |
+| 5 | Sequential Transmission Package | `$135B` | `+$120B` |
 
 Possible level effects:
 

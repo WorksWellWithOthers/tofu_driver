@@ -40,7 +40,7 @@ kept out of the primary Tofu Garage loop.
 | Manager Desk | Managed-shop layer | high Reputation and shop level | batch/queue upgrades | turn queue pressure into throughput | after Counter Crew/Catering scale | maxed Counter Service plateau | future franchise only later | meaningful V1 |
 | Wholesale Pickup | Capped managed queue clearing | Manager Desk upgrade | consumes scalar orders/stock | clear full queue without per-order objects | after Hire Shift Manager | order queue cap | Covered Car teaser, future manager economy | meaningful V1 |
 | Covered Car / Dream Build Teaser | Parked story/status carrot | Manager Desk scale and Wholesale Pickup progress | seen/acknowledged state only | understand that the shop funds the dream | after managed shop proves itself | motivation after the first shop layer | future Dream Garage planning | implemented story/status only |
-| First Dream Build Investment | Wheels Fund purchase, Wheels work levels, Exhaust V1 through Showcase Finish, Dream Build Progress, Showcase Prep V1, Sponsor Inquiry V1, and Garage Event Board V1 | Cash from Tofu Shop orders and shop automation | subtracts Cash, raises Garage Build Value, can add one-time Cash and Brand Value through Sponsor Inquiry and event rewards | decide whether to fund careful garage/story work or keep growing the shop | after covered-car teaser, stable shop state, Wheels level 3 for Exhaust, first `$1M Net Worth` for Showcase Interest, Showcase Prep for Sponsor Inquiry, and `$100M Net Worth` plus Tires Level 5 for Garage Event Board | proves multi-part buy-once/work-level model without speed/performance framing | Wheels levels 4-5, recurring sponsor packages, repeatable events, full Car Management, future Dream Garage design | meaningful V1 purchase/work/progress |
+| First Dream Build Investment | Wheels Fund purchase, Wheels work levels, Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Dream Build Progress, Showcase Prep V1, Sponsor Inquiry V1, and Garage Event Board V1 | Cash from Tofu Shop orders and shop automation | subtracts Cash, raises Garage Build Value, can add one-time Cash and Brand Value through Sponsor Inquiry and event rewards | decide whether to fund careful garage/story work or keep growing the shop | after covered-car teaser, stable shop state, Wheels level 3 for Exhaust, first `$1M Net Worth` for Showcase Interest, Showcase Prep for Sponsor Inquiry, `$100M Net Worth` plus Tires Level 5 for Garage Event Board, and Induction Level 5 for Drivetrain | proves multi-part buy-once/work-level model without speed/performance framing | Wheels levels 4-5, Aero, recurring sponsor packages, repeatable events, full Car Management, future Dream Garage design | meaningful V1 purchase/work/progress |
 | Net Worth Milestones | Long-term value ladder toward `$1T Net Worth` | Cash, Tofu Business Value, Garage Build Value, Brand Value | milestone state is tracked; no separate spend | gives concrete stepping stones and unlocks Showcase Interest at first `$1M` | after Net Worth V1 is visible | vague `$1T` goal with no intermediate carrot | Showcase Prep, Sponsor Inquiry, later business opportunities | meaningful V1 guidance |
 | Brand Value | Fictional value from careful garage-build attention | one-time Sponsor Inquiry V1 and Garage Event Board V1 | contributes to Net Worth V1 only | show smooth garage investment can create business value | after Showcase Prep/first `$1M Net Worth`, then event board at `$100M` plus Tires Level 5 | Net Worth path feels only like cash saving | recurring sponsor packages later | meaningful V1, no recurring income |
 | Passport Stamps | Local status/milestone layer | shop and Cup Test milestones | collection/progress feedback | pursue short-term proof | first stamp | lack of direction | later achievement layers | meaningful |
@@ -86,9 +86,9 @@ one-time parked event bridge.
 Overview Glance Mode V1 does not add a new resource or system. It clarifies the current unfold by
 separating live `Now`, stable `Pinned Goal`, and long-term `Era Goal`, while moving long formulas
 and explanations behind Details controls. After the build starts, the earned Dream Build tab holds
-the detailed Wheels, Exhaust, Suspension, Tires, Brakes, Induction, Garage Build Value, and Builder
-Note content. After Anti-Lag & Cooling Package, it tells the player that Drivetrain & Transmission
-is future/target-only.
+the detailed Wheels, Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Garage Build Value,
+and Builder Note content. After Sequential Transmission Package, it tells the player that Aero,
+Styling & Weight Reduction is future/target-only.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
@@ -99,7 +99,7 @@ separate.
 Later:
 
 ```text
-Drivetrain/Aero target preview -> Wheels levels 4-5 -> recurring sponsor package design ->
+Aero target preview -> Wheels levels 4-5 -> recurring sponsor package design ->
 completed-build event design -> Keep / Show / Auction choice -> full Net Worth accounting.
 ```
 

@@ -138,8 +138,9 @@ The static app uses hash routing:
   edited, and detailed Dream Build work moves into the earned Dream Build tab. The Suspension
   track is implemented through Showcase Stance; Tires & Rubber, Brakes & Control, and Induction &
   Cooling are implemented through their Level 5 completions; Garage Event Board V1 adds one-time
-  parked fictional events after `$100M Net Worth` plus Tires Level 5; Drivetrain & Transmission
-  remains the next future build track.
+  parked fictional events after `$100M Net Worth` plus Tires Level 5; Drivetrain & Transmission is
+  implemented through Sequential Transmission Package; Aero, Styling & Weight Reduction remains
+  the next future build track.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
 - `CORE_GAME_SPINE_AUDIT.md`: evidence audit for what is real versus scaffolding in the current

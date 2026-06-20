@@ -406,6 +406,16 @@ const DREAM_BUILD_INDUCTION_BIG_TURBO_COST = 12000000000;
 const DREAM_BUILD_INDUCTION_BIG_TURBO_VALUE = 9000000000;
 const DREAM_BUILD_INDUCTION_ANTI_LAG_COST = 18000000000;
 const DREAM_BUILD_INDUCTION_ANTI_LAG_VALUE = 14000000000;
+const DREAM_BUILD_DRIVETRAIN_CLUTCH_COST = 27000000000;
+const DREAM_BUILD_DRIVETRAIN_CLUTCH_VALUE = 20000000000;
+const DREAM_BUILD_DRIVETRAIN_LSD_COST = 40000000000;
+const DREAM_BUILD_DRIVETRAIN_LSD_VALUE = 32000000000;
+const DREAM_BUILD_DRIVETRAIN_DRIVESHAFT_COST = 60000000000;
+const DREAM_BUILD_DRIVETRAIN_DRIVESHAFT_VALUE = 50000000000;
+const DREAM_BUILD_DRIVETRAIN_GEARBOX_COST = 90000000000;
+const DREAM_BUILD_DRIVETRAIN_GEARBOX_VALUE = 78000000000;
+const DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_COST = 135000000000;
+const DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_VALUE = 120000000000;
 const DREAM_BUILD_TOTAL_WORK_STAGES = 40;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
@@ -3143,6 +3153,7 @@ function defaultShopState() {
       tiresLevel: 0,
       brakesLevel: 0,
       inductionLevel: 0,
+      drivetrainLevel: 0,
       builderNote: "",
       firstInvestmentPurchasedAt: "",
       showcaseDisplayPrepared: false,
@@ -3260,6 +3271,8 @@ function normalizeDreamBuild(dreamBuild) {
   const brakesLevel = tiresLevel >= 5 ? clamp(rawBrakesLevel, 0, 5) : 0;
   const rawInductionLevel = safeNonNegativeInteger(source.inductionLevel, 0, 5);
   const inductionLevel = brakesLevel >= 5 ? clamp(rawInductionLevel, 0, 5) : 0;
+  const rawDrivetrainLevel = safeNonNegativeInteger(source.drivetrainLevel, 0, 5);
+  const drivetrainLevel = inductionLevel >= 5 ? clamp(rawDrivetrainLevel, 0, 5) : 0;
   const knownMilestoneIds = new Set(NET_WORTH_MILESTONES.map((milestone) => milestone.id));
   const netWorthMilestonesReached = Array.isArray(source.netWorthMilestonesReached)
     ? source.netWorthMilestonesReached
@@ -3277,6 +3290,7 @@ function normalizeDreamBuild(dreamBuild) {
     tiresLevel,
     brakesLevel,
     inductionLevel,
+    drivetrainLevel,
     builderNote: sanitizeBuilderNote(source.builderNote),
     firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
       ? source.firstInvestmentPurchasedAt.slice(0, 40)
@@ -5372,6 +5386,10 @@ function dreamBuildInductionLevel(gameState) {
   return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.inductionLevel, 0, 5);
 }
 
+function dreamBuildDrivetrainLevel(gameState) {
+  return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.drivetrainLevel, 0, 5);
+}
+
 function dreamBuildInvestmentStarted(gameState) {
   const state = normalizeGameState(gameState);
   const build = state.shop.dreamBuild;
@@ -5383,6 +5401,7 @@ function dreamBuildInvestmentStarted(gameState) {
     || safeNonNegativeInteger(build.tiresLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.brakesLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.inductionLevel, 0, 5) > 0
+    || safeNonNegativeInteger(build.drivetrainLevel, 0, 5) > 0
     || Boolean(build.showcaseDisplayPrepared);
 }
 
@@ -5399,6 +5418,7 @@ function projectCarValueV1(gameState) {
   const tiresLevel = dreamBuildTiresLevel(state);
   const brakesLevel = dreamBuildBrakesLevel(state);
   const inductionLevel = dreamBuildInductionLevel(state);
+  const drivetrainLevel = dreamBuildDrivetrainLevel(state);
   let value = 0;
   if (wheelsLevel >= 3) {
     value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
@@ -5468,6 +5488,13 @@ function projectCarValueV1(gameState) {
     DREAM_BUILD_INDUCTION_HYBRID_TURBO_VALUE,
     DREAM_BUILD_INDUCTION_BIG_TURBO_VALUE,
     DREAM_BUILD_INDUCTION_ANTI_LAG_VALUE,
+  ]);
+  value += dreamBuildProgressiveValue(drivetrainLevel, [
+    DREAM_BUILD_DRIVETRAIN_CLUTCH_VALUE,
+    DREAM_BUILD_DRIVETRAIN_LSD_VALUE,
+    DREAM_BUILD_DRIVETRAIN_DRIVESHAFT_VALUE,
+    DREAM_BUILD_DRIVETRAIN_GEARBOX_VALUE,
+    DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_VALUE,
   ]);
   return value;
 }
@@ -6231,6 +6258,101 @@ function nextDreamBuildInductionWork(gameState) {
   return dreamBuildInductionWorkForLevel(dreamBuildInductionLevel(state));
 }
 
+function drivetrainUnlockStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const inductionReady = dreamBuildInductionLevel(state) >= 5;
+  return {
+    unlocked: inductionReady,
+    inductionReady,
+    reason: inductionReady ? "" : "Complete Induction & Cooling to unlock the next power-delivery phase.",
+  };
+}
+
+function dreamBuildDrivetrainWorkForLevel(level) {
+  if (level === 0) {
+    return {
+      action: "sports-clutch-flywheel",
+      nextLevel: 1,
+      title: "Sports Clutch & Flywheel",
+      completeTitle: "Sports Clutch & Flywheel",
+      buttonLabel: "Install Clutch & Flywheel",
+      cost: DREAM_BUILD_DRIVETRAIN_CLUTCH_COST,
+      valueAdded: DREAM_BUILD_DRIVETRAIN_CLUTCH_VALUE,
+      copy: "Start the drivetrain track with a sharper clutch and flywheel package.",
+      detailCopy: "Sports flywheel and clutch-kit language maps to fictional response, durability, and event-fit stats.",
+      completeCopy: "The power-delivery track has its first sharper package.",
+      feedback: "Dream Build work complete: Sports Clutch & Flywheel.",
+    };
+  }
+  if (level === 1) {
+    return {
+      action: "limited-slip-differential",
+      nextLevel: 2,
+      title: "Limited-Slip Differential",
+      completeTitle: "Limited-Slip Differential",
+      buttonLabel: "Install LSD",
+      cost: DREAM_BUILD_DRIVETRAIN_LSD_COST,
+      valueAdded: DREAM_BUILD_DRIVETRAIN_LSD_VALUE,
+      copy: "Add a proper differential setup so the build feels more complete.",
+      detailCopy: "1-way, 1.5-way, 2-way, and fully customizable LSD language becomes fictional control and event-fit detail.",
+      completeCopy: "The build has a proper differential setup.",
+      feedback: "Dream Build work complete: Limited-Slip Differential.",
+    };
+  }
+  if (level === 2) {
+    return {
+      action: "carbon-driveshaft-axles",
+      nextLevel: 3,
+      title: "Carbon Driveshaft & Axles",
+      completeTitle: "Carbon Driveshaft & Axles",
+      buttonLabel: "Upgrade Driveshaft",
+      cost: DREAM_BUILD_DRIVETRAIN_DRIVESHAFT_COST,
+      valueAdded: DREAM_BUILD_DRIVETRAIN_DRIVESHAFT_VALUE,
+      copy: "Strengthen the power path with lighter, tougher drivetrain hardware.",
+      detailCopy: "Carbon driveshaft and upgraded heavy-duty axles / half-shafts add fictional durability, response, and collector appeal.",
+      completeCopy: "The power path has lighter, tougher drivetrain hardware.",
+      feedback: "Dream Build work complete: Carbon Driveshaft & Axles.",
+    };
+  }
+  if (level === 3) {
+    return {
+      action: "custom-gearbox",
+      nextLevel: 4,
+      title: "Custom Gearbox",
+      completeTitle: "Custom Gearbox",
+      buttonLabel: "Build Custom Gearbox",
+      cost: DREAM_BUILD_DRIVETRAIN_GEARBOX_COST,
+      valueAdded: DREAM_BUILD_DRIVETRAIN_GEARBOX_VALUE,
+      copy: "Build the gearbox around the car's new power and event identity.",
+      detailCopy: "Custom manual transmission, short-throw shifter, shifter bushings, and gear-ratio setup language become fictional event-fit detail.",
+      completeCopy: "The gearbox now matches the car's event identity.",
+      feedback: "Dream Build work complete: Custom Gearbox.",
+    };
+  }
+  if (level === 4) {
+    return {
+      action: "sequential-transmission-package",
+      nextLevel: 5,
+      title: "Sequential Transmission Package",
+      completeTitle: "Sequential Transmission Package",
+      buttonLabel: "Complete Transmission",
+      cost: DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_COST,
+      valueAdded: DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_VALUE,
+      copy: "Complete the drivetrain with a high-end transmission package.",
+      detailCopy: "Fully customizable sequential transmission and high-end semiautomatic transmission language belongs to fictional Tofu Garage event builds.",
+      completeCopy: "The power-delivery package is complete.",
+      feedback: "Drivetrain & Transmission complete: Sequential Transmission Package added. Garage Build Value +$120B.",
+    };
+  }
+  return null;
+}
+
+function nextDreamBuildDrivetrainWork(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!drivetrainUnlockStatus(state).unlocked) return null;
+  return dreamBuildDrivetrainWorkForLevel(dreamBuildDrivetrainLevel(state));
+}
+
 function dreamBuildWheelsStatusLabel(level) {
   if (level >= 5) return "Collector Finish";
   if (level >= 4) return "Showpiece Fitment";
@@ -6285,6 +6407,15 @@ function dreamBuildInductionStatusLabel(level) {
   return "Stock Induction";
 }
 
+function dreamBuildDrivetrainStatusLabel(level) {
+  if (level >= 5) return "Sequential Transmission Package";
+  if (level >= 4) return "Custom Gearbox";
+  if (level >= 3) return "Carbon Driveshaft & Axles";
+  if (level >= 2) return "Limited-Slip Differential";
+  if (level >= 1) return "Sports Clutch & Flywheel";
+  return "Stock Drivetrain";
+}
+
 function dreamBuildProgressVisible(gameState) {
   const state = normalizeGameState(gameState);
   return dreamBuildWheelsPurchased(state) || (coveredCarTeaserSeen(state) && dreamInvestmentTargetVisible(state));
@@ -6298,8 +6429,9 @@ function dreamBuildProgressSummary(gameState) {
   const tiresLevel = dreamBuildTiresLevel(state);
   const brakesLevel = dreamBuildBrakesLevel(state);
   const inductionLevel = dreamBuildInductionLevel(state);
+  const drivetrainLevel = dreamBuildDrivetrainLevel(state);
   const completed = clamp(
-    wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel + inductionLevel,
+    wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel + inductionLevel + drivetrainLevel,
     0,
     DREAM_BUILD_TOTAL_WORK_STAGES,
   );
@@ -6319,6 +6451,8 @@ function dreamBuildProgressSummary(gameState) {
     brakesStatus: dreamBuildBrakesStatusLabel(brakesLevel),
     inductionLevel,
     inductionStatus: dreamBuildInductionStatusLabel(inductionLevel),
+    drivetrainLevel,
+    drivetrainStatus: dreamBuildDrivetrainStatusLabel(drivetrainLevel),
   };
 }
 
@@ -6384,10 +6518,21 @@ function nextDreamBuildStep(gameState) {
   if (inductionWork) {
     return { title: inductionWork.title, copy: inductionWork.copy, future: false };
   }
+  const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+  if (drivetrainWork) {
+    return { title: drivetrainWork.title, copy: drivetrainWork.copy, future: false };
+  }
+  if (dreamBuildDrivetrainLevel(state) >= 5) {
+    return {
+      title: "Aero, Styling & Weight Reduction",
+      copy: "Drivetrain & Transmission is complete. Aero, Styling & Weight Reduction comes in a future garage pass.",
+      future: true,
+    };
+  }
   if (dreamBuildInductionLevel(state) >= 5) {
     return {
       title: "Drivetrain & Transmission",
-      copy: "Induction & Cooling is complete. Drivetrain & Transmission comes in a future garage pass.",
+      copy: "Induction & Cooling is complete. Drivetrain & Transmission is next.",
       future: true,
     };
   }
@@ -6606,6 +6751,34 @@ function buyDreamBuildInduction(action, gameState, options = {}) {
   }
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
   next.shop.dreamBuild.inductionLevel = work.nextLevel;
+  next.shop.counterService.lastResult = work.feedback;
+  return {
+    ok: true,
+    reason: "",
+    feedback: work.feedback,
+    work,
+    gameState: addLedgerEntry(next, "story", work.feedback),
+  };
+}
+
+function buyDreamBuildDrivetrain(action, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  const unlock = drivetrainUnlockStatus(next);
+  if (!unlock.unlocked) {
+    return { ok: false, reason: unlock.reason, gameState: next };
+  }
+  const work = nextDreamBuildDrivetrainWork(next);
+  if (!work || work.action !== action) {
+    return { ok: false, reason: "That Drivetrain & Transmission work is not available yet.", gameState: next };
+  }
+  if (cashBalance(next) < work.cost) {
+    return { ok: false, reason: `Need ${formatCash(work.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
+  next.shop.dreamBuild.drivetrainLevel = work.nextLevel;
   next.shop.counterService.lastResult = work.feedback;
   return {
     ok: true,
@@ -11919,6 +12092,7 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildTiresWork(state)
     && !nextDreamBuildBrakesWork(state)
     && !nextDreamBuildInductionWork(state)
+    && !nextDreamBuildDrivetrainWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -11945,6 +12119,7 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildTiresWork(state)
     && !nextDreamBuildBrakesWork(state)
     && !nextDreamBuildInductionWork(state)
+    && !nextDreamBuildDrivetrainWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -12117,6 +12292,17 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+      if (drivetrainWork) {
+        const ready = cashBalance(state) >= drivetrainWork.cost;
+        return {
+          type: ready ? "buy_dream_drivetrain_work" : "dream_investment_target",
+          title: ready ? `Next: ${drivetrainWork.buttonLabel}` : `Next: Grow Cash for ${drivetrainWork.title}`,
+          copy: ready ? drivetrainWork.copy : `${drivetrainWork.title} is the next Drivetrain & Transmission work when the shop can fund it.`,
+          buttonLabel: drivetrainWork.buttonLabel,
+          disabled: false,
+        };
+      }
       const availableGarageEvent = nextAvailableGarageEvent(state);
       if (availableGarageEvent) {
         const affordable = garageEventAffordability(availableGarageEvent, state);
@@ -12209,7 +12395,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "Induction & Cooling comes in a future garage pass.",
+        copy: "Aero, Styling & Weight Reduction comes in a future garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -13133,6 +13319,55 @@ function renderDreamInvestmentTargetCard(gameState) {
         detailsLabel: "Induction details",
       });
     }
+    const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+    if (drivetrainWork) {
+      return renderDreamBuildTrackWorkCard(state, {
+        title: "Drivetrain & Transmission",
+        level: dreamBuildDrivetrainLevel(state),
+        statusLabel: dreamBuildDrivetrainStatusLabel(dreamBuildDrivetrainLevel(state)),
+        work: drivetrainWork,
+        detailsLabel: "Drivetrain details",
+      });
+    }
+    const drivetrainStatus = drivetrainUnlockStatus(state);
+    if (dreamBuildInductionLevel(state) >= 5) {
+      if (!drivetrainStatus.unlocked) {
+        return renderIdleCard({
+          title: "Drivetrain & Transmission",
+          status: "Future Track",
+          copy: drivetrainStatus.reason,
+          extra: `
+            <div class="nospill-afford-progress">
+              <div class="nospill-afford-progress-head">
+                <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+                <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+              </div>
+              <small>Requirement: Induction &amp; Cooling Level 5 complete.</small>
+              <small>No drivetrain purchase button appears until the power-delivery phase is unlocked.</small>
+            </div>
+          `,
+          actions: [],
+        });
+      }
+      if (dreamBuildDrivetrainLevel(state) >= 5) {
+        return renderIdleCard({
+          title: "Drivetrain & Transmission",
+          status: "Level 5 / 5 · Sequential Transmission Package",
+          copy: "Drivetrain & Transmission Complete. The power-delivery package is complete.",
+          extra: `
+            <div class="nospill-afford-progress">
+              <div class="nospill-afford-progress-head">
+                <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+                <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+              </div>
+              <small>Next Build Track: Aero, Styling &amp; Weight Reduction</small>
+              <small>Future garage pass.</small>
+            </div>
+          `,
+          actions: [],
+        });
+      }
+    }
     const inductionStatus = inductionUnlockStatus(state);
     if (dreamBuildBrakesLevel(state) >= 5) {
       if (!inductionStatus.unlocked) {
@@ -13314,7 +13549,7 @@ function renderDreamBuildProgressCard(gameState) {
     title: "Core Build Progress",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: capReached
-      ? "Induction & Cooling complete. Next Build Track: Drivetrain & Transmission, future garage pass."
+      ? "Drivetrain & Transmission complete. Next Build Track: Aero, Styling & Weight Reduction, future garage pass."
       : "Fictional garage work adds build value without changing Cup Test scoring. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
@@ -13334,6 +13569,7 @@ function renderDreamBuildProgressCard(gameState) {
         <small>Tires &amp; Rubber · Level ${escapeHtml(formatShopCount(progress.tiresLevel))} / 5 · ${escapeHtml(progress.tiresStatus)}</small>
         <small>Brakes &amp; Control · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</small>
         <small>Induction &amp; Cooling · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</small>
+        <small>Drivetrain &amp; Transmission · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}</small>
         <details class="nospill-compact-details">
           <summary>Dream Build details</summary>
@@ -13362,6 +13598,11 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
       : dreamBuildBrakesLevel(state) >= 5
         ? "Locked"
         : "Future";
+  const drivetrainLabel = progress.drivetrainLevel > 0
+    ? progress.drivetrainStatus
+    : dreamBuildInductionLevel(state) >= 5
+      ? "Next"
+      : "Future";
   const eventSummary = garageEventBoardOverviewSummary(state);
   return renderIdleCard({
     title: "Dream Build",
@@ -13375,6 +13616,7 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
         <small>Tires: ${escapeHtml(tiresLabel)}</small>
         <small>Brakes: ${escapeHtml(brakesLabel)}</small>
         <small>Induction: ${escapeHtml(inductionLabel)}</small>
+        <small>Drivetrain: ${escapeHtml(drivetrainLabel)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))}</small>
         ${eventSummary ? `<small>Garage Event Board: ${escapeHtml(eventSummary)}</small>` : ""}
       </div>
@@ -13394,7 +13636,9 @@ function renderDreamBuildTracksCard(gameState) {
   const tiresWork = nextDreamBuildTiresWork(state);
   const brakesWork = nextDreamBuildBrakesWork(state);
   const inductionWork = nextDreamBuildInductionWork(state);
+  const drivetrainWork = nextDreamBuildDrivetrainWork(state);
   const inductionStatus = inductionUnlockStatus(state);
+  const drivetrainStatus = drivetrainUnlockStatus(state);
   const suspensionLine = dreamBuildExhaustLevel(state) < 5
     ? "Future Track · Complete the current implemented build track first."
     : suspensionWork
@@ -13415,6 +13659,11 @@ function renderDreamBuildTracksCard(gameState) {
     : inductionWork
       ? `Next Work: ${inductionWork.title} · ${formatCash(inductionWork.cost)} Cash · +${formatCashCount(inductionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
       : "Complete · Next Build Track: Drivetrain & Transmission, future garage pass.";
+  const drivetrainLine = !drivetrainStatus.unlocked
+    ? `Future Track · ${drivetrainStatus.reason || "Complete Induction & Cooling first."}`
+    : drivetrainWork
+      ? `Next Work: ${drivetrainWork.title} · ${formatCash(drivetrainWork.cost)} Cash · +${formatCashCount(drivetrainWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+      : "Complete · Next Build Track: Aero, Styling & Weight Reduction, future garage pass.";
   return renderIdleCard({
     title: "Work Tracks",
     status: "Current build",
@@ -13433,7 +13682,8 @@ function renderDreamBuildTracksCard(gameState) {
         <small>${escapeHtml(brakesLine)}</small>
         <small><strong>Induction &amp; Cooling</strong> · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</small>
         <small>${escapeHtml(inductionLine)}</small>
-        <small><strong>Drivetrain &amp; Transmission</strong> · Future Track</small>
+        <small><strong>Drivetrain &amp; Transmission</strong> · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</small>
+        <small>${escapeHtml(drivetrainLine)}</small>
         <small><strong>Aero, Styling &amp; Weight Reduction</strong> · Future Track</small>
       </div>
     `,
@@ -13451,7 +13701,8 @@ function renderFutureGarageManagementCard() {
 
 function garageTuningCatalogFocusLabel(gameState) {
   const state = normalizeGameState(gameState);
-  if (dreamBuildInductionLevel(state) >= 5) return "Drivetrain & Transmission, future";
+  if (dreamBuildDrivetrainLevel(state) >= 5) return "Aero, Styling & Weight Reduction, future";
+  if (dreamBuildInductionLevel(state) >= 5 || dreamBuildDrivetrainLevel(state) > 0) return "Drivetrain & Transmission";
   if (dreamBuildBrakesLevel(state) >= 5 || dreamBuildInductionLevel(state) > 0) return "Induction & Cooling";
   if (dreamBuildTiresLevel(state) >= 5 || dreamBuildBrakesLevel(state) > 0) return "Brakes & Control";
   if (dreamBuildSuspensionLevel(state) >= 5 || dreamBuildTiresLevel(state) > 0) return "Tires & Rubber";
@@ -14339,6 +14590,18 @@ function nextMilestoneForShop(gameState) {
           guidance: inductionWork.copy,
         };
       }
+      const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+      if (drivetrainWork) {
+        const progress = nextMilestoneProgress(cashBalance(state), drivetrainWork.cost);
+        return {
+          id: drivetrainWork.action,
+          name: drivetrainWork.title,
+          progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
+          percent: progress.percent,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(drivetrainWork.valueAdded)}`,
+          guidance: drivetrainWork.copy,
+        };
+      }
       const showcase = showcasePrepStatus(state);
       if (showcase.unlocked && !showcase.prepared) {
         const progress = nextMilestoneProgress(cashBalance(state), showcase.cost);
@@ -14376,13 +14639,14 @@ function nextMilestoneForShop(gameState) {
       }
       const nextTarget = dreamBuildNextTargetProgress(state);
       const buildProgress = dreamBuildProgressSummary(state);
+      const nextStep = nextDreamBuildStep(state);
       return {
         id: "dream_build_progress",
         name: "Dream Build Progress",
         progressText: `${formatShopCount(buildProgress.completed)} / ${formatShopCount(buildProgress.total)} work stages`,
         percent: buildProgress.percent || nextTarget.percent,
         reward: "First smooth garage-build path",
-        guidance: "Next Dream Step: Induction & Cooling. Future garage work; keep growing Cash.",
+        guidance: `Next Dream Step: ${nextStep.title}. ${nextStep.future ? "Future garage work; keep growing Cash." : nextStep.copy}`,
       };
     }
     return {
@@ -14585,6 +14849,7 @@ function goalStackTargetForAction(action) {
     || action.type === "buy_dream_tires_work"
     || action.type === "buy_dream_brakes_work"
     || action.type === "buy_dream_induction_work"
+    || action.type === "buy_dream_drivetrain_work"
     || action.type === "dream_investment_target"
     || action.type === "prepare_showcase"
     || action.type === "showcase_prep_target"
@@ -14611,7 +14876,8 @@ function dreamBuildImplementedCapReached(gameState) {
     && dreamBuildSuspensionLevel(state) >= 5
     && dreamBuildTiresLevel(state) >= 5
     && dreamBuildBrakesLevel(state) >= 5
-    && dreamBuildInductionLevel(state) >= 5;
+    && dreamBuildInductionLevel(state) >= 5
+    && dreamBuildDrivetrainLevel(state) >= 5;
 }
 
 function pinnedNearGoalForShop(gameState) {
@@ -14748,6 +15014,29 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
+    const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+    if (drivetrainWork) {
+      return {
+        id: drivetrainWork.action,
+        title: drivetrainWork.title,
+        body: drivetrainWork.nextLevel === 1
+          ? "Start the Drivetrain & Transmission track."
+          : drivetrainWork.nextLevel === 2
+            ? "Continue the power-delivery package."
+            : drivetrainWork.nextLevel === 3
+              ? "Strengthen the drivetrain."
+              : drivetrainWork.nextLevel === 4
+                ? "Build the gearbox around the car."
+                : "Finish the drivetrain package.",
+        progressCurrent: cashBalance(state),
+        progressTarget: drivetrainWork.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(drivetrainWork.cost)} Cash`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(drivetrainWork.valueAdded)}`,
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
     const inductionStatus = inductionUnlockStatus(state);
     if (dreamBuildBrakesLevel(state) >= 5 && !inductionStatus.unlocked) {
       const progress = dreamBuildProgressSummary(state);
@@ -14766,16 +15055,31 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
-    if (dreamBuildInductionLevel(state) >= 5) {
+    if (dreamBuildInductionLevel(state) >= 5 && dreamBuildDrivetrainLevel(state) < 5) {
       const progress = dreamBuildProgressSummary(state);
       return {
-        id: "dream_build_induction_complete",
-        title: "Induction & Cooling complete",
-        body: "Next Build Track: Drivetrain & Transmission, future garage pass.",
+        id: "dream_build_drivetrain_available",
+        title: "Sports Clutch & Flywheel",
+        body: "Start the Drivetrain & Transmission track.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
         progressLabel: `Induction: ${progress.inductionStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Drivetrain & Transmission is future/target-only",
+        reward: "Unlocks the power-delivery package",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    if (dreamBuildDrivetrainLevel(state) >= 5) {
+      const progress = dreamBuildProgressSummary(state);
+      return {
+        id: "dream_build_drivetrain_complete",
+        title: "Drivetrain & Transmission complete",
+        body: "Next Build Track: Aero, Styling & Weight Reduction, future garage pass.",
+        progressCurrent: progress.completed,
+        progressTarget: progress.total,
+        progressLabel: `Drivetrain: ${progress.drivetrainStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Aero, Styling & Weight Reduction is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -14851,11 +15155,11 @@ function pinnedNearGoalForShop(gameState) {
       return {
         id: "dream_build_current_cap",
         title: "Dream Build Status",
-        body: "Current implemented core build track complete. Next Build Track: Induction & Cooling. Coming in a future garage pass.",
+        body: "Current implemented core build track complete. Next Build Track: Aero, Styling & Weight Reduction. Coming in a future garage pass.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
-        progressLabel: `Wheels: ${progress.wheelsStatus} · Exhaust: ${progress.exhaustStatus} · Suspension: ${progress.suspensionStatus} · Tires: ${progress.tiresStatus} · Brakes: ${progress.brakesStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Induction & Cooling is future/target-only",
+        progressLabel: `Wheels: ${progress.wheelsStatus} · Exhaust: ${progress.exhaustStatus} · Suspension: ${progress.suspensionStatus} · Tires: ${progress.tiresStatus} · Brakes: ${progress.brakesStatus} · Induction: ${progress.inductionStatus} · Drivetrain: ${progress.drivetrainStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Aero, Styling & Weight Reduction is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -17573,6 +17877,24 @@ function handleDreamBuildInduction(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleDreamBuildDrivetrain(action) {
+  const result = buyDreamBuildDrivetrain(action, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = dreamBuildTabUnlocked(result.gameState) ? "dream_build" : "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleGarageEvent(eventId) {
   const result = completeGarageEvent(eventId, currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -17801,6 +18123,14 @@ function handleTofuShopPanelClick(event) {
       || target.dataset.dreamBuildAction === "anti-lag-cooling-package"
     ) {
       handleDreamBuildInduction(target.dataset.dreamBuildAction);
+    } else if (
+      target.dataset.dreamBuildAction === "sports-clutch-flywheel"
+      || target.dataset.dreamBuildAction === "limited-slip-differential"
+      || target.dataset.dreamBuildAction === "carbon-driveshaft-axles"
+      || target.dataset.dreamBuildAction === "custom-gearbox"
+      || target.dataset.dreamBuildAction === "sequential-transmission-package"
+    ) {
+      handleDreamBuildDrivetrain(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
     } else if (target.dataset.dreamBuildAction === "accept-sponsor-inquiry") {
@@ -18411,7 +18741,16 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildInduction(work.action);
     } else {
-      setSummaryStatusMessage("Drivetrain & Transmission comes in a future garage pass.");
+      setSummaryStatusMessage("Drivetrain & Transmission is the next build track.");
+    }
+    return;
+  }
+  if (actionType === "buy_dream_drivetrain_work") {
+    const work = nextDreamBuildDrivetrainWork(currentGameState());
+    if (work) {
+      handleDreamBuildDrivetrain(work.action);
+    } else {
+      setSummaryStatusMessage("Aero, Styling & Weight Reduction comes in a future garage pass.");
     }
     return;
   }
