@@ -310,10 +310,10 @@ Use more authentic language for Suspension while keeping runtime purchases narro
 - Level 4: Corner Balance. Fully customizable coilover setup and chassis geometry.
 - Level 5: Showcase Stance. Final geometry, bracing, fitment, and presentation.
 
-Suspension Track Completion V1 implements Levels 1-5. Tires & Rubber Track V1 and Brakes & Control
-Track V1 are now implemented as the next runtime slices. Induction & Cooling is the next future
-build track and should be pulled from this catalog only when that runtime slice is intentionally
-scoped.
+Suspension Track Completion V1 implements Levels 1-5. Tires & Rubber Track V1, Brakes & Control
+Track V1, and Induction & Cooling Track V1 are now implemented as runtime slices. Drivetrain &
+Transmission and Aero/Styling remain future tracks and should be pulled from this catalog only when
+those runtime slices are intentionally scoped.
 
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build

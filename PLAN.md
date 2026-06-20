@@ -226,9 +226,11 @@
   Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add a combined
   `+$47M Garage Build Value`.
 - Tires & Rubber Track V1 and Brakes & Control Track V1 are implemented after Suspension Level 5.
-  Tires adds `+$505M Garage Build Value`; Brakes adds `+$4.05B Garage Build Value`. Induction &
-  Cooling, full parts inventory, repeatable completed-build events, Car Management, and full
-  valuation remain future.
+  Tires adds `+$505M Garage Build Value`; Brakes adds `+$4.05B Garage Build Value`.
+- Induction & Cooling Track V1 is implemented after Brakes Level 5 plus Local Showcase completion.
+  It adds Sports Intercooler through Anti-Lag & Cooling Package, adds `+$35.25B Garage Build
+  Value`, and keeps Drivetrain & Transmission, full parts inventory, repeatable completed-build
+  events, Car Management, and full valuation future.
 - Garage Event Board V1 is implemented inside the Dream Build tab as the first parked event bridge.
   It unlocks at `$100M Net Worth` plus Tires & Rubber Level 5 and resolves four one-time fictional
   events instantly: Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector
@@ -236,9 +238,9 @@
   rewards. Full Car Management, multiple cars, auctions, collector-sale offers, public profiles,
   uploads, and network calls remain future.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
-  Tires, and Brakes levels against a planned `40` stage core build, shows current part labels,
+  Tires, Brakes, and Induction levels against a planned `40` stage core build, shows current part labels,
   points to the next dream step, and keeps future tracks locked/deferred. The current implemented
-  maximum is `23 / 40`. Goal Stack also uses this status as the stable mid-term target so players
+  maximum is `28 / 40`. Goal Stack also uses this status as the stable mid-term target so players
   know whether more implemented car work exists.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
@@ -346,9 +348,9 @@ Canonical references:
    Wheels Fund is hidden on fresh saves, Exhaust stays hidden until Wheels level 3,
    Buy Exhaust/Tuned Note/Heat Wrapped/Showcase Finish appear only when affordable and stable, the
    Dream Build tab appears only after build start, Suspension work appears in stable order after
-   Exhaust Level 5, Tires and Brakes continue in stable order, Garage Build Value and `23 / 40`
-   progress totals stay clear, Induction & Cooling remains future-only, and urgent shop bottlenecks
-   still win.
+   Exhaust Level 5, Tires, Brakes, and Induction continue in stable order, Garage Build Value and
+   `28 / 40` progress totals stay clear, Drivetrain & Transmission remains future-only, and urgent
+   shop bottlenecks still win.
 12. Playtest Garage Event Board V1: verify `$100M Net Worth` plus Tires Level 5 unlock, event
    reward pacing, Garage Reputation clarity, Brand Value/Net Worth changes, badge status, repeat
    prevention, and that full Car Management still feels like a future layer.
@@ -434,9 +436,10 @@ Future Dream Garage milestone sequence:
    Fitted, `$375K` Sealed Joints, `$600K` Tuned Note, `$1.1M` Heat Wrapped, `$2M` Showcase Finish,
    `$4M` Suspension Refreshed, `$7.5M` Ride Height Set, `$12M` Alignment Dialed, `$20M` Corner
    Balance, `$35M` Showcase Stance, Tires through `$300M` Event Tire Set, Brakes through `$2.25B`
-   Brake Balance & Control Package, `23 / 40` progress, Garage Build Value totals, persistence,
-   and priority rules.
-2. Design Induction & Cooling as the next standalone track.
+   Brake Balance & Control Package, Sports Intercooler, Electronic Boost Control, Hybrid Turbo
+   Upgrade, Big Turbo Kit, Anti-Lag & Cooling Package, `28 / 40` progress, Garage Build Value
+   totals, persistence, and priority rules.
+2. Design Drivetrain & Transmission as the next standalone track.
 3. Design the first parked event/showcase loop.
 4. Implement Car Management V1 only after the first part tracks are fun.
 6. Add multiple cars.

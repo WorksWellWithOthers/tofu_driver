@@ -670,10 +670,10 @@ Design rules:
 - Exhaust V1 implements Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped, and Showcase
   Finish.
 - Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It holds
-  Wheels, Exhaust, Suspension, Tires & Rubber, Brakes & Control, Dream Build Progress, Garage Build
-  Value, Builder Note, and future-only garage management notes so the Overview does not become a
-  full build dashboard. It may show a collapsed Garage Tuning Catalog category preview, but the
-  full parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
+  Wheels, Exhaust, Suspension, Tires & Rubber, Brakes & Control, Induction & Cooling, Dream Build
+  Progress, Garage Build Value, Builder Note, and future-only garage management notes so the
+  Overview does not become a full build dashboard. It may show a collapsed Garage Tuning Catalog
+  category preview, but the full parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
 - Suspension Track Completion V1 is implemented after Exhaust Level 5. Suspension Refreshed,
   Ride Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add Garage
   Build Value, and are framed as fictional garage/story value, not speed or real-world vehicle
@@ -684,6 +684,10 @@ Design rules:
 - Brakes & Control Track V1 is implemented after Tires Level 5. Sports Brake Pads, Sports Brake
   Kit, Racing Brake Kit, Carbon Ceramic Big Brake Kit, and Brake Balance & Control Package cost
   Cash, add `+$4.05B Garage Build Value`, and advance Core Build Progress to `23 / 40`.
+- Induction & Cooling Track V1 is implemented after Brakes Level 5 and Local Showcase completion.
+  Sports Intercooler, Electronic Boost Control, Hybrid Turbo Upgrade, Big Turbo Kit, and Anti-Lag
+  & Cooling Package cost Cash, add `+$35.25B Garage Build Value`, and advance Core Build Progress
+  to `28 / 40`.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
@@ -691,8 +695,8 @@ Design rules:
   auctions, collector-sale offers, public profiles, or networked play.
 - Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
-  and Brakes levels. Induction & Cooling, Drivetrain & Transmission, Aero/Styling/Weight
-  Reduction, repeatable events, and full Dream Garage remain future.
+  Brakes, and Induction levels. Drivetrain & Transmission, Aero/Styling/Weight Reduction,
+  repeatable events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -767,19 +771,19 @@ Implemented Suspension V1 values:
 | 4 | Corner Balance | `$20M` | `+$12M` (`$27.725M` with Wheels level 3 and Exhaust level 5) |
 | 5 | Showcase Stance | `$35M` | `+$22M` (`$49.725M` with Wheels level 3 and Exhaust level 5) |
 
-Wheels levels 4-5, Induction & Cooling, full Dream Garage, completed-build events, Auction,
-Showcase, and Collector Offer remain future.
+Wheels levels 4-5, Drivetrain & Transmission, Aero/Styling/Weight Reduction, full Dream Garage,
+completed-build events, Auction, Showcase, and Collector Offer remain future.
 
 Core Build Progress V2:
 
 ```text
-Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + future core track levels
+Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + future core track levels
 Planned core build size = 8 tracks x 5 levels = 40 work stages
 ```
 
-The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, and Brakes labels, the
+The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, Brakes, and Induction labels, the
 next dream step, Garage Build Value, Builder Note, and compact future track notes. It must not add
-future Induction, Drivetrain, Aero purchase buttons, Car Management, or a full Dream Garage surface.
+future Drivetrain, Aero purchase buttons, Car Management, or a full Dream Garage surface.
 
 Avoid:
 

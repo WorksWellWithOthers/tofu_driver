@@ -77,7 +77,8 @@ Covered Car / Dream Build Teaser V1 -> First Dream Build Investment Purchase V1 
 Wheels Work Levels V1 -> Exhaust Purchase + Work Level V1 -> Core Build Progress V2 ->
 Net Worth Milestone Ladder V1 -> Showcase Interest / Showcase Prep V1 -> Sponsor Inquiry V1 ->
 Overview Glance Mode V1 -> Dream Build Tab V1 -> Suspension Track Completion V1 ->
-Tofu Garage Tuning Catalog V1 -> Tires & Rubber Track V1 -> Brakes & Control Track V1.
+Tofu Garage Tuning Catalog V1 -> Tires & Rubber Track V1 -> Brakes & Control Track V1 ->
+Induction & Cooling Track V1.
 Garage Event Board V1 now follows Tires & Rubber Level 5 plus `$100M Net Worth` as the first
 one-time parked event bridge.
 ```
@@ -85,9 +86,9 @@ one-time parked event bridge.
 Overview Glance Mode V1 does not add a new resource or system. It clarifies the current unfold by
 separating live `Now`, stable `Pinned Goal`, and long-term `Era Goal`, while moving long formulas
 and explanations behind Details controls. After the build starts, the earned Dream Build tab holds
-the detailed Wheels, Exhaust, Suspension, Tires, Brakes, Garage Build Value, and Builder Note
-content. After Brake Balance & Control Package, it tells the player that Induction & Cooling is
-future/target-only.
+the detailed Wheels, Exhaust, Suspension, Tires, Brakes, Induction, Garage Build Value, and Builder
+Note content. After Anti-Lag & Cooling Package, it tells the player that Drivetrain & Transmission
+is future/target-only.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
@@ -98,9 +99,8 @@ separate.
 Later:
 
 ```text
-Induction & Cooling target preview -> Wheels levels 4-5 or Drivetrain/Aero -> recurring sponsor
-package design -> completed-build event design -> Keep / Show / Auction choice -> full Net Worth
-accounting.
+Drivetrain/Aero target preview -> Wheels levels 4-5 -> recurring sponsor package design ->
+completed-build event design -> Keep / Show / Auction choice -> full Net Worth accounting.
 ```
 
 Avoid for now:

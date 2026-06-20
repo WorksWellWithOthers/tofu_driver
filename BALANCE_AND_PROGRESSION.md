@@ -399,13 +399,18 @@ Examples:
   Suspension Level 5. Tires levels 1-5 add `+$505M Garage Build Value`; Brakes levels 1-5 add
   `+$4.05B Garage Build Value`. They are fictional garage/event-fit upgrades and do not affect
   Don't Spill the Cup scoring, certification, route proof, or Driver XP.
+- Induction & Cooling Track V1 unlocks after Brakes & Control Level 5 plus Local Showcase
+  completion. Levels 1-5 add `+$35.25B Garage Build Value`, advance Core Build Progress to
+  `28 / 40`, and use authentic intercooler, boost control, turbo, anti-lag, and cooling-package
+  language as fictional Tofu Garage progression only.
 - Garage Event Board V1 is the first parked event bridge after Tires & Rubber Level 5 and `$100M`
   Net Worth. It lives in the Dream Build tab, resolves events instantly in V1, and grants defined
   local Cash, Brand Value, Garage Reputation, and local badge rewards. It does not create repeatable
   timers, multiple cars, auctions, collector-sale offers, Car Management, or networked/social play.
 - Core Build Progress V2 summarizes current build completion as work stages. The planned core
   build size is 40 stages: eight tracks times five levels. Current implemented stages are Wheels
-  levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, and Brakes levels 1-5.
+  levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, Brakes levels 1-5,
+  and Induction levels 1-5.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -462,8 +467,9 @@ The Pinned Goal should update when a meaningful milestone completes, not because
 an affordability threshold, the order queue briefly fills, or ETA text changes. After Exhaust Level
 5, it may point through the implemented Suspension track. After Suspension Level 5, it points
 through Tires & Rubber. After Tires Level 5, it can point to the Garage Event Board when an event
-is available, otherwise through Brakes & Control. After the V1 event board is complete and Brakes
-Level 5 is complete, Induction & Cooling is shown as the next future/target-only build track.
+is available, otherwise through Brakes & Control. After Brakes Level 5 and Local Showcase are
+complete, it points through Induction & Cooling. After Induction Level 5, Drivetrain & Transmission
+is shown as the next future/target-only build track.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -503,8 +509,9 @@ Rules:
   If Cash is already at `$50K`, it may show `Buy Wheels`. After Wheels are purchased, it may show
   Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`,
   `Seal Joints`, `Tuned Note`, `Heat Wrapped`, or `Showcase Finish` when no urgent shop goal is
-  more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, and Brakes
-  & Control. After Brakes level 5, Induction & Cooling remains target-only/future.
+  more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, Brakes &
+  Control, and Induction & Cooling. After Induction level 5, Drivetrain & Transmission remains
+  target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1554,15 +1561,25 @@ Core Build Progress V2:
 | Suspension Level | `0-5` current runtime stages |
 | Tires & Rubber Level | `0-5` current runtime stages |
 | Brakes & Control Level | `0-5` current runtime stages |
-| Induction & Cooling | future locked track |
+| Induction & Cooling Level | `0-5` current runtime stages after Brakes Level 5 plus Local Showcase |
 | Drivetrain & Transmission | future locked track |
 | Aero, Styling & Weight Reduction | future locked track |
 
 The progress denominator is `40` planned core work stages. After Balanced Fitment, Showcase Finish,
-Showcase Stance, Event Tire Set, and Brake Balance & Control Package, the current implemented
-maximum is `23 / 40`. Induction & Cooling remains target-only/future.
+Showcase Stance, Event Tire Set, Brake Balance & Control Package, and Anti-Lag & Cooling Package,
+the current implemented maximum is `28 / 40`. Drivetrain & Transmission remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
+
+Implemented Induction & Cooling V1 values:
+
+| Induction Level | Work | Cash Cost | Garage Build Value |
+| --- | --- | --- | --- |
+| 1 | Sports Intercooler | `$3.5B` | `+$2.5B` |
+| 2 | Electronic Boost Control | `$5.25B` | `+$3.75B` |
+| 3 | Hybrid Turbo Upgrade | `$8B` | `+$6B` |
+| 4 | Big Turbo Kit | `$12B` | `+$9B` |
+| 5 | Anti-Lag & Cooling Package | `$18B` | `+$14B` |
 
 Possible level effects:
 
