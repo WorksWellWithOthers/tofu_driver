@@ -416,9 +416,9 @@ Examples:
   local Cash, Brand Value, Garage Reputation, and local badge rewards. It does not create repeatable
   timers, multiple cars, auctions, collector-sale offers, Car Management, or networked/social play.
 - Core Build Progress V2 summarizes current build completion as work stages. The planned core
-  build size is 40 stages: eight tracks times five levels. Current implemented stages are Wheels
-  levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, Brakes levels 1-5,
-  and Induction levels 1-5.
+  build size is 40 stages. Current implemented stages are Wheels levels 1-3, Exhaust levels 1-5,
+  Suspension levels 1-5, Tires levels 1-5, Brakes levels 1-5, Induction levels 1-5, Drivetrain
+  levels 1-5, Aero levels 1-5, Final Detail, and Shakedown Complete.
 - A finished project car may unlock sponsors, showcases, a tuning shop, or a car company.
 - Keeping a car may increase status and portfolio value.
 - Selling a car may convert Car Asset Value back into Cash.
@@ -478,8 +478,8 @@ through Tires & Rubber. After Tires Level 5, it can point to the Garage Event Bo
 is available, otherwise through Brakes & Control. After Brakes Level 5 and Local Showcase are
 complete, it points through Induction & Cooling. After Induction Level 5, it points through
 Drivetrain & Transmission. After Drivetrain Level 5, it points through Aero, Styling & Weight
-Reduction. After Aero Level 5, Final Detail & Shakedown is shown as the next future/target-only
-core step.
+Reduction. After Aero Level 5, it points through Final Detail and Shakedown Complete. After the
+first complete build, it points to future Car Management as target-only.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -520,8 +520,9 @@ Rules:
   Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`,
   `Seal Joints`, `Tuned Note`, `Heat Wrapped`, or `Showcase Finish` when no urgent shop goal is
   more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, Brakes &
-  Control, Induction & Cooling, Drivetrain & Transmission, and Aero, Styling & Weight Reduction.
-  After Aero level 5, Final Detail & Shakedown remains target-only/future.
+  Control, Induction & Cooling, Drivetrain & Transmission, Aero, Styling & Weight Reduction, Final
+  Detail, and Shakedown Complete. After the first complete build, Car Management remains
+  target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1574,11 +1575,12 @@ Core Build Progress V2:
 | Induction & Cooling Level | `0-5` current runtime stages after Brakes Level 5 plus Local Showcase |
 | Drivetrain & Transmission Level | `0-5` current runtime stages after Induction Level 5 |
 | Aero, Styling & Weight Reduction Level | `0-5` current runtime stages after Drivetrain Level 5 |
+| Final Build Level | `0-2` current runtime stages after Aero Level 5 |
 
 The progress denominator is `40` planned core work stages. After Balanced Fitment, Showcase Finish,
 Showcase Stance, Event Tire Set, Brake Balance & Control Package, Anti-Lag & Cooling Package, and
-Sequential Transmission Package, and Carbon Body & Roll Cage, the current implemented maximum is
-`38 / 40`. Final Detail & Shakedown remains target-only/future.
+Sequential Transmission Package, Carbon Body & Roll Cage, Final Detail, and Shakedown Complete,
+the current implemented maximum is `40 / 40`.
 
 Each level is an investment, not a direct cash printer.
 
@@ -1611,6 +1613,17 @@ Implemented Aero, Styling & Weight Reduction V1 values:
 | 3 | Wide Body & Vented Panels | `$450B` | `+$360B` |
 | 4 | Weight Reduction Package | `$675B` | `+$540B` |
 | 5 | Carbon Body & Roll Cage | `$1T` | `+$800B` |
+
+Implemented First Complete Build V1 values:
+
+| Final Step | Work | Cash Cost | Garage Build Value |
+| --- | --- | --- | --- |
+| 39 / 40 | Final Detail | `$1.5T` | `+$1.2T` |
+| 40 / 40 | Shakedown Complete / First Complete Build | `$2.5T` | `+$2T` |
+
+The First Complete Build status is local Tofu Garage progression only. It does not add Car
+Management, multiple cars, auctions, collector offers, repeatable events, backend sync, or Cup Test
+effects.
 
 Possible level effects:
 

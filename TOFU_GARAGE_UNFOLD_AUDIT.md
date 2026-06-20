@@ -40,7 +40,7 @@ kept out of the primary Tofu Garage loop.
 | Manager Desk | Managed-shop layer | high Reputation and shop level | batch/queue upgrades | turn queue pressure into throughput | after Counter Crew/Catering scale | maxed Counter Service plateau | future franchise only later | meaningful V1 |
 | Wholesale Pickup | Capped managed queue clearing | Manager Desk upgrade | consumes scalar orders/stock | clear full queue without per-order objects | after Hire Shift Manager | order queue cap | Covered Car teaser, future manager economy | meaningful V1 |
 | Covered Car / Dream Build Teaser | Parked story/status carrot | Manager Desk scale and Wholesale Pickup progress | seen/acknowledged state only | understand that the shop funds the dream | after managed shop proves itself | motivation after the first shop layer | future Dream Garage planning | implemented story/status only |
-| First Dream Build Investment | Wheels Fund purchase, Wheels work levels, Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Aero, Dream Build Progress, Showcase Prep V1, Sponsor Inquiry V1, and Garage Event Board V1 | Cash from Tofu Shop orders and shop automation | subtracts Cash, raises Garage Build Value, can add one-time Cash and Brand Value through Sponsor Inquiry and event rewards | decide whether to fund careful garage/story work or keep growing the shop | after covered-car teaser, stable shop state, Wheels level 3 for Exhaust, first `$1M Net Worth` for Showcase Interest, Showcase Prep for Sponsor Inquiry, `$100M Net Worth` plus Tires Level 5 for Garage Event Board, Induction Level 5 for Drivetrain, and Drivetrain Level 5 for Aero | proves multi-part buy-once/work-level model without speed/performance framing | Wheels levels 4-5, Final Detail & Shakedown, recurring sponsor packages, repeatable events, full Car Management, future Dream Garage design | meaningful V1 purchase/work/progress |
+| First Dream Build Investment | Wheels Fund purchase, Wheels work levels, Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, Shakedown, Dream Build Progress, Showcase Prep V1, Sponsor Inquiry V1, and Garage Event Board V1 | Cash from Tofu Shop orders and shop automation | subtracts Cash, raises Garage Build Value, can add one-time Cash and Brand Value through Sponsor Inquiry and event rewards | decide whether to fund careful garage/story work or keep growing the shop | after covered-car teaser, stable shop state, Wheels level 3 for Exhaust, first `$1M Net Worth` for Showcase Interest, Showcase Prep for Sponsor Inquiry, `$100M Net Worth` plus Tires Level 5 for Garage Event Board, Induction Level 5 for Drivetrain, Drivetrain Level 5 for Aero, and Aero Level 5 for Final Detail & Shakedown | proves multi-part buy-once/work-level model without speed/performance framing | Wheels levels 4-5, recurring sponsor packages, repeatable events, full Car Management, future Dream Garage design | meaningful V1 purchase/work/progress |
 | Net Worth Milestones | Long-term value ladder toward `$1T Net Worth` | Cash, Tofu Business Value, Garage Build Value, Brand Value | milestone state is tracked; no separate spend | gives concrete stepping stones and unlocks Showcase Interest at first `$1M` | after Net Worth V1 is visible | vague `$1T` goal with no intermediate carrot | Showcase Prep, Sponsor Inquiry, later business opportunities | meaningful V1 guidance |
 | Brand Value | Fictional value from careful garage-build attention | one-time Sponsor Inquiry V1 and Garage Event Board V1 | contributes to Net Worth V1 only | show smooth garage investment can create business value | after Showcase Prep/first `$1M Net Worth`, then event board at `$100M` plus Tires Level 5 | Net Worth path feels only like cash saving | recurring sponsor packages later | meaningful V1, no recurring income |
 | Passport Stamps | Local status/milestone layer | shop and Cup Test milestones | collection/progress feedback | pursue short-term proof | first stamp | lack of direction | later achievement layers | meaningful |
@@ -78,7 +78,8 @@ Wheels Work Levels V1 -> Exhaust Purchase + Work Level V1 -> Core Build Progress
 Net Worth Milestone Ladder V1 -> Showcase Interest / Showcase Prep V1 -> Sponsor Inquiry V1 ->
 Overview Glance Mode V1 -> Dream Build Tab V1 -> Suspension Track Completion V1 ->
 Tofu Garage Tuning Catalog V1 -> Tires & Rubber Track V1 -> Brakes & Control Track V1 ->
-Induction & Cooling Track V1.
+Induction & Cooling Track V1 -> Drivetrain & Transmission Track V1 ->
+Aero, Styling & Weight Reduction Track V1 -> First Complete Build V1.
 Garage Event Board V1 now follows Tires & Rubber Level 5 plus `$100M Net Worth` as the first
 one-time parked event bridge.
 ```
@@ -86,9 +87,10 @@ one-time parked event bridge.
 Overview Glance Mode V1 does not add a new resource or system. It clarifies the current unfold by
 separating live `Now`, stable `Pinned Goal`, and long-term `Era Goal`, while moving long formulas
 and explanations behind Details controls. After the build starts, the earned Dream Build tab holds
-the detailed Wheels, Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Aero, Garage Build
-Value, and Builder Note content. After Carbon Body & Roll Cage, it tells the player that Final
-Detail & Shakedown is future/target-only.
+the detailed Wheels, Exhaust, Suspension, Tires, Brakes, Induction, Drivetrain, Aero, Final Detail,
+Garage Build Value, and Builder Note content. After Carbon Body & Roll Cage, it offers Final Detail
+and Shakedown as the last two local core build steps; after Shakedown it points to Car Management
+as a future garage pass.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
@@ -99,8 +101,8 @@ separate.
 Later:
 
 ```text
-Final Detail & Shakedown target preview -> Wheels levels 4-5 -> recurring sponsor package design ->
-completed-build event design -> Keep / Show / Auction choice -> full Net Worth accounting.
+Wheels levels 4-5 -> recurring sponsor package design -> completed-build event design ->
+Car Management V1 -> Keep / Show / Auction choice -> full Net Worth accounting.
 ```
 
 Avoid for now:

@@ -703,6 +703,9 @@ Design rules:
   5. Front Splitter & Side Skirts, Rear Diffuser & Wing, Wide Body & Vented Panels, Weight
   Reduction Package, and Carbon Body & Roll Cage cost Cash, add `+$2.1T Garage Build Value`, and
   advance Core Build Progress to `38 / 40`.
+- First Complete Build V1 finishes the first core car after Aero Level 5. Final Detail costs
+  `$1.5T Cash` and adds `+$1.2T Garage Build Value`; Shakedown Complete costs `$2.5T Cash`, adds
+  `+$2T Garage Build Value`, and marks the local `First Complete Build` status at `40 / 40`.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
@@ -710,8 +713,8 @@ Design rules:
   auctions, collector-sale offers, public profiles, or networked play.
 - Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
-  Brakes, Induction, Drivetrain, and Aero levels. Final Detail & Shakedown, repeatable events, and
-  full Dream Garage remain future.
+  Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion. Repeatable events,
+  multiple cars, auctions, collector offers, and full Car Management remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.

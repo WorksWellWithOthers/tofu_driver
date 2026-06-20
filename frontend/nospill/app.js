@@ -329,7 +329,7 @@ const DRIVER_LICENSES = [
   { minLevel: 30, label: "Delivery Legend" },
 ];
 
-const SHOP_MAX_RESOURCE = 1000000000000;
+const SHOP_MAX_RESOURCE = 10000000000000;
 const SHOP_DELIVERY_ORDER_QUEUE_CAP = 1000000;
 const SHOP_OFFLINE_BASE_CAP_HOURS = 24;
 const SHOP_OFFLINE_MANAGED_CAP_HOURS = 72;
@@ -426,6 +426,10 @@ const DREAM_BUILD_AERO_WEIGHT_REDUCTION_COST = 675000000000;
 const DREAM_BUILD_AERO_WEIGHT_REDUCTION_VALUE = 540000000000;
 const DREAM_BUILD_AERO_CARBON_CAGE_COST = 1000000000000;
 const DREAM_BUILD_AERO_CARBON_CAGE_VALUE = 800000000000;
+const DREAM_BUILD_FINAL_DETAIL_COST = 1500000000000;
+const DREAM_BUILD_FINAL_DETAIL_VALUE = 1200000000000;
+const DREAM_BUILD_SHAKEDOWN_COST = 2500000000000;
+const DREAM_BUILD_SHAKEDOWN_VALUE = 2000000000000;
 const DREAM_BUILD_TOTAL_WORK_STAGES = 40;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
@@ -3167,6 +3171,7 @@ function defaultShopState() {
       inductionLevel: 0,
       drivetrainLevel: 0,
       aeroLevel: 0,
+      finalBuildLevel: 0,
       builderNote: "",
       firstInvestmentPurchasedAt: "",
       showcaseDisplayPrepared: false,
@@ -3288,6 +3293,8 @@ function normalizeDreamBuild(dreamBuild) {
   const drivetrainLevel = inductionLevel >= 5 ? clamp(rawDrivetrainLevel, 0, 5) : 0;
   const rawAeroLevel = safeNonNegativeInteger(source.aeroLevel, 0, 5);
   const aeroLevel = drivetrainLevel >= 5 ? clamp(rawAeroLevel, 0, 5) : 0;
+  const rawFinalBuildLevel = safeNonNegativeInteger(source.finalBuildLevel, 0, 2);
+  const finalBuildLevel = aeroLevel >= 5 ? clamp(rawFinalBuildLevel, 0, 2) : 0;
   const knownMilestoneIds = new Set(NET_WORTH_MILESTONES.map((milestone) => milestone.id));
   const netWorthMilestonesReached = Array.isArray(source.netWorthMilestonesReached)
     ? source.netWorthMilestonesReached
@@ -3307,6 +3314,7 @@ function normalizeDreamBuild(dreamBuild) {
     inductionLevel,
     drivetrainLevel,
     aeroLevel,
+    finalBuildLevel,
     builderNote: sanitizeBuilderNote(source.builderNote),
     firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
       ? source.firstInvestmentPurchasedAt.slice(0, 40)
@@ -4741,7 +4749,9 @@ function orderPrepProgress(gameState) {
     : null;
   let message = `Next order is ${Math.floor(progress * 100)}% prepared.`;
   if (ready >= deliveryOrderQueueCapacity()) {
-    message = "Order queue full. Use Counter Service or bulk handoff upgrades before preparing more.";
+    message = state.shop.counterService && state.shop.counterService.running
+      ? "Order queue full. Counter Service is clearing prepared orders."
+      : "Order queue full. Start Counter Service to clear prepared orders.";
   } else if (ready > 0) {
     message = `Next order is ${Math.floor(progress * 100)}% prepared. Ready orders can be fulfilled now.`;
   } else if (running && etaSeconds !== null) {
@@ -5410,6 +5420,10 @@ function dreamBuildAeroLevel(gameState) {
   return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.aeroLevel, 0, 5);
 }
 
+function dreamBuildFinalBuildLevel(gameState) {
+  return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.finalBuildLevel, 0, 2);
+}
+
 function dreamBuildInvestmentStarted(gameState) {
   const state = normalizeGameState(gameState);
   const build = state.shop.dreamBuild;
@@ -5423,6 +5437,7 @@ function dreamBuildInvestmentStarted(gameState) {
     || safeNonNegativeInteger(build.inductionLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.drivetrainLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.aeroLevel, 0, 5) > 0
+    || safeNonNegativeInteger(build.finalBuildLevel, 0, 2) > 0
     || Boolean(build.showcaseDisplayPrepared);
 }
 
@@ -5441,6 +5456,7 @@ function projectCarValueV1(gameState) {
   const inductionLevel = dreamBuildInductionLevel(state);
   const drivetrainLevel = dreamBuildDrivetrainLevel(state);
   const aeroLevel = dreamBuildAeroLevel(state);
+  const finalBuildLevel = dreamBuildFinalBuildLevel(state);
   let value = 0;
   if (wheelsLevel >= 3) {
     value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
@@ -5524,6 +5540,10 @@ function projectCarValueV1(gameState) {
     DREAM_BUILD_AERO_WIDE_BODY_VALUE,
     DREAM_BUILD_AERO_WEIGHT_REDUCTION_VALUE,
     DREAM_BUILD_AERO_CARBON_CAGE_VALUE,
+  ]);
+  value += dreamBuildProgressiveValue(finalBuildLevel, [
+    DREAM_BUILD_FINAL_DETAIL_VALUE,
+    DREAM_BUILD_SHAKEDOWN_VALUE,
   ]);
   return value;
 }
@@ -6477,6 +6497,56 @@ function nextDreamBuildAeroWork(gameState) {
   return dreamBuildAeroWorkForLevel(dreamBuildAeroLevel(state));
 }
 
+function finalBuildUnlockStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const aeroReady = dreamBuildAeroLevel(state) >= 5;
+  return {
+    unlocked: aeroReady,
+    aeroReady,
+    reason: aeroReady ? "" : "Complete Aero, Styling & Weight Reduction to finish the first core build.",
+  };
+}
+
+function dreamBuildFinalWorkForLevel(level) {
+  if (level === 0) {
+    return {
+      action: "final-detail",
+      nextLevel: 1,
+      title: "Final Detail",
+      completeTitle: "Final Detail Complete",
+      buttonLabel: "Final Detail",
+      cost: DREAM_BUILD_FINAL_DETAIL_COST,
+      valueAdded: DREAM_BUILD_FINAL_DETAIL_VALUE,
+      copy: "Finish the final details, clean up the presentation, and make the first build feel complete.",
+      detailCopy: "Final inspection, body alignment, detailing, fastener check, fluids, presentation setup, and garage photo prep.",
+      completeCopy: "The build is cleaned up and ready for shakedown.",
+      feedback: "Final Detail complete: Garage Build Value +$1.2T.",
+    };
+  }
+  if (level === 1) {
+    return {
+      action: "shakedown-complete",
+      nextLevel: 2,
+      title: "Shakedown Complete",
+      completeTitle: "First Complete Build",
+      buttonLabel: "Complete First Build",
+      cost: DREAM_BUILD_SHAKEDOWN_COST,
+      valueAdded: DREAM_BUILD_SHAKEDOWN_VALUE,
+      copy: "Complete the first full build with a fictional parked shakedown and final garage sign-off.",
+      detailCopy: "Fictional shakedown sign-off, event readiness notes, final setup review, and first complete build documentation.",
+      completeCopy: "The first Tofu Garage build is complete.",
+      feedback: "First Complete Build: Shakedown Complete added. Garage Build Value +$2T.",
+    };
+  }
+  return null;
+}
+
+function nextDreamBuildFinalWork(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!finalBuildUnlockStatus(state).unlocked) return null;
+  return dreamBuildFinalWorkForLevel(dreamBuildFinalBuildLevel(state));
+}
+
 function dreamBuildWheelsStatusLabel(level) {
   if (level >= 5) return "Collector Finish";
   if (level >= 4) return "Showpiece Fitment";
@@ -6549,6 +6619,12 @@ function dreamBuildAeroStatusLabel(level) {
   return "Stock Body";
 }
 
+function dreamBuildFinalStatusLabel(level) {
+  if (level >= 2) return "First Complete Build";
+  if (level >= 1) return "Final Detail Complete";
+  return "Not started";
+}
+
 function dreamBuildProgressVisible(gameState) {
   const state = normalizeGameState(gameState);
   return dreamBuildWheelsPurchased(state) || (coveredCarTeaserSeen(state) && dreamInvestmentTargetVisible(state));
@@ -6564,8 +6640,9 @@ function dreamBuildProgressSummary(gameState) {
   const inductionLevel = dreamBuildInductionLevel(state);
   const drivetrainLevel = dreamBuildDrivetrainLevel(state);
   const aeroLevel = dreamBuildAeroLevel(state);
+  const finalBuildLevel = dreamBuildFinalBuildLevel(state);
   const completed = clamp(
-    wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel + inductionLevel + drivetrainLevel + aeroLevel,
+    wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel + inductionLevel + drivetrainLevel + aeroLevel + finalBuildLevel,
     0,
     DREAM_BUILD_TOTAL_WORK_STAGES,
   );
@@ -6589,6 +6666,8 @@ function dreamBuildProgressSummary(gameState) {
     drivetrainStatus: dreamBuildDrivetrainStatusLabel(drivetrainLevel),
     aeroLevel,
     aeroStatus: dreamBuildAeroStatusLabel(aeroLevel),
+    finalBuildLevel,
+    finalBuildStatus: dreamBuildFinalStatusLabel(finalBuildLevel),
   };
 }
 
@@ -6662,11 +6741,22 @@ function nextDreamBuildStep(gameState) {
   if (aeroWork) {
     return { title: aeroWork.title, copy: aeroWork.copy, future: false };
   }
+  const finalWork = nextDreamBuildFinalWork(state);
+  if (finalWork) {
+    return { title: finalWork.title, copy: finalWork.copy, future: false };
+  }
+  if (dreamBuildFinalBuildLevel(state) >= 2) {
+    return {
+      title: "First Complete Build",
+      copy: "The first Tofu Garage build is complete. Car Management comes in a future garage pass.",
+      future: true,
+    };
+  }
   if (dreamBuildAeroLevel(state) >= 5) {
     return {
       title: "Final Detail & Shakedown",
-      copy: "Aero, Styling & Weight Reduction is complete. Final Detail & Shakedown comes in a future garage pass.",
-      future: true,
+      copy: "Aero, Styling & Weight Reduction is complete. Final Detail is next.",
+      future: false,
     };
   }
   if (dreamBuildDrivetrainLevel(state) >= 5) {
@@ -6954,6 +7044,34 @@ function buyDreamBuildAero(action, gameState, options = {}) {
   }
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
   next.shop.dreamBuild.aeroLevel = work.nextLevel;
+  next.shop.counterService.lastResult = work.feedback;
+  return {
+    ok: true,
+    reason: "",
+    feedback: work.feedback,
+    work,
+    gameState: addLedgerEntry(next, "story", work.feedback),
+  };
+}
+
+function buyDreamBuildFinal(action, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  const unlock = finalBuildUnlockStatus(next);
+  if (!unlock.unlocked) {
+    return { ok: false, reason: unlock.reason, gameState: next };
+  }
+  const work = nextDreamBuildFinalWork(next);
+  if (!work || work.action !== action) {
+    return { ok: false, reason: "That Final Detail & Shakedown work is not available yet.", gameState: next };
+  }
+  if (cashBalance(next) < work.cost) {
+    return { ok: false, reason: `Need ${formatCash(work.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
+  next.shop.dreamBuild.finalBuildLevel = work.nextLevel;
   next.shop.counterService.lastResult = work.feedback;
   return {
     ok: true,
@@ -12275,6 +12393,7 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildInductionWork(state)
     && !nextDreamBuildDrivetrainWork(state)
     && !nextDreamBuildAeroWork(state)
+    && !nextDreamBuildFinalWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -12303,6 +12422,7 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildInductionWork(state)
     && !nextDreamBuildDrivetrainWork(state)
     && !nextDreamBuildAeroWork(state)
+    && !nextDreamBuildFinalWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -12315,7 +12435,13 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
-  if (shopUnlocked && prep.ready > 0 && bestOrder && state.shop.counterService.running) {
+  if (
+    shopUnlocked
+    && prep.ready > 0
+    && bestOrder
+    && state.shop.counterService.running
+    && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
+  ) {
     return {
       type: "wait_counter_service",
       title: "Next: Let Counter Service work",
@@ -12497,6 +12623,17 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const finalWork = nextDreamBuildFinalWork(state);
+      if (finalWork) {
+        const ready = cashBalance(state) >= finalWork.cost;
+        return {
+          type: ready ? "buy_dream_final_work" : "dream_investment_target",
+          title: ready ? `Next: ${finalWork.buttonLabel}` : `Next: Grow Cash for ${finalWork.title}`,
+          copy: ready ? finalWork.copy : `${finalWork.title} is the next final core build step when the shop can fund it.`,
+          buttonLabel: finalWork.buttonLabel,
+          disabled: false,
+        };
+      }
       const availableGarageEvent = nextAvailableGarageEvent(state);
       if (availableGarageEvent) {
         const affordable = garageEventAffordability(availableGarageEvent, state);
@@ -12589,7 +12726,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "Final Detail & Shakedown comes in a future garage pass.",
+        copy: "First Complete Build is finished. Car Management comes in a future garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -13359,9 +13496,10 @@ function renderDreamBuildTrackWorkCard(state, options) {
   const work = options.work;
   const canAfford = cashBalance(state) >= work.cost;
   const missing = Math.max(0, work.cost - cashBalance(state));
+  const status = options.statusOverride || `Level ${formatShopCount(options.level)} / ${formatShopCount(options.totalLevels || 5)} · ${options.statusLabel}`;
   return renderIdleCard({
     title: options.title,
-    status: `Level ${formatShopCount(options.level)} / 5 · ${options.statusLabel}`,
+    status,
     copy: work.copy,
     extra: `
       <div class="nospill-afford-progress">
@@ -13535,6 +13673,17 @@ function renderDreamInvestmentTargetCard(gameState) {
         detailsLabel: "Aero details",
       });
     }
+    const finalWork = nextDreamBuildFinalWork(state);
+    if (finalWork) {
+      return renderDreamBuildTrackWorkCard(state, {
+        title: "Final Detail & Shakedown",
+        level: dreamBuildFinalBuildLevel(state),
+        statusLabel: dreamBuildFinalStatusLabel(dreamBuildFinalBuildLevel(state)),
+        statusOverride: finalWork.nextLevel === 1 ? "Step 39 / 40" : "Step 40 / 40",
+        work: finalWork,
+        detailsLabel: "Final build details",
+      });
+    }
     const aeroStatus = aeroUnlockStatus(state);
     if (dreamBuildDrivetrainLevel(state) >= 5) {
       if (!aeroStatus.unlocked) {
@@ -13555,18 +13704,19 @@ function renderDreamInvestmentTargetCard(gameState) {
           actions: [],
         });
       }
-      if (dreamBuildAeroLevel(state) >= 5) {
+      if (dreamBuildFinalBuildLevel(state) >= 2) {
         return renderIdleCard({
-          title: "Aero, Styling & Weight Reduction",
-          status: "Level 5 / 5 · Carbon Body & Roll Cage",
-          copy: "Aero, Styling & Weight Reduction Complete. The body, aero, and weight package is complete.",
+          title: "First Complete Build",
+          status: "Core Build Complete · 40 / 40",
+          copy: "The first Tofu Garage build is complete.",
           extra: `
             <div class="nospill-afford-progress">
               <div class="nospill-afford-progress-head">
                 <span>${GARAGE_BUILD_VALUE_LABEL}</span>
                 <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
               </div>
-              <small>Next Core Build Step: Final Detail &amp; Shakedown</small>
+              <small>First Complete Build</small>
+              <small>Next Era: Car Management</small>
               <small>Future garage pass.</small>
             </div>
           `,
@@ -13789,12 +13939,14 @@ function renderDreamBuildProgressCard(gameState) {
   const progress = dreamBuildProgressSummary(state);
   const nextStep = nextDreamBuildStep(state);
   const projectValue = projectCarValueV1(state);
-  const capReached = dreamBuildImplementedCapReached(state);
+  const finalComplete = dreamBuildFinalBuildLevel(state) >= 2;
   return renderIdleCard({
     title: "Core Build Progress",
-    status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
-    copy: capReached
-      ? "Core build nearly complete. Final Detail & Shakedown comes in a future garage pass."
+    status: finalComplete
+      ? `Core Build Complete · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`
+      : `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
+    copy: finalComplete
+      ? "The first Tofu Garage build is complete. Car Management comes later."
       : "Fictional Tofu Garage build value. Does not affect Cup Test scoring.",
     extra: `
       <div class="nospill-afford-progress">
@@ -13820,6 +13972,7 @@ function renderDreamBuildProgressCard(gameState) {
           <p>Induction &amp; Cooling · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</p>
           <p>Drivetrain &amp; Transmission · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</p>
           <p>Aero, Styling &amp; Weight Reduction · Level ${escapeHtml(formatShopCount(progress.aeroLevel))} / 5 · ${escapeHtml(progress.aeroStatus)}</p>
+          <p>Final Detail &amp; Shakedown · Step ${escapeHtml(formatShopCount(progress.finalBuildLevel))} / 2 · ${escapeHtml(progress.finalBuildStatus)}</p>
           <p>Net Worth V1 includes ${escapeHtml(netWorthV1FormulaLabel(state))}.</p>
         `)}
       </div>
@@ -13853,11 +14006,23 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
     : dreamBuildDrivetrainLevel(state) >= 5
       ? "Next"
       : "Future";
+  const finalWork = nextDreamBuildFinalWork(state);
+  const finalLabel = progress.finalBuildLevel >= 2
+    ? "First Complete Build"
+    : finalWork
+      ? `Next: ${finalWork.title}`
+      : dreamBuildAeroLevel(state) >= 5
+        ? "Next"
+        : "Future";
   const eventSummary = garageEventBoardOverviewSummary(state);
   return renderIdleCard({
     title: "Dream Build",
-    status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
-    copy: "The covered build now has its own tab. Overview stays focused on the next shop move.",
+    status: progress.finalBuildLevel >= 2
+      ? "First Complete Build"
+      : `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
+    copy: progress.finalBuildLevel >= 2
+      ? "First build complete. Next Era: Car Management, future."
+      : "The covered build now has its own tab. Overview stays focused on the next shop move.",
     extra: `
       <div class="nospill-afford-progress">
         <small>Wheels: ${escapeHtml(progress.wheelsStatus)}</small>
@@ -13868,6 +14033,7 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
         <small>Induction: ${escapeHtml(inductionLabel)}</small>
         <small>Drivetrain: ${escapeHtml(drivetrainLabel)}</small>
         <small>Aero: ${escapeHtml(aeroLabel)}</small>
+        <small>Final: ${escapeHtml(finalLabel)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))}</small>
         ${eventSummary ? `<small>Garage Event Board: ${escapeHtml(eventSummary)}</small>` : ""}
       </div>
@@ -13889,9 +14055,11 @@ function renderDreamBuildTracksCard(gameState) {
   const inductionWork = nextDreamBuildInductionWork(state);
   const drivetrainWork = nextDreamBuildDrivetrainWork(state);
   const aeroWork = nextDreamBuildAeroWork(state);
+  const finalWork = nextDreamBuildFinalWork(state);
   const inductionStatus = inductionUnlockStatus(state);
   const drivetrainStatus = drivetrainUnlockStatus(state);
   const aeroStatus = aeroUnlockStatus(state);
+  const finalStatus = finalBuildUnlockStatus(state);
   const trackRows = [
     ["Wheels", progress.wheelsStatus],
     ["Exhaust", progress.exhaustStatus],
@@ -13901,6 +14069,7 @@ function renderDreamBuildTracksCard(gameState) {
     ["Induction", inductionStatus.unlocked || progress.inductionLevel > 0 ? progress.inductionStatus : "Future"],
     ["Drivetrain", drivetrainStatus.unlocked || progress.drivetrainLevel > 0 ? progress.drivetrainStatus : "Future"],
     ["Aero", aeroStatus.unlocked || progress.aeroLevel > 0 ? progress.aeroStatus : "Future"],
+    ["Final", finalStatus.unlocked || progress.finalBuildLevel > 0 ? progress.finalBuildStatus : "Future"],
   ];
   const futureTracks = trackRows
     .filter(([, status]) => status === "Future")
@@ -13936,7 +14105,12 @@ function renderDreamBuildTracksCard(gameState) {
       ? `Aero, Styling & Weight Reduction · Future Track · ${aeroStatus.reason || "Complete Drivetrain & Transmission first."}`
       : aeroWork
         ? `Aero, Styling & Weight Reduction · Next Work: ${aeroWork.title} · ${formatCash(aeroWork.cost)} Cash · +${formatCashCount(aeroWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-        : "Aero, Styling & Weight Reduction · Complete · Next Core Build Step: Final Detail & Shakedown, future garage pass.",
+        : "Aero, Styling & Weight Reduction · Complete · Next Core Build Step: Final Detail & Shakedown.",
+    !finalStatus.unlocked
+      ? `Final Detail & Shakedown · Future Step · ${finalStatus.reason || "Complete Aero, Styling & Weight Reduction first."}`
+      : finalWork
+        ? `Final Detail & Shakedown · Next Work: ${finalWork.title} · ${formatCash(finalWork.cost)} Cash · +${formatCashCount(finalWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "First Complete Build · Core Build Complete · 40 / 40 · Next Era: Car Management, future garage pass.",
   ];
   return renderIdleCard({
     title: "Work Tracks",
@@ -13966,7 +14140,8 @@ function renderFutureGarageManagementCard() {
 
 function garageTuningCatalogFocusLabel(gameState) {
   const state = normalizeGameState(gameState);
-  if (dreamBuildAeroLevel(state) >= 5) return "Final Detail & Shakedown, future";
+  if (dreamBuildFinalBuildLevel(state) >= 2) return "Car Management, future";
+  if (dreamBuildAeroLevel(state) >= 5 || dreamBuildFinalBuildLevel(state) > 0) return "Final Detail & Shakedown";
   if (dreamBuildDrivetrainLevel(state) >= 5 || dreamBuildAeroLevel(state) > 0) return "Aero, Styling & Weight Reduction";
   if (dreamBuildInductionLevel(state) >= 5 || dreamBuildDrivetrainLevel(state) > 0) return "Drivetrain & Transmission";
   if (dreamBuildBrakesLevel(state) >= 5 || dreamBuildInductionLevel(state) > 0) return "Induction & Cooling";
@@ -14210,6 +14385,14 @@ function dreamInvestmentReturningNote(gameState) {
     if (tiresWork && cashBalance(state) >= tiresWork.cost) return `Dream Build work is ready: ${tiresWork.title}`;
     const brakesWork = nextDreamBuildBrakesWork(state);
     if (brakesWork && cashBalance(state) >= brakesWork.cost) return `Dream Build work is ready: ${brakesWork.title}`;
+    const inductionWork = nextDreamBuildInductionWork(state);
+    if (inductionWork && cashBalance(state) >= inductionWork.cost) return `Dream Build work is ready: ${inductionWork.title}`;
+    const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+    if (drivetrainWork && cashBalance(state) >= drivetrainWork.cost) return `Dream Build work is ready: ${drivetrainWork.title}`;
+    const aeroWork = nextDreamBuildAeroWork(state);
+    if (aeroWork && cashBalance(state) >= aeroWork.cost) return `Dream Build work is ready: ${aeroWork.title}`;
+    const finalWork = nextDreamBuildFinalWork(state);
+    if (finalWork && cashBalance(state) >= finalWork.cost) return `Dream Build work is ready: ${finalWork.title}`;
     const sponsor = sponsorInquiryStatus(state);
     if (sponsor.unlocked && !sponsor.accepted) return "Sponsor Inquiry available";
     const showcase = showcasePrepStatus(state);
@@ -15129,6 +15312,7 @@ function goalStackTargetForAction(action) {
     || action.type === "buy_dream_induction_work"
     || action.type === "buy_dream_drivetrain_work"
     || action.type === "buy_dream_aero_work"
+    || action.type === "buy_dream_final_work"
     || action.type === "dream_investment_target"
     || action.type === "prepare_showcase"
     || action.type === "showcase_prep_target"
@@ -15157,7 +15341,8 @@ function dreamBuildImplementedCapReached(gameState) {
     && dreamBuildBrakesLevel(state) >= 5
     && dreamBuildInductionLevel(state) >= 5
     && dreamBuildDrivetrainLevel(state) >= 5
-    && dreamBuildAeroLevel(state) >= 5;
+    && dreamBuildAeroLevel(state) >= 5
+    && dreamBuildFinalBuildLevel(state) >= 2;
 }
 
 function pinnedNearGoalForShop(gameState) {
@@ -15340,6 +15525,38 @@ function pinnedNearGoalForShop(gameState) {
           isFutureOnly: false,
         };
       }
+      const finalWork = nextDreamBuildFinalWork(state);
+      if (finalWork) {
+        return {
+          id: finalWork.action,
+          title: finalWork.title,
+          body: finalWork.nextLevel === 1
+            ? "Clean up the final presentation before shakedown."
+            : "Finish the first complete build.",
+          progressCurrent: cashBalance(state),
+          progressTarget: finalWork.cost,
+          progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(finalWork.cost)} Cash`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(finalWork.valueAdded)}`,
+          ctaLabel: "",
+          ctaTarget: "",
+          isFutureOnly: false,
+        };
+      }
+      if (dreamBuildFinalBuildLevel(state) >= 2) {
+        const progress = dreamBuildProgressSummary(state);
+        return {
+          id: "first_complete_build",
+          title: "First Complete Build",
+          body: "Car Management comes in a future garage pass.",
+          progressCurrent: progress.completed,
+          progressTarget: progress.total,
+          progressLabel: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} Core Build Progress`,
+          reward: "First Complete Build local status",
+          ctaLabel: "",
+          ctaTarget: "",
+          isFutureOnly: true,
+        };
+      }
     const inductionStatus = inductionUnlockStatus(state);
     if (dreamBuildBrakesLevel(state) >= 5 && !inductionStatus.unlocked) {
       const progress = dreamBuildProgressSummary(state);
@@ -15392,12 +15609,12 @@ function pinnedNearGoalForShop(gameState) {
       const progress = dreamBuildProgressSummary(state);
       return {
         id: "dream_build_current_cap",
-        title: "Core build nearly complete",
-        body: "Final Detail & Shakedown comes in a future garage pass.",
+        title: "First Complete Build",
+        body: "Car Management comes in a future garage pass.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
-        progressLabel: `Aero: ${progress.aeroStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Final Detail & Shakedown is future/target-only",
+        progressLabel: `${progress.finalBuildStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Car Management is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -15729,6 +15946,9 @@ function renderOverviewOperationalCard(state) {
         ? "Counter Service is waiting for ready orders."
         : "Tofu Stock, ready orders, and Counter Service are summarized here.";
   const prepCapacityLine = `${formatShopCount(state.shop.prepSlots)} slots open · ${formatShopCount(getPrepSlotMax(state.shop))} max`;
+  const prepCapacityMeaning = state.shop.prepSlots > 0
+    ? "Prepared-order storage is not currently the bottleneck."
+    : "Prep Capacity is recovering before more station purchases.";
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
   return renderIdleCard({
     title: "Tofu Shop",
@@ -15740,9 +15960,10 @@ function renderOverviewOperationalCard(state) {
         <small>Income: ${escapeHtml(income.text)}</small>
         <small>Tofu Stock/sec: +${escapeHtml(formatShopRate(rates.tofuPressPerSecond))}/sec</small>
         <small>Prep Capacity: ${escapeHtml(prepCapacityLine)}</small>
+        <small>${escapeHtml(prepCapacityMeaning)}</small>
         ${compactDetails("overview_order_details", "How orders work", `
           <p>Prepared orders fill the Delivery Orders queue. When that queue is full, Counter Service is the normal way to clear space.</p>
-          <p>Prep Capacity is the recovering expansion pool used to add more production stations. It is not a manual recharge button.</p>
+          <p>Prep Capacity is the recovering expansion pool used to add more production stations. It is not prepared-order storage and not a manual recharge button.</p>
           <p>Current prep state: ${escapeHtml(prep.message)}</p>
           ${bestOrder ? `<p>Best current order: ${escapeHtml(bestOrder.name)} uses ${escapeHtml(formatShopCost(bestOrder.tofuRequired))} tofu stock and ${escapeHtml(formatShopCount(bestOrder.deliveryOrdersRequired))} ready order${bestOrder.deliveryOrdersRequired === 1 ? "" : "s"}.</p>` : ""}
         `)}
@@ -18287,6 +18508,24 @@ function handleDreamBuildAero(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleDreamBuildFinal(action) {
+  const result = buyDreamBuildFinal(action, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = dreamBuildTabUnlocked(result.gameState) ? "dream_build" : "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleGarageEvent(eventId) {
   const result = completeGarageEvent(eventId, currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -18531,6 +18770,11 @@ function handleTofuShopPanelClick(event) {
       || target.dataset.dreamBuildAction === "carbon-body-roll-cage"
     ) {
       handleDreamBuildAero(target.dataset.dreamBuildAction);
+    } else if (
+      target.dataset.dreamBuildAction === "final-detail"
+      || target.dataset.dreamBuildAction === "shakedown-complete"
+    ) {
+      handleDreamBuildFinal(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
     } else if (target.dataset.dreamBuildAction === "accept-sponsor-inquiry") {
@@ -19168,7 +19412,16 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildAero(work.action);
     } else {
-      setSummaryStatusMessage("Final Detail & Shakedown comes in a future garage pass.");
+      setSummaryStatusMessage("Final Detail & Shakedown is the next core build step.");
+    }
+    return;
+  }
+  if (actionType === "buy_dream_final_work") {
+    const work = nextDreamBuildFinalWork(currentGameState());
+    if (work) {
+      handleDreamBuildFinal(work.action);
+    } else {
+      setSummaryStatusMessage("First Complete Build is finished. Car Management comes later.");
     }
     return;
   }

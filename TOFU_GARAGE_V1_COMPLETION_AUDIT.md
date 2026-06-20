@@ -66,9 +66,9 @@ or car assets.
 | First Dream Build Investment Purchase V1 | Implemented | Lets the player buy Wheels for `$50K Cash` after the covered-car bridge; subtracts Cash, persists locally, and starts `$25K Garage Build Value` without a Dream Garage tab or full parts inventory. |
 | Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Garage Build Value to `$65K`; Balanced Fitment costs `$150K` and raises Garage Build Value to `$150K`; levels 4-5 remain future. |
 | Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Garage Build Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note costs `$600K` and raises it to `$825K`; Heat Wrapped costs `$1.1M` and raises it to `$1.475M`; Showcase Finish costs `$2M` and raises it to `$2.725M`. |
-| Dream Build Tab V1 + Suspension/Tires/Brakes/Induction/Drivetrain/Aero Tracks | Implemented | Earned Dream Build tab appears after the build starts; Suspension, Tires & Rubber, Brakes & Control, Induction & Cooling, Drivetrain & Transmission, and Aero/Styling/Weight Reduction levels 1-5 unfold in order through Carbon Body & Roll Cage. |
+| Dream Build Tab V1 + Suspension/Tires/Brakes/Induction/Drivetrain/Aero/First Complete Build Tracks | Implemented | Earned Dream Build tab appears after the build starts; Suspension, Tires & Rubber, Brakes & Control, Induction & Cooling, Drivetrain & Transmission, Aero/Styling/Weight Reduction levels 1-5, Final Detail, and Shakedown unfold in order through First Complete Build. |
 | Tofu Garage Tuning Catalog V1 | Implemented docs + preview | `TOFU_GARAGE_TUNING_CATALOG.md` is the canonical future parts source; Dream Build tab shows a collapsed category-only preview and does not dump the full list into Overview. |
-| Core Build Progress V2 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level against `40` planned core work stages; current maximum is `38 / 40`; Final Detail & Shakedown remains locked/deferred. |
+| Core Build Progress V2 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level + Final Build Level against `40` planned core work stages; current maximum is `40 / 40` after Shakedown Complete. |
 | Garage Event Board V1 | Implemented | Unlocks in the Dream Build tab at `$100M Net Worth` plus Tires & Rubber Level 5; Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector Preview are one-time parked fictional events with local Cash, Brand Value, Garage Reputation, and badge rewards. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
@@ -189,14 +189,16 @@ Current code status:
 - Suspension Track Completion V1 implements Suspension Refreshed, Ride Height Set, Alignment
   Dialed, Corner Balance, and Showcase Stance after Exhaust Level 5. Tires & Rubber Track V1 then
   adds Sports Tire Set through Event Tire Set, Brakes & Control Track V1 adds Sports Brake Pads
-  through Brake Balance & Control Package, and Induction & Cooling Track V1 adds Sports Intercooler
-  through Anti-Lag & Cooling Package after Local Showcase.
+  through Brake Balance & Control Package, Induction & Cooling Track V1 adds Sports Intercooler
+  through Anti-Lag & Cooling Package after Local Showcase, Drivetrain & Transmission adds the
+  power-delivery layer, Aero/Styling/Weight Reduction adds the body package, and First Complete
+  Build V1 adds Final Detail plus Shakedown Complete.
 - Tofu Garage Tuning Catalog V1 documents authentic future parts vocabulary for the standalone
   garage game. Runtime only previews category names in a collapsed Dream Build card.
 - Core Build Progress V2 shows the project as `40` planned core work stages. Current implemented
   stages are Wheels levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5,
-  Brakes levels 1-5, Induction levels 1-5, Drivetrain levels 1-5, and Aero levels 1-5, for a
-  current maximum of `38 / 40`.
+  Brakes levels 1-5, Induction levels 1-5, Drivetrain levels 1-5, Aero levels 1-5, Final Detail,
+  and Shakedown Complete, for a current maximum of `40 / 40`.
 - Garage Event Board V1 makes the first `$100M` garage-era reward real once Tires & Rubber Level 5
   is complete. It is one-time and parked-only; repeatable events, multiple cars, collector offers,
   auctions, and full Car Management remain future.
@@ -228,11 +230,11 @@ budgets, and any Car Asset Value-facing accounting.
 7. Playtest First Dream Build Investment Purchase V1: verify the `$50K` Wheels purchase and `$25K`
    Garage Build Value tradeoff is clear without feeling like full Dream Garage.
 8. Playtest Wheels Work Levels V1, Exhaust Purchase + Work Level V1, and Core Build Progress V2
-   alongside the implemented Suspension, Tires, Brakes, Induction, Drivetrain, and Aero tracks.
+   alongside the implemented Suspension, Tires, Brakes, Induction, Drivetrain, Aero, and First
+   Complete Build steps.
    Parts should be purchased once, then improved through levels.
-9. Playtest Suspension, Tires & Rubber, Brakes & Control, Induction & Cooling, Drivetrain, and Aero
-   after the completed Exhaust track; keep Final Detail & Shakedown target-only until this slice is
-   proven.
+9. Playtest Final Detail and Shakedown pacing after Aero Level 5; keep Car Management target-only
+   until the completed-build handoff is proven.
 10. Design completed-build event choices before implementing Keep, Showcase, Closed-Course
    Exhibition, Auction, or Collector Offer outcomes.
 11. Design full Car Asset Value and project-budget rules before any broader car-part costs are added.

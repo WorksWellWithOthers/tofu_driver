@@ -4553,6 +4553,77 @@ const aeroFiveTick = normalizeGameState(aeroFivePurchase.gameState);
 aeroFiveTick.shop.tips += 500000;
 globalThis.aeroFiveTickPinned = pinnedNearGoalForShop(aeroFiveTick);
 
+const finalDetailLow = normalizeGameState(aeroFivePurchase.gameState);
+finalDetailLow.shop.tips = 1499999999999;
+globalThis.finalDetailLowCardHtml = renderDreamInvestmentTargetCard(finalDetailLow);
+globalThis.finalDetailLowPurchase = buyDreamBuildFinal("final-detail", finalDetailLow, { activeDrive: false });
+
+const finalDetailReady = normalizeGameState(aeroFivePurchase.gameState);
+finalDetailReady.shop.tips = 1500001000000;
+globalThis.finalDetailReadyCardHtml = renderDreamInvestmentTargetCard(finalDetailReady);
+globalThis.finalDetailPinned = pinnedNearGoalForShop(finalDetailReady);
+globalThis.finalDetailAction = nextBestAction(finalDetailReady);
+globalThis.finalDetailPurchase = buyDreamBuildFinal("final-detail", finalDetailReady, { activeDrive: false });
+globalThis.finalDetailLevel = dreamBuildProgressSummary(finalDetailPurchase.gameState).finalBuildLevel;
+globalThis.finalDetailCashAfter = cashBalance(finalDetailPurchase.gameState);
+globalThis.finalDetailProjectValue = projectCarValueV1(finalDetailPurchase.gameState);
+globalThis.finalDetailProgress = dreamBuildProgressSummary(finalDetailPurchase.gameState);
+globalThis.finalDetailPanelHtml = renderDreamBuildPanel(finalDetailPurchase.gameState);
+globalThis.activeFinalDetailPurchase = buyDreamBuildFinal("final-detail", finalDetailReady, { activeDrive: true });
+
+const shakedownReady = normalizeGameState(finalDetailPurchase.gameState);
+shakedownReady.shop.tips = 2500001000000;
+globalThis.shakedownReadyCardHtml = renderDreamInvestmentTargetCard(shakedownReady);
+globalThis.shakedownPinned = pinnedNearGoalForShop(shakedownReady);
+globalThis.shakedownAction = nextBestAction(shakedownReady);
+globalThis.shakedownPurchase = buyDreamBuildFinal("shakedown-complete", shakedownReady, { activeDrive: false });
+globalThis.shakedownLevel = dreamBuildProgressSummary(shakedownPurchase.gameState).finalBuildLevel;
+globalThis.shakedownCashAfter = cashBalance(shakedownPurchase.gameState);
+globalThis.shakedownProjectValue = projectCarValueV1(shakedownPurchase.gameState);
+globalThis.shakedownNetWorth = netWorthV1(shakedownPurchase.gameState);
+globalThis.shakedownFormulaNetWorth = cashBalance(shakedownPurchase.gameState) + tofuBusinessValue(shakedownPurchase.gameState) + projectCarValueV1(shakedownPurchase.gameState) + brandValueV1(shakedownPurchase.gameState);
+globalThis.shakedownProgress = dreamBuildProgressSummary(shakedownPurchase.gameState);
+globalThis.shakedownCardHtml = renderDreamInvestmentTargetCard(shakedownPurchase.gameState);
+globalThis.shakedownPanelHtml = renderDreamBuildPanel(shakedownPurchase.gameState);
+globalThis.shakedownOverviewHtml = renderOverviewPanel(shakedownPurchase.gameState);
+globalThis.shakedownPinnedAfter = pinnedNearGoalForShop(shakedownPurchase.gameState);
+globalThis.shakedownActionAfter = nextBestAction(shakedownPurchase.gameState);
+globalThis.shakedownSecondPurchase = buyDreamBuildFinal("shakedown-complete", shakedownPurchase.gameState, { activeDrive: false });
+
+const normalizedInvalidFinalBuild = normalizeGameState({ shop: { dreamBuild: { aeroLevel: 4, finalBuildLevel: 2 } } });
+globalThis.normalizedInvalidFinalBuildLevel = dreamBuildProgressSummary(normalizedInvalidFinalBuild).finalBuildLevel;
+
+const queueFullRunning = normalizeGameState(defaultGameState());
+queueFullRunning.shop.deliveryOrders = deliveryOrderQueueCapacity();
+queueFullRunning.shop.counterService.running = true;
+queueFullRunning.shop.prepSlots = 964;
+queueFullRunning.shop.lifetimeDeliveryOrders = 10;
+queueFullRunning.shop.lifetimeTips = 1000;
+queueFullRunning.shop.tips = 154000;
+[
+  "counter_service_bell",
+  "counter_service_wide",
+  "counter_service_routine",
+  "counter_service_register",
+  "counter_service_window",
+  "counter_service_crew",
+].forEach((upgradeId) => {
+  queueFullRunning.shop.stationUpgrades[upgradeId] = 1;
+});
+globalThis.queueFullRunningAction = nextBestAction(queueFullRunning);
+globalThis.queueFullRunningPrep = orderPrepProgress(queueFullRunning);
+globalThis.queueFullRunningOverview = renderOverviewPanel(queueFullRunning);
+const queueFullRunningTick = normalizeGameState(queueFullRunning);
+queueFullRunningTick.shop.tips += 195000;
+queueFullRunningTick.shop.generatorCarry.deliveryOrders = 0;
+globalThis.queueFullRunningTickAction = nextBestAction(queueFullRunningTick);
+globalThis.queueFullRunningTickPrep = orderPrepProgress(queueFullRunningTick);
+
+const queueFullPaused = normalizeGameState(queueFullRunning);
+queueFullPaused.shop.counterService.running = false;
+globalThis.queueFullPausedAction = nextBestAction(queueFullPaused);
+globalThis.queueFullPausedPrep = orderPrepProgress(queueFullPaused);
+
 appState.shopTab = "overview";
 globalThis.dreamOverviewSummary = renderOverviewPanel(suspensionFivePurchase.gameState);
 globalThis.dreamSummaryCard = renderDreamBuildOverviewSummaryCard(suspensionFivePurchase.gameState);
@@ -5007,27 +5078,88 @@ appState.running = false;
   assert.strictEqual(context.aeroFivePurchase.ok, true);
   assert.strictEqual(context.aeroFivePurchase.feedback, 'Aero, Styling & Weight Reduction complete: Carbon Body & Roll Cage added. Garage Build Value +$800B.');
   assert.strictEqual(context.aeroFiveLevel, 5);
-  assert.strictEqual(context.aeroFiveCashAfter, 0);
+  assert.strictEqual(context.aeroFiveCashAfter, 1000000);
   assert.strictEqual(context.aeroFiveProjectValue, 2439854725000);
   assert(context.aeroFiveNetWorth <= context.aeroFiveFormulaNetWorth);
   assert(context.aeroFiveFormulaNetWorth >= context.aeroFiveProjectValue);
-  assert.strictEqual(context.aeroFiveNetWorth, 1000000000000);
+  assert.strictEqual(context.aeroFiveNetWorth, context.aeroFiveFormulaNetWorth);
   assert.strictEqual(context.aeroFiveProgress.completed, 38);
   assert.strictEqual(context.aeroFiveProgress.total, 40);
-  assert(context.aeroFiveCardHtml.includes('Aero, Styling &amp; Weight Reduction Complete'));
-  assert(context.aeroFiveCardHtml.includes('Next Core Build Step: Final Detail &amp; Shakedown'));
+  assert(context.aeroFiveCardHtml.includes('Final Detail &amp; Shakedown'));
+  assert(context.aeroFiveCardHtml.includes('Step 39 / 40'));
+  assert(context.aeroFiveCardHtml.includes('Next Work: Final Detail'));
+  assert(context.aeroFiveCardHtml.includes('Cost: $1.5T Cash'));
+  assert(context.aeroFiveCardHtml.includes('Build Value added: +$1.2T'));
   assert(context.aeroFivePanelHtml.includes('Aero, Styling &amp; Weight Reduction'));
-  assert(context.aeroFivePanelHtml.includes('Complete · Next Core Build Step: Final Detail &amp; Shakedown, future garage pass.'));
-  assert(context.aeroFivePanelHtml.includes('Current focus: Final Detail &amp; Shakedown, future.'));
+  assert(context.aeroFivePanelHtml.includes('Aero, Styling &amp; Weight Reduction · Complete · Next Core Build Step: Final Detail &amp; Shakedown.'));
+  assert(context.aeroFivePanelHtml.includes('Current focus: Final Detail &amp; Shakedown.'));
   assert(!context.aeroFivePanelHtml.includes('Final Detail</button>'));
   assert(!context.aeroFivePanelHtml.includes('Shakedown</button>'));
   assert(!context.aeroFivePanelHtml.includes('Car Management'));
   assert(!context.aeroFivePanelHtml.includes('Auction'));
   assert(!context.aeroFivePanelHtml.includes('multiple cars'));
-  assert.strictEqual(context.aeroFivePinnedAfter.title, 'Core build nearly complete');
-  assert.strictEqual(context.aeroFiveTickPinned.title, 'Core build nearly complete');
+  assert.strictEqual(context.aeroFivePinnedAfter.title, 'Final Detail');
+  assert.strictEqual(context.aeroFiveTickPinned.title, 'Final Detail');
   assert.notStrictEqual(context.aeroFiveActionAfter.type, 'buy_dream_aero_work');
   assert.strictEqual(context.aeroFiveSecondPurchase.ok, false);
+
+  assert(context.finalDetailLowCardHtml.includes('Final Detail'));
+  assert(context.finalDetailLowCardHtml.includes('Need $1 more Cash.'));
+  assert.strictEqual(context.finalDetailLowPurchase.ok, false);
+  assert.strictEqual(context.finalDetailPinned.title, 'Final Detail');
+  assert.strictEqual(context.finalDetailAction.type, 'buy_dream_final_work');
+  assert.strictEqual(context.finalDetailPurchase.ok, true);
+  assert.strictEqual(context.finalDetailPurchase.feedback, 'Final Detail complete: Garage Build Value +$1.2T.');
+  assert.strictEqual(context.finalDetailLevel, 1);
+  assert.strictEqual(context.finalDetailCashAfter, 1000000);
+  assert.strictEqual(context.finalDetailProjectValue, 3639854725000);
+  assert.strictEqual(context.finalDetailProgress.completed, 39);
+  assert.strictEqual(context.finalDetailProgress.total, 40);
+  assert(context.finalDetailPanelHtml.includes('Step 40 / 40'));
+  assert(context.finalDetailPanelHtml.includes('Next Work: Shakedown Complete'));
+  assert(context.finalDetailPanelHtml.includes('Cost: $2.5T Cash'));
+  assert(context.finalDetailPanelHtml.includes('Build Value added: +$2T'));
+  assert.strictEqual(context.activeFinalDetailPurchase.ok, false);
+
+  assert.strictEqual(context.shakedownPinned.title, 'Shakedown Complete');
+  assert.strictEqual(context.shakedownAction.type, 'buy_dream_final_work');
+  assert.strictEqual(context.shakedownPurchase.ok, true);
+  assert.strictEqual(context.shakedownPurchase.feedback, 'First Complete Build: Shakedown Complete added. Garage Build Value +$2T.');
+  assert.strictEqual(context.shakedownLevel, 2);
+  assert.strictEqual(context.shakedownCashAfter, 1000000);
+  assert.strictEqual(context.shakedownProjectValue, 5639854725000);
+  assert.strictEqual(context.shakedownNetWorth, context.shakedownFormulaNetWorth);
+  assert.strictEqual(context.shakedownProgress.completed, 40);
+  assert.strictEqual(context.shakedownProgress.total, 40);
+  assert.strictEqual(context.shakedownProgress.finalBuildStatus, 'First Complete Build');
+  assert(context.shakedownCardHtml.includes('First Complete Build'));
+  assert(context.shakedownCardHtml.includes('Core Build Complete · 40 / 40'));
+  assert(context.shakedownCardHtml.includes('Next Era: Car Management'));
+  assert(context.shakedownPanelHtml.includes('First Complete Build'));
+  assert(context.shakedownPanelHtml.includes('Core Build Complete · 40 / 40'));
+  assert(context.shakedownPanelHtml.includes('Current focus: Car Management, future.'));
+  assert(!context.shakedownPanelHtml.includes('Car Management</button>'));
+  assert(!context.shakedownPanelHtml.includes('Auction'));
+  assert(!context.shakedownPanelHtml.includes('multiple cars'));
+  assert(context.shakedownOverviewHtml.includes('First Complete Build'));
+  assert(context.shakedownOverviewHtml.includes('Progress'));
+  assert.strictEqual(context.shakedownPinnedAfter.title, 'First Complete Build');
+  assert.notStrictEqual(context.shakedownActionAfter.type, 'buy_dream_final_work');
+  assert.strictEqual(context.shakedownSecondPurchase.ok, false);
+  assert.strictEqual(context.normalizedInvalidFinalBuildLevel, 0);
+
+  assert.strictEqual(context.queueFullRunningAction.title, 'Next: Clear the Order Queue');
+  assert(context.queueFullRunningAction.copy.includes('Counter Service is already clearing it'));
+  assert(!context.queueFullRunningAction.title.includes('Let Counter Service work'));
+  assert.strictEqual(context.queueFullRunningTickAction.title, 'Next: Clear the Order Queue');
+  assert(!context.queueFullRunningTickAction.title.includes('Let Counter Service work'));
+  assert.strictEqual(context.queueFullRunningPrep.message, 'Order queue full. Counter Service is clearing prepared orders.');
+  assert.strictEqual(context.queueFullRunningTickPrep.message, 'Order queue full. Counter Service is clearing prepared orders.');
+  assert.strictEqual(context.queueFullPausedAction.title, 'Next: Clear the Order Queue');
+  assert(context.queueFullPausedAction.copy.includes('Start Counter Service'));
+  assert.strictEqual(context.queueFullPausedPrep.message, 'Order queue full. Start Counter Service to clear prepared orders.');
+  assert(context.queueFullRunningOverview.includes('Prepared-order storage is not currently the bottleneck.'));
+  assert(!context.queueFullRunningPrep.message.includes('Next order is 0% prepared'));
 
   assert(context.dreamOverviewSummary.includes('Open Dream Build'));
   assert(context.dreamOverviewSummary.includes('data-shop-tab="dream_build"'));
@@ -6740,8 +6872,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620a'));
-  assert(html.includes('/static/nospill/app.css?v=20260620a'));
+  assert(html.includes('/static/nospill/app.js?v=20260620b'));
+  assert(html.includes('/static/nospill/app.css?v=20260620b'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -9426,8 +9558,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620a'));
-  assert(html.includes('/static/nospill/app.css?v=20260620a'));
+  assert(html.includes('/static/nospill/app.js?v=20260620b'));
+  assert(html.includes('/static/nospill/app.css?v=20260620b'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));

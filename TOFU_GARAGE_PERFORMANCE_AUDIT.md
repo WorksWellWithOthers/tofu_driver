@@ -241,8 +241,10 @@ Fix applied:
   and Recent/While Away feedback. Long explanations, Net Worth formulas, Dream Build details, and
   saved Builder Note editing controls are collapsed by default so the active Overview does less
   visible text churn. Keyed Details retain open/closed state across live ticks without localStorage.
-  Dream Build Tab V1 keeps detailed Wheels, Exhaust, Suspension, Garage Build Value, and Builder
-  Note rendering in an earned parked tab instead of expanding the Overview dashboard.
+  Dream Build Tab V1 keeps detailed Wheels, Exhaust, Suspension, later tuning tracks, Final Detail,
+  Garage Build Value, and Builder Note rendering in an earned parked tab instead of expanding the
+  Overview dashboard. Queue-full Now copy and Prep Counter headlines use stable categories so live
+  ticks do not alternate between equivalent recommendation strings.
 
 Result:
 

@@ -243,9 +243,10 @@
   rewards. Full Car Management, multiple cars, auctions, collector-sale offers, public profiles,
   uploads, and network calls remain future.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
-  Tires, Brakes, Induction, Drivetrain, and Aero levels against a planned `40` stage core build,
-  shows current part labels, points to the next dream step, and keeps future tracks locked/deferred.
-  The current implemented maximum is `38 / 40`. Goal Stack also uses this status as the stable
+  Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
+  planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
+  future tracks locked/deferred.
+  The current implemented maximum is `40 / 40` with First Complete Build. Goal Stack also uses this status as the stable
   mid-term target so players know whether more implemented car work exists.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
@@ -353,9 +354,9 @@ Canonical references:
    Wheels Fund is hidden on fresh saves, Exhaust stays hidden until Wheels level 3,
    Buy Exhaust/Tuned Note/Heat Wrapped/Showcase Finish appear only when affordable and stable, the
    Dream Build tab appears only after build start, Suspension work appears in stable order after
-   Exhaust Level 5, Tires, Brakes, Induction, Drivetrain, and Aero continue in stable order, Garage Build
-   Value and `38 / 40` progress totals stay clear, Final Detail & Shakedown remains future-only, and urgent shop
-   bottlenecks still win.
+   Exhaust Level 5, Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown
+   continue in stable order, Garage Build Value and `40 / 40` progress totals stay clear, Car
+   Management remains future-only, and urgent shop bottlenecks still win.
 12. Playtest Garage Event Board V1: verify `$100M Net Worth` plus Tires Level 5 unlock, event
    reward pacing, Garage Reputation clarity, Brand Value/Net Worth changes, badge status, repeat
    prevention, and that full Car Management still feels like a future layer.
@@ -443,9 +444,9 @@ Future Dream Garage milestone sequence:
    Balance, `$35M` Showcase Stance, Tires through `$300M` Event Tire Set, Brakes through `$2.25B`
    Brake Balance & Control Package, Sports Intercooler, Electronic Boost Control, Hybrid Turbo
    Upgrade, Big Turbo Kit, Anti-Lag & Cooling Package, Drivetrain through `$135B` Sequential
-   Transmission Package, Aero through `$1T` Carbon Body & Roll Cage, `38 / 40` progress, Garage
-   Build Value totals, persistence, and priority rules.
-2. Design Final Detail & Shakedown as the last core-build bridge before full Car Management.
+   Transmission Package, Aero through `$1T` Carbon Body & Roll Cage, Final Detail, Shakedown
+   Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
+2. Playtest First Complete Build pacing and design Car Management V1 as the next parked layer.
 3. Design the first parked event/showcase expansion loop.
 4. Implement Car Management V1 only after the first part tracks are fun.
 6. Add multiple cars.
