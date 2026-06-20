@@ -407,6 +407,10 @@ Examples:
   `+$300B Garage Build Value`, advance Core Build Progress to `33 / 40`, and use authentic clutch,
   limited-slip differential, driveshaft, gearbox, and sequential-transmission language as fictional
   Tofu Garage progression only.
+- Aero, Styling & Weight Reduction Track V1 unlocks after Drivetrain & Transmission Level 5.
+  Levels 1-5 add `+$2.1T Garage Build Value`, advance Core Build Progress to `38 / 40`, and use
+  authentic splitter, diffuser, wing, wide body, weight-reduction, carbon-panel, and roll-cage
+  language as fictional Tofu Garage progression only.
 - Garage Event Board V1 is the first parked event bridge after Tires & Rubber Level 5 and `$100M`
   Net Worth. It lives in the Dream Build tab, resolves events instantly in V1, and grants defined
   local Cash, Brand Value, Garage Reputation, and local badge rewards. It does not create repeatable
@@ -473,8 +477,9 @@ an affordability threshold, the order queue briefly fills, or ETA text changes. 
 through Tires & Rubber. After Tires Level 5, it can point to the Garage Event Board when an event
 is available, otherwise through Brakes & Control. After Brakes Level 5 and Local Showcase are
 complete, it points through Induction & Cooling. After Induction Level 5, it points through
-Drivetrain & Transmission. After Drivetrain Level 5, Aero, Styling & Weight Reduction is shown as
-the next future/target-only build track.
+Drivetrain & Transmission. After Drivetrain Level 5, it points through Aero, Styling & Weight
+Reduction. After Aero Level 5, Final Detail & Shakedown is shown as the next future/target-only
+core step.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -515,8 +520,8 @@ Rules:
   Wheels work levels. After Wheels level 3, it may show `Save for Exhaust`, `Buy Exhaust`,
   `Seal Joints`, `Tuned Note`, `Heat Wrapped`, or `Showcase Finish` when no urgent shop goal is
   more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, Brakes &
-  Control, Induction & Cooling, and Drivetrain & Transmission. After Drivetrain level 5, Aero,
-  Styling & Weight Reduction remains target-only/future.
+  Control, Induction & Cooling, Drivetrain & Transmission, and Aero, Styling & Weight Reduction.
+  After Aero level 5, Final Detail & Shakedown remains target-only/future.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1568,12 +1573,12 @@ Core Build Progress V2:
 | Brakes & Control Level | `0-5` current runtime stages |
 | Induction & Cooling Level | `0-5` current runtime stages after Brakes Level 5 plus Local Showcase |
 | Drivetrain & Transmission Level | `0-5` current runtime stages after Induction Level 5 |
-| Aero, Styling & Weight Reduction | future locked track |
+| Aero, Styling & Weight Reduction Level | `0-5` current runtime stages after Drivetrain Level 5 |
 
 The progress denominator is `40` planned core work stages. After Balanced Fitment, Showcase Finish,
 Showcase Stance, Event Tire Set, Brake Balance & Control Package, Anti-Lag & Cooling Package, and
-Sequential Transmission Package, the current implemented maximum is `33 / 40`. Aero, Styling &
-Weight Reduction remains target-only/future.
+Sequential Transmission Package, and Carbon Body & Roll Cage, the current implemented maximum is
+`38 / 40`. Final Detail & Shakedown remains target-only/future.
 
 Each level is an investment, not a direct cash printer.
 
@@ -1596,6 +1601,16 @@ Implemented Drivetrain & Transmission V1 values:
 | 3 | Carbon Driveshaft & Axles | `$60B` | `+$50B` |
 | 4 | Custom Gearbox | `$90B` | `+$78B` |
 | 5 | Sequential Transmission Package | `$135B` | `+$120B` |
+
+Implemented Aero, Styling & Weight Reduction V1 values:
+
+| Aero Level | Work | Cash Cost | Garage Build Value |
+| --- | --- | --- | --- |
+| 1 | Front Splitter & Side Skirts | `$200B` | `+$160B` |
+| 2 | Rear Diffuser & Wing | `$300B` | `+$240B` |
+| 3 | Wide Body & Vented Panels | `$450B` | `+$360B` |
+| 4 | Weight Reduction Package | `$675B` | `+$540B` |
+| 5 | Carbon Body & Roll Cage | `$1T` | `+$800B` |
 
 Possible level effects:
 

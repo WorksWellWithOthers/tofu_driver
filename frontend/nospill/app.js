@@ -416,6 +416,16 @@ const DREAM_BUILD_DRIVETRAIN_GEARBOX_COST = 90000000000;
 const DREAM_BUILD_DRIVETRAIN_GEARBOX_VALUE = 78000000000;
 const DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_COST = 135000000000;
 const DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_VALUE = 120000000000;
+const DREAM_BUILD_AERO_SPLITTER_COST = 200000000000;
+const DREAM_BUILD_AERO_SPLITTER_VALUE = 160000000000;
+const DREAM_BUILD_AERO_REAR_AERO_COST = 300000000000;
+const DREAM_BUILD_AERO_REAR_AERO_VALUE = 240000000000;
+const DREAM_BUILD_AERO_WIDE_BODY_COST = 450000000000;
+const DREAM_BUILD_AERO_WIDE_BODY_VALUE = 360000000000;
+const DREAM_BUILD_AERO_WEIGHT_REDUCTION_COST = 675000000000;
+const DREAM_BUILD_AERO_WEIGHT_REDUCTION_VALUE = 540000000000;
+const DREAM_BUILD_AERO_CARBON_CAGE_COST = 1000000000000;
+const DREAM_BUILD_AERO_CARBON_CAGE_VALUE = 800000000000;
 const DREAM_BUILD_TOTAL_WORK_STAGES = 40;
 const SHOWCASE_PREP_COST = 500000;
 const SHOWCASE_PREP_VALUE = 300000;
@@ -3154,6 +3164,7 @@ function defaultShopState() {
       brakesLevel: 0,
       inductionLevel: 0,
       drivetrainLevel: 0,
+      aeroLevel: 0,
       builderNote: "",
       firstInvestmentPurchasedAt: "",
       showcaseDisplayPrepared: false,
@@ -3273,6 +3284,8 @@ function normalizeDreamBuild(dreamBuild) {
   const inductionLevel = brakesLevel >= 5 ? clamp(rawInductionLevel, 0, 5) : 0;
   const rawDrivetrainLevel = safeNonNegativeInteger(source.drivetrainLevel, 0, 5);
   const drivetrainLevel = inductionLevel >= 5 ? clamp(rawDrivetrainLevel, 0, 5) : 0;
+  const rawAeroLevel = safeNonNegativeInteger(source.aeroLevel, 0, 5);
+  const aeroLevel = drivetrainLevel >= 5 ? clamp(rawAeroLevel, 0, 5) : 0;
   const knownMilestoneIds = new Set(NET_WORTH_MILESTONES.map((milestone) => milestone.id));
   const netWorthMilestonesReached = Array.isArray(source.netWorthMilestonesReached)
     ? source.netWorthMilestonesReached
@@ -3291,6 +3304,7 @@ function normalizeDreamBuild(dreamBuild) {
     brakesLevel,
     inductionLevel,
     drivetrainLevel,
+    aeroLevel,
     builderNote: sanitizeBuilderNote(source.builderNote),
     firstInvestmentPurchasedAt: typeof source.firstInvestmentPurchasedAt === "string"
       ? source.firstInvestmentPurchasedAt.slice(0, 40)
@@ -5390,6 +5404,10 @@ function dreamBuildDrivetrainLevel(gameState) {
   return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.drivetrainLevel, 0, 5);
 }
 
+function dreamBuildAeroLevel(gameState) {
+  return safeNonNegativeInteger(normalizeGameState(gameState).shop.dreamBuild.aeroLevel, 0, 5);
+}
+
 function dreamBuildInvestmentStarted(gameState) {
   const state = normalizeGameState(gameState);
   const build = state.shop.dreamBuild;
@@ -5402,6 +5420,7 @@ function dreamBuildInvestmentStarted(gameState) {
     || safeNonNegativeInteger(build.brakesLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.inductionLevel, 0, 5) > 0
     || safeNonNegativeInteger(build.drivetrainLevel, 0, 5) > 0
+    || safeNonNegativeInteger(build.aeroLevel, 0, 5) > 0
     || Boolean(build.showcaseDisplayPrepared);
 }
 
@@ -5419,6 +5438,7 @@ function projectCarValueV1(gameState) {
   const brakesLevel = dreamBuildBrakesLevel(state);
   const inductionLevel = dreamBuildInductionLevel(state);
   const drivetrainLevel = dreamBuildDrivetrainLevel(state);
+  const aeroLevel = dreamBuildAeroLevel(state);
   let value = 0;
   if (wheelsLevel >= 3) {
     value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
@@ -5495,6 +5515,13 @@ function projectCarValueV1(gameState) {
     DREAM_BUILD_DRIVETRAIN_DRIVESHAFT_VALUE,
     DREAM_BUILD_DRIVETRAIN_GEARBOX_VALUE,
     DREAM_BUILD_DRIVETRAIN_SEQUENTIAL_VALUE,
+  ]);
+  value += dreamBuildProgressiveValue(aeroLevel, [
+    DREAM_BUILD_AERO_SPLITTER_VALUE,
+    DREAM_BUILD_AERO_REAR_AERO_VALUE,
+    DREAM_BUILD_AERO_WIDE_BODY_VALUE,
+    DREAM_BUILD_AERO_WEIGHT_REDUCTION_VALUE,
+    DREAM_BUILD_AERO_CARBON_CAGE_VALUE,
   ]);
   return value;
 }
@@ -6353,6 +6380,101 @@ function nextDreamBuildDrivetrainWork(gameState) {
   return dreamBuildDrivetrainWorkForLevel(dreamBuildDrivetrainLevel(state));
 }
 
+function aeroUnlockStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const drivetrainReady = dreamBuildDrivetrainLevel(state) >= 5;
+  return {
+    unlocked: drivetrainReady,
+    drivetrainReady,
+    reason: drivetrainReady ? "" : "Complete Drivetrain & Transmission to unlock the final core build track.",
+  };
+}
+
+function dreamBuildAeroWorkForLevel(level) {
+  if (level === 0) {
+    return {
+      action: "front-splitter-side-skirts",
+      nextLevel: 1,
+      title: "Front Splitter & Side Skirts",
+      completeTitle: "Front Splitter & Side Skirts",
+      buttonLabel: "Fit Splitter & Skirts",
+      cost: DREAM_BUILD_AERO_SPLITTER_COST,
+      valueAdded: DREAM_BUILD_AERO_SPLITTER_VALUE,
+      copy: "Start shaping the body with a cleaner front and side profile.",
+      detailCopy: "Front splitter / lip spoiler, support rods, and side skirts become fictional Style, Event Fit, and Showcase Readiness details.",
+      completeCopy: "The body has a cleaner front and side profile.",
+      feedback: "Dream Build work complete: Front Splitter & Side Skirts.",
+    };
+  }
+  if (level === 1) {
+    return {
+      action: "rear-diffuser-wing",
+      nextLevel: 2,
+      title: "Rear Diffuser & Wing",
+      completeTitle: "Rear Diffuser & Wing",
+      buttonLabel: "Fit Rear Aero",
+      cost: DREAM_BUILD_AERO_REAR_AERO_COST,
+      valueAdded: DREAM_BUILD_AERO_REAR_AERO_VALUE,
+      copy: "Give the rear of the build a proper event-ready silhouette.",
+      detailCopy: "Rear diffuser, custom rear wing set, chassis-mounted wing, and swan-neck wing mount language maps to fictional aero identity and event classification.",
+      completeCopy: "The rear of the build has a proper event-ready silhouette.",
+      feedback: "Dream Build work complete: Rear Diffuser & Wing.",
+    };
+  }
+  if (level === 2) {
+    return {
+      action: "wide-body-vented-panels",
+      nextLevel: 3,
+      title: "Wide Body & Vented Panels",
+      completeTitle: "Wide Body & Vented Panels",
+      buttonLabel: "Fit Wide Body",
+      cost: DREAM_BUILD_AERO_WIDE_BODY_COST,
+      valueAdded: DREAM_BUILD_AERO_WIDE_BODY_VALUE,
+      copy: "Commit to the body shape and make the build instantly recognizable.",
+      detailCopy: "Wide body modification, vented hood, and louvered fender language becomes fictional Style, Cooling Presence, and Collector Appeal.",
+      completeCopy: "The build's body identity is instantly recognizable.",
+      feedback: "Dream Build work complete: Wide Body & Vented Panels.",
+    };
+  }
+  if (level === 3) {
+    return {
+      action: "weight-reduction-package",
+      nextLevel: 4,
+      title: "Weight Reduction Package",
+      completeTitle: "Weight Reduction Package",
+      buttonLabel: "Reduce Weight",
+      cost: DREAM_BUILD_AERO_WEIGHT_REDUCTION_COST,
+      valueAdded: DREAM_BUILD_AERO_WEIGHT_REDUCTION_VALUE,
+      copy: "Strip, strengthen, and refine the chassis so the build feels serious.",
+      detailCopy: "Weight Reduction stages, Lexan / polycarbonate windows, and increased body rigidity become fictional Weight Class, Response, and Event Fit details.",
+      completeCopy: "The chassis has a more serious fictional weight and rigidity package.",
+      feedback: "Dream Build work complete: Weight Reduction Package.",
+    };
+  }
+  if (level === 4) {
+    return {
+      action: "carbon-body-roll-cage",
+      nextLevel: 5,
+      title: "Carbon Body & Roll Cage",
+      completeTitle: "Carbon Body & Roll Cage",
+      buttonLabel: "Complete Aero Package",
+      cost: DREAM_BUILD_AERO_CARBON_CAGE_COST,
+      valueAdded: DREAM_BUILD_AERO_CARBON_CAGE_VALUE,
+      copy: "Finish the body with carbon panels and a proper cage so the core build feels complete.",
+      detailCopy: "Carbon fiber hood, trunk, roof, doors, roll cage Type A / B / C, and final chassis presentation complete the fictional aero and body package.",
+      completeCopy: "The body, aero, and weight package is complete.",
+      feedback: "Aero, Styling & Weight Reduction complete: Carbon Body & Roll Cage added. Garage Build Value +$800B.",
+    };
+  }
+  return null;
+}
+
+function nextDreamBuildAeroWork(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!aeroUnlockStatus(state).unlocked) return null;
+  return dreamBuildAeroWorkForLevel(dreamBuildAeroLevel(state));
+}
+
 function dreamBuildWheelsStatusLabel(level) {
   if (level >= 5) return "Collector Finish";
   if (level >= 4) return "Showpiece Fitment";
@@ -6416,6 +6538,15 @@ function dreamBuildDrivetrainStatusLabel(level) {
   return "Stock Drivetrain";
 }
 
+function dreamBuildAeroStatusLabel(level) {
+  if (level >= 5) return "Carbon Body & Roll Cage";
+  if (level >= 4) return "Weight Reduction Package";
+  if (level >= 3) return "Wide Body & Vented Panels";
+  if (level >= 2) return "Rear Diffuser & Wing";
+  if (level >= 1) return "Front Splitter & Side Skirts";
+  return "Stock Body";
+}
+
 function dreamBuildProgressVisible(gameState) {
   const state = normalizeGameState(gameState);
   return dreamBuildWheelsPurchased(state) || (coveredCarTeaserSeen(state) && dreamInvestmentTargetVisible(state));
@@ -6430,8 +6561,9 @@ function dreamBuildProgressSummary(gameState) {
   const brakesLevel = dreamBuildBrakesLevel(state);
   const inductionLevel = dreamBuildInductionLevel(state);
   const drivetrainLevel = dreamBuildDrivetrainLevel(state);
+  const aeroLevel = dreamBuildAeroLevel(state);
   const completed = clamp(
-    wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel + inductionLevel + drivetrainLevel,
+    wheelsLevel + exhaustLevel + suspensionLevel + tiresLevel + brakesLevel + inductionLevel + drivetrainLevel + aeroLevel,
     0,
     DREAM_BUILD_TOTAL_WORK_STAGES,
   );
@@ -6453,6 +6585,8 @@ function dreamBuildProgressSummary(gameState) {
     inductionStatus: dreamBuildInductionStatusLabel(inductionLevel),
     drivetrainLevel,
     drivetrainStatus: dreamBuildDrivetrainStatusLabel(drivetrainLevel),
+    aeroLevel,
+    aeroStatus: dreamBuildAeroStatusLabel(aeroLevel),
   };
 }
 
@@ -6522,11 +6656,22 @@ function nextDreamBuildStep(gameState) {
   if (drivetrainWork) {
     return { title: drivetrainWork.title, copy: drivetrainWork.copy, future: false };
   }
+  const aeroWork = nextDreamBuildAeroWork(state);
+  if (aeroWork) {
+    return { title: aeroWork.title, copy: aeroWork.copy, future: false };
+  }
+  if (dreamBuildAeroLevel(state) >= 5) {
+    return {
+      title: "Final Detail & Shakedown",
+      copy: "Aero, Styling & Weight Reduction is complete. Final Detail & Shakedown comes in a future garage pass.",
+      future: true,
+    };
+  }
   if (dreamBuildDrivetrainLevel(state) >= 5) {
     return {
       title: "Aero, Styling & Weight Reduction",
-      copy: "Drivetrain & Transmission is complete. Aero, Styling & Weight Reduction comes in a future garage pass.",
-      future: true,
+      copy: "Drivetrain & Transmission is complete. Aero, Styling & Weight Reduction is next.",
+      future: false,
     };
   }
   if (dreamBuildInductionLevel(state) >= 5) {
@@ -6779,6 +6924,34 @@ function buyDreamBuildDrivetrain(action, gameState, options = {}) {
   }
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
   next.shop.dreamBuild.drivetrainLevel = work.nextLevel;
+  next.shop.counterService.lastResult = work.feedback;
+  return {
+    ok: true,
+    reason: "",
+    feedback: work.feedback,
+    work,
+    gameState: addLedgerEntry(next, "story", work.feedback),
+  };
+}
+
+function buyDreamBuildAero(action, gameState, options = {}) {
+  const next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Dream Build actions unlock after you finish and park.", gameState: next };
+  }
+  const unlock = aeroUnlockStatus(next);
+  if (!unlock.unlocked) {
+    return { ok: false, reason: unlock.reason, gameState: next };
+  }
+  const work = nextDreamBuildAeroWork(next);
+  if (!work || work.action !== action) {
+    return { ok: false, reason: "That Aero, Styling & Weight Reduction work is not available yet.", gameState: next };
+  }
+  if (cashBalance(next) < work.cost) {
+    return { ok: false, reason: `Need ${formatCash(work.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
+  next.shop.dreamBuild.aeroLevel = work.nextLevel;
   next.shop.counterService.lastResult = work.feedback;
   return {
     ok: true,
@@ -12093,6 +12266,7 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildBrakesWork(state)
     && !nextDreamBuildInductionWork(state)
     && !nextDreamBuildDrivetrainWork(state)
+    && !nextDreamBuildAeroWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -12120,6 +12294,7 @@ function nextBestAction(gameState, options = {}) {
     && !nextDreamBuildBrakesWork(state)
     && !nextDreamBuildInductionWork(state)
     && !nextDreamBuildDrivetrainWork(state)
+    && !nextDreamBuildAeroWork(state)
     && counterIncome.status !== "waiting_stock"
     && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
     && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
@@ -12303,6 +12478,17 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const aeroWork = nextDreamBuildAeroWork(state);
+      if (aeroWork) {
+        const ready = cashBalance(state) >= aeroWork.cost;
+        return {
+          type: ready ? "buy_dream_aero_work" : "dream_investment_target",
+          title: ready ? `Next: ${aeroWork.buttonLabel}` : `Next: Grow Cash for ${aeroWork.title}`,
+          copy: ready ? aeroWork.copy : `${aeroWork.title} is the next Aero, Styling & Weight Reduction work when the shop can fund it.`,
+          buttonLabel: aeroWork.buttonLabel,
+          disabled: false,
+        };
+      }
       const availableGarageEvent = nextAvailableGarageEvent(state);
       if (availableGarageEvent) {
         const affordable = garageEventAffordability(availableGarageEvent, state);
@@ -12395,7 +12581,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "Aero, Styling & Weight Reduction comes in a future garage pass.",
+        copy: "Final Detail & Shakedown comes in a future garage pass.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -13329,6 +13515,55 @@ function renderDreamInvestmentTargetCard(gameState) {
         detailsLabel: "Drivetrain details",
       });
     }
+    const aeroWork = nextDreamBuildAeroWork(state);
+    if (aeroWork) {
+      return renderDreamBuildTrackWorkCard(state, {
+        title: "Aero, Styling & Weight Reduction",
+        level: dreamBuildAeroLevel(state),
+        statusLabel: dreamBuildAeroStatusLabel(dreamBuildAeroLevel(state)),
+        work: aeroWork,
+        detailsLabel: "Aero details",
+      });
+    }
+    const aeroStatus = aeroUnlockStatus(state);
+    if (dreamBuildDrivetrainLevel(state) >= 5) {
+      if (!aeroStatus.unlocked) {
+        return renderIdleCard({
+          title: "Aero, Styling & Weight Reduction",
+          status: "Future Track",
+          copy: aeroStatus.reason,
+          extra: `
+            <div class="nospill-afford-progress">
+              <div class="nospill-afford-progress-head">
+                <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+                <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+              </div>
+              <small>Requirement: Drivetrain &amp; Transmission Level 5 complete.</small>
+              <small>No aero purchase button appears until the final core build track is unlocked.</small>
+            </div>
+          `,
+          actions: [],
+        });
+      }
+      if (dreamBuildAeroLevel(state) >= 5) {
+        return renderIdleCard({
+          title: "Aero, Styling & Weight Reduction",
+          status: "Level 5 / 5 · Carbon Body & Roll Cage",
+          copy: "Aero, Styling & Weight Reduction Complete. The body, aero, and weight package is complete.",
+          extra: `
+            <div class="nospill-afford-progress">
+              <div class="nospill-afford-progress-head">
+                <span>${GARAGE_BUILD_VALUE_LABEL}</span>
+                <strong>${escapeHtml(formatCashCount(projectCarValueV1(state)))}</strong>
+              </div>
+              <small>Next Core Build Step: Final Detail &amp; Shakedown</small>
+              <small>Future garage pass.</small>
+            </div>
+          `,
+          actions: [],
+        });
+      }
+    }
     const drivetrainStatus = drivetrainUnlockStatus(state);
     if (dreamBuildInductionLevel(state) >= 5) {
       if (!drivetrainStatus.unlocked) {
@@ -13549,7 +13784,7 @@ function renderDreamBuildProgressCard(gameState) {
     title: "Core Build Progress",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: capReached
-      ? "Drivetrain & Transmission complete. Next Build Track: Aero, Styling & Weight Reduction, future garage pass."
+      ? "Core build nearly complete. Final Detail & Shakedown comes in a future garage pass."
       : "Fictional garage work adds build value without changing Cup Test scoring. Not faster. Smoother.",
     extra: `
       <div class="nospill-afford-progress">
@@ -13570,6 +13805,7 @@ function renderDreamBuildProgressCard(gameState) {
         <small>Brakes &amp; Control · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</small>
         <small>Induction &amp; Cooling · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</small>
         <small>Drivetrain &amp; Transmission · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</small>
+        <small>Aero, Styling &amp; Weight Reduction · Level ${escapeHtml(formatShopCount(progress.aeroLevel))} / 5 · ${escapeHtml(progress.aeroStatus)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}</small>
         <details class="nospill-compact-details">
           <summary>Dream Build details</summary>
@@ -13603,6 +13839,11 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
     : dreamBuildInductionLevel(state) >= 5
       ? "Next"
       : "Future";
+  const aeroLabel = progress.aeroLevel > 0
+    ? progress.aeroStatus
+    : dreamBuildDrivetrainLevel(state) >= 5
+      ? "Next"
+      : "Future";
   const eventSummary = garageEventBoardOverviewSummary(state);
   return renderIdleCard({
     title: "Dream Build",
@@ -13617,6 +13858,7 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
         <small>Brakes: ${escapeHtml(brakesLabel)}</small>
         <small>Induction: ${escapeHtml(inductionLabel)}</small>
         <small>Drivetrain: ${escapeHtml(drivetrainLabel)}</small>
+        <small>Aero: ${escapeHtml(aeroLabel)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))}</small>
         ${eventSummary ? `<small>Garage Event Board: ${escapeHtml(eventSummary)}</small>` : ""}
       </div>
@@ -13637,8 +13879,10 @@ function renderDreamBuildTracksCard(gameState) {
   const brakesWork = nextDreamBuildBrakesWork(state);
   const inductionWork = nextDreamBuildInductionWork(state);
   const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+  const aeroWork = nextDreamBuildAeroWork(state);
   const inductionStatus = inductionUnlockStatus(state);
   const drivetrainStatus = drivetrainUnlockStatus(state);
+  const aeroStatus = aeroUnlockStatus(state);
   const suspensionLine = dreamBuildExhaustLevel(state) < 5
     ? "Future Track · Complete the current implemented build track first."
     : suspensionWork
@@ -13663,7 +13907,12 @@ function renderDreamBuildTracksCard(gameState) {
     ? `Future Track · ${drivetrainStatus.reason || "Complete Induction & Cooling first."}`
     : drivetrainWork
       ? `Next Work: ${drivetrainWork.title} · ${formatCash(drivetrainWork.cost)} Cash · +${formatCashCount(drivetrainWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Aero, Styling & Weight Reduction, future garage pass.";
+      : "Complete · Next Build Track: Aero, Styling & Weight Reduction.";
+  const aeroLine = !aeroStatus.unlocked
+    ? `Future Track · ${aeroStatus.reason || "Complete Drivetrain & Transmission first."}`
+    : aeroWork
+      ? `Next Work: ${aeroWork.title} · ${formatCash(aeroWork.cost)} Cash · +${formatCashCount(aeroWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+      : "Complete · Next Core Build Step: Final Detail & Shakedown, future garage pass.";
   return renderIdleCard({
     title: "Work Tracks",
     status: "Current build",
@@ -13684,7 +13933,8 @@ function renderDreamBuildTracksCard(gameState) {
         <small>${escapeHtml(inductionLine)}</small>
         <small><strong>Drivetrain &amp; Transmission</strong> · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</small>
         <small>${escapeHtml(drivetrainLine)}</small>
-        <small><strong>Aero, Styling &amp; Weight Reduction</strong> · Future Track</small>
+        <small><strong>Aero, Styling &amp; Weight Reduction</strong> · Level ${escapeHtml(formatShopCount(progress.aeroLevel))} / 5 · ${escapeHtml(progress.aeroStatus)}</small>
+        <small>${escapeHtml(aeroLine)}</small>
       </div>
     `,
   });
@@ -13701,7 +13951,8 @@ function renderFutureGarageManagementCard() {
 
 function garageTuningCatalogFocusLabel(gameState) {
   const state = normalizeGameState(gameState);
-  if (dreamBuildDrivetrainLevel(state) >= 5) return "Aero, Styling & Weight Reduction, future";
+  if (dreamBuildAeroLevel(state) >= 5) return "Final Detail & Shakedown, future";
+  if (dreamBuildDrivetrainLevel(state) >= 5 || dreamBuildAeroLevel(state) > 0) return "Aero, Styling & Weight Reduction";
   if (dreamBuildInductionLevel(state) >= 5 || dreamBuildDrivetrainLevel(state) > 0) return "Drivetrain & Transmission";
   if (dreamBuildBrakesLevel(state) >= 5 || dreamBuildInductionLevel(state) > 0) return "Induction & Cooling";
   if (dreamBuildTiresLevel(state) >= 5 || dreamBuildBrakesLevel(state) > 0) return "Brakes & Control";
@@ -14602,6 +14853,18 @@ function nextMilestoneForShop(gameState) {
           guidance: drivetrainWork.copy,
         };
       }
+      const aeroWork = nextDreamBuildAeroWork(state);
+      if (aeroWork) {
+        const progress = nextMilestoneProgress(cashBalance(state), aeroWork.cost);
+        return {
+          id: aeroWork.action,
+          name: aeroWork.title,
+          progressText: `${formatCash(progress.current)} / ${formatCash(progress.required)} Cash`,
+          percent: progress.percent,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(aeroWork.valueAdded)}`,
+          guidance: aeroWork.copy,
+        };
+      }
       const showcase = showcasePrepStatus(state);
       if (showcase.unlocked && !showcase.prepared) {
         const progress = nextMilestoneProgress(cashBalance(state), showcase.cost);
@@ -14850,6 +15113,7 @@ function goalStackTargetForAction(action) {
     || action.type === "buy_dream_brakes_work"
     || action.type === "buy_dream_induction_work"
     || action.type === "buy_dream_drivetrain_work"
+    || action.type === "buy_dream_aero_work"
     || action.type === "dream_investment_target"
     || action.type === "prepare_showcase"
     || action.type === "showcase_prep_target"
@@ -14877,7 +15141,8 @@ function dreamBuildImplementedCapReached(gameState) {
     && dreamBuildTiresLevel(state) >= 5
     && dreamBuildBrakesLevel(state) >= 5
     && dreamBuildInductionLevel(state) >= 5
-    && dreamBuildDrivetrainLevel(state) >= 5;
+    && dreamBuildDrivetrainLevel(state) >= 5
+    && dreamBuildAeroLevel(state) >= 5;
 }
 
 function pinnedNearGoalForShop(gameState) {
@@ -15014,9 +15279,9 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
-    const drivetrainWork = nextDreamBuildDrivetrainWork(state);
-    if (drivetrainWork) {
-      return {
+      const drivetrainWork = nextDreamBuildDrivetrainWork(state);
+      if (drivetrainWork) {
+        return {
         id: drivetrainWork.action,
         title: drivetrainWork.title,
         body: drivetrainWork.nextLevel === 1
@@ -15034,9 +15299,32 @@ function pinnedNearGoalForShop(gameState) {
         reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(drivetrainWork.valueAdded)}`,
         ctaLabel: "",
         ctaTarget: "",
-        isFutureOnly: false,
-      };
-    }
+          isFutureOnly: false,
+        };
+      }
+      const aeroWork = nextDreamBuildAeroWork(state);
+      if (aeroWork) {
+        return {
+          id: aeroWork.action,
+          title: aeroWork.title,
+          body: aeroWork.nextLevel === 1
+            ? "Start shaping the body and aero package."
+            : aeroWork.nextLevel === 2
+              ? "Continue the aero package."
+              : aeroWork.nextLevel === 3
+                ? "Commit to the build's body identity."
+                : aeroWork.nextLevel === 4
+                  ? "Refine the chassis and weight class."
+                  : "Finish the aero and body package.",
+          progressCurrent: cashBalance(state),
+          progressTarget: aeroWork.cost,
+          progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(aeroWork.cost)} Cash`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(aeroWork.valueAdded)}`,
+          ctaLabel: "",
+          ctaTarget: "",
+          isFutureOnly: false,
+        };
+      }
     const inductionStatus = inductionUnlockStatus(state);
     if (dreamBuildBrakesLevel(state) >= 5 && !inductionStatus.unlocked) {
       const progress = dreamBuildProgressSummary(state);
@@ -15070,16 +15358,31 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
-    if (dreamBuildDrivetrainLevel(state) >= 5) {
+    if (dreamBuildDrivetrainLevel(state) >= 5 && dreamBuildAeroLevel(state) < 5) {
       const progress = dreamBuildProgressSummary(state);
       return {
-        id: "dream_build_drivetrain_complete",
-        title: "Drivetrain & Transmission complete",
-        body: "Next Build Track: Aero, Styling & Weight Reduction, future garage pass.",
+        id: "dream_build_aero_available",
+        title: "Front Splitter & Side Skirts",
+        body: "Start shaping the body and aero package.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
         progressLabel: `Drivetrain: ${progress.drivetrainStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Aero, Styling & Weight Reduction is future/target-only",
+        reward: "Unlocks the final visible core build track",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    if (dreamBuildImplementedCapReached(state)) {
+      const progress = dreamBuildProgressSummary(state);
+      return {
+        id: "dream_build_current_cap",
+        title: "Core build nearly complete",
+        body: "Final Detail & Shakedown comes in a future garage pass.",
+        progressCurrent: progress.completed,
+        progressTarget: progress.total,
+        progressLabel: `Aero: ${progress.aeroStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
+        reward: "Final Detail & Shakedown is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -15145,21 +15448,6 @@ function pinnedNearGoalForShop(gameState) {
         progressTarget: progress.total,
         progressLabel: `Brakes: ${progress.brakesStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
         reward: "Induction & Cooling is future/target-only",
-        ctaLabel: "",
-        ctaTarget: "",
-        isFutureOnly: true,
-      };
-    }
-    if (dreamBuildImplementedCapReached(state)) {
-      const progress = dreamBuildProgressSummary(state);
-      return {
-        id: "dream_build_current_cap",
-        title: "Dream Build Status",
-        body: "Current implemented core build track complete. Next Build Track: Aero, Styling & Weight Reduction. Coming in a future garage pass.",
-        progressCurrent: progress.completed,
-        progressTarget: progress.total,
-        progressLabel: `Wheels: ${progress.wheelsStatus} · Exhaust: ${progress.exhaustStatus} · Suspension: ${progress.suspensionStatus} · Tires: ${progress.tiresStatus} · Brakes: ${progress.brakesStatus} · Induction: ${progress.inductionStatus} · Drivetrain: ${progress.drivetrainStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Aero, Styling & Weight Reduction is future/target-only",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,
@@ -17895,6 +18183,24 @@ function handleDreamBuildDrivetrain(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleDreamBuildAero(action) {
+  const result = buyDreamBuildAero(action, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = dreamBuildTabUnlocked(result.gameState) ? "dream_build" : "overview";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleGarageEvent(eventId) {
   const result = completeGarageEvent(eventId, currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -18131,6 +18437,14 @@ function handleTofuShopPanelClick(event) {
       || target.dataset.dreamBuildAction === "sequential-transmission-package"
     ) {
       handleDreamBuildDrivetrain(target.dataset.dreamBuildAction);
+    } else if (
+      target.dataset.dreamBuildAction === "front-splitter-side-skirts"
+      || target.dataset.dreamBuildAction === "rear-diffuser-wing"
+      || target.dataset.dreamBuildAction === "wide-body-vented-panels"
+      || target.dataset.dreamBuildAction === "weight-reduction-package"
+      || target.dataset.dreamBuildAction === "carbon-body-roll-cage"
+    ) {
+      handleDreamBuildAero(target.dataset.dreamBuildAction);
     } else if (target.dataset.dreamBuildAction === "prepare-showcase") {
       handleShowcasePrep();
     } else if (target.dataset.dreamBuildAction === "accept-sponsor-inquiry") {
@@ -18750,7 +19064,16 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildDrivetrain(work.action);
     } else {
-      setSummaryStatusMessage("Aero, Styling & Weight Reduction comes in a future garage pass.");
+      setSummaryStatusMessage("Aero, Styling & Weight Reduction is the next build track.");
+    }
+    return;
+  }
+  if (actionType === "buy_dream_aero_work") {
+    const work = nextDreamBuildAeroWork(currentGameState());
+    if (work) {
+      handleDreamBuildAero(work.action);
+    } else {
+      setSummaryStatusMessage("Final Detail & Shakedown comes in a future garage pass.");
     }
     return;
   }

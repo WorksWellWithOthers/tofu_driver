@@ -692,6 +692,10 @@ Design rules:
   Clutch & Flywheel, Limited-Slip Differential, Carbon Driveshaft & Axles, Custom Gearbox, and
   Sequential Transmission Package cost Cash, add `+$300B Garage Build Value`, and advance Core
   Build Progress to `33 / 40`.
+- Aero, Styling & Weight Reduction Track V1 is implemented after Drivetrain & Transmission Level
+  5. Front Splitter & Side Skirts, Rear Diffuser & Wing, Wide Body & Vented Panels, Weight
+  Reduction Package, and Carbon Body & Roll Cage cost Cash, add `+$2.1T Garage Build Value`, and
+  advance Core Build Progress to `38 / 40`.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
@@ -699,7 +703,7 @@ Design rules:
   auctions, collector-sale offers, public profiles, or networked play.
 - Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
-  Brakes, Induction, and Drivetrain levels. Aero/Styling/Weight Reduction, repeatable events, and
+  Brakes, Induction, Drivetrain, and Aero levels. Final Detail & Shakedown, repeatable events, and
   full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
@@ -775,19 +779,20 @@ Implemented Suspension V1 values:
 | 4 | Corner Balance | `$20M` | `+$12M` (`$27.725M` with Wheels level 3 and Exhaust level 5) |
 | 5 | Showcase Stance | `$35M` | `+$22M` (`$49.725M` with Wheels level 3 and Exhaust level 5) |
 
-Wheels levels 4-5, Aero/Styling/Weight Reduction, full Dream Garage,
+Wheels levels 4-5, Final Detail & Shakedown, full Dream Garage,
 completed-build events, Auction, Showcase, and Collector Offer remain future.
 
 Core Build Progress V2:
 
 ```text
-Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + future core track levels
+Core Build Progress = Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level + future final detail stages
 Planned core build size = 8 tracks x 5 levels = 40 work stages
 ```
 
 The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, Brakes, Induction, and
-Drivetrain labels, the next dream step, Garage Build Value, Builder Note, and compact future track
-notes. It must not add future Aero purchase buttons, Car Management, or a full Dream Garage surface.
+Drivetrain/Aero labels, the next dream step, Garage Build Value, Builder Note, and compact future
+track notes. It must not add Final Detail/Shakedown purchase buttons, Car Management, or a full
+Dream Garage surface.
 
 Avoid:
 

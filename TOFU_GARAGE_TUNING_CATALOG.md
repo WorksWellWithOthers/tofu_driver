@@ -311,9 +311,9 @@ Use more authentic language for Suspension while keeping runtime purchases narro
 - Level 5: Showcase Stance. Final geometry, bracing, fitment, and presentation.
 
 Suspension Track Completion V1 implements Levels 1-5. Tires & Rubber Track V1, Brakes & Control
-Track V1, Induction & Cooling Track V1, and Drivetrain & Transmission Track V1 are now implemented
-as runtime slices. Aero/Styling remains a future track and should be pulled from this catalog only
-when that runtime slice is intentionally scoped.
+Track V1, Induction & Cooling Track V1, Drivetrain & Transmission Track V1, and Aero/Styling Track
+V1 are now implemented as runtime slices. Final Detail & Shakedown remains future-only and should
+be scoped after Aero pacing is proven.
 
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
