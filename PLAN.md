@@ -47,17 +47,19 @@
 - The P0/P1 `FIRST_LOOP_AUDIT.md` findings have been implemented: Tidy Packaging is the first
   relevant Prep Counter upgrade when order prep is the bottleneck, Steady Pressing is stock-specific,
   empty upgrade panels are hidden, and early upgrade cards show before/after impact.
-- Tofu Shop Overview is now the first-loop play surface: it includes ready orders, Prep Counter
-  progress, the best available order card, and the relevant next station/upgrade so the first loop
-  is playable without opening Orders.
+- Tofu Shop Overview is now a glance-first play surface: it defaults to Goal Stack, one compact
+  operational shop card, one compact build-status card, and Recent/While Away feedback. Detailed
+  prep/order math, order cards, Counter Service detail, formulas, and reward/status surfaces live
+  behind Details or in their specific tabs.
 - Tofu Shop Overview now uses Overview Glance Mode V1. It separates Now, a stable Pinned Goal, and
   the long-term Era Goal so a large Net Worth target does not hide the next meaningful shop or Dream
-  Build target. Long explanations/formulas move behind Details, saved Builder Notes collapse until
-  edited, Counter Service shows only the relevant Start/Pause action, and offline summaries stay
-  compact. Goal Stack buttons are suppressed unless they perform a concrete useful action, queue-full
-  copy stays stable, and recommendations mention upgrades only when a visible implemented upgrade is
-  actually available. Detailed car work lives in the earned Dream Build tab, and future-only build
-  steps stay labeled without dead buttons.
+  Build target. Long explanations/formulas move behind stable keyed Details that stay open across
+  live ticks, saved Builder Notes collapse until edited, Counter Service shows only the relevant
+  Start/Pause action, and offline summaries stay compact with a real Ledger CTA. Goal Stack buttons
+  are suppressed unless they perform a concrete useful action, queue-full copy stays stable, and
+  recommendations mention upgrades only when a visible implemented upgrade is actually available.
+  Detailed car work lives in the earned Dream Build tab, and future-only build steps stay labeled
+  without dead buttons.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
@@ -92,10 +94,11 @@
   scale. Hire Shift Manager raises Counter Service batch size to 25, and Wholesale Pickup converts
   near-full waiting-order queues into capped scalar handoffs when supplied.
 - Shop Spirit is still not a first-loop system, but its implemented panel now uses clearer action
-  language, fixed sections, and local wallet context: generators use Buy, instant actions spend
-  Spirit with immediate gain/cost feedback, timed effects show duration/active state, and token cards
-  stay hidden until usable token generation exists. `Buy All Affordable` now bulk-buys permanent
-  Spirit Generators only and leaves instant/timed/token actions untouched.
+  language, fixed sections, and local wallet context: permanent generators show level/max and cap at
+  Level 25, instant actions use Activate wording with immediate gain/cost feedback, timed effects
+  show duration/active state, and token cards stay hidden until usable token generation exists. `Buy
+  All Affordable` now bulk-buys permanent Spirit Generators only, respects max levels, and leaves
+  instant/timed/token actions untouched.
 - Dashboard actions that say `View Counter Service` now open the Tofu Garage overview at the
   Counter Service card so players can find the running service and its upgrade path.
 - Cup-first visitors now get clearer parked paths into Tofu Garage from the landing copy and Cup
@@ -213,10 +216,12 @@
   Tuned Note costs `$600K Cash` and adds another `$350K`; Heat Wrapped costs `$1.1M Cash` and adds
   another `$650K`; Showcase Finish costs `$2M Cash`, adds another `$1.25M`, and completes the
   current Exhaust track.
-- Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It carries
-  detailed Wheels, Exhaust, Suspension, Dream Build Progress, Garage Build Value, and Builder Note
-  content so the Overview can stay compact. It also contains a collapsed Garage Tuning Catalog
-  category preview; the full canonical parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
+- Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. Its default
+  view is compact: current build summary, active work card, Work Tracks glance list, collapsed
+  Builder Note, and collapsed event/future/catalog sections. Detailed Wheels, Exhaust, Suspension,
+  Tires, Brakes, Induction, Drivetrain, Aero, Garage Build Value, Garage Event Board, and tuning
+  catalog content stay behind Details so the Overview can stay compact. The full canonical parts
+  list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
 - Tofu Garage is allowed to use authentic tuning vocabulary as fictional standalone garage-game
   language. Garage parts may affect future Build Value, Build Score, Style, Reliability, Event Fit,
   Race Class, Collector Appeal, Garage Reputation, Brand Value, prize potential, and

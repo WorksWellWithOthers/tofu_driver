@@ -471,12 +471,13 @@ Current design principles:
   running, shop income can include a `Cash/min when supplied` line; if it lacks stock or ready
   orders, the UI should say what is missing rather than showing a misleading zero.
 - Shop Spirit actions should use stable sections and action-specific language: generators use `Buy`
-  or `Buy All Affordable`, instant actions use `Spend Spirit`, and timed effects use `Start Effect`
-  or a specific effect name. `Buy All Affordable` is quality-of-life for permanent Spirit
-  Generators only; it must not trigger instant actions, timed effects, tokens, routes, Dream Build,
-  or normal shop upgrades. Instant Spirit spends should be strategic emergency recovery, such as
-  adding a meaningful amount of Tofu Stock or order prep, with immediate inline feedback. Token
-  shelves stay hidden until an implemented system can actually generate usable tokens.
+  or `Buy All Affordable`, instant actions use `Activate`, and timed effects use `Start Effect`
+  or a specific effect name. Permanent Spirit Generators cap at Level 25 and show `Maxed` at cap.
+  `Buy All Affordable` is quality-of-life for permanent Spirit Generators only; it must respect
+  generator max levels and must not trigger instant actions, timed effects, tokens, routes, Dream
+  Build, or normal shop upgrades. Instant Spirit activations should be strategic emergency recovery,
+  such as adding a meaningful amount of Tofu Stock or order prep, with immediate inline feedback.
+  Token shelves stay hidden until an implemented system can actually generate usable tokens.
   Route-related Spirit actions stay hidden until fictional route systems matter.
 - Regular Customers, gameplay Routes, full Dream Garage, Rivals, and License prestige
   remain deferred until Counter Service and the V1 spine have been playtested and tuned. While
@@ -539,6 +540,11 @@ Current design principles:
 - Long Overview explanations, Net Worth formulas, Garage Build formulas, and saved Builder Note
   editing controls should be collapsed by default. Counter Service should show only the meaningful
   Start or Pause action, not disabled duplicate buttons.
+- Tofu Garage Overview uses a stricter default-visible set after Glance Mode tuning: Goal Stack,
+  one compact operational Tofu Shop card, one compact build-status card, and Recent/While Away
+  feedback. Prep/order math, Counter Service detail, Net Worth formulas, showcase/sponsor/passport
+  detail, and optional boost copy belong behind Details or in their specific tabs. Details open
+  state is runtime UI state and should survive live shop ticks without localStorage persistence.
 - The Tofu Shop Living Scene is a decorative parked Overview panel, not a control surface. It should
   present one cohesive full-scene image or placeholder at a time, selected by meaningful shop
   milestones, while buttons and gameplay decisions remain separate UI. Do not show separate
@@ -669,11 +675,12 @@ Design rules:
   future.
 - Exhaust V1 implements Exhaust Fitted, Sealed Joints, Tuned Note, Heat Wrapped, and Showcase
   Finish.
-- Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It holds
-  Wheels, Exhaust, Suspension, Tires & Rubber, Brakes & Control, Induction & Cooling, Dream Build
-  Progress, Garage Build Value, Builder Note, and future-only garage management notes so the
-  Overview does not become a full build dashboard. It may show a collapsed Garage Tuning Catalog
-  category preview, but the full parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
+- Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It defaults
+  to a compact current-build summary, one active work card, compact Work Tracks, a collapsed Builder
+  Note, and collapsed event/future/catalog sections. Detailed Wheels, Exhaust, Suspension, Tires &
+  Rubber, Brakes & Control, Induction & Cooling, Drivetrain, Aero, Garage Event Board, tuning
+  catalog, and future-only management copy stay behind Details so the tab feels like a car screen
+  rather than documentation. The full parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
 - Suspension Track Completion V1 is implemented after Exhaust Level 5. Suspension Refreshed,
   Ride Height Set, Alignment Dialed, Corner Balance, and Showcase Stance cost Cash, add Garage
   Build Value, and are framed as fictional garage/story value, not speed or real-world vehicle
@@ -1147,7 +1154,8 @@ Pour achievement, and the Tofu Driver Penguin Delivery White Tee unlocks from a 
 completed with an unlocked Penguin mascot selected. If an old save already has a shirt, the matching
 sticker is treated as unlocked so the reward ladder stays coherent. The app must not auto-open
 product links, pass GPS/route/speed/user data to URLs, call Shopify APIs, or imply that Shopify
-verifies any unlock.
+verifies any unlock. Locked Secret Merch surfaces should stay compact and should not expose product
+or partner-store purchase links before a local unlock.
 
 Discord/community links are optional parked-use CTAs. They must be hidden by default unless
 configured, never shown during active drive, and never framed as a place to report, identify, shame,

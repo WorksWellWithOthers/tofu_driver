@@ -796,6 +796,7 @@ const SPIRIT_GENERATORS = [
   { id: "night_shift_kettle", name: "Night Shift Kettle", costTips: 900, spiritPerSecond: 0.18, unlock: "Shop Level 4" },
   { id: "lucky_cat", name: "Lucky Cat", costTips: 1400, spiritPerSecond: 0.25, unlock: "Shop Level 5" },
 ];
+const SPIRIT_GENERATOR_MAX_LEVEL = 25;
 const SPIRIT_GENERATOR_BULK_PURCHASE_CAP = 500;
 
 const SHOP_SPIRIT_BOOSTS = [
@@ -1343,6 +1344,7 @@ const appState = {
   shopTab: "overview",
   purchaseMultiplier: 1,
   shopInlineResult: "",
+  detailOpenState: {},
   shopStoryTeaser: null,
   summaryMode: null,
   shopResultCanFulfillAnother: false,
@@ -3193,7 +3195,7 @@ function defaultShopState() {
     routes: normalizeRouteState({}),
     garage: normalizeCatalogCounts({}, GARAGE_UPGRADES, 100),
     crew: normalizeCatalogCounts({}, CREW_ROLES, 1000),
-    spiritGenerators: normalizeCatalogCounts({}, SPIRIT_GENERATORS, 1000),
+    spiritGenerators: normalizeCatalogCounts({}, SPIRIT_GENERATORS, SPIRIT_GENERATOR_MAX_LEVEL),
     festivalBoosts: normalizeFestivalBoosts({}),
     licensePerks: normalizeCatalogCounts({}, LICENSE_PERKS, 20),
     rivals: normalizeCatalogCounts({}, RIVAL_CHALLENGES, 1000),
@@ -3490,7 +3492,7 @@ function normalizeShopState(shop) {
     routes: normalizeRouteState(source.routes),
     garage: normalizeCatalogCounts(source.garage, GARAGE_UPGRADES, 100),
     crew: normalizeCatalogCounts(source.crew, CREW_ROLES, 1000),
-    spiritGenerators: normalizeCatalogCounts(source.spiritGenerators, SPIRIT_GENERATORS, 1000),
+    spiritGenerators: normalizeCatalogCounts(source.spiritGenerators, SPIRIT_GENERATORS, SPIRIT_GENERATOR_MAX_LEVEL),
     festivalBoosts: normalizeFestivalBoosts(source.festivalBoosts),
     licensePerks: normalizeCatalogCounts(source.licensePerks, LICENSE_PERKS, 20),
     rivals: normalizeCatalogCounts(source.rivals, RIVAL_CHALLENGES, 1000),
@@ -4511,7 +4513,7 @@ function getShopGeneratorRates(gameState, now = new Date()) {
     * stationMilestoneMultiplier("regular_customer", customerOwned);
   const shopSpiritPerSecond = SPIRIT_GENERATORS.reduce((total, generator) => (
     total
-    + safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 100000)
+    + safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL)
       * generator.spiritPerSecond
   ), 0);
   const prepSlotPerSecond = PREP_SLOT_REGEN_PER_SECOND
@@ -8616,7 +8618,8 @@ function buySpiritGenerator(generatorId, gameState) {
   let next = normalizeGameState(gameState);
   const generator = SPIRIT_GENERATORS.find((item) => item.id === generatorId);
   if (!generator) return { ok: false, reason: "Shop Spirit station unavailable.", gameState: next };
-  const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, 1000);
+  const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL);
+  if (current >= SPIRIT_GENERATOR_MAX_LEVEL) return { ok: false, reason: `${generator.name} is maxed.`, gameState: next };
   const costTips = Math.ceil(generator.costTips * Math.pow(1.22, current));
   if (next.shop.tips < costTips) return { ok: false, reason: "Not enough Cash.", gameState: next };
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - costTips);
@@ -8627,14 +8630,14 @@ function buySpiritGenerator(generatorId, gameState) {
 
 function spiritGeneratorNextCost(generator, gameState) {
   const state = normalizeGameState(gameState);
-  const current = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
+  const current = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL);
   return Math.ceil(generator.costTips * Math.pow(1.22, current));
 }
 
 function affordableSpiritGeneratorPurchases(gameState) {
   const state = normalizeGameState(gameState);
   return SPIRIT_GENERATORS.filter((generator) => (
-    safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000) < 1000
+    safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL) < SPIRIT_GENERATOR_MAX_LEVEL
     && state.shop.tips >= spiritGeneratorNextCost(generator, state)
   ));
 }
@@ -8651,25 +8654,30 @@ function buyAllAffordableSpiritGenerators(gameState, options = {}) {
   let hitCap = false;
   for (let index = 0; index < SPIRIT_GENERATOR_BULK_PURCHASE_CAP; index += 1) {
     const generator = SPIRIT_GENERATORS.find((item) => (
-      safeNonNegativeInteger(next.shop.spiritGenerators[item.id], 0, 1000) < 1000
+      safeNonNegativeInteger(next.shop.spiritGenerators[item.id], 0, SPIRIT_GENERATOR_MAX_LEVEL) < SPIRIT_GENERATOR_MAX_LEVEL
       && next.shop.tips >= spiritGeneratorNextCost(item, next)
     ));
     if (!generator) break;
-    const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, 1000);
-    if (current >= 1000) break;
+    const current = safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL);
+    if (current >= SPIRIT_GENERATOR_MAX_LEVEL) break;
     const cost = spiritGeneratorNextCost(generator, next);
     next.shop.tips = safeNonNegativeInteger(next.shop.tips - cost);
     next.shop.spiritGenerators[generator.id] = current + 1;
     spent += cost;
     bought += 1;
-    breakdown[generator.name] = safeNonNegativeInteger(breakdown[generator.name] + 1, 1, 1000);
+    breakdown[generator.name] = safeNonNegativeInteger(breakdown[generator.name] + 1, 1, SPIRIT_GENERATOR_MAX_LEVEL);
     if (index === SPIRIT_GENERATOR_BULK_PURCHASE_CAP - 1) hitCap = true;
   }
   if (bought < 1) {
+    const allMaxed = SPIRIT_GENERATORS.every((generator) => (
+      safeNonNegativeInteger(next.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL) >= SPIRIT_GENERATOR_MAX_LEVEL
+    ));
     return {
       ok: false,
-      reason: SPIRIT_GENERATORS.length
-        ? "No affordable Spirit generators right now."
+      reason: allMaxed
+        ? "All Spirit generators are maxed."
+        : SPIRIT_GENERATORS.length
+          ? "No affordable Spirit generators right now."
         : "No Spirit generators unlocked yet.",
       gameState: next,
     };
@@ -8737,9 +8745,9 @@ function useShopSpiritBoost(boostId, gameState, options = {}) {
   next = addLedgerEntry(next, "boost", `${boost.name} used while parked.`);
   let feedback = `${boost.name} used.`;
   if (boost.type === "instant_tofu") {
-    feedback = `${boost.name}: +${formatShopCount(appliedAmount)} Tofu Stock · -${formatShopCost(boost.costSpirit)} Spirit`;
+    feedback = `${boost.name} activated: +${formatShopCount(appliedAmount)} Tofu Stock · -${formatShopCost(boost.costSpirit)} Spirit.`;
   } else if (boost.type === "instant_orders") {
-    feedback = `${boost.name}: +${formatShopCount(appliedAmount)} ready order${appliedAmount === 1 ? "" : "s"} · -${formatShopCost(boost.costSpirit)} Spirit`;
+    feedback = `${boost.name} activated: +${formatShopCount(appliedAmount)} ready order${appliedAmount === 1 ? "" : "s"} · -${formatShopCost(boost.costSpirit)} Spirit.`;
   } else if (boost.durationSeconds) {
     feedback = `${boost.name} active for ${formatShopCount(Math.ceil(boost.durationSeconds / 60))} min · -${formatShopCost(boost.costSpirit)} Spirit`;
   }
@@ -12891,6 +12899,8 @@ function activeTimedEffectFor(state, boostId) {
 }
 
 function spiritGeneratorDisabledReason(generator, state, cost) {
+  const current = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL);
+  if (current >= SPIRIT_GENERATOR_MAX_LEVEL) return "Maxed";
   const missing = Math.max(0, cost - state.shop.tips);
   return missing > 0
     ? `Need ${formatCash(missing)} · You have ${formatCashBalance(state.shop.tips)}`
@@ -12949,7 +12959,7 @@ function festivalBoostDisabledReason(boost, state) {
 
 function spiritBoostActionLabel(boost) {
   if (boost.type === "instant_tofu" || boost.type === "instant_orders") {
-    return `Spend ${formatShopCost(boost.costSpirit)} Spirit`;
+    return `Activate · ${formatShopCost(boost.costSpirit)} Spirit`;
   }
   if (boost.durationSeconds) {
     if (boost.id === "busy_lunch") return "Start Lunch Hour";
@@ -12969,12 +12979,12 @@ function spiritBoostCopy(boost, state) {
     return `${boost.description} Duration: ${formatShopCount(Math.ceil(boost.durationSeconds / 60))} min. Does not stack; start it when the shop is parked.`;
   }
   if (boost.type === "instant_tofu") {
-    return `${boost.description} Current effect: +${formatShopCount(shopSpiritInstantAmount(boost, state))} Tofu Stock.`;
+    return `Activation burst: ${boost.description} Current effect: +${formatShopCount(shopSpiritInstantAmount(boost, state))} Tofu Stock.`;
   }
   if (boost.type === "instant_orders") {
     const amount = Math.min(shopSpiritInstantAmount(boost, state), deliveryOrderQueueSpace(state.shop));
     if (amount < 1) return "Order queue is full. Use Counter Service or Wholesale Pickup first.";
-    return `${boost.description} Current effect: +${formatShopCount(amount)} ready order${amount === 1 ? "" : "s"}.`;
+    return `Activation burst: ${boost.description} Current effect: +${formatShopCount(amount)} ready order${amount === 1 ? "" : "s"}.`;
   }
   return `${boost.description} Instant parked-only action.`;
 }
@@ -13352,7 +13362,7 @@ function renderDreamBuildTrackWorkCard(state, options) {
   return renderIdleCard({
     title: options.title,
     status: `Level ${formatShopCount(options.level)} / 5 · ${options.statusLabel}`,
-    copy: `${work.copy} Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up. These are fictional Tofu Garage upgrades, not Cup Test scoring changes.`,
+    copy: work.copy,
     extra: `
       <div class="nospill-afford-progress">
         <div class="nospill-afford-progress-head">
@@ -13362,7 +13372,7 @@ function renderDreamBuildTrackWorkCard(state, options) {
         <small>Next Work: ${escapeHtml(work.title)}</small>
         <small>Cost: ${escapeHtml(formatCash(work.cost))} Cash · Build Value added: +${escapeHtml(formatCashCount(work.valueAdded))}</small>
         <small>${escapeHtml(work.copy)}</small>
-        ${work.detailCopy ? `<details class="nospill-compact-details"><summary>${escapeHtml(options.detailsLabel)}</summary><p>${escapeHtml(work.detailCopy)}</p></details>` : ""}
+        ${work.detailCopy ? compactDetails(`dream_build_${work.action}_details`, options.detailsLabel, `<p>${escapeHtml(work.detailCopy)}</p>`) : ""}
         ${!canAfford ? `<small>Need ${escapeHtml(formatCash(missing))} more Cash.</small>` : ""}
       </div>
     `,
@@ -13399,7 +13409,7 @@ function renderDreamInvestmentTargetCard(gameState) {
       return renderIdleCard({
         title: wheelsLevel >= 2 ? "Polished Wheels" : "Dream Build",
         status: `${levelTitle} · Level ${formatShopCount(wheelsLevel)} / 5`,
-        copy: `${levelCopy} Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up. Not faster. Smoother.`,
+        copy: levelCopy,
         extra: `
           <div class="nospill-afford-progress">
             <div class="nospill-afford-progress-head">
@@ -13435,8 +13445,8 @@ function renderDreamInvestmentTargetCard(gameState) {
         ? "Balanced Fitment · Wheels Level 3 / 5"
         : `Level ${formatShopCount(exhaustLevel)} / 5 · ${currentExhaustLabel}`;
       const copy = isPurchase
-        ? `The project needs its first calm note. Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up.`
-        : `${exhaustWork.copy} Cash goes down now. ${GARAGE_BUILD_VALUE_LABEL} goes up.`;
+        ? "The project needs its first calm note."
+        : exhaustWork.copy;
       return renderIdleCard({
         title: cardTitle,
         status,
@@ -13785,7 +13795,7 @@ function renderDreamBuildProgressCard(gameState) {
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: capReached
       ? "Core build nearly complete. Final Detail & Shakedown comes in a future garage pass."
-      : "Fictional garage work adds build value without changing Cup Test scoring. Not faster. Smoother.",
+      : "Fictional Tofu Garage build value. Does not affect Cup Test scoring.",
     extra: `
       <div class="nospill-afford-progress">
         <div
@@ -13798,21 +13808,20 @@ function renderDreamBuildProgressCard(gameState) {
         >
           <span style="width: ${progress.percent}%"></span>
         </div>
-        <small>Wheels · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
-        <small>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
-        <small>Suspension · Level ${escapeHtml(formatShopCount(progress.suspensionLevel))} / 5 · ${escapeHtml(progress.suspensionStatus)}</small>
-        <small>Tires &amp; Rubber · Level ${escapeHtml(formatShopCount(progress.tiresLevel))} / 5 · ${escapeHtml(progress.tiresStatus)}</small>
-        <small>Brakes &amp; Control · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</small>
-        <small>Induction &amp; Cooling · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</small>
-        <small>Drivetrain &amp; Transmission · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</small>
-        <small>Aero, Styling &amp; Weight Reduction · Level ${escapeHtml(formatShopCount(progress.aeroLevel))} / 5 · ${escapeHtml(progress.aeroStatus)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectValue))}</small>
-        <details class="nospill-compact-details">
-          <summary>Dream Build details</summary>
+        ${compactDetails("dream_build_details", "Dream Build details", `
           <p>Next Dream Step: ${escapeHtml(nextStep.title)}${nextStep.future ? " · future/target-only" : ""}</p>
           <p>${escapeHtml(nextStep.copy)}</p>
+          <p>Wheels · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</p>
+          <p>Exhaust · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</p>
+          <p>Suspension · Level ${escapeHtml(formatShopCount(progress.suspensionLevel))} / 5 · ${escapeHtml(progress.suspensionStatus)}</p>
+          <p>Tires &amp; Rubber · Level ${escapeHtml(formatShopCount(progress.tiresLevel))} / 5 · ${escapeHtml(progress.tiresStatus)}</p>
+          <p>Brakes &amp; Control · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</p>
+          <p>Induction &amp; Cooling · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</p>
+          <p>Drivetrain &amp; Transmission · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</p>
+          <p>Aero, Styling &amp; Weight Reduction · Level ${escapeHtml(formatShopCount(progress.aeroLevel))} / 5 · ${escapeHtml(progress.aeroStatus)}</p>
           <p>Net Worth V1 includes ${escapeHtml(netWorthV1FormulaLabel(state))}.</p>
-        </details>
+        `)}
       </div>
     `,
   });
@@ -13883,58 +13892,64 @@ function renderDreamBuildTracksCard(gameState) {
   const inductionStatus = inductionUnlockStatus(state);
   const drivetrainStatus = drivetrainUnlockStatus(state);
   const aeroStatus = aeroUnlockStatus(state);
-  const suspensionLine = dreamBuildExhaustLevel(state) < 5
-    ? "Future Track · Complete the current implemented build track first."
-    : suspensionWork
-      ? `Next Work: ${suspensionWork.title} · ${formatCash(suspensionWork.cost)} Cash · +${formatCashCount(suspensionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Tires & Rubber.";
-  const tiresLine = dreamBuildSuspensionLevel(state) < 5
-    ? "Future Track · Complete Suspension & Chassis Geometry first."
-    : tiresWork
-      ? `Next Work: ${tiresWork.title} · ${formatCash(tiresWork.cost)} Cash · +${formatCashCount(tiresWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Brakes & Control.";
-  const brakesLine = dreamBuildTiresLevel(state) < 5
-    ? "Future Track · Complete Tires & Rubber first."
-    : brakesWork
-      ? `Next Work: ${brakesWork.title} · ${formatCash(brakesWork.cost)} Cash · +${formatCashCount(brakesWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Induction & Cooling.";
-  const inductionLine = !inductionStatus.unlocked
-    ? `Future Track · ${inductionStatus.reason || "Complete Brakes & Control and Local Showcase first."}`
-    : inductionWork
-      ? `Next Work: ${inductionWork.title} · ${formatCash(inductionWork.cost)} Cash · +${formatCashCount(inductionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Drivetrain & Transmission, future garage pass.";
-  const drivetrainLine = !drivetrainStatus.unlocked
-    ? `Future Track · ${drivetrainStatus.reason || "Complete Induction & Cooling first."}`
-    : drivetrainWork
-      ? `Next Work: ${drivetrainWork.title} · ${formatCash(drivetrainWork.cost)} Cash · +${formatCashCount(drivetrainWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Build Track: Aero, Styling & Weight Reduction.";
-  const aeroLine = !aeroStatus.unlocked
-    ? `Future Track · ${aeroStatus.reason || "Complete Drivetrain & Transmission first."}`
-    : aeroWork
-      ? `Next Work: ${aeroWork.title} · ${formatCash(aeroWork.cost)} Cash · +${formatCashCount(aeroWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-      : "Complete · Next Core Build Step: Final Detail & Shakedown, future garage pass.";
+  const trackRows = [
+    ["Wheels", progress.wheelsStatus],
+    ["Exhaust", progress.exhaustStatus],
+    ["Suspension", dreamBuildExhaustLevel(state) >= 5 || progress.suspensionLevel > 0 ? progress.suspensionStatus : "Future"],
+    ["Tires", dreamBuildSuspensionLevel(state) >= 5 || progress.tiresLevel > 0 ? progress.tiresStatus : "Future"],
+    ["Brakes", dreamBuildTiresLevel(state) >= 5 || progress.brakesLevel > 0 ? progress.brakesStatus : "Future"],
+    ["Induction", inductionStatus.unlocked || progress.inductionLevel > 0 ? progress.inductionStatus : "Future"],
+    ["Drivetrain", drivetrainStatus.unlocked || progress.drivetrainLevel > 0 ? progress.drivetrainStatus : "Future"],
+    ["Aero", aeroStatus.unlocked || progress.aeroLevel > 0 ? progress.aeroStatus : "Future"],
+  ];
+  const futureTracks = trackRows
+    .filter(([, status]) => status === "Future")
+    .map(([name]) => name);
+  const activeStep = nextDreamBuildStep(state);
+  const detailLines = [
+    dreamBuildExhaustLevel(state) < 5
+      ? "Suspension & Chassis Geometry · Future Track · Complete the current implemented build track first."
+      : suspensionWork
+        ? `Suspension & Chassis Geometry · Next Work: ${suspensionWork.title} · ${formatCash(suspensionWork.cost)} Cash · +${formatCashCount(suspensionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "Suspension & Chassis Geometry · Complete · Next Build Track: Tires & Rubber.",
+    dreamBuildSuspensionLevel(state) < 5
+      ? "Tires & Rubber · Future Track · Complete Suspension & Chassis Geometry first."
+      : tiresWork
+        ? `Tires & Rubber · Next Work: ${tiresWork.title} · ${formatCash(tiresWork.cost)} Cash · +${formatCashCount(tiresWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "Tires & Rubber · Complete · Next Build Track: Brakes & Control.",
+    dreamBuildTiresLevel(state) < 5
+      ? "Brakes & Control · Future Track · Complete Tires & Rubber first."
+      : brakesWork
+        ? `Brakes & Control · Next Work: ${brakesWork.title} · ${formatCash(brakesWork.cost)} Cash · +${formatCashCount(brakesWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "Brakes & Control · Complete · Next Build Track: Induction & Cooling.",
+    !inductionStatus.unlocked
+      ? `Induction & Cooling · Future Track · ${inductionStatus.reason || "Complete Brakes & Control and Local Showcase first."}`
+      : inductionWork
+        ? `Induction & Cooling · Next Work: ${inductionWork.title} · ${formatCash(inductionWork.cost)} Cash · +${formatCashCount(inductionWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "Induction & Cooling · Complete · Next Build Track: Drivetrain & Transmission, future garage pass.",
+    !drivetrainStatus.unlocked
+      ? `Drivetrain & Transmission · Future Track · ${drivetrainStatus.reason || "Complete Induction & Cooling first."}`
+      : drivetrainWork
+        ? `Drivetrain & Transmission · Next Work: ${drivetrainWork.title} · ${formatCash(drivetrainWork.cost)} Cash · +${formatCashCount(drivetrainWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "Drivetrain & Transmission · Complete · Next Build Track: Aero, Styling & Weight Reduction.",
+    !aeroStatus.unlocked
+      ? `Aero, Styling & Weight Reduction · Future Track · ${aeroStatus.reason || "Complete Drivetrain & Transmission first."}`
+      : aeroWork
+        ? `Aero, Styling & Weight Reduction · Next Work: ${aeroWork.title} · ${formatCash(aeroWork.cost)} Cash · +${formatCashCount(aeroWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : "Aero, Styling & Weight Reduction · Complete · Next Core Build Step: Final Detail & Shakedown, future garage pass.",
+  ];
   return renderIdleCard({
     title: "Work Tracks",
-    status: "Current build",
-    copy: "One part, then careful work levels. No duplicate part-buying loop.",
+    status: "Compact",
+    copy: "Current build tracks at a glance.",
     extra: `
       <div class="nospill-afford-progress">
-        <small><strong>Wheels &amp; Fitment</strong> · Level ${escapeHtml(formatShopCount(progress.wheelsLevel))} / 5 · ${escapeHtml(progress.wheelsStatus)}</small>
-        <small>Future: Showpiece Fitment, Collector Finish</small>
-        <small><strong>Exhaust &amp; Airflow</strong> · Level ${escapeHtml(formatShopCount(progress.exhaustLevel))} / 5 · ${escapeHtml(progress.exhaustStatus)}</small>
-        <small>${progress.exhaustLevel >= 5 ? "Complete" : "Keep working the current Exhaust step."}</small>
-        <small><strong>Suspension &amp; Chassis Geometry</strong> · Level ${escapeHtml(formatShopCount(progress.suspensionLevel))} / 5 · ${escapeHtml(progress.suspensionStatus)}</small>
-        <small>${escapeHtml(suspensionLine)}</small>
-        <small><strong>Tires &amp; Rubber</strong> · Level ${escapeHtml(formatShopCount(progress.tiresLevel))} / 5 · ${escapeHtml(progress.tiresStatus)}</small>
-        <small>${escapeHtml(tiresLine)}</small>
-        <small><strong>Brakes &amp; Control</strong> · Level ${escapeHtml(formatShopCount(progress.brakesLevel))} / 5 · ${escapeHtml(progress.brakesStatus)}</small>
-        <small>${escapeHtml(brakesLine)}</small>
-        <small><strong>Induction &amp; Cooling</strong> · Level ${escapeHtml(formatShopCount(progress.inductionLevel))} / 5 · ${escapeHtml(progress.inductionStatus)}</small>
-        <small>${escapeHtml(inductionLine)}</small>
-        <small><strong>Drivetrain &amp; Transmission</strong> · Level ${escapeHtml(formatShopCount(progress.drivetrainLevel))} / 5 · ${escapeHtml(progress.drivetrainStatus)}</small>
-        <small>${escapeHtml(drivetrainLine)}</small>
-        <small><strong>Aero, Styling &amp; Weight Reduction</strong> · Level ${escapeHtml(formatShopCount(progress.aeroLevel))} / 5 · ${escapeHtml(progress.aeroStatus)}</small>
-        <small>${escapeHtml(aeroLine)}</small>
+        ${trackRows.map(([name, status]) => `<small>${escapeHtml(name)}: ${escapeHtml(status)}</small>`).join("")}
+        ${futureTracks.length ? compactDetails("dream_build_future_tracks", "Future Tracks", `
+          <p>${escapeHtml(futureTracks.join(" · "))}</p>
+          <p>Next tracked step: ${escapeHtml(activeStep.title)}${activeStep.future ? " · future/target-only" : ""}.</p>
+        `) : ""}
+        ${compactDetails("dream_build_track_details", "Track details", detailLines.map((line) => `<p>${escapeHtml(line)}</p>`).join(""))}
       </div>
     `,
   });
@@ -13968,12 +13983,11 @@ function renderGarageTuningCatalogPreviewCard(gameState) {
     status: "Future catalog",
     copy: `Authentic tuning parts unlock across future garage eras. Current focus: ${focus}.`,
     extra: `
-      <details class="nospill-compact-details">
-        <summary>Catalog categories</summary>
+      ${compactDetails("dream_build_catalog_categories", "Catalog categories", `
         <div class="nospill-afford-progress">
           ${GARAGE_TUNING_CATALOG_CATEGORIES.map((category) => `<small>${escapeHtml(category)}</small>`).join("")}
         </div>
-      </details>
+      `)}
     `,
   });
 }
@@ -14092,16 +14106,19 @@ function renderDreamBuildPanel(gameState) {
   const progress = dreamBuildProgressSummary(state);
   return `
     <h4>Dream Build</h4>
-    <p class="nospill-panel-helper"><strong>Current Build</strong> · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages · ${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))} · Not faster. Smoother.</p>
+    <p class="nospill-panel-helper"><strong>Current Build</strong> · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages · ${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))}. Fictional Tofu Garage build value. Does not affect Cup Test scoring.</p>
     <div class="nospill-idle-grid">
       ${renderDreamBuildProgressCard(state)}
-      ${renderDreamBuildTracksCard(state)}
-      ${renderGarageEventBoardCard(state)}
       ${renderDreamInvestmentTargetCard(state)}
-      ${renderProjectCarValueCard(state)}
+      ${renderDreamBuildTracksCard(state)}
       ${renderBuilderNoteCard(state)}
-      ${renderGarageTuningCatalogPreviewCard(state)}
-      ${renderFutureGarageManagementCard()}
+      ${compactDetails("dream_build_garage_events", "Garage Events", renderGarageEventBoardCard(state) || "<p>Garage Event Board appears after the build reaches its event-ready threshold.</p>")}
+      ${compactDetails("dream_build_future_management", "Future Garage", `
+        <div class="nospill-idle-grid">
+          ${renderGarageTuningCatalogPreviewCard(state)}
+          ${renderFutureGarageManagementCard()}
+        </div>
+      `)}
     </div>
   `;
 }
@@ -14281,11 +14298,10 @@ function renderNetWorthCard(gameState) {
         >
           <span style="width: ${percent}%"></span>
         </div>
-        <details class="nospill-compact-details">
-          <summary>What counts toward Net Worth?</summary>
+        ${compactDetails("net_worth_formula", "What counts toward Net Worth?", `
           <p>Formula: ${escapeHtml(netWorthV1FormulaLabel(state))}.</p>
           <p>Cash can be spent now or invested into careful garage/story value later.</p>
-        </details>
+        `)}
       </div>
     `,
   });
@@ -14522,11 +14538,10 @@ function renderCounterServiceCard(state) {
           <span style="width: ${progress.percent}%"></span>
         </div>
         ${blocker ? `<small>${escapeHtml(blocker)}</small>` : ""}
-        <details class="nospill-compact-details">
-          <summary>Counter details</summary>
+        ${compactDetails("counter_service_details", "Counter details", `
           <p>Priority: ${escapeHtml(counterServicePriorityLabel(service.priority))}</p>
           ${income.detail ? `<p>${escapeHtml(income.detail)}</p>` : ""}
-        </details>
+        `)}
         ${service.lastResult ? `<small>${escapeHtml(service.lastResult)}</small>` : ""}
       </div>
     `,
@@ -15689,19 +15704,63 @@ function renderGoalStackCard(state) {
   `;
 }
 
+function renderOverviewOperationalCard(state) {
+  const prep = orderPrepProgress(state);
+  const rates = getShopGeneratorRates(state);
+  const income = counterServiceIncomeStatus(state);
+  const queueFull = deliveryOrderQueueSpace(state.shop) < 1;
+  const counterRunning = Boolean(state.shop.counterService && state.shop.counterService.running);
+  const waitingForStock = counterRunning && state.shop.deliveryOrders > 0 && state.shop.tofuStock < 1;
+  const waitingForOrders = counterRunning && state.shop.deliveryOrders < 1;
+  const status = queueFull
+    ? `Queue full · Counter Service ${counterRunning ? "running" : "paused"}`
+    : waitingForStock
+      ? "Waiting for Tofu Stock"
+      : waitingForOrders
+        ? "Waiting for ready orders"
+        : "Shop moving";
+  const copy = queueFull
+    ? counterRunning
+      ? "Queue full. Counter Service is already clearing prepared orders."
+      : "Queue full. Start Counter Service to turn ready orders into Cash."
+    : waitingForStock
+      ? "Counter Service is waiting for tofu stock."
+      : waitingForOrders
+        ? "Counter Service is waiting for ready orders."
+        : "Tofu Stock, ready orders, and Counter Service are summarized here.";
+  const prepCapacityLine = `${formatShopCount(state.shop.prepSlots)} slots open · ${formatShopCount(getPrepSlotMax(state.shop))} max`;
+  const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
+  return renderIdleCard({
+    title: "Tofu Shop",
+    status,
+    copy,
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>Ready Orders: ${escapeHtml(formatShopCount(state.shop.deliveryOrders))}</small>
+        <small>Income: ${escapeHtml(income.text)}</small>
+        <small>Tofu Stock/sec: +${escapeHtml(formatShopRate(rates.tofuPressPerSecond))}/sec</small>
+        <small>Prep Capacity: ${escapeHtml(prepCapacityLine)}</small>
+        ${compactDetails("overview_order_details", "How orders work", `
+          <p>Prepared orders fill the Delivery Orders queue. When that queue is full, Counter Service is the normal way to clear space.</p>
+          <p>Prep Capacity is the recovering expansion pool used to add more production stations. It is not a manual recharge button.</p>
+          <p>Current prep state: ${escapeHtml(prep.message)}</p>
+          ${bestOrder ? `<p>Best current order: ${escapeHtml(bestOrder.name)} uses ${escapeHtml(formatShopCost(bestOrder.tofuRequired))} tofu stock and ${escapeHtml(formatShopCount(bestOrder.deliveryOrdersRequired))} ready order${bestOrder.deliveryOrdersRequired === 1 ? "" : "s"}.</p>` : ""}
+        `)}
+      </div>
+    `,
+  });
+}
+
 function renderOverviewHowItWorks(state, bestOrder, runway, bottleneck) {
   const bestOrderLine = bestOrder
     ? `Best current order: ${bestOrder.name} uses ${formatShopCost(bestOrder.tofuRequired)} tofu stock and ${formatShopCount(bestOrder.deliveryOrdersRequired)} ready order${bestOrder.deliveryOrdersRequired === 1 ? "" : "s"}.`
     : "Keep building Tofu Stock and ready orders to reveal better payouts.";
-  return `
-    <details class="nospill-compact-details nospill-overview-details">
-      <summary>How this works</summary>
+  return compactDetails("overview_how_this_works", "How this works", `
       <p>Current bottleneck: ${escapeHtml(bottleneck.label)}. ${escapeHtml(bottleneck.action)}</p>
       <p>Tofu Stock feeds Prep Counter and larger orders. Counter Service turns prepared orders into Cash from tips.</p>
       <p>Cash buys upgrades. ${escapeHtml(runway.message)}</p>
       <p>${escapeHtml(bestOrderLine)}</p>
-    </details>
-  `;
+    `, { className: "nospill-overview-details" });
 }
 
 function renderOverviewPanel(state) {
@@ -15709,34 +15768,37 @@ function renderOverviewPanel(state) {
   const runway = tofuStockRunway(state);
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
   const recentReward = renderRecentShopRewardCard(state);
+  const hiddenOverviewCards = `
+    ${renderPreparingOrderCard(state)}
+    ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
+    ${renderOverviewImprovementCard(state)}
+    ${renderCounterServiceCard(state)}
+    ${renderShowcaseInterestCard(state)}
+    ${renderSponsorInquiryCard(state)}
+    ${renderNetWorthCard(state)}
+    ${renderNetWorthMilestoneCard(state)}
+    ${renderDriverBonusCard(state)}
+    ${renderPassportTeaserCard(state)}
+    ${renderStoryTeaserCard()}
+    ${renderIdleCard({
+      title: "Optional Certified Boost",
+      status: "Don't Spill the Cup",
+      copy: "Available when you want a smooth-driving bonus. It is not required for shop progress.",
+      actions: [actionButton("Take Don't Spill the Cup", "data-surface-target", "cup-test", false)],
+    })}
+  `;
   return `
     <h4>Overview</h4>
     ${renderGoalStackCard(state)}
     ${renderTofuShopLivingScene(state)}
-    <p class="nospill-panel-helper nospill-overview-brief">Queue, Cash, and build goals are summarized here. Open Details or the matching tab for deeper controls.</p>
-    ${renderOverviewHowItWorks(state, bestOrder, runway, bottleneck)}
     ${recentReward ? `<div class="nospill-overview-recent">${recentReward}</div>` : ""}
     <div class="nospill-idle-grid">
-      ${renderPreparingOrderCard(state)}
-      ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
-      ${renderOverviewImprovementCard(state)}
-      ${renderCounterServiceCard(state)}
+      ${renderOverviewOperationalCard(state)}
       ${renderCoveredCarTeaserCard(state)}
       ${dreamBuildInvestmentStarted(state) ? renderDreamBuildOverviewSummaryCard(state) : renderDreamInvestmentTargetCard(state)}
-      ${renderShowcaseInterestCard(state)}
-      ${renderSponsorInquiryCard(state)}
-      ${renderNetWorthCard(state)}
-      ${renderNetWorthMilestoneCard(state)}
-      ${renderDriverBonusCard(state)}
-      ${renderPassportTeaserCard(state)}
-      ${renderStoryTeaserCard()}
-      ${renderIdleCard({
-        title: "Optional Certified Boost",
-        status: "Don't Spill the Cup",
-        copy: "Available when you want a smooth-driving bonus. It is not required for shop progress.",
-        actions: [actionButton("Take Don't Spill the Cup", "data-surface-target", "cup-test", false)],
-      })}
     </div>
+    ${renderOverviewHowItWorks(state, bestOrder, runway, bottleneck)}
+    ${compactDetails("overview_more_status", "More status", `<div class="nospill-idle-grid">${hiddenOverviewCards}</div>`)}
   `;
 }
 
@@ -15973,12 +16035,15 @@ function renderSpiritPanel(state) {
   const spiritRates = getShopGeneratorRates(state);
   const activeDrive = appState.running || appState.calibrating;
   const affordableGenerators = affordableSpiritGeneratorPurchases(state);
-  const nextGeneratorCost = Math.min(...SPIRIT_GENERATORS.map((generator) => spiritGeneratorNextCost(generator, state)));
+  const nextGeneratorCosts = SPIRIT_GENERATORS
+    .filter((generator) => safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL) < SPIRIT_GENERATOR_MAX_LEVEL)
+    .map((generator) => spiritGeneratorNextCost(generator, state));
+  const nextGeneratorCost = nextGeneratorCosts.length ? Math.min(...nextGeneratorCosts) : 0;
   const bulkDisabledReason = affordableGenerators.length
     ? ""
-    : SPIRIT_GENERATORS.length
+    : nextGeneratorCosts.length
       ? `Need more Cash. Next Spirit generator costs ${formatCash(nextGeneratorCost)}.`
-      : "No Spirit generators unlocked yet.";
+      : "All Spirit generators are maxed.";
   const visibleSpiritBoosts = SHOP_SPIRIT_BOOSTS.filter((boost) => (
     boost.type !== "route_multiplier" || hasRouteStoryBeat(state)
   ));
@@ -16028,14 +16093,15 @@ function renderSpiritPanel(state) {
       `}
       <div class="nospill-idle-grid">
         ${SPIRIT_GENERATORS.map((generator) => {
-          const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, 1000);
+          const owned = safeNonNegativeInteger(state.shop.spiritGenerators[generator.id], 0, SPIRIT_GENERATOR_MAX_LEVEL);
           const cost = spiritGeneratorNextCost(generator, state);
+          const maxed = owned >= SPIRIT_GENERATOR_MAX_LEVEL;
           const disabledReason = spiritGeneratorDisabledReason(generator, state, cost);
           return renderIdleCard({
-            title: `${generator.name} x${formatShopCount(owned)}`,
-            status: `${formatCash(cost)}`,
-            copy: `Generates ${formatShopRate(generator.spiritPerSecond * Math.max(1, owned || 1))} Shop Spirit/sec when owned. Unlock: ${generator.unlock}.`,
-            actions: [actionButton("Buy", "data-spirit-generator", generator.id, state.shop.tips < cost, "nospill-secondary", disabledReason)],
+            title: `${generator.name} Lv ${formatShopCount(owned)} / ${formatShopCount(SPIRIT_GENERATOR_MAX_LEVEL)}`,
+            status: maxed ? "Maxed" : `${formatCash(cost)}`,
+            copy: `Generates ${formatShopRate(generator.spiritPerSecond * owned)} Shop Spirit/sec. Unlock: ${generator.unlock}.`,
+            actions: [actionButton(maxed ? "Maxed" : "Buy", "data-spirit-generator", generator.id, maxed || state.shop.tips < cost, "nospill-secondary", disabledReason)],
           });
         }).join("")}
       </div>
@@ -16356,7 +16422,7 @@ function renderTofuShop(gameState = loadGameState()) {
   }
   if (elements.shopPrepSlots) {
     setTextIfChanged(elements.shopPrepSlots, reveal.shop
-      ? `${formatShopCount(shop.prepSlots)} available · ${formatShopCount(getPrepSlotMax(shop))} max`
+      ? `${formatShopCount(shop.prepSlots)} slots open · ${formatShopCount(getPrepSlotMax(shop))} max`
       : "Locked");
   }
   if (elements.shopReach) {
@@ -16486,13 +16552,17 @@ function renderTofuShop(gameState = loadGameState()) {
     if (offlineTofuConsumed > 0.005 && offlineOrders > 0.005) compactNotes.push("tofu spent on prep");
     if (offlineCounterPaused && offlineOrders > 0.005) compactNotes.push("Counter Service stays offline");
     const compactSuggestions = offlineSuggestions.slice(0, 2);
-    const extraSuggestionCount = Math.max(0, offlineSuggestions.length - compactSuggestions.length);
-    setTextIfChanged(
-      elements.shopOfflineEarnings,
-      hasOfflineEarnings
-        ? `While away: ${compactOffline.concat(compactNotes).join(" · ")}${compactSuggestions.length ? ` · Next: ${compactSuggestions.join(" · ")}` : ""}${extraSuggestionCount ? " · View Ledger" : ""}`
-        : "",
-    );
+    const showLedgerCta = hasOfflineEarnings && (compactSuggestions.length > 0 || hasMeaningfulLedgerHistory(state));
+    const offlineText = hasOfflineEarnings
+      ? `While away: ${compactOffline.concat(compactNotes).join(" · ")}${compactSuggestions.length ? ` · Next: ${compactSuggestions.join(" · ")}` : ""}${showLedgerCta ? " · View Ledger" : ""}`
+      : "";
+    const offlineHtml = hasOfflineEarnings
+      ? `While away: ${escapeHtml(compactOffline.concat(compactNotes).join(" · "))}${compactSuggestions.length ? ` · Next: ${escapeHtml(compactSuggestions.join(" · "))}` : ""}${showLedgerCta ? ` <button type="button" class="nospill-link-button" data-shop-tab="ledger">View Ledger</button>` : ""}`
+      : "";
+    setTextIfChanged(elements.shopOfflineEarnings, offlineText);
+    if (elements.shopOfflineEarnings.querySelector && elements.shopOfflineEarnings.innerHTML !== offlineHtml) {
+      elements.shopOfflineEarnings.innerHTML = offlineHtml;
+    }
   }
   renderDeliveryWall(state);
 }
@@ -17158,6 +17228,22 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function detailsOpenAttribute(key, defaultOpen = false) {
+  const state = appState.detailOpenState || {};
+  const hasStoredValue = Object.prototype.hasOwnProperty.call(state, key);
+  return (hasStoredValue ? Boolean(state[key]) : Boolean(defaultOpen)) ? " open" : "";
+}
+
+function compactDetails(key, summary, bodyHtml, options = {}) {
+  const className = options.className ? ` ${escapeHtml(options.className)}` : "";
+  return `
+    <details class="nospill-compact-details${className}" data-details-key="${escapeHtml(key)}"${detailsOpenAttribute(key, Boolean(options.defaultOpen))}>
+      <summary>${escapeHtml(summary)}</summary>
+      ${bodyHtml}
+    </details>
+  `;
 }
 
 function renderCargoCommentary(summary = appState.lastSummary) {
@@ -18574,6 +18660,15 @@ function handleTofuShopPanelClick(event) {
   }
 }
 
+function handleShopDetailsToggle(event) {
+  const target = event.target;
+  if (!target || !target.matches || !target.matches("details[data-details-key]")) return;
+  const key = target.dataset.detailsKey;
+  if (!key) return;
+  appState.detailOpenState = appState.detailOpenState || {};
+  appState.detailOpenState[key] = Boolean(target.open);
+}
+
 function handleGoalStackTarget(target) {
   if (appState.running || appState.calibrating) {
     setSummaryStatusMessage("Shop actions unlock after you finish and park.");
@@ -19275,8 +19370,10 @@ function bindEvents() {
   if (elements.shopTabPanel) {
     elements.shopTabPanel.addEventListener("click", handleTofuShopPanelClick);
     elements.shopTabPanel.addEventListener("click", handleShopUpgradeClick);
+    elements.shopTabPanel.addEventListener("toggle", handleShopDetailsToggle, true);
   }
   if (elements.shopTabList) elements.shopTabList.addEventListener("click", handleTofuShopPanelClick);
+  if (elements.shopOfflineEarnings) elements.shopOfflineEarnings.addEventListener("click", handleTofuShopPanelClick);
   if (elements.shopBuyMultiplier) {
     elements.shopBuyMultiplier.addEventListener("change", handleShopMultiplierChange);
   }

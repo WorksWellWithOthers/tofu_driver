@@ -2243,7 +2243,7 @@ progression contract.
 | Project car stages | Documented only | Stage 0 through Stage 3 tables/lists | covered car, daily build, closed-course build, dream build are defined | no runtime state/UI yet |
 | Fictional closed-course events | Documented only | event table and safety rules | future event names/rewards are specified | no event queues/results yet |
 | Project car completion/sale prestige | Documented only | Builder Stars design | future prestige direction is specified | no Builder Stars state yet |
-| Shop Spirit | Implemented | Spirit resources/boost helpers and panel copy | wallet shows Cash, Shop Spirit, Spirit/sec, and multiplier; cards use stable generator/instant/timed sections; `Buy All Affordable` buys permanent Spirit Generators only with a bounded loop and compact feedback; Rush Stock and Warm Counter show exact inline gain/cost feedback; token cards stay hidden until token generation is implemented; route-related Spirit items stay hidden until route story beats matter | tune emergency-spend pacing and add token earning rules later |
+| Shop Spirit | Implemented | Spirit resources/boost helpers and panel copy | wallet shows Cash, Shop Spirit, Spirit/sec, and multiplier; cards use stable generator/instant/timed sections; permanent Spirit Generators show level/max and cap at 25; `Buy All Affordable` buys permanent Spirit Generators only with a bounded loop, max-level respect, and compact feedback; Rush Stock and Warm Counter use Activate language and show exact inline gain/cost feedback; token cards stay hidden until token generation is implemented; route-related Spirit items stay hidden until route story beats matter | tune emergency-spend pacing and add token earning rules later |
 | Rivals | Placeholder | challenge helpers | friendly challenge scaffold exists | keep hidden until later |
 | License Exam | Placeholder | exam/perk helpers | reset/perk concept exists | tune requirements and reset strategy |
 | Passport | Partial | stamp labels/panel | stamps can unlock | staged reveal and details |
@@ -2329,7 +2329,8 @@ Offline:
 - existing Cash balances are never capped directly; only newly accrued offline production is capped
 - zero-value offline summaries are hidden
 - offline summaries should be compact, say `waiting orders`, mention when tofu was spent on prep,
-  and note that Counter Service remains active-page-only and does not fulfill offline in V1
+  note that Counter Service remains active-page-only and does not fulfill offline in V1, and expose a
+  real `View Ledger` CTA when the summary points to follow-up detail
 - long absences show the saved direct progress window and explain that excess time is capped for
   pacing rather than treating the absence as lost time
 - Rested Shop Time is deferred; future larger caps can come from later franchise/corporate

@@ -32,8 +32,9 @@ time. The first Passport stamp uses a local Stamp Fanfare, and the first meaning
 system uses a local Discovery Fanfare so progression moments are visible without exposing the full
 future roadmap. Midgame supply pressure is handled through parked management decisions such as
 Counter Service batch upgrades and Reputation-funded Supplier Contracts, not faster clicking. Shop
-Spirit includes a parked `Buy All Affordable` control for permanent Spirit Generators only; it does
-not trigger instant boosts, timed effects, tokens, driving rewards, or networked systems.
+Spirit includes capped permanent Spirit Generators, Activate-style instant boosts, and a parked
+`Buy All Affordable` control for permanent Spirit Generators only; it does not trigger instant
+boosts, timed effects, tokens, driving rewards, or networked systems.
 
 Hidden merch is local-only in the MVP. Stickers are the first hidden reward tier: the Tofu Driver
 `Not Fast. Smooth.` Sticker unlocks from a first Certified Result, and the Tofu Driver Penguin
@@ -133,9 +134,11 @@ The static app uses hash routing:
   Project Car progression, future Net Worth endgame direction, and balance tests. Tofu Shop is
   idle-first: manual actions teach the loop, repeated labor earns automation exits, and decisions
   rather than clicking speed drive progression.
-- Tofu Garage Overview uses Glance Mode V1: Now, stable Pinned Goal, Era Goal, and compact Recent
-  feedback. Long explanations/formulas sit behind Details, saved Builder Notes collapse until
-  edited, and detailed Dream Build work moves into the earned Dream Build tab. The Suspension
+- Tofu Garage Overview uses Glance Mode V1: Now, stable Pinned Goal, Era Goal, one compact
+  operational card, one compact build-status card, and Recent/While Away feedback. Long
+  explanations/formulas sit behind keyed Details that stay open across live ticks, saved Builder
+  Notes collapse until edited, and detailed Dream Build work moves into the earned Dream Build tab.
+  The Suspension
   track is implemented through Showcase Stance; Tires & Rubber, Brakes & Control, Induction &
   Cooling, Drivetrain & Transmission, and Aero/Styling/Weight Reduction are implemented through
   their Level 5 completions; Garage Event Board V1 adds one-time parked fictional events after

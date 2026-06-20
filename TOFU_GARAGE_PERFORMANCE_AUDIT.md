@@ -109,8 +109,9 @@ Tofu Garage now has explicit high-scale guardrails:
 - Multi-resource upgrade copy labels Cost, Cash progress, and Reputation progress explicitly so
   changing affordability text does not read like a second price.
 - Shop Spirit `Buy All Affordable` is bounded and generator-only. It buys permanent Spirit
-  Generators in fixed display order, emits one compact feedback/ledger entry, and never triggers
-  instant Spirit actions, timed effects, tokens, routes, Dream Build, merch, or normal upgrades.
+  Generators in fixed display order, respects the Level 25 generator cap, emits one compact
+  feedback/ledger entry, and never triggers instant Spirit actions, timed effects, tokens, routes,
+  Dream Build, merch, or normal upgrades.
 
 These bounds preserve the idle-management decision instead of rewarding unbounded backlog size.
 
@@ -236,10 +237,12 @@ Fix applied:
   Manager Desk queue pressure.
 - Overview Glance Mode V1 keeps the Pinned Goal stable: live Cash, queue, stock, and ETA changes
   update progress/copy in place instead of replacing the medium-term target during normal ticks.
-  Long explanations, Net Worth formulas, Dream Build details, and saved Builder Note editing
-  controls are collapsed by default so the active Overview does less visible text churn. Dream Build
-  Tab V1 keeps detailed Wheels, Exhaust, Suspension, Garage Build Value, and Builder Note rendering
-  in an earned parked tab instead of expanding the Overview dashboard.
+  The default Overview now limits itself to Goal Stack, one operational card, one build-status card,
+  and Recent/While Away feedback. Long explanations, Net Worth formulas, Dream Build details, and
+  saved Builder Note editing controls are collapsed by default so the active Overview does less
+  visible text churn. Keyed Details retain open/closed state across live ticks without localStorage.
+  Dream Build Tab V1 keeps detailed Wheels, Exhaust, Suspension, Garage Build Value, and Builder
+  Note rendering in an earned parked tab instead of expanding the Overview dashboard.
 
 Result:
 
