@@ -101,6 +101,11 @@ labels, cost/reward previews, ready-to-collect copy, a first-loop checklist, and
 history. Multiple cars, second car purchase, auctions, collector offers, and repeatable board
 expansion remain future.
 
+Second Car Project / Second Bay V1 is now the bridge after that first loop: complete all three
+assignments, reach/spend Garage Reputation, open Second Bay, and acquire a Second Project Car as a
+Rolling Shell. The first completed car remains the managed assignment car. Second-car build tracks
+and fleet management remain future.
+
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
 preview only. Authentic tuner terms are allowed in Tofu Garage as fictional game vocabulary, while

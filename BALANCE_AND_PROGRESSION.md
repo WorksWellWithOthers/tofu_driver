@@ -422,6 +422,12 @@ Examples:
   local and collected explicitly. Car Management Assignment Explainability V1 makes each assignment
   show a state label, cost, duration, concrete reward preview, net-Cash line, ready-to-collect
   state, first-loop checklist, and compact recent history.
+- Second Car Project / Second Bay V1 unlocks after the first Car Management loop is complete and
+  Garage Reputation reaches `250`. It treats Garage Reputation as spendable for this expansion:
+  opening Second Bay costs `$500B Cash + 250 Garage Reputation`, and acquiring the Second Project
+  Car costs `$1T Cash + 500 Garage Reputation`. Acquisition adds `+$750B Garage Build Value` through
+  the existing Garage Build Value component; Net Worth remains Cash + Tofu Business Value + Garage
+  Build Value + Brand Value. The first completed car remains the only managed assignment car.
 - Core Build Progress V2 summarizes current build completion as work stages. The planned core
   build size is 40 stages. Current implemented stages are Wheels levels 1-3, Exhaust levels 1-5,
   Suspension levels 1-5, Tires levels 1-5, Brakes levels 1-5, Induction levels 1-5, Drivetrain
@@ -1666,6 +1672,16 @@ Implemented Car Management V1 assignment values:
 Only one Car Management assignment can be active at a time. Assignment rewards are not granted
 until the player collects them, and assignment history is capped. The tab shows the last three
 assignment results by default and treats Garage Event Board as the separate one-time event board.
+
+Implemented Second Car Project / Second Bay V1 values:
+
+| Step | Unlock | Cash Cost | Garage Reputation Cost | Reward |
+| --- | --- | --- | --- | --- |
+| Open Second Bay | First Car Management loop complete and `250` Garage Reputation | `$500B` | `250` | opens second project bay |
+| Acquire Second Project Car | Second Bay opened and `500` Garage Reputation | `$1T` | `500` | `+$750B Garage Build Value`, Rolling Shell |
+
+Second Car Build Tracks remain future-only. There is no second-car assignment system or fleet
+management in V1.
 
 Possible level effects:
 

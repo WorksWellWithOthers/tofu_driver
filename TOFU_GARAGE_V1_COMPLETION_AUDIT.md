@@ -71,6 +71,7 @@ or car assets.
 | Core Build Progress V2 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level + Induction Level + Drivetrain Level + Aero Level + Final Build Level against `40` planned core work stages; current maximum is `40 / 40` after Shakedown Complete. |
 | Garage Event Board V1 | Implemented | Unlocks in the Dream Build tab at `$100M Net Worth` plus Tires & Rubber Level 5; Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector Preview are one-time parked fictional events with local Cash, Brand Value, Garage Reputation, and badge rewards. |
 | Car Management V1 + Assignment Explainability V1 | Implemented | Unlocks after First Complete Build; creates one local managed-car snapshot and supports one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and Closed-Course Exhibition Booking. Assignment cards show state labels, concrete cost/reward previews, active/ready states, capped recent history, and first-loop checklist closure. |
+| Second Car Project / Second Bay V1 | Implemented | Unlocks after the first Car Management loop and `250` Garage Reputation; opens Second Bay for `$500B Cash + 250 Garage Reputation`, then acquires the Second Project Car rolling shell for `$1T Cash + 500 Garage Reputation` and `+$750B Garage Build Value`. Second-car build tracks remain future-only. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
@@ -205,6 +206,9 @@ Current code status:
   assignment loop with explicit assignment states, reward previews, ready-to-collect feedback, and
   capped history. Repeatable event boards, second car purchase, multiple cars, collector offers,
   and auctions remain future.
+- Second Car Project / Second Bay V1 implements the first post-loop expansion step without full
+  fleet management. Second Bay and the rolling shell are local-only Tofu Garage progression, and
+  the first completed car remains the only assignment car.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 

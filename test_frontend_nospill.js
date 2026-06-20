@@ -5480,6 +5480,43 @@ globalThis.allAssignmentsState = exhibitionCollect.gameState;
 globalThis.allAssignmentsPanel = renderCarManagementPanel(allAssignmentsState);
 globalThis.allAssignmentsOverviewSummary = carManagementOverviewSummary(allAssignmentsState);
 globalThis.allAssignmentsPinned = pinnedNearGoalForShop(allAssignmentsState);
+globalThis.secondBayReadyStatus = secondBayStatus(allAssignmentsState);
+globalThis.secondBayReadyAction = nextBestAction(allAssignmentsState);
+const oneAssignmentState = normalizeGameState(showcaseCollectedState);
+globalThis.secondBayIncompletePanel = renderCarManagementPanel(oneAssignmentState);
+const lowRepSecondBayState = normalizeGameState(allAssignmentsState);
+lowRepSecondBayState.carManagement.garageReputation = 100;
+lowRepSecondBayState.shop.garageEvents.garageReputation = 0;
+globalThis.secondBayLowRepPanel = renderCarManagementPanel(lowRepSecondBayState);
+globalThis.secondBayLowRepPinned = pinnedNearGoalForShop(lowRepSecondBayState);
+const secondBayCashReady = normalizeGameState(allAssignmentsState);
+secondBayCashReady.shop.tips = 600000000000;
+globalThis.secondBayOpen = openSecondBay(secondBayCashReady, { activeDrive: false, now: "2026-06-20T16:00:00.000Z" });
+globalThis.secondBayOpenState = secondBayOpen.gameState;
+globalThis.secondBayOpenPanel = renderCarManagementPanel(secondBayOpenState);
+globalThis.secondBayOpenOverview = carManagementOverviewSummary(secondBayOpenState);
+globalThis.secondBayOpenPinned = pinnedNearGoalForShop(secondBayOpenState);
+globalThis.secondBayOpenAgain = openSecondBay(secondBayOpenState, { activeDrive: false, now: "2026-06-20T16:01:00.000Z" });
+globalThis.secondBayOpenCashAfter = cashBalance(secondBayOpenState);
+globalThis.secondBayOpenRepAfter = garageReputationV1(secondBayOpenState);
+const acquireReady = normalizeGameState(secondBayOpenState);
+acquireReady.shop.tips = 1200000000000;
+acquireReady.carManagement.garageReputation = 500;
+globalThis.secondProjectValueBeforeAcquire = projectCarValueV1(acquireReady);
+globalThis.firstCarBeforeSecondAcquire = JSON.stringify(acquireReady.carManagement.currentCar);
+globalThis.secondProjectAcquire = acquireSecondProjectCar(acquireReady, { activeDrive: false, now: "2026-06-20T17:00:00.000Z" });
+globalThis.secondProjectState = secondProjectAcquire.gameState;
+globalThis.secondProjectPanel = renderCarManagementPanel(secondProjectState);
+globalThis.secondProjectOverview = carManagementOverviewSummary(secondProjectState);
+globalThis.secondProjectPinned = pinnedNearGoalForShop(secondProjectState);
+globalThis.secondProjectValue = projectCarValueV1(secondProjectState);
+globalThis.secondProjectFormula = cashBalance(secondProjectState) + tofuBusinessValue(secondProjectState) + projectCarValueV1(secondProjectState) + brandValueV1(secondProjectState);
+globalThis.secondProjectNetWorth = netWorthV1(secondProjectState);
+globalThis.firstCarAfterSecondAcquire = JSON.stringify(secondProjectState.carManagement.currentCar);
+globalThis.secondProjectReload = normalizeGameState(JSON.parse(JSON.stringify(secondProjectState)));
+globalThis.secondProjectAssignmentStart = startCarAssignment("showcase_rotation", secondProjectState, { activeDrive: false, now: "2026-06-20T18:00:00.000Z" });
+globalThis.secondProjectActiveCarId = secondProjectAssignmentStart.gameState.carManagement.activeAssignment && secondProjectAssignmentStart.gameState.carManagement.activeAssignment.carId;
+globalThis.activeSecondBayOpen = openSecondBay(secondBayCashReady, { activeDrive: true });
 const longHistoryState = normalizeGameState(allAssignmentsState);
 longHistoryState.carManagement.assignmentHistory = [
   ...longHistoryState.carManagement.assignmentHistory,
@@ -5583,10 +5620,46 @@ appState.running = false;
   assert.strictEqual(context.exhibitionStart.ok, true);
   assert.strictEqual(context.exhibitionCollect.ok, true);
   assert(context.allAssignmentsPanel.includes('First Car Management Loop Complete'));
-  assert(context.allAssignmentsPanel.includes('Next: Second Car, future garage pass.'));
-  assert.strictEqual(context.allAssignmentsOverviewSummary, 'First car management loop complete. Second car comes in a future garage pass.');
-  assert.strictEqual(context.allAssignmentsPinned.title, 'First car managed');
-  assert.strictEqual(context.allAssignmentsPinned.body, 'Second car comes in a future garage pass.');
+  assert(context.allAssignmentsPanel.includes('Second Bay Ready'));
+  assert(context.allAssignmentsPanel.includes('Open Second Bay'));
+  assert(context.allAssignmentsPanel.includes('Garage Reputation: 250 / 250'));
+  assert.strictEqual(context.allAssignmentsOverviewSummary, 'Second Bay ready.');
+  assert.strictEqual(context.allAssignmentsPinned.title, 'Open Second Bay');
+  assert.strictEqual(context.allAssignmentsPinned.body, 'Expand the garage for the next project car.');
+  assert.strictEqual(context.secondBayReadyStatus.canOpen, false);
+  assert.strictEqual(context.secondBayReadyAction.title, 'Next: Grow Cash for Second Bay');
+  assert(context.secondBayIncompletePanel.includes('Complete the first Car Management loop to expand the garage.'));
+  assert(context.secondBayLowRepPanel.includes('Reach 250 Garage Reputation to expand the garage.'));
+  assert.strictEqual(context.secondBayLowRepPinned.title, 'Grow Garage Reputation');
+  assert.strictEqual(context.secondBayOpen.ok, true);
+  assert.strictEqual(context.secondBayOpen.feedback, 'Second Bay opened. The garage has room for another project.');
+  assert.strictEqual(context.secondBayOpenState.carManagement.secondCarProject.stage, 'bay_open');
+  assert.strictEqual(context.secondBayOpenCashAfter, 100000000000);
+  assert.strictEqual(context.secondBayOpenRepAfter, 0);
+  assert(context.secondBayOpenPanel.includes('Second Bay Open'));
+  assert(context.secondBayOpenPanel.includes('Acquire Second Project Car'));
+  assert.strictEqual(context.secondBayOpenOverview, 'Second Bay open. Second Project Car available.');
+  assert.strictEqual(context.secondBayOpenPinned.title, 'Acquire Second Project Car');
+  assert.strictEqual(context.secondBayOpenAgain.ok, false);
+  assert(context.secondBayOpenAgain.reason.includes('already open'));
+  assert.strictEqual(context.secondProjectAcquire.ok, true);
+  assert.strictEqual(context.secondProjectAcquire.feedback, 'Second Project Car acquired. A new build is waiting in the second bay.');
+  assert.strictEqual(context.secondProjectState.carManagement.secondCarProject.stage, 'rolling_shell');
+  assert.strictEqual(context.secondProjectState.carManagement.secondCarProject.garageBuildValue, 750000000000);
+  assert.strictEqual(context.secondProjectValue, context.secondProjectValueBeforeAcquire + 750000000000);
+  assert(context.secondProjectPanel.includes('Second Project Car'));
+  assert(context.secondProjectPanel.includes('Stage: Rolling Shell'));
+  assert(context.secondProjectPanel.includes('Second Car Build Tracks: Future garage pass.'));
+  assert(!context.secondProjectPanel.includes('data-second-car-assignment'));
+  assert.strictEqual(context.secondProjectOverview, 'Second Project Car acquired. Future build tracks coming.');
+  assert.strictEqual(context.secondProjectPinned.title, 'Second Project Car acquired');
+  assert.strictEqual(context.secondProjectNetWorth, context.secondProjectFormula);
+  assert.strictEqual(context.firstCarAfterSecondAcquire, context.firstCarBeforeSecondAcquire);
+  assert.strictEqual(context.secondProjectReload.carManagement.secondCarProject.acquired, true);
+  assert.strictEqual(context.secondProjectAssignmentStart.ok, true);
+  assert.strictEqual(context.secondProjectActiveCarId, 'first_complete_build');
+  assert.strictEqual(context.activeSecondBayOpen.ok, false);
+  assert(context.activeSecondBayOpen.reason.includes('parked') || context.activeSecondBayOpen.reason.includes('after the drive'));
   assert(context.longHistoryPanel.includes('Recent Assignment Results'));
   assert(context.longHistoryPanel.includes('Last 3'));
   assert.strictEqual(context.eventBoardStillWorks.ok, true);
@@ -7120,8 +7193,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620e'));
-  assert(html.includes('/static/nospill/app.css?v=20260620e'));
+  assert(html.includes('/static/nospill/app.js?v=20260620f'));
+  assert(html.includes('/static/nospill/app.css?v=20260620f'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -9995,8 +10068,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620e'));
-  assert(html.includes('/static/nospill/app.css?v=20260620e'));
+  assert(html.includes('/static/nospill/app.js?v=20260620f'));
+  assert(html.includes('/static/nospill/app.css?v=20260620f'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -11520,6 +11593,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-garage-event',
     'data-car-assignment-start',
     'data-car-assignment-collect',
+    'data-second-car-action',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',

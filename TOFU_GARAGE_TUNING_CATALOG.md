@@ -319,6 +319,11 @@ state labels, concrete cost/reward previews, ready-to-collect copy, a first-loop
 capped recent history. Multiple cars, second car purchase, and repeatable event board expansion
 remain future.
 
+Second Car Project / Second Bay V1 now adds the first bridge toward multiple cars: after the first
+assignment loop and Garage Reputation threshold, the player can open a second bay and acquire a
+Second Project Car rolling shell. Its actual build tracks are future-only and should pull from this
+catalog gradually rather than dumping the full parts list into runtime.
+
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
 progress, Garage Build Value, Brand Value, and Garage Reputation. It stays separate from Car

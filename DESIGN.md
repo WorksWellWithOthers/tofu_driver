@@ -722,6 +722,12 @@ Design rules:
   assignment results while keeping stored history capped. Assignment history is local; it is not a
   public profile, leaderboard, route proof, or Cup Test result. Multiple cars, auctions, sell
   offers, collector offers, and repeatable board expansion remain future.
+- Second Car Project / Second Bay V1 unlocks after the first Car Management loop is complete and
+  Garage Reputation reaches `250`. Opening Second Bay costs `$500B Cash + 250 Garage Reputation`;
+  acquiring the Second Project Car costs `$1T Cash + 500 Garage Reputation`, adds `+$750B Garage
+  Build Value`, and shows the car as a `Rolling Shell` with future-only second-car build tracks.
+  The first completed build remains the managed assignment car; no fleet controls, second-car
+  assignments, auctions, sell offers, collector offers, backend, uploads, or network play are added.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,

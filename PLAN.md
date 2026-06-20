@@ -251,6 +251,11 @@
   previews, active progress, ready-to-collect copy, a first-loop checklist, and compact recent
   history. Multiple cars, auctions, collector/sell offers, backend/uploads, and network calls
   remain future.
+- Second Car Project / Second Bay V1 is implemented as the bridge toward multiple cars. After all
+  three Car Management assignments are completed and Garage Reputation reaches `250`, the player can
+  open Second Bay for `$500B Cash + 250 Garage Reputation`; after that, acquiring the Second Project
+  Car costs `$1T Cash + 500 Garage Reputation` and adds `+$750B Garage Build Value`. The first car
+  remains the only managed assignment car, and second-car build tracks remain future-only.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
   planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
@@ -459,11 +464,14 @@ Future Dream Garage milestone sequence:
    Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
 2. Playtest Car Management V1 assignment durations/rewards, readable state labels, first-loop
    closure, and whether one active assignment is enough for the first completed car.
-3. Design the next parked event/showcase expansion loop without replacing the existing one-car
+3. Playtest Second Bay costs, Garage Reputation spending, and whether the Rolling Shell future-only
+   state is enough closure before second-car build tracks.
+4. Design the next parked event/showcase expansion loop without replacing the existing one-car
    assignment board.
-4. Add multiple cars.
-5. Add the next era unlock.
-6. Much later connect completed builds to business expansion, collector networks, and scalable
+5. Add second-car build tracks.
+6. Add multiple-car management only after the second project build loop works.
+7. Add the next era unlock.
+8. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car management has a V1 loop now: Showcase Rotation, Sponsor Demo Day, and

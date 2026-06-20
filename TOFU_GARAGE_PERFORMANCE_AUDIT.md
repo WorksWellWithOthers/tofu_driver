@@ -250,6 +250,9 @@ Fix applied:
   worker/background timer, and no network calls. Assignment explainability renders only the
   managed car, current assignment states, first-loop checklist, and last three history rows; stored
   history remains capped.
+- Second Car Project / Second Bay V1 adds only one bounded object under Car Management state and
+  two scalar parked actions. It does not add fleet arrays, multiple active assignments, repeatable
+  event timers, service workers, backend sync, uploads, or unbounded history.
 - High-Scale Counter Contracts V1 keeps late-game handoffs scalar and bounded. Wholesale Case,
   Event Catering Load, and Venue Supply Contract are larger order bundles, not per-order object
   queues; Counter Service batch floors rise to 100/250/1000 only through parked contracts, and

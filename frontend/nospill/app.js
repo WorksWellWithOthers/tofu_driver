@@ -485,6 +485,12 @@ const GARAGE_EVENTS = [
 ];
 const CAR_MANAGEMENT_HISTORY_LIMIT = 20;
 const CAR_MANAGEMENT_CURRENT_CAR_ID = "first_complete_build";
+const SECOND_CAR_PROJECT_ID = "second_project_car";
+const SECOND_BAY_OPEN_COST = 500000000000;
+const SECOND_BAY_OPEN_REPUTATION_COST = 250;
+const SECOND_PROJECT_CAR_COST = 1000000000000;
+const SECOND_PROJECT_CAR_REPUTATION_COST = 500;
+const SECOND_PROJECT_CAR_GARAGE_VALUE = 750000000000;
 const CAR_ASSIGNMENTS = [
   {
     id: "showcase_rotation",
@@ -2948,6 +2954,23 @@ function defaultCarManagementState() {
     lastAssignmentResult: null,
     brandValue: 0,
     garageReputation: 0,
+    secondCarProject: defaultSecondCarProjectState(),
+  };
+}
+
+function defaultSecondCarProjectState() {
+  return {
+    bayUnlocked: false,
+    bayUnlockedAt: null,
+    bayOpened: false,
+    bayOpenedAt: null,
+    acquired: false,
+    acquiredAt: null,
+    id: SECOND_CAR_PROJECT_ID,
+    name: "Second Project Car",
+    stage: "locked",
+    builderNote: "",
+    garageBuildValue: 0,
   };
 }
 
@@ -3571,6 +3594,40 @@ function normalizeCarActiveAssignment(value, currentCar) {
   };
 }
 
+function normalizeSecondCarProject(value, gameState) {
+  const defaults = defaultSecondCarProjectState();
+  const source = value && typeof value === "object" ? value : {};
+  const carManagement = gameState && gameState.carManagement && typeof gameState.carManagement === "object"
+    ? gameState.carManagement
+    : {};
+  const completions = carManagement.assignmentCompletions && typeof carManagement.assignmentCompletions === "object"
+    ? carManagement.assignmentCompletions
+    : {};
+  const loopComplete = CAR_ASSIGNMENTS.every((assignment) => safeNonNegativeInteger(completions[assignment.id], 0, 100000) >= 1);
+  const bayOpened = Boolean(source.bayOpened);
+  const acquired = Boolean(source.acquired);
+  const bayUnlocked = Boolean(source.bayUnlocked) || loopComplete || bayOpened || acquired;
+  const stage = acquired ? "rolling_shell" : bayOpened ? "bay_open" : "locked";
+  return {
+    ...defaults,
+    bayUnlocked,
+    bayUnlockedAt: typeof source.bayUnlockedAt === "string" ? source.bayUnlockedAt.slice(0, 40) : null,
+    bayOpened,
+    bayOpenedAt: typeof source.bayOpenedAt === "string" ? source.bayOpenedAt.slice(0, 40) : null,
+    acquired,
+    acquiredAt: typeof source.acquiredAt === "string" ? source.acquiredAt.slice(0, 40) : null,
+    id: SECOND_CAR_PROJECT_ID,
+    name: typeof source.name === "string" && source.name.trim()
+      ? source.name.slice(0, 80)
+      : defaults.name,
+    stage,
+    builderNote: sanitizeBuilderNote(source.builderNote || ""),
+    garageBuildValue: acquired
+      ? safeNonNegativeInteger(source.garageBuildValue, SECOND_PROJECT_CAR_GARAGE_VALUE, SHOP_MAX_RESOURCE)
+      : 0,
+  };
+}
+
 function normalizeCarManagement(carManagement, gameState) {
   const defaults = defaultCarManagementState();
   const source = carManagement && typeof carManagement === "object" ? carManagement : {};
@@ -3584,7 +3641,7 @@ function normalizeCarManagement(carManagement, gameState) {
   const currentCar = unlockedByBuild
     ? createCurrentCarSnapshot(gameState, sourceCar || {})
     : null;
-  return {
+  const normalized = {
     ...defaults,
     unlocked: unlockedByBuild || Boolean(source.unlocked),
     currentCar,
@@ -3595,6 +3652,11 @@ function normalizeCarManagement(carManagement, gameState) {
     brandValue: safeNonNegativeInteger(source.brandValue, 0, SHOP_MAX_RESOURCE),
     garageReputation: safeNonNegativeInteger(source.garageReputation, 0, SHOP_MAX_RESOURCE),
   };
+  normalized.secondCarProject = normalizeSecondCarProject(source.secondCarProject, {
+    ...gameState,
+    carManagement: normalized,
+  });
+  return normalized;
 }
 
 function normalizeCounterContracts(counterContracts) {
@@ -5889,7 +5951,20 @@ function projectCarValueFromDreamBuild(dreamBuild) {
 
 function projectCarValueV1(gameState) {
   const state = normalizeGameState(gameState);
-  return projectCarValueFromDreamBuild(state.shop.dreamBuild);
+  return Math.min(
+    SHOP_MAX_RESOURCE,
+    projectCarValueFromDreamBuild(state.shop.dreamBuild) + secondCarProjectGarageValue(state),
+  );
+}
+
+function secondCarProjectGarageValue(gameState) {
+  const state = gameState && gameState.carManagement ? gameState : normalizeGameState(gameState);
+  const project = state.carManagement && state.carManagement.secondCarProject;
+  return safeNonNegativeInteger(
+    project && project.acquired ? project.garageBuildValue : 0,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
 }
 
 function showcaseInterestUnlocked(gameState) {
@@ -6243,6 +6318,64 @@ function allCarAssignmentsCompletedOnce(gameState) {
   return CAR_ASSIGNMENTS.every((assignment) => carAssignmentCompletions(gameState, assignment.id) >= 1);
 }
 
+function secondCarProjectState(gameState) {
+  const state = normalizeGameState(gameState);
+  return state.carManagement && state.carManagement.secondCarProject
+    ? state.carManagement.secondCarProject
+    : defaultSecondCarProjectState();
+}
+
+function secondBayStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const project = secondCarProjectState(state);
+  const loopComplete = allCarAssignmentsCompletedOnce(state);
+  const reputation = garageReputationV1(state);
+  const cash = cashBalance(state);
+  const reputationReady = reputation >= SECOND_BAY_OPEN_REPUTATION_COST;
+  const acquireReputationReady = reputation >= SECOND_PROJECT_CAR_REPUTATION_COST;
+  return {
+    project,
+    loopComplete,
+    reputation,
+    cash,
+    bayUnlocked: loopComplete && reputationReady,
+    bayOpened: Boolean(project.bayOpened),
+    acquired: Boolean(project.acquired),
+    canOpen: loopComplete
+      && reputationReady
+      && !project.bayOpened
+      && !project.acquired
+      && cash >= SECOND_BAY_OPEN_COST,
+    canAcquire: Boolean(project.bayOpened)
+      && !project.acquired
+      && cash >= SECOND_PROJECT_CAR_COST
+      && acquireReputationReady,
+    missingOpenCash: Math.max(0, SECOND_BAY_OPEN_COST - cash),
+    missingOpenReputation: Math.max(0, SECOND_BAY_OPEN_REPUTATION_COST - reputation),
+    missingAcquireCash: Math.max(0, SECOND_PROJECT_CAR_COST - cash),
+    missingAcquireReputation: Math.max(0, SECOND_PROJECT_CAR_REPUTATION_COST - reputation),
+  };
+}
+
+function spendGarageReputation(gameState, amount) {
+  const next = normalizeGameState(gameState);
+  let remaining = safeNonNegativeInteger(amount, 0, SHOP_MAX_RESOURCE);
+  const carRep = safeNonNegativeInteger(next.carManagement && next.carManagement.garageReputation, 0, SHOP_MAX_RESOURCE);
+  const carSpend = Math.min(carRep, remaining);
+  next.carManagement.garageReputation = carRep - carSpend;
+  remaining -= carSpend;
+  if (remaining > 0 && next.shop && next.shop.garageEvents) {
+    const eventRep = safeNonNegativeInteger(next.shop.garageEvents.garageReputation, 0, SHOP_MAX_RESOURCE);
+    const eventSpend = Math.min(eventRep, remaining);
+    next.shop.garageEvents.garageReputation = eventRep - eventSpend;
+    remaining -= eventSpend;
+  }
+  return {
+    ok: remaining <= 0,
+    gameState: next,
+  };
+}
+
 function nextCarAssignment(gameState) {
   const state = normalizeGameState(gameState);
   return CAR_ASSIGNMENTS.find((assignment) => carAssignmentCompletions(state, assignment.id) < 1)
@@ -6410,6 +6543,103 @@ function collectCarAssignment(gameState, options = {}) {
   next = addLedgerEntry(next, "story", feedback);
   next = syncNetWorthMilestones(next).gameState;
   return { ok: true, reason: "", feedback, assignment: status.assignment, economics, gameState: next };
+}
+
+function openSecondBay(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Second Bay opens while parked after the drive.", gameState: next };
+  }
+  if (!carManagementUnlocked(next)) {
+    return { ok: false, reason: "Complete the first build to unlock Car Management.", gameState: next };
+  }
+  const status = secondBayStatus(next);
+  if (status.project.bayOpened || status.project.acquired) {
+    return { ok: false, reason: "Second Bay is already open.", gameState: next };
+  }
+  if (!status.loopComplete) {
+    return { ok: false, reason: "Complete the first Car Management loop to expand the garage.", gameState: next };
+  }
+  if (status.reputation < SECOND_BAY_OPEN_REPUTATION_COST) {
+    return { ok: false, reason: `Reach ${formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST)} Garage Reputation to expand the garage.`, gameState: next };
+  }
+  if (cashBalance(next) < SECOND_BAY_OPEN_COST) {
+    return { ok: false, reason: `Need ${formatCash(SECOND_BAY_OPEN_COST - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  const spend = spendGarageReputation(next, SECOND_BAY_OPEN_REPUTATION_COST);
+  if (!spend.ok) {
+    return { ok: false, reason: `Need ${formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST)} Garage Reputation.`, gameState: next };
+  }
+  next = spend.gameState;
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - SECOND_BAY_OPEN_COST, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.secondCarProject = {
+    ...defaultSecondCarProjectState(),
+    ...(next.carManagement.secondCarProject || {}),
+    bayUnlocked: true,
+    bayUnlockedAt: (next.carManagement.secondCarProject && next.carManagement.secondCarProject.bayUnlockedAt) || now,
+    bayOpened: true,
+    bayOpenedAt: now,
+    acquired: false,
+    acquiredAt: null,
+    id: SECOND_CAR_PROJECT_ID,
+    name: "Second Project Car",
+    stage: "bay_open",
+    garageBuildValue: 0,
+  };
+  const feedback = "Second Bay opened. The garage has room for another project.";
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  return { ok: true, reason: "", feedback, gameState: next };
+}
+
+function acquireSecondProjectCar(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Second Project Car can be acquired while parked after the drive.", gameState: next };
+  }
+  if (!carManagementUnlocked(next)) {
+    return { ok: false, reason: "Complete the first build to unlock Car Management.", gameState: next };
+  }
+  const status = secondBayStatus(next);
+  if (status.project.acquired) {
+    return { ok: false, reason: "Second Project Car is already waiting in the second bay.", gameState: next };
+  }
+  if (!status.project.bayOpened) {
+    return { ok: false, reason: "Open Second Bay before acquiring another project car.", gameState: next };
+  }
+  if (status.reputation < SECOND_PROJECT_CAR_REPUTATION_COST) {
+    return { ok: false, reason: `Reach ${formatShopCount(SECOND_PROJECT_CAR_REPUTATION_COST)} Garage Reputation to acquire the second project car.`, gameState: next };
+  }
+  if (cashBalance(next) < SECOND_PROJECT_CAR_COST) {
+    return { ok: false, reason: `Need ${formatCash(SECOND_PROJECT_CAR_COST - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  const spend = spendGarageReputation(next, SECOND_PROJECT_CAR_REPUTATION_COST);
+  if (!spend.ok) {
+    return { ok: false, reason: `Need ${formatShopCount(SECOND_PROJECT_CAR_REPUTATION_COST)} Garage Reputation.`, gameState: next };
+  }
+  next = spend.gameState;
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - SECOND_PROJECT_CAR_COST, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.secondCarProject = {
+    ...defaultSecondCarProjectState(),
+    ...(next.carManagement.secondCarProject || {}),
+    bayUnlocked: true,
+    bayOpened: true,
+    acquired: true,
+    acquiredAt: now,
+    id: SECOND_CAR_PROJECT_ID,
+    name: "Second Project Car",
+    stage: "rolling_shell",
+    garageBuildValue: SECOND_PROJECT_CAR_GARAGE_VALUE,
+  };
+  const feedback = "Second Project Car acquired. A new build is waiting in the second bay.";
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  next = syncNetWorthMilestones(next).gameState;
+  return { ok: true, reason: "", feedback, gameState: next };
 }
 
 function sponsorInquiryStatus(gameState) {
@@ -12790,10 +13020,47 @@ function nextCarManagementAction(gameState) {
     };
   }
   if (allCarAssignmentsCompletedOnce(state)) {
+    const secondBay = secondBayStatus(state);
+    if (secondBay.acquired) {
+      return {
+        type: "car_management_target",
+        title: "Next: Second Project Car Acquired",
+        copy: "Second car build tracks come in a future garage pass.",
+        buttonLabel: "View Car Management",
+        disabled: false,
+      };
+    }
+    if (secondBay.bayOpened) {
+      return {
+        type: secondBay.canAcquire ? "acquire_second_project_car" : "car_management_target",
+        title: secondBay.canAcquire ? "Next: Acquire Second Project Car" : "Next: Grow Cash for Second Project Car",
+        copy: "Start the next project in the second bay.",
+        buttonLabel: secondBay.canAcquire ? "Acquire Second Project Car" : "View Car Management",
+        disabled: false,
+      };
+    }
+    if (secondBay.reputation < SECOND_BAY_OPEN_REPUTATION_COST) {
+      return {
+        type: "car_management_target",
+        title: "Next: Grow Garage Reputation",
+        copy: "Second Bay unlocks at 250 Garage Reputation.",
+        buttonLabel: "View Car Management",
+        disabled: false,
+      };
+    }
+    if (secondBay.canOpen) {
+      return {
+        type: "open_second_bay",
+        title: "Next: Open Second Bay",
+        copy: "Expand the garage for the next project car.",
+        buttonLabel: "Open Second Bay",
+        disabled: false,
+      };
+    }
     return {
       type: "car_management_target",
-      title: "Next: First Car Managed",
-      copy: "Future garage pass: multiple cars and deeper Car Management.",
+      title: "Next: Grow Cash for Second Bay",
+      copy: "Garage Reputation is ready. Save Cash to open the second bay.",
       buttonLabel: "View Car Management",
       disabled: false,
     };
@@ -15230,6 +15497,110 @@ function renderCarManagementHistory(gameState) {
   `;
 }
 
+function renderSecondBayChecklist(gameState) {
+  const state = normalizeGameState(gameState);
+  const rows = CAR_ASSIGNMENTS.map((assignment) => {
+    const done = carAssignmentCompletions(state, assignment.id) >= 1;
+    return `
+      <label class="nospill-checkline">
+        <input type="checkbox" disabled ${done ? "checked" : ""}>
+        <span>${escapeHtml(assignment.title)}</span>
+      </label>
+    `;
+  }).join("");
+  const reputation = garageReputationV1(state);
+  return `
+    <div class="nospill-checklist">${rows}</div>
+    <div class="nospill-afford-progress">
+      <small>Garage Reputation: ${escapeHtml(formatShopCount(reputation))} / ${escapeHtml(formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST))}</small>
+    </div>
+  `;
+}
+
+function renderSecondBayCard(gameState) {
+  const state = normalizeGameState(gameState);
+  const status = secondBayStatus(state);
+  const project = status.project;
+  if (project.acquired) {
+    return renderIdleCard({
+      title: "Second Project Car",
+      status: "Stage: Rolling Shell",
+      copy: "The first completed build stays managed. The second car starts as a new project shell.",
+      extra: `
+        <div class="nospill-afford-progress">
+          <small>${GARAGE_BUILD_VALUE_LABEL}: +${escapeHtml(formatCashCount(SECOND_PROJECT_CAR_GARAGE_VALUE))}</small>
+          <small>Second Car Build Tracks: Future garage pass.</small>
+          <small>No second-car assignments or fleet controls are added in this pass.</small>
+        </div>
+      `,
+    });
+  }
+  if (project.bayOpened) {
+    const disabledReason = status.missingAcquireCash > 0
+      ? `Need ${formatCash(status.missingAcquireCash)} more Cash.`
+      : status.missingAcquireReputation > 0
+        ? `Need ${formatShopCount(status.missingAcquireReputation)} more Garage Reputation.`
+        : "";
+    return renderIdleCard({
+      title: "Second Bay Open",
+      status: "Project shell available",
+      copy: "Acquire the second project car shell.",
+      extra: `
+        <div class="nospill-afford-progress">
+          <small>Cost: ${escapeHtml(formatCash(SECOND_PROJECT_CAR_COST))} Cash + ${escapeHtml(formatShopCount(SECOND_PROJECT_CAR_REPUTATION_COST))} Garage Reputation</small>
+          <small>${GARAGE_BUILD_VALUE_LABEL}: +${escapeHtml(formatCashCount(SECOND_PROJECT_CAR_GARAGE_VALUE))}</small>
+          <small>The first completed build stays managed. The second car starts as a new project shell.</small>
+          <small>${disabledReason || "Ready"}</small>
+        </div>
+      `,
+      actions: [
+        actionButton("Acquire Second Project Car", "data-second-car-action", "acquire", !status.canAcquire, "nospill-primary", disabledReason),
+      ],
+    });
+  }
+  const loopMessage = status.loopComplete
+    ? "First Car Management loop complete."
+    : "Complete the first Car Management loop to expand the garage.";
+  const reputationMessage = status.reputation >= SECOND_BAY_OPEN_REPUTATION_COST
+    ? "Garage Reputation ready."
+    : `Reach ${formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST)} Garage Reputation to expand the garage.`;
+  if (!status.loopComplete || status.reputation < SECOND_BAY_OPEN_REPUTATION_COST) {
+    return renderIdleCard({
+      title: "Second Bay",
+      status: "Locked",
+      copy: !status.loopComplete
+        ? "Complete the first Car Management loop to expand the garage."
+        : "Reach 250 Garage Reputation to expand the garage.",
+      locked: true,
+      extra: `
+        ${renderSecondBayChecklist(state)}
+        <div class="nospill-afford-progress">
+          <small>${escapeHtml(loopMessage)}</small>
+          <small>${escapeHtml(reputationMessage)}</small>
+        </div>
+      `,
+    });
+  }
+  const disabledReason = status.missingOpenCash > 0
+    ? `Need ${formatCash(status.missingOpenCash)} more Cash.`
+    : "";
+  return renderIdleCard({
+    title: "Second Bay Ready",
+    status: "Ready to open",
+    copy: "Open a second project bay and prepare for the next car.",
+    extra: `
+      ${renderSecondBayChecklist(state)}
+      <div class="nospill-afford-progress">
+        <small>Cost: ${escapeHtml(formatCash(SECOND_BAY_OPEN_COST))} Cash + ${escapeHtml(formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST))} Garage Reputation</small>
+        <small>${disabledReason || "Ready"}</small>
+      </div>
+    `,
+    actions: [
+      actionButton("Open Second Bay", "data-second-car-action", "open_bay", !status.canOpen, "nospill-primary", disabledReason),
+    ],
+  });
+}
+
 function renderCarManagementPanel(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -15262,6 +15633,7 @@ function renderCarManagementPanel(gameState) {
         ${lastLine}
       </section>
       ${renderCarManagementLoopChecklist(state)}
+      ${renderSecondBayCard(state)}
       ${renderCarManagementHistory(state)}
       ${CAR_ASSIGNMENTS.map((assignment) => renderCarAssignmentCard(assignment, state)).join("")}
     </div>
@@ -15277,9 +15649,11 @@ function carManagementOverviewSummary(gameState) {
       ? `${active.assignment.title} ready to collect.`
       : `${active.assignment.title} in progress · ${formatAssignmentDuration(active.remainingMs)} remaining.`;
   }
-  if (allCarAssignmentsCompletedOnce(state)) {
-    return "First car management loop complete. Second car comes in a future garage pass.";
-  }
+  const secondBay = secondBayStatus(state);
+  if (secondBay.acquired) return "Second Project Car acquired. Future build tracks coming.";
+  if (secondBay.bayOpened) return "Second Bay open. Second Project Car available.";
+  if (secondBay.loopComplete && secondBay.reputation >= SECOND_BAY_OPEN_REPUTATION_COST) return "Second Bay ready.";
+  if (allCarAssignmentsCompletedOnce(state)) return "First car management loop complete. Grow Garage Reputation for Second Bay.";
   const nextAssignment = nextAvailableCarAssignment(state);
   return nextAssignment ? `${nextAssignment.title} available.` : "Assignments preparing.";
 }
@@ -16406,6 +16780,63 @@ function carManagementPinnedGoal(gameState) {
     };
   }
   if (allCarAssignmentsCompletedOnce(state)) {
+    const secondBay = secondBayStatus(state);
+    if (secondBay.acquired) {
+      return {
+        id: "second_project_car_acquired",
+        title: "Second Project Car acquired",
+        body: "Second car build tracks come in a future garage pass.",
+        progressCurrent: 1,
+        progressTarget: 1,
+        progressLabel: "Rolling Shell ready",
+        reward: "Future second car build tracks",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: true,
+      };
+    }
+    if (secondBay.bayOpened) {
+      return {
+        id: "acquire_second_project_car",
+        title: "Acquire Second Project Car",
+        body: "Start the next project.",
+        progressCurrent: cashBalance(state),
+        progressTarget: SECOND_PROJECT_CAR_COST,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(SECOND_PROJECT_CAR_COST)} Cash · ${formatShopCount(secondBay.reputation)} / ${formatShopCount(SECOND_PROJECT_CAR_REPUTATION_COST)} Garage Reputation`,
+        reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(SECOND_PROJECT_CAR_GARAGE_VALUE)}`,
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    if (secondBay.reputation < SECOND_BAY_OPEN_REPUTATION_COST) {
+      return {
+        id: "grow_garage_reputation",
+        title: "Grow Garage Reputation",
+        body: "Second Bay unlocks at 250 Garage Reputation.",
+        progressCurrent: secondBay.reputation,
+        progressTarget: SECOND_BAY_OPEN_REPUTATION_COST,
+        progressLabel: `${formatShopCount(secondBay.reputation)} / ${formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST)} Garage Reputation`,
+        reward: "Second Bay access",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    if (!secondBay.bayOpened) {
+      return {
+        id: "open_second_bay",
+        title: "Open Second Bay",
+        body: "Expand the garage for the next project car.",
+        progressCurrent: cashBalance(state),
+        progressTarget: SECOND_BAY_OPEN_COST,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(SECOND_BAY_OPEN_COST)} Cash · ${formatShopCount(secondBay.reputation)} / ${formatShopCount(SECOND_BAY_OPEN_REPUTATION_COST)} Garage Reputation`,
+        reward: "Second project bay",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
     return {
       id: "first_car_managed",
       title: "First car managed",
@@ -19724,6 +20155,25 @@ function handleCollectCarAssignment() {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleSecondCarProjectAction(action) {
+  const fn = action === "acquire" ? acquireSecondProjectCar : openSecondBay;
+  const result = fn(currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "car_management";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -20056,6 +20506,10 @@ function handleTofuShopPanelClick(event) {
   }
   if (target.dataset.counterServiceAction) {
     handleCounterServiceAction(target.dataset.counterServiceAction);
+    return;
+  }
+  if (target.dataset.secondCarAction) {
+    handleSecondCarProjectAction(target.dataset.secondCarAction);
     return;
   }
   const actionMap = [
@@ -20646,6 +21100,14 @@ function handleNextBestAction() {
   }
   if (actionType === "collect_car_assignment") {
     handleCollectCarAssignment();
+    return;
+  }
+  if (actionType === "open_second_bay") {
+    handleSecondCarProjectAction("open_bay");
+    return;
+  }
+  if (actionType === "acquire_second_project_car") {
+    handleSecondCarProjectAction("acquire");
     return;
   }
   if (actionType === "car_assignment_active" || actionType === "car_management_target") {
