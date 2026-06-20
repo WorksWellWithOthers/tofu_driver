@@ -5591,8 +5591,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619k'));
-  assert(html.includes('/static/nospill/app.css?v=20260619k'));
+  assert(html.includes('/static/nospill/app.js?v=20260619l'));
+  assert(html.includes('/static/nospill/app.css?v=20260619l'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -7401,7 +7401,8 @@ function testQualifiedRouteContextSharingAndAchievementsV1() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(html.includes('Share Card Trail'));
-  assert(html.includes('Route Outline + Smoothness Overlay'));
+  assert(html.includes('Share Route Outline'));
+  assert(html.includes('Use Abstract Cup Trail'));
   assert(html.includes('id="route-share-warning"'));
   assert(source.includes('ROUTE_OUTLINE_SHARE_WARNING'));
   assert(!source.includes('fetch('));
@@ -7440,10 +7441,19 @@ function testQualifiedRouteContextSharingAndAchievementsV1() {
     routeContext,
     normalizedRouteOutline: outline,
   };
+  const previewData = context.storyCardPreviewData(summaryWithContext);
+  assert.strictEqual(previewData.trailMode, 'route_outline');
+  assert(previewData.routeArtifactHtml.includes('Route Smoothness Outline'));
+  assert(previewData.routeArtifactHtml.includes('This route shape may reveal where you drove'));
+  assert(previewData.routeArtifactHtml.includes('nospill-route-outline-marker'));
   const defaultCard = context.buildShareCardData(summaryWithContext);
-  assert.strictEqual(defaultCard.shareTrailMode, 'abstract');
-  assert.strictEqual(defaultCard.routeOutline.length, 0);
+  assert.strictEqual(defaultCard.shareTrailMode, 'route_outline');
+  assert.strictEqual(defaultCard.cupTrailLabel, 'Route Smoothness Outline');
+  assert(defaultCard.routeOutline.length >= 2);
   assert.strictEqual(context.routeOutlineShareAvailable(summaryWithContext), true);
+  const abstractCard = context.buildShareCardData(summaryWithContext, { shareTrailMode: 'abstract' });
+  assert.strictEqual(abstractCard.shareTrailMode, 'abstract');
+  assert.strictEqual(abstractCard.routeOutline.length, 0);
 
   const routeCard = context.buildShareCardData(summaryWithContext, { shareTrailMode: 'route_outline' });
   assert.strictEqual(routeCard.shareTrailMode, 'route_outline');
@@ -7455,19 +7465,25 @@ function testQualifiedRouteContextSharingAndAchievementsV1() {
   assert(shareText.includes('Turn Density:'));
   assert(shareText.includes('Curvature:'));
   assert(shareText.includes('Stop-Start Texture:'));
-  assert(shareText.includes('Route Outline: user chose to include it on the image card.'));
+  assert(shareText.includes('Route Smoothness Outline included.'));
   assert(!/gps|map|street|trace|location|lat|lon|speed|mph|\[|\{/.test(shareText.toLowerCase()));
 
   const basicSummary = {
     ...summaryWithContext,
     mode: 'basic',
     qualificationStatus: 'practice',
+    routeContext: { status: 'unavailable', message: 'Local route outline only.' },
   };
-  assert.strictEqual(context.routeOutlineShareAvailable(basicSummary), false);
+  assert.strictEqual(context.routeOutlineShareAvailable(basicSummary), true);
+  const localPreview = context.storyCardPreviewData(basicSummary);
+  assert.strictEqual(localPreview.status, 'Local Result');
+  assert.strictEqual(localPreview.trailMode, 'route_outline');
+  assert(localPreview.routeArtifactHtml.includes('Route Smoothness Outline'));
   assert.strictEqual(
     context.buildShareCardData(basicSummary, { shareTrailMode: 'route_outline' }).shareTrailMode,
-    'abstract',
+    'route_outline',
   );
+  assert.strictEqual(context.buildShareCardData(basicSummary, { shareTrailMode: 'route_outline' }).challengeName, 'Local Result');
   assert.strictEqual(context.routeContextAchievementIds(basicSummary).length, 0);
 
   const simulatedSummary = {
@@ -8202,8 +8218,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619k'));
-  assert(html.includes('/static/nospill/app.css?v=20260619k'));
+  assert(html.includes('/static/nospill/app.js?v=20260619l'));
+  assert(html.includes('/static/nospill/app.css?v=20260619l'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));

@@ -687,8 +687,95 @@
   background: rgba(240, 185, 90, 0.09);
 }
 
+.nospill-story-card-preview-route {
+  min-width: 0;
+}
+
+.nospill-route-artifact,
 .nospill-story-card-preview p {
   margin: 0;
+}
+
+.nospill-route-artifact {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(110, 198, 255, 0.24);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(110, 198, 255, 0.055);
+}
+
+.nospill-route-artifact-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.nospill-route-artifact-head span {
+  color: #93a099;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.nospill-route-artifact-head strong {
+  color: #9ee9bf;
+  font-size: 0.86rem;
+}
+
+.nospill-route-artifact svg {
+  width: 100%;
+  min-height: 126px;
+  border-radius: 7px;
+  background:
+    linear-gradient(90deg, rgba(244, 247, 239, 0.04) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(244, 247, 239, 0.04) 1px, transparent 1px),
+    #070a0a;
+  background-size: 32px 28px;
+}
+
+.nospill-route-outline-shadow {
+  fill: none;
+  stroke: rgba(7, 10, 10, 0.75);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 13;
+}
+
+.nospill-route-outline-line {
+  fill: none;
+  stroke: rgba(110, 198, 255, 0.82);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 7;
+}
+
+.nospill-route-outline-marker {
+  stroke: #070a0a;
+  stroke-width: 2;
+}
+
+.nospill-route-outline-marker.is-steady {
+  fill: #55d98a;
+}
+
+.nospill-route-outline-marker.is-mixed {
+  fill: #f7d66b;
+}
+
+.nospill-route-outline-marker.is-messy {
+  fill: #f0b95a;
+}
+
+.nospill-route-artifact small {
+  color: #f8d891;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.nospill-story-card-preview p {
   color: #9ee9bf;
   font-weight: 900;
 }

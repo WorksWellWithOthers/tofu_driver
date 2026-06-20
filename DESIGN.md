@@ -107,16 +107,15 @@ These rules are authoritative for all current and future features:
 - Location may be requested only after the explicit Start action to attempt certification and
   route-context eligibility. Denying or lacking location must not block play; the run remains a
   `Local Result`.
-- Default sharing must stay privacy-safe and abstract. The default share card uses the motion-derived
-  Abstract Cup Trail, which is not a map, route identity, street shape, distance plot, or speed
-  chart.
-- Actual route outline sharing is allowed only as an explicit, post-run, user-selected option for a
-  Certified Result with usable route data. The Route Outline + Smoothness Overlay card may reveal
-  where the user drove, so the UI must warn: `This may reveal where you drove. Share only if you are
-  comfortable showing this route shape.`
-- Optional route-outline cards must never be shared automatically and must not include map tiles,
-  street names, exact coordinates, speed overlays, route leaderboards, or route points in copied
-  share text.
+- Actual Route Outline is the primary post-run result/share artifact when usable local route data
+  exists. It may appear for Certified or Local Results, but route display alone must not imply
+  certification.
+- Abstract Cup Trail remains the privacy/fallback artifact when route data is unavailable or the
+  player chooses not to share route shape.
+- Route-outline sharing/downloading is still an explicit post-run user choice with warning copy:
+  `This route shape may reveal where you drove. Share only if comfortable.`
+- Route-outline cards must never include map tiles, street names, exact coordinates, speed overlays,
+  route leaderboards, or route points in copied share text.
 - Motion permission must be requested from the explicit `Start Cup Test` tap before optional
   audio setup or other awaited work, so mobile Safari keeps the user-gesture chain.
 - Permission-needed, permission-denied, insecure-context, unsupported-browser, and no-motion-data
@@ -991,7 +990,7 @@ Default share output may include:
 - Rank
 - Trip Time
 - Drive Shape
-- Abstract Cup Trail / Cup Trail label
+- Route Smoothness Outline when usable route data exists, or Abstract Cup Trail fallback
 - safe Coach Recap labels
 - local generated Cargo Commentary when safe
 - Driver License
@@ -1033,8 +1032,9 @@ accounts, uploads, social feeds, or active-drive commentary.
 
 Result Card Visual Polish V1 makes those post-run story pieces read as a compact mini story card.
 The parked result screen now prioritizes result status, rank/cargo condition, cargo type, one Cargo
-Commentary line, optional player Story Caption, concise Mika coach summary, Abstract Cup Trail, and
-the `Not faster. Smoother.` tagline. XP, rewards, merch, passport, selected crew, route-context
+Commentary line, optional player Story Caption, concise Mika coach summary, Route Smoothness Outline
+when usable local route data exists, Abstract Cup Trail as the privacy/fallback view, and the
+`Not faster. Smoother.` tagline. XP, rewards, merch, passport, selected crew, route-context
 eligibility, signal quality, and the full Coach Recap live in collapsed Run Details by default.
 Downloaded share cards should keep the same story-card hierarchy without adding a full comic
 editor, stickers, uploads, backend sharing, accounts, public profiles, scoring changes, reward

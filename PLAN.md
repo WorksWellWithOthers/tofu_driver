@@ -59,7 +59,8 @@
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
-  commentary, concise Mika coach summary, Abstract Cup Trail, and the share/take-another/garage
+  commentary, concise Mika coach summary, Route Smoothness Outline when usable local route data
+  exists, Abstract Cup Trail as the privacy/fallback view, and the share/take-another/garage
   actions; XP, rewards, merch, passport, route context, signal quality, and full Coach Recap are
   collapsed under Run Details by default.
 - Counter Service V1 is the starter automation layer. It is available from the first session, runs
@@ -103,10 +104,12 @@
   smooth hands, brake feather, decel control, transition smoothness, cargo balance, passenger
   comfort, and consistency.
 - Qualified Route Context V1 is implemented for completed Certified Results with usable local route
-  data. Default sharing remains the Abstract Cup Trail. Route Outline + Smoothness Overlay is an
-  explicit post-run share-card choice with warning copy, bucketed route context in copied text, and
-  no map tiles, street names, coordinates, speed overlay, automatic sharing, uploads, backend,
-  accounts, public profiles, or leaderboards.
+  data, and route-outline rendering is available for any non-simulated result with usable local route
+  data. Route Smoothness Outline is the primary result/share artifact when route data exists;
+  Abstract Cup Trail remains the privacy/fallback view. Route-outline sharing/downloading shows
+  warning copy, copied text uses labels/buckets only, and there are no map tiles, street names,
+  coordinates, speed overlays, automatic sharing, uploads, backend, accounts, public profiles, or
+  leaderboards.
 - Hidden Shirt Unlock V1 is implemented as a local parked post-run merch reveal. The Tofu Driver
   `Not Fast. Smooth.` Tee link appears only after a Certified Perfect Pour or route-context Perfect
   Pour achievement, is repeat-suppressed after acknowledgement, and does not use backend
@@ -256,9 +259,10 @@
   copy, and does not change scoring, qualification, Driver XP, shop rewards, Net Worth, Garage Build
   Value, Brand Value, or economy balance.
 - Result Card Visual Polish V1 is implemented as parked post-run UI polish: Result Card combines
-  result status, cargo facts, Cargo Commentary, concise coach summary, optional Story Caption,
-  Abstract Cup Trail, and `Not faster. Smoother.` before collapsed Run Details, and the downloaded
-  card uses the same mini story hierarchy.
+  result status, cargo facts, Cargo Commentary, concise coach summary, optional Story Caption, Route
+  Smoothness Outline when usable local route data exists, Abstract Cup Trail fallback, and
+  `Not faster. Smoother.` before collapsed Run Details, and the downloaded card uses the same mini
+  story hierarchy.
 - Garage Pride / Builder Note V1 is implemented on parked Tofu Garage Overview after the Dream
   Build starts. It lets the player save one sanitized local note about the current build; it is not
   shown on Cup Test share cards and does not change scoring, rewards, Net Worth, Garage Build Value,
@@ -366,11 +370,12 @@ Canonical references:
 27. Playtest Failure Flavor V1: confirm Cargo Commentary feels funny and recoverable for rough
    outcomes without shaming the player or implying performance-driving coaching.
 28. Playtest Result Card Visual Polish V1 on mobile and desktop: confirm the compact Result Card,
-   Cargo Commentary, Story Caption, concise Coach Summary, Abstract Cup Trail, collapsed Run
-   Details, and downloaded card boxes feel readable without crowding the result actions.
-29. Real-device QA Qualified Route Context V1: verify route-context buckets, warning copy, opt-in
-   Route Outline card rendering, and Winding/Stop-and-Go/Technical achievement gates without
-   changing base Cup Test scoring or rewarding speed.
+   Cargo Commentary, Story Caption, concise Coach Summary, Route Smoothness Outline/Abstract Cup
+   Trail fallback, collapsed Run Details, and downloaded card boxes feel readable without crowding
+   the result actions.
+29. Real-device QA Qualified Route Context V1: verify route-context buckets, warning copy, primary
+   Route Smoothness Outline rendering, Abstract Cup Trail fallback, and Winding/Stop-and-Go/Technical
+   achievement gates without changing base Cup Test scoring or rewarding speed.
 30. Playtest Garage Pride / Builder Note V1: confirm the 100-character limit, preset chips, saved
    note display, and local-only positioning create build ownership without feeling like required
    progression.

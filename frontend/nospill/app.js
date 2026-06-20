@@ -89,7 +89,7 @@ const SHARE_CARD_TRAIL_MODES = {
   routeOutline: "route_outline",
 };
 const ROUTE_OUTLINE_SHARE_WARNING =
-  "This may reveal where you drove. Share only if you are comfortable showing this route shape.";
+  "This route shape may reveal where you drove. Share only if comfortable.";
 const RESULT_STORY_CAPTION_MAX_LENGTH = 90;
 const BUILDER_NOTE_MAX_LENGTH = 100;
 const BUILDER_NOTE_PRESETS = [
@@ -1209,6 +1209,7 @@ const appState = {
   audio: null,
   lastSummary: null,
   shareTrailMode: SHARE_CARD_TRAIL_MODES.abstract,
+  shareTrailModeUserSelected: false,
   resultStoryCaption: "",
   tofuVisual: defaultTofuVisualState(),
   renderPending: false,
@@ -2183,6 +2184,52 @@ function renderCupTrail(summary = {}) {
       <small>${escapeHtml(label)} Decorative only; it is not a real-world path.</small>
     </section>
   `;
+}
+
+function routeOutlinePath(points, width = 320, height = 140) {
+  const safePoints = (Array.isArray(points) ? points : [])
+    .filter((point) => Number.isFinite(Number(point.x)) && Number.isFinite(Number(point.y)))
+    .slice(0, 80);
+  if (safePoints.length < 2) return "";
+  return safePoints.map((point, index) => {
+    const x = clamp(Number(point.x), 0, 1) * width;
+    const y = clamp(Number(point.y), 0, 1) * height;
+    return `${index === 0 ? "M" : "L"} ${roundTo(x, 1)} ${roundTo(y, 1)}`;
+  }).join(" ");
+}
+
+function renderRouteArtifact(summary = {}, mode = activeShareTrailMode(summary)) {
+  const outline = Array.isArray(summary.normalizedRouteOutline)
+    ? summary.normalizedRouteOutline.slice(0, 80)
+    : [];
+  if (mode === SHARE_CARD_TRAIL_MODES.routeOutline && outline.length >= 2) {
+    const width = 320;
+    const height = 140;
+    const path = routeOutlinePath(outline, width, height);
+    const markerStep = Math.max(1, Math.floor(outline.length / 14));
+    const markers = outline
+      .map((point, index) => ({ point, index }))
+      .filter(({ index }) => index % markerStep === 0 || index === outline.length - 1)
+      .map(({ point }) => {
+        const smoothness = ["steady", "mixed", "messy"].includes(point.smoothness) ? point.smoothness : "mixed";
+        return `<circle class="nospill-route-outline-marker is-${smoothness}" cx="${escapeHtml(String(roundTo(clamp(Number(point.x), 0, 1) * width, 1)))}" cy="${escapeHtml(String(roundTo(clamp(Number(point.y), 0, 1) * height, 1)))}" r="4.8"></circle>`;
+      }).join("");
+    return `
+      <section class="nospill-route-artifact" aria-label="Route Smoothness Outline">
+        <div class="nospill-route-artifact-head">
+          <span>Route Smoothness Outline</span>
+          <strong>Local route shape</strong>
+        </div>
+        <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Normalized route outline with smoothness and roughness markers. This is not a map." focusable="false">
+          <path class="nospill-route-outline-shadow" d="${escapeHtml(path)}"></path>
+          <path class="nospill-route-outline-line" d="${escapeHtml(path)}"></path>
+          ${markers}
+        </svg>
+        <small>${escapeHtml(ROUTE_OUTLINE_SHARE_WARNING)}</small>
+      </section>
+    `;
+  }
+  return renderCupTrail(summary);
 }
 
 function applyDailyDeliveryCredit(summary = {}) {
@@ -9429,7 +9476,7 @@ function projectRouteSample(sample, origin, originLatRadians) {
 }
 
 function normalizedRouteOutlineForShare(routeSamples = [], summary = {}) {
-  if (resultStatusForSession(summary) !== "certified" || summary.simulated || summary.mode === "simulated") return [];
+  if (summary.simulated || summary.mode === "simulated") return [];
   const coordinateSamples = (Array.isArray(routeSamples) ? routeSamples : []).filter(
     (sample) =>
       Number.isFinite(sample.lat)
@@ -9453,29 +9500,43 @@ function normalizedRouteOutlineForShare(routeSamples = [], summary = {}) {
   const spanX = Math.max(maxX - minX, 0.0001);
   const spanY = Math.max(maxY - minY, 0.0001);
   const span = Math.max(spanX, spanY);
-  const cargo = calculateCargoCondition(summary);
-  const smoothness = cargo >= 95 ? "steady" : cargo >= 85 ? "mixed" : "messy";
-  return projected.map((point) => ({
+  const roughEvents = safeNonNegativeInteger(summary.roughCount, 0, 1000000)
+    + safeNonNegativeInteger(summary.harshInputCount, 0, 1000000)
+    + safeNonNegativeInteger(summary.transitionRoughnessCount, 0, 1000000);
+  const cargo = safeNonNegativeNumber(summary.cargoCondition ?? summary.waterLeft, 0, 100);
+  const roughnessPressure = clamp((100 - cargo) / 55 + roughEvents / Math.max(12, sampled.length), 0, 1);
+  return projected.map((point, index) => ({
     x: roundTo(clamp(0.5 + ((point.x - minX) - spanX / 2) / span * 0.82, 0, 1), 3),
     y: roundTo(clamp(0.5 - ((point.y - minY) - spanY / 2) / span * 0.82, 0, 1), 3),
-    smoothness,
+    smoothness: routeOutlineSmoothnessAt(index, sampled.length, roughnessPressure),
   }));
+}
+
+function routeOutlineSmoothnessAt(index, total, roughnessPressure) {
+  const pressure = clamp(Number(roughnessPressure || 0), 0, 1);
+  if (pressure < 0.18) return "steady";
+  const phase = total > 1 ? index / (total - 1) : 0;
+  const wave = Math.abs(Math.sin((phase * Math.PI * 3.5) + pressure * Math.PI));
+  if (pressure > 0.62 && wave > 0.52) return "messy";
+  if (pressure > 0.34 && wave > 0.62) return "messy";
+  if (pressure > 0.22 && wave > 0.38) return "mixed";
+  return "steady";
 }
 
 function routeOutlineShareAvailable(summary = {}) {
   return Boolean(
     summary
-    && resultStatusForSession(summary) === "certified"
     && !summary.simulated
     && summary.mode !== "simulated"
-    && summary.routeContext
-    && summary.routeContext.status === "usable"
     && Array.isArray(summary.normalizedRouteOutline)
     && summary.normalizedRouteOutline.length >= 2,
   );
 }
 
 function activeShareTrailMode(summary = appState.lastSummary) {
+  if (routeOutlineShareAvailable(summary) && !appState.shareTrailModeUserSelected) {
+    return SHARE_CARD_TRAIL_MODES.routeOutline;
+  }
   if (
     appState.shareTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline
     && routeOutlineShareAvailable(summary)
@@ -14801,6 +14862,7 @@ function storyCardPreviewData(summary = {}) {
     coachSummary,
     storyCaption: data.storyCaption,
     trailMode: data.shareTrailMode,
+    routeArtifactHtml: renderRouteArtifact(summary, data.shareTrailMode),
     routeContextLabel: routeContext && routeContext.status === "usable" ? routeContext.routeContextLabel : "",
     routeContextSummary: routeContext && routeContext.status === "usable"
       ? `Route Context: ${routeContext.routeContextLabel} · Turns ${routeContext.turnDensity} · Curves ${routeContext.curvature} · Stop-Start ${routeContext.stopStartTexture}`
@@ -14825,8 +14887,11 @@ function renderStoryCardPreview(summary = appState.lastSummary) {
   if (elements.storyCardPreviewRouteMode) {
     elements.storyCardPreviewRouteMode.textContent =
       data.trailMode === SHARE_CARD_TRAIL_MODES.routeOutline
-        ? "Route Outline + Smoothness Overlay"
+        ? "Route Smoothness Outline"
         : "Abstract Cup Trail";
+  }
+  if (elements.storyCardPreviewRouteVisual) {
+    elements.storyCardPreviewRouteVisual.innerHTML = data.routeArtifactHtml;
   }
   if (elements.storyCardPreviewRouteContext) {
     elements.storyCardPreviewRouteContext.textContent = data.routeContextSummary;
@@ -14909,6 +14974,7 @@ function updateShareTrailModeUi(summary = appState.lastSummary) {
 
 function handleShareTrailModeChange(event) {
   const value = event && event.target ? event.target.value : SHARE_CARD_TRAIL_MODES.abstract;
+  appState.shareTrailModeUserSelected = true;
   appState.shareTrailMode =
     value === SHARE_CARD_TRAIL_MODES.routeOutline
       ? SHARE_CARD_TRAIL_MODES.routeOutline
@@ -14937,7 +15003,10 @@ function renderSummary(summary) {
   appState.resultStoryCaption = sanitizeResultStoryCaption(summary.storyCaption || "");
   summary.storyCaption = appState.resultStoryCaption;
   appState.lastSummary = summary;
-  appState.shareTrailMode = SHARE_CARD_TRAIL_MODES.abstract;
+  appState.shareTrailMode = routeOutlineShareAvailable(summary)
+    ? SHARE_CARD_TRAIL_MODES.routeOutline
+    : SHARE_CARD_TRAIL_MODES.abstract;
+  appState.shareTrailModeUserSelected = false;
   trackCupTestCompletedAnalytics(summary);
   setSummaryMode("cup-test");
   setShareActionsEnabled(true);
@@ -15127,8 +15196,13 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     summary.deliveryRewards ? summary.deliveryRewards.gameState : null,
   );
   const cargoCommentary = failureFlavorForSession(summary);
-  const requestedTrailMode = config && config.shareTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline
-    ? SHARE_CARD_TRAIL_MODES.routeOutline
+  const hasExplicitTrailMode = config && Object.prototype.hasOwnProperty.call(config, "shareTrailMode");
+  const requestedTrailMode = hasExplicitTrailMode
+    ? (
+        config.shareTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline
+          ? SHARE_CARD_TRAIL_MODES.routeOutline
+          : SHARE_CARD_TRAIL_MODES.abstract
+      )
     : activeShareTrailMode(summary);
   const shareTrailMode = requestedTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline
     && routeOutlineShareAvailable(summary)
@@ -15152,7 +15226,7 @@ function buildShareCardData(summary, config = SHARE_CONFIG) {
     tripTime: formatTripDuration(summary.durationSeconds),
     distanceLabel: "",
     cupTrailLabel: shareTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline
-      ? "Route Outline + Smoothness Overlay"
+      ? "Route Smoothness Outline"
       : "Abstract Cup Trail",
     cupTrail: Array.isArray(summary.cupTrail)
       ? summary.cupTrail.map(boundedCupTrailPoint).slice(0, 48)
@@ -15207,7 +15281,7 @@ function buildShareText(summary, config = SHARE_CONFIG) {
     lines.push(`Curvature: ${data.routeContext.curvature}`);
     lines.push(`Stop-Start Texture: ${data.routeContext.stopStartTexture}`);
     if (data.shareTrailMode === SHARE_CARD_TRAIL_MODES.routeOutline) {
-      lines.push("Route Outline: user chose to include it on the image card.");
+      lines.push("Route Smoothness Outline included.");
     }
   }
   if (data.storyCaption) lines.push(`Caption: "${data.storyCaption}"`);
@@ -15387,7 +15461,7 @@ function renderShareCanvas(summary) {
     });
     context.fillStyle = "#9ee9bf";
     context.font = "800 23px Inter, Arial, sans-serif";
-    context.fillText("Route Outline + Smoothness Overlay", width - 452, height - 555);
+    context.fillText("Route Smoothness Outline", width - 452, height - 555);
     context.fillStyle = "#bbc7c0";
     context.font = "700 18px Inter, Arial, sans-serif";
     context.fillText("Shared by user. May reveal route shape.", width - 452, height - 528);
@@ -16809,6 +16883,7 @@ function cacheElements() {
     storyCardPreviewRank: document.getElementById("story-card-preview-rank"),
     storyCardPreviewRouteMode: document.getElementById("story-card-preview-route-mode"),
     storyCardPreviewRouteContext: document.getElementById("story-card-preview-route-context"),
+    storyCardPreviewRouteVisual: document.getElementById("story-card-preview-route-visual"),
     storyCardPreviewCommentary: document.getElementById("story-card-preview-commentary"),
     storyCardPreviewCoach: document.getElementById("story-card-preview-coach"),
     storyCardPreviewCaptionBox: document.getElementById("story-card-preview-caption-box"),

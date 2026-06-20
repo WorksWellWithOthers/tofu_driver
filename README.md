@@ -10,14 +10,16 @@ Garage progression is playable at home without sensors or location.
 
 Cup-first visitors can reach Tofu Garage from the landing page and from parked Cup Test results.
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
-decorative Cup Trail, Daily Delivery Credit, concise Coach Recap labels, local Cargo Commentary,
-Result Card, and optional player Story Captions. These are derived from summarized motion only and
-must not expose speed, distance, GPS, maps, street names, route traces, or racing/performance-driving
-technique. Tapping `Start Cup Test` attempts certification automatically: usable local route data can
-produce a Certified Result, while denied or insufficient location produces a Local Result. Certified
-Results can also show coarse Route Context buckets. The default share card remains the abstract Cup
-Trail; a Route Outline + Smoothness Overlay card is shown only as an explicit post-run opt-in and
-copied text never includes route points, coordinates, street names, speed, or map data.
+Route Smoothness Outline when usable local route data exists, Abstract Cup Trail as the
+privacy/fallback view, Daily Delivery Credit, concise Coach Recap labels, local Cargo Commentary,
+Result Card, and optional player Story Captions. These are derived from summarized motion and
+normalized route shape only and must not expose speed, distance, GPS coordinates, maps, street
+names, raw route traces, or racing/performance-driving technique. Tapping `Start Cup Test` attempts
+certification automatically: usable local route data can produce a Certified Result, while denied or
+insufficient location produces a Local Result. Local results with route data may still show a local
+route outline, but route display does not imply certification. Sharing/downloading a route-outline
+card requires the post-run privacy warning, and copied text never includes route points,
+coordinates, street names, speed, or map data.
 
 Tofu Shop, the first Tofu Garage business, starts with a focused first loop and reveals depth over
 time. The first Passport stamp uses a local Stamp Fanfare, and the first meaningful hidden shop
