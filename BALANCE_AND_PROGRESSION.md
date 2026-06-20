@@ -1680,8 +1680,11 @@ Implemented Second Car Project / Second Bay V1 values:
 | Open Second Bay | First Car Management loop complete and `250` Garage Reputation | `$500B` | `250` | opens second project bay |
 | Acquire Second Project Car | Second Bay opened and `500` Garage Reputation | `$1T` | `500` | `+$750B Garage Build Value`, Rolling Shell |
 
-Second Car Build Tracks remain future-only. There is no second-car assignment system or fleet
-management in V1.
+Second Car Identity / Build Direction V1 unlocks after the rolling shell is acquired. The one-time
+locked choices are Showcase Build, Track Build, Drift Build, Rally Build, and Restoration Build.
+This is narrative/strategic setup only: it grants no Cash, Brand Value, Garage Reputation, Garage
+Build Value, or Net Worth change. Second Car Build Tracks remain future-only. There is no second-car
+assignment system or fleet management in V1.
 
 Possible level effects:
 

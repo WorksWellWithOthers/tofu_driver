@@ -491,6 +491,43 @@ const SECOND_BAY_OPEN_REPUTATION_COST = 250;
 const SECOND_PROJECT_CAR_COST = 1000000000000;
 const SECOND_PROJECT_CAR_REPUTATION_COST = 500;
 const SECOND_PROJECT_CAR_GARAGE_VALUE = 750000000000;
+const SECOND_CAR_BUILD_DIRECTIONS = [
+  {
+    id: "showcase_build",
+    title: "Showcase Build",
+    copy: "Build for presence, finish, and collector attention.",
+    flavor: "Wide body, aero details, wheels, stance, finish quality, and presentation.",
+    future: "Future bonuses: Brand Value, Collector Appeal, Showcase Readiness.",
+  },
+  {
+    id: "track_build",
+    title: "Track Build",
+    copy: "Build for closed-course event fit and serious hardware.",
+    flavor: "R-compounds, brake packages, cooling, aero, drivetrain, and event setup.",
+    future: "Future bonuses: Garage Reputation, event rewards, Race Class.",
+  },
+  {
+    id: "drift_build",
+    title: "Drift Build",
+    copy: "Build for style, angle, smoke, and exhibition energy.",
+    flavor: "Steering angle adapters, hydraulic handbrake, differential setup, cooling, and tire wear.",
+    future: "Future bonuses: Style, sponsor appeal, exhibition rewards.",
+  },
+  {
+    id: "rally_build",
+    title: "Rally Build",
+    copy: "Build for rough surfaces, weather, and resilient event fit.",
+    flavor: "Dirt tires, wet tires, suspension travel, protection, cooling, and reliability.",
+    future: "Future bonuses: Reliability, weather fit, special event access.",
+  },
+  {
+    id: "restoration_build",
+    title: "Restoration Build",
+    copy: "Build for history, craftsmanship, and long-term collector value.",
+    flavor: "New body, new engine, engine balance, chassis refresh, interior detail, and clean documentation.",
+    future: "Future bonuses: Collector Appeal, Garage Build Value, prestige paths.",
+  },
+];
 const CAR_ASSIGNMENTS = [
   {
     id: "showcase_rotation",
@@ -2971,6 +3008,9 @@ function defaultSecondCarProjectState() {
     stage: "locked",
     builderNote: "",
     garageBuildValue: 0,
+    buildDirection: null,
+    buildDirectionSelectedAt: null,
+    directionLocked: false,
   };
 }
 
@@ -3525,6 +3565,10 @@ function carAssignmentById(assignmentId) {
   return CAR_ASSIGNMENTS.find((assignment) => assignment.id === assignmentId) || null;
 }
 
+function secondCarBuildDirectionById(directionId) {
+  return SECOND_CAR_BUILD_DIRECTIONS.find((direction) => direction.id === directionId) || null;
+}
+
 function createCurrentCarSnapshot(gameState, currentCar = {}) {
   const state = gameState && typeof gameState === "object" ? gameState : { shop: defaultShopState() };
   const build = state.shop && state.shop.dreamBuild ? state.shop.dreamBuild : defaultShopState().dreamBuild;
@@ -3608,6 +3652,9 @@ function normalizeSecondCarProject(value, gameState) {
   const acquired = Boolean(source.acquired);
   const bayUnlocked = Boolean(source.bayUnlocked) || loopComplete || bayOpened || acquired;
   const stage = acquired ? "rolling_shell" : bayOpened ? "bay_open" : "locked";
+  const direction = acquired && typeof source.buildDirection === "string"
+    ? secondCarBuildDirectionById(source.buildDirection)
+    : null;
   return {
     ...defaults,
     bayUnlocked,
@@ -3625,6 +3672,11 @@ function normalizeSecondCarProject(value, gameState) {
     garageBuildValue: acquired
       ? safeNonNegativeInteger(source.garageBuildValue, SECOND_PROJECT_CAR_GARAGE_VALUE, SHOP_MAX_RESOURCE)
       : 0,
+    buildDirection: direction ? direction.id : null,
+    buildDirectionSelectedAt: direction && typeof source.buildDirectionSelectedAt === "string"
+      ? source.buildDirectionSelectedAt.slice(0, 40)
+      : null,
+    directionLocked: Boolean(direction),
   };
 }
 
@@ -6640,6 +6692,42 @@ function acquireSecondProjectCar(gameState, options = {}) {
   next = addLedgerEntry(next, "story", feedback);
   next = syncNetWorthMilestones(next).gameState;
   return { ok: true, reason: "", feedback, gameState: next };
+}
+
+function selectSecondCarBuildDirection(directionId, gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Second Car Direction can be selected while parked after the drive.", gameState: next };
+  }
+  const direction = secondCarBuildDirectionById(directionId);
+  if (!direction) return { ok: false, reason: "That Second Car Direction is not available.", gameState: next };
+  if (!carManagementUnlocked(next)) {
+    return { ok: false, reason: "Complete the first build to unlock Car Management.", gameState: next };
+  }
+  const project = secondCarProjectState(next);
+  if (!project.acquired) {
+    return { ok: false, reason: "Acquire the Second Project Car before choosing its build direction.", gameState: next };
+  }
+  if (project.directionLocked && project.buildDirection) {
+    const selected = secondCarBuildDirectionById(project.buildDirection);
+    return {
+      ok: false,
+      reason: selected ? `Second Car Direction is already locked: ${selected.title}.` : "Second Car Direction is already locked.",
+      gameState: next,
+    };
+  }
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.carManagement.secondCarProject = {
+    ...project,
+    buildDirection: direction.id,
+    buildDirectionSelectedAt: now,
+    directionLocked: true,
+  };
+  const feedback = `Second Car Direction Selected: ${direction.title}. Future second-car tracks will follow this identity.`;
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  return { ok: true, reason: "", feedback, direction, gameState: next };
 }
 
 function sponsorInquiryStatus(gameState) {
@@ -13022,10 +13110,20 @@ function nextCarManagementAction(gameState) {
   if (allCarAssignmentsCompletedOnce(state)) {
     const secondBay = secondBayStatus(state);
     if (secondBay.acquired) {
+      const selected = secondCarBuildDirectionById(secondBay.project.buildDirection);
+      if (!selected) {
+        return {
+          type: "car_management_target",
+          title: "Next: Choose Second Car Direction",
+          copy: "Decide what kind of builder this project becomes.",
+          buttonLabel: "View Car Management",
+          disabled: false,
+        };
+      }
       return {
         type: "car_management_target",
-        title: "Next: Second Project Car Acquired",
-        copy: "Second car build tracks come in a future garage pass.",
+        title: "Next: Second Car Direction Locked",
+        copy: `${selected.title} will guide future second-car work tracks.`,
         buttonLabel: "View Car Management",
         disabled: false,
       };
@@ -15601,6 +15699,59 @@ function renderSecondBayCard(gameState) {
   });
 }
 
+function renderSecondCarDirectionCard(gameState) {
+  const state = normalizeGameState(gameState);
+  const project = secondCarProjectState(state);
+  if (!project.acquired) return "";
+  const selected = secondCarBuildDirectionById(project.buildDirection);
+  if (selected) {
+    return renderIdleCard({
+      title: "Second Car Direction",
+      status: "Locked for V1",
+      copy: selected.title,
+      extra: `
+        <div class="nospill-afford-progress">
+          <small>${escapeHtml(selected.copy)}</small>
+          <small>Future second-car work tracks will follow this identity.</small>
+          <small>The first completed build stays managed. The second car is a new project identity.</small>
+        </div>
+        <details data-details-key="second_car_direction_details">
+          <summary>Direction details</summary>
+          <p>${escapeHtml(selected.flavor)}</p>
+          <p>${escapeHtml(selected.future)}</p>
+        </details>
+      `,
+    });
+  }
+  const options = SECOND_CAR_BUILD_DIRECTIONS.map((direction) => `
+    <div class="nospill-upgrade-item">
+      <header>
+        <strong>${escapeHtml(direction.title)}</strong>
+        <small>Available</small>
+      </header>
+      <small>${escapeHtml(direction.copy)}</small>
+      <details data-details-key="second_car_direction_${escapeHtml(direction.id)}">
+        <summary>Tuning flavor</summary>
+        <p>${escapeHtml(direction.flavor)}</p>
+        <p>${escapeHtml(direction.future)}</p>
+      </details>
+      ${actionButton(`Choose ${direction.title}`, "data-second-car-direction", direction.id, false, "nospill-secondary")}
+    </div>
+  `).join("");
+  return renderIdleCard({
+    title: "Second Car Direction",
+    status: "Choose carefully",
+    copy: "Choose what kind of builder this project becomes.",
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>Locked for V1 after selection.</small>
+        <small>No Cash, Brand Value, Garage Reputation, or Garage Build Value is granted by this choice.</small>
+      </div>
+      <div class="nospill-upgrade-list">${options}</div>
+    `,
+  });
+}
+
 function renderCarManagementPanel(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -15634,6 +15785,7 @@ function renderCarManagementPanel(gameState) {
       </section>
       ${renderCarManagementLoopChecklist(state)}
       ${renderSecondBayCard(state)}
+      ${renderSecondCarDirectionCard(state)}
       ${renderCarManagementHistory(state)}
       ${CAR_ASSIGNMENTS.map((assignment) => renderCarAssignmentCard(assignment, state)).join("")}
     </div>
@@ -15650,7 +15802,12 @@ function carManagementOverviewSummary(gameState) {
       : `${active.assignment.title} in progress · ${formatAssignmentDuration(active.remainingMs)} remaining.`;
   }
   const secondBay = secondBayStatus(state);
-  if (secondBay.acquired) return "Second Project Car acquired. Future build tracks coming.";
+  if (secondBay.acquired) {
+    const selected = secondCarBuildDirectionById(secondBay.project.buildDirection);
+    return selected
+      ? `Second Project Car: ${selected.title}. Future tracks coming.`
+      : "Second Project Car acquired. Choose its build direction.";
+  }
   if (secondBay.bayOpened) return "Second Bay open. Second Project Car available.";
   if (secondBay.loopComplete && secondBay.reputation >= SECOND_BAY_OPEN_REPUTATION_COST) return "Second Bay ready.";
   if (allCarAssignmentsCompletedOnce(state)) return "First car management loop complete. Grow Garage Reputation for Second Bay.";
@@ -16782,13 +16939,28 @@ function carManagementPinnedGoal(gameState) {
   if (allCarAssignmentsCompletedOnce(state)) {
     const secondBay = secondBayStatus(state);
     if (secondBay.acquired) {
+      const selected = secondCarBuildDirectionById(secondBay.project.buildDirection);
+      if (!selected) {
+        return {
+          id: "choose_second_car_direction",
+          title: "Choose Second Car Direction",
+          body: "Decide what kind of builder this project becomes.",
+          progressCurrent: 0,
+          progressTarget: 1,
+          progressLabel: "Direction not selected",
+          reward: "Second car identity",
+          ctaLabel: "",
+          ctaTarget: "",
+          isFutureOnly: false,
+        };
+      }
       return {
-        id: "second_project_car_acquired",
-        title: "Second Project Car acquired",
-        body: "Second car build tracks come in a future garage pass.",
+        id: "second_car_direction_locked",
+        title: "Second Car Direction Locked",
+        body: "Second-car build tracks come in a future garage pass.",
         progressCurrent: 1,
         progressTarget: 1,
-        progressLabel: "Rolling Shell ready",
+        progressLabel: selected.title,
         reward: "Future second car build tracks",
         ctaLabel: "",
         ctaTarget: "",
@@ -20174,6 +20346,24 @@ function handleSecondCarProjectAction(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleSecondCarDirection(directionId) {
+  const result = selectSecondCarBuildDirection(directionId, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "car_management";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -20510,6 +20700,10 @@ function handleTofuShopPanelClick(event) {
   }
   if (target.dataset.secondCarAction) {
     handleSecondCarProjectAction(target.dataset.secondCarAction);
+    return;
+  }
+  if (target.dataset.secondCarDirection) {
+    handleSecondCarDirection(target.dataset.secondCarDirection);
     return;
   }
   const actionMap = [

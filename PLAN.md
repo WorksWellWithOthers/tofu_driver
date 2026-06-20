@@ -256,6 +256,10 @@
   open Second Bay for `$500B Cash + 250 Garage Reputation`; after that, acquiring the Second Project
   Car costs `$1T Cash + 500 Garage Reputation` and adds `+$750B Garage Build Value`. The first car
   remains the only managed assignment car, and second-car build tracks remain future-only.
+- Second Car Identity / Build Direction V1 is implemented after Second Project Car acquisition.
+  Showcase Build, Track Build, Drift Build, Rally Build, and Restoration Build are one-time locked
+  direction choices. They create future identity only and do not grant Cash, Brand Value, Garage
+  Reputation, Garage Build Value, Net Worth, or Cup Test effects.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
   planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
@@ -464,8 +468,8 @@ Future Dream Garage milestone sequence:
    Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
 2. Playtest Car Management V1 assignment durations/rewards, readable state labels, first-loop
    closure, and whether one active assignment is enough for the first completed car.
-3. Playtest Second Bay costs, Garage Reputation spending, and whether the Rolling Shell future-only
-   state is enough closure before second-car build tracks.
+3. Playtest Second Bay costs, Garage Reputation spending, and whether the locked Build Direction
+   choice gives the Rolling Shell enough identity before second-car build tracks.
 4. Design Second Car Build Tracks V1 as a separate project-car build loop, not fleet management.
 5. Design the next parked event/showcase expansion loop without replacing the existing one-car
    assignment board.

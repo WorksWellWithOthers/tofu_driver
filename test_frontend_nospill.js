@@ -166,11 +166,14 @@ globalThis.renderNetWorthCard = renderNetWorthCard;
 globalThis.brandValueV1 = brandValueV1;
 globalThis.garageEventBrandValueV1 = garageEventBrandValueV1;
 globalThis.garageReputationV1 = garageReputationV1;
+globalThis.SECOND_CAR_BUILD_DIRECTIONS = SECOND_CAR_BUILD_DIRECTIONS;
+globalThis.secondCarBuildDirectionById = secondCarBuildDirectionById;
 globalThis.garageEventBoardStatus = garageEventBoardStatus;
 globalThis.garageEventRequirementStatus = garageEventRequirementStatus;
 globalThis.nextGarageEvent = nextGarageEvent;
 globalThis.nextAvailableGarageEvent = nextAvailableGarageEvent;
 globalThis.completeGarageEvent = completeGarageEvent;
+globalThis.selectSecondCarBuildDirection = selectSecondCarBuildDirection;
 globalThis.renderGarageEventBoardCard = renderGarageEventBoardCard;
 globalThis.nextNetWorthMilestone = nextNetWorthMilestone;
 globalThis.netWorthMilestoneReached = netWorthMilestoneReached;
@@ -5516,6 +5519,46 @@ globalThis.firstCarAfterSecondAcquire = JSON.stringify(secondProjectState.carMan
 globalThis.secondProjectReload = normalizeGameState(JSON.parse(JSON.stringify(secondProjectState)));
 globalThis.secondProjectAssignmentStart = startCarAssignment("showcase_rotation", secondProjectState, { activeDrive: false, now: "2026-06-20T18:00:00.000Z" });
 globalThis.secondProjectActiveCarId = secondProjectAssignmentStart.gameState.carManagement.activeAssignment && secondProjectAssignmentStart.gameState.carManagement.activeAssignment.carId;
+globalThis.secondCarDirectionIds = SECOND_CAR_BUILD_DIRECTIONS.map((direction) => direction.id);
+globalThis.secondDirectionHiddenBeforeAcquire = !secondBayOpenPanel.includes('Second Car Direction');
+const invalidDirectionImport = normalizeGameState(JSON.parse(JSON.stringify(secondProjectState)));
+invalidDirectionImport.carManagement.secondCarProject.buildDirection = "illegal_direction";
+invalidDirectionImport.carManagement.secondCarProject.directionLocked = true;
+globalThis.invalidDirectionImport = normalizeGameState(invalidDirectionImport);
+globalThis.secondDirectionBeforeCash = cashBalance(secondProjectState);
+globalThis.secondDirectionBeforeBrand = brandValueV1(secondProjectState);
+globalThis.secondDirectionBeforeCarBrand = carManagementBrandValueV1(secondProjectState);
+globalThis.secondDirectionBeforeRep = garageReputationV1(secondProjectState);
+globalThis.secondDirectionBeforeValue = projectCarValueV1(secondProjectState);
+globalThis.secondDirectionBeforeNetWorth = netWorthV1(secondProjectState);
+globalThis.trackDirectionSelect = selectSecondCarBuildDirection("track_build", secondProjectState, { activeDrive: false, now: "2026-06-20T18:30:00.000Z" });
+globalThis.trackDirectionState = trackDirectionSelect.gameState;
+globalThis.trackDirectionPanel = renderCarManagementPanel(trackDirectionState);
+globalThis.trackDirectionOverview = carManagementOverviewSummary(trackDirectionState);
+globalThis.trackDirectionPinned = pinnedNearGoalForShop(trackDirectionState);
+globalThis.trackDirectionAction = nextBestAction(trackDirectionState);
+globalThis.trackDirectionReload = normalizeGameState(JSON.parse(JSON.stringify(trackDirectionState)));
+globalThis.trackDirectionSecondSelect = selectSecondCarBuildDirection("showcase_build", trackDirectionState, { activeDrive: false });
+globalThis.trackDirectionAssignmentStart = startCarAssignment("showcase_rotation", trackDirectionState, { activeDrive: false, now: "2026-06-20T19:00:00.000Z" });
+globalThis.trackDirectionActiveCarId = trackDirectionAssignmentStart.gameState.carManagement.activeAssignment && trackDirectionAssignmentStart.gameState.carManagement.activeAssignment.carId;
+globalThis.directionResults = Object.fromEntries(SECOND_CAR_BUILD_DIRECTIONS.map((direction) => {
+  const fixture = normalizeGameState(secondProjectState);
+  const result = selectSecondCarBuildDirection(direction.id, fixture, { activeDrive: false, now: "2026-06-20T18:45:00.000Z" });
+  return [direction.id, {
+    ok: result.ok,
+    buildDirection: result.gameState.carManagement.secondCarProject.buildDirection,
+    directionLocked: result.gameState.carManagement.secondCarProject.directionLocked,
+    cash: cashBalance(result.gameState),
+    brand: brandValueV1(result.gameState),
+    carBrand: carManagementBrandValueV1(result.gameState),
+    reputation: garageReputationV1(result.gameState),
+    projectValue: projectCarValueV1(result.gameState),
+    netWorth: netWorthV1(result.gameState),
+    feedback: result.feedback,
+  }];
+}));
+globalThis.invalidDirectionSelect = selectSecondCarBuildDirection("not_real", secondProjectState, { activeDrive: false });
+globalThis.activeDirectionSelect = selectSecondCarBuildDirection("showcase_build", secondProjectState, { activeDrive: true });
 globalThis.activeSecondBayOpen = openSecondBay(secondBayCashReady, { activeDrive: true });
 const longHistoryState = normalizeGameState(allAssignmentsState);
 longHistoryState.carManagement.assignmentHistory = [
@@ -5650,14 +5693,66 @@ appState.running = false;
   assert(context.secondProjectPanel.includes('Second Project Car'));
   assert(context.secondProjectPanel.includes('Stage: Rolling Shell'));
   assert(context.secondProjectPanel.includes('Second Car Build Tracks: Future garage pass.'));
+  assert(context.secondProjectPanel.includes('Second Car Direction'));
+  assert(context.secondProjectPanel.includes('Choose what kind of builder this project becomes.'));
+  assert(context.secondProjectPanel.includes('Showcase Build'));
+  assert(context.secondProjectPanel.includes('Track Build'));
+  assert(context.secondProjectPanel.includes('Drift Build'));
+  assert(context.secondProjectPanel.includes('Rally Build'));
+  assert(context.secondProjectPanel.includes('Restoration Build'));
+  assert(context.secondProjectPanel.includes('Locked for V1 after selection.'));
+  assert(context.secondProjectPanel.includes('No Cash, Brand Value, Garage Reputation, or Garage Build Value is granted by this choice.'));
   assert(!context.secondProjectPanel.includes('data-second-car-assignment'));
-  assert.strictEqual(context.secondProjectOverview, 'Second Project Car acquired. Future build tracks coming.');
-  assert.strictEqual(context.secondProjectPinned.title, 'Second Project Car acquired');
+  assert.strictEqual(context.secondProjectOverview, 'Second Project Car acquired. Choose its build direction.');
+  assert(!context.secondProjectOverview.includes('Showcase Build'));
+  assert(!context.secondProjectOverview.includes('Restoration Build'));
+  assert.strictEqual(context.secondProjectPinned.title, 'Choose Second Car Direction');
+  assert.strictEqual(context.secondProjectPinned.body, 'Decide what kind of builder this project becomes.');
   assert.strictEqual(context.secondProjectNetWorth, context.secondProjectFormula);
   assert.strictEqual(context.firstCarAfterSecondAcquire, context.firstCarBeforeSecondAcquire);
   assert.strictEqual(context.secondProjectReload.carManagement.secondCarProject.acquired, true);
   assert.strictEqual(context.secondProjectAssignmentStart.ok, true);
   assert.strictEqual(context.secondProjectActiveCarId, 'first_complete_build');
+  assert.strictEqual(context.secondDirectionHiddenBeforeAcquire, true);
+  assert.strictEqual(JSON.stringify(context.secondCarDirectionIds), JSON.stringify(['showcase_build', 'track_build', 'drift_build', 'rally_build', 'restoration_build']));
+  assert.strictEqual(context.invalidDirectionImport.carManagement.secondCarProject.buildDirection, null);
+  assert.strictEqual(context.invalidDirectionImport.carManagement.secondCarProject.directionLocked, false);
+  assert.strictEqual(context.trackDirectionSelect.ok, true);
+  assert.strictEqual(context.trackDirectionSelect.feedback, 'Second Car Direction Selected: Track Build. Future second-car tracks will follow this identity.');
+  assert.strictEqual(context.trackDirectionState.carManagement.secondCarProject.buildDirection, 'track_build');
+  assert.strictEqual(context.trackDirectionState.carManagement.secondCarProject.directionLocked, true);
+  assert(context.trackDirectionState.carManagement.secondCarProject.buildDirectionSelectedAt);
+  assert(context.trackDirectionPanel.includes('Second Car Direction'));
+  assert(context.trackDirectionPanel.includes('Track Build'));
+  assert(context.trackDirectionPanel.includes('Locked for V1'));
+  assert(context.trackDirectionPanel.includes('Future second-car work tracks will follow this identity.'));
+  assert(!context.trackDirectionPanel.includes('Choose Showcase Build'));
+  assert(!context.trackDirectionPanel.includes('Change Direction'));
+  assert.strictEqual(context.trackDirectionOverview, 'Second Project Car: Track Build. Future tracks coming.');
+  assert.strictEqual(context.trackDirectionPinned.title, 'Second Car Direction Locked');
+  assert.strictEqual(context.trackDirectionAction.title, 'Next: Second Car Direction Locked');
+  assert.strictEqual(context.trackDirectionReload.carManagement.secondCarProject.buildDirection, 'track_build');
+  assert.strictEqual(context.trackDirectionSecondSelect.ok, false);
+  assert(context.trackDirectionSecondSelect.reason.includes('already locked'));
+  assert.strictEqual(context.trackDirectionAssignmentStart.ok, true);
+  assert.strictEqual(context.trackDirectionActiveCarId, 'first_complete_build');
+  for (const directionId of context.secondCarDirectionIds) {
+    const result = context.directionResults[directionId];
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.buildDirection, directionId);
+    assert.strictEqual(result.directionLocked, true);
+    assert.strictEqual(result.cash, context.secondDirectionBeforeCash);
+    assert.strictEqual(result.brand, context.secondDirectionBeforeBrand);
+    assert.strictEqual(result.carBrand, context.secondDirectionBeforeCarBrand);
+    assert.strictEqual(result.reputation, context.secondDirectionBeforeRep);
+    assert.strictEqual(result.projectValue, context.secondDirectionBeforeValue);
+    assert.strictEqual(result.netWorth, context.secondDirectionBeforeNetWorth);
+    assert(result.feedback.includes('Second Car Direction Selected'));
+  }
+  assert.strictEqual(context.invalidDirectionSelect.ok, false);
+  assert(context.invalidDirectionSelect.reason.includes('not available'));
+  assert.strictEqual(context.activeDirectionSelect.ok, false);
+  assert(context.activeDirectionSelect.reason.includes('parked') || context.activeDirectionSelect.reason.includes('after the drive'));
   assert.strictEqual(context.activeSecondBayOpen.ok, false);
   assert(context.activeSecondBayOpen.reason.includes('parked') || context.activeSecondBayOpen.reason.includes('after the drive'));
   assert(context.longHistoryPanel.includes('Recent Assignment Results'));
@@ -7193,8 +7288,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620f'));
-  assert(html.includes('/static/nospill/app.css?v=20260620f'));
+  assert(html.includes('/static/nospill/app.js?v=20260620g'));
+  assert(html.includes('/static/nospill/app.css?v=20260620g'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -10068,8 +10163,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620f'));
-  assert(html.includes('/static/nospill/app.css?v=20260620f'));
+  assert(html.includes('/static/nospill/app.js?v=20260620g'));
+  assert(html.includes('/static/nospill/app.css?v=20260620g'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -11594,6 +11689,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-car-assignment-start',
     'data-car-assignment-collect',
     'data-second-car-action',
+    'data-second-car-direction',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',

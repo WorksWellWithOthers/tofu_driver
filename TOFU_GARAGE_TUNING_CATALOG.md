@@ -325,6 +325,10 @@ assignment loop and Garage Reputation threshold, the player can open a second ba
 Second Project Car rolling shell. Its actual build tracks are future-only and should pull from this
 catalog gradually rather than dumping the full parts list into runtime.
 
+Second Car Identity / Build Direction V1 gives that rolling shell a locked future direction before
+new tracks exist: Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build. These
+directions are future stat/flavor hooks only and do not grant immediate economy rewards.
+
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
 progress, Garage Build Value, Brand Value, and Garage Reputation. It stays separate from Car

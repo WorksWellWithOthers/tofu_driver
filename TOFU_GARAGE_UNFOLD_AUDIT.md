@@ -107,6 +107,10 @@ assignments, reach/spend Garage Reputation, open Second Bay, and acquire a Secon
 Rolling Shell. The first completed car remains the managed assignment car. Second-car build tracks
 and fleet management remain future.
 
+Second Car Identity / Build Direction V1 adds a one-time locked direction after the rolling shell:
+Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build. It is identity setup
+only and does not add second-car tracks, assignments, fleet controls, or economy rewards.
+
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category
 preview only. Authentic tuner terms are allowed in Tofu Garage as fictional game vocabulary, while

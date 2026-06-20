@@ -728,6 +728,11 @@ Design rules:
   Build Value`, and shows the car as a `Rolling Shell` with future-only second-car build tracks.
   The first completed build remains the managed assignment car; no fleet controls, second-car
   assignments, auctions, sell offers, collector offers, backend, uploads, or network play are added.
+- Second Car Identity / Build Direction V1 unlocks after the Second Project Car is acquired. The
+  one-time locked direction choices are Showcase Build, Track Build, Drift Build, Rally Build, and
+  Restoration Build. The choice adds identity and future tuning direction only: no Cash, Brand
+  Value, Garage Reputation, Garage Build Value, Net Worth, Cup Test scoring, certification, uploads,
+  or network effects.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
