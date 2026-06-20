@@ -158,6 +158,14 @@ globalThis.netWorthProgress = netWorthProgress;
 globalThis.shouldShowNetWorthV1 = shouldShowNetWorthV1;
 globalThis.renderNetWorthCard = renderNetWorthCard;
 globalThis.brandValueV1 = brandValueV1;
+globalThis.garageEventBrandValueV1 = garageEventBrandValueV1;
+globalThis.garageReputationV1 = garageReputationV1;
+globalThis.garageEventBoardStatus = garageEventBoardStatus;
+globalThis.garageEventRequirementStatus = garageEventRequirementStatus;
+globalThis.nextGarageEvent = nextGarageEvent;
+globalThis.nextAvailableGarageEvent = nextAvailableGarageEvent;
+globalThis.completeGarageEvent = completeGarageEvent;
+globalThis.renderGarageEventBoardCard = renderGarageEventBoardCard;
 globalThis.nextNetWorthMilestone = nextNetWorthMilestone;
 globalThis.netWorthMilestoneReached = netWorthMilestoneReached;
 globalThis.syncNetWorthMilestones = syncNetWorthMilestones;
@@ -4546,15 +4554,15 @@ appState.running = false;
   assert(context.tireFivePanelHtml.includes('Tires &amp; Rubber'));
   assert(context.tireFivePanelHtml.includes('Complete · Next Build Track: Brakes &amp; Control.'));
   assert(context.tireFivePanelHtml.includes('Current focus: Brakes &amp; Control.'));
-  assert.strictEqual(context.tireFivePinnedAfter.title, 'Sports Brake Pads');
+  assert.strictEqual(context.tireFivePinnedAfter.title, 'Grow Cash for Local Showcase');
   assert.strictEqual(context.tireFiveSecondPurchase.ok, false);
 
   assert(context.brakeOneReadyCardHtml.includes('Fit Sports Pads'));
   assert(context.brakeOneReadyCardHtml.includes('Cost: $450M Cash'));
   assert(context.brakeOneReadyCardHtml.includes('Build Value added: +$300M'));
   assert(context.brakeOneReadyCardHtml.includes('Sports, clubsport, and racing pad language'));
-  assert.strictEqual(context.brakeOnePinned.title, 'Sports Brake Pads');
-  assert.strictEqual(context.brakeOneAction.type, 'buy_dream_brakes_work');
+  assert.strictEqual(context.brakeOnePinned.title, 'Enter Local Showcase');
+  assert.strictEqual(context.brakeOneAction.type, 'enter_garage_event');
   assert.strictEqual(context.brakeOnePurchase.ok, true);
   assert.strictEqual(context.brakeOneLevel, 1);
   assert.strictEqual(context.brakeOneCashAfter, 1000000);
@@ -4579,7 +4587,7 @@ appState.running = false;
   assert(context.brakeFiveReadyCardHtml.includes('Complete Brake Setup'));
   assert(context.brakeFiveReadyCardHtml.includes('Cost: $2.25B Cash'));
   assert(context.brakeFiveReadyCardHtml.includes('Build Value added: +$1.55B'));
-  assert.strictEqual(context.brakeFivePinned.title, 'Brake Balance & Control Package');
+  assert.strictEqual(context.brakeFivePinned.title, 'Enter Local Showcase');
   assert.strictEqual(context.brakeFivePurchase.ok, true);
   assert.strictEqual(context.brakeFiveLevel, 5);
   assert.strictEqual(context.brakeFiveCashAfter, 1000000);
@@ -4595,9 +4603,9 @@ appState.running = false;
   assert(context.brakeFivePanelHtml.includes('Current focus: Induction &amp; Cooling, future.'));
   assert(!context.brakeFivePanelHtml.includes('Buy Induction'));
   assert(!context.brakeFivePanelHtml.includes('Install Induction'));
-  assert.strictEqual(context.brakeFivePinnedAfter.id, 'dream_build_brakes_complete');
-  assert.strictEqual(context.brakeFivePinnedAfter.title, 'Brakes & Control complete');
-  assert.strictEqual(context.brakeFiveTickPinned.title, 'Brakes & Control complete');
+  assert.strictEqual(context.brakeFivePinnedAfter.id, 'local_showcase');
+  assert.strictEqual(context.brakeFivePinnedAfter.title, 'Grow Cash for Local Showcase');
+  assert.strictEqual(context.brakeFiveTickPinned.title, 'Grow Cash for Local Showcase');
   assert.notStrictEqual(context.brakeFiveActionAfter.type, 'buy_dream_brakes_work');
   assert.strictEqual(context.brakeFiveSecondPurchase.ok, false);
 
@@ -4620,6 +4628,183 @@ appState.running = false;
   assert(!source.includes('fetch('));
   assert(!source.includes('XMLHttpRequest'));
   assert(!source.includes('sendBeacon'));
+}
+
+function testGarageEventBoardV1IsLocalParkedAndSafe() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function garageEventFixture(options = {}) {
+  const state = normalizeGameState(defaultGameState());
+  state.shop.tips = options.cash === undefined ? 600000000 : options.cash;
+  state.shop.lifetimeTips = options.lifetimeTips === undefined ? 600000000 : options.lifetimeTips;
+  state.shop.tofuStock = 1000000;
+  state.shop.deliveryOrders = 0;
+  state.shop.lifetimeDeliveryOrders = 10000;
+  state.shop.wholesalePickupsCompleted = 1;
+  state.shop.dreamBuild.wheelsPurchased = true;
+  state.shop.dreamBuild.wheelsLevel = 3;
+  state.shop.dreamBuild.exhaustPurchased = true;
+  state.shop.dreamBuild.exhaustLevel = 5;
+  state.shop.dreamBuild.suspensionLevel = options.suspensionLevel === undefined ? 5 : options.suspensionLevel;
+  state.shop.dreamBuild.tiresLevel = options.tiresLevel === undefined ? 5 : options.tiresLevel;
+  state.shop.dreamBuild.brakesLevel = options.brakesLevel === undefined ? 0 : options.brakesLevel;
+  Object.keys(state.shop.stations).forEach((id) => { state.shop.stations[id] = 1000; });
+  Object.keys(state.shop.stationUpgrades).forEach((id) => { state.shop.stationUpgrades[id] = 100; });
+  return normalizeGameState(state);
+}
+
+const early = normalizeGameState(defaultGameState());
+globalThis.eventBoardEarlyHtml = renderGarageEventBoardCard(early);
+globalThis.eventBoardEarlyStatus = garageEventBoardStatus(early);
+
+const highNetMissingTires = garageEventFixture({ cash: 200000000, tiresLevel: 0, brakesLevel: 0 });
+globalThis.eventBoardHighNetHtml = renderGarageEventBoardCard(highNetMissingTires);
+globalThis.eventBoardHighNetStatus = garageEventBoardStatus(highNetMissingTires);
+
+const unlockedLowCash = garageEventFixture({ cash: 10000000, tiresLevel: 5, brakesLevel: 0 });
+globalThis.eventBoardUnlockedLowCashHtml = renderGarageEventBoardCard(unlockedLowCash);
+globalThis.eventBoardUnlockedLowCashStatus = garageEventBoardStatus(unlockedLowCash);
+globalThis.localShowcaseLowCash = completeGarageEvent("local_showcase", unlockedLowCash, { activeDrive: false });
+
+const unlocked = garageEventFixture({ cash: 100000000, tiresLevel: 5, brakesLevel: 0 });
+globalThis.eventBoardUnlockedStatus = garageEventBoardStatus(unlocked);
+globalThis.eventBoardUnlockedHtml = renderGarageEventBoardCard(unlocked);
+globalThis.eventBoardOverviewSummary = renderDreamBuildOverviewSummaryCard(unlocked);
+globalThis.eventBoardOverviewPanel = renderOverviewPanel(unlocked);
+globalThis.eventBoardPinned = pinnedNearGoalForShop(unlocked);
+globalThis.eventBoardAction = nextBestAction(unlocked);
+globalThis.eventBoardNetWorthBefore = netWorthV1(unlocked);
+globalThis.eventBoardFormulaBefore = cashBalance(unlocked) + tofuBusinessValue(unlocked) + projectCarValueV1(unlocked) + brandValueV1(unlocked);
+globalThis.eventBoardLifetimeTipsBefore = unlocked.shop.lifetimeTips;
+globalThis.eventBoardXpBefore = unlocked.totalXP;
+globalThis.eventBoardPerfectBefore = unlocked.perfectPourCount;
+globalThis.eventBoardLocalResult = completeGarageEvent("local_showcase", unlocked, { activeDrive: false, now: "2026-06-19T12:00:00.000Z" });
+globalThis.localShowcaseState = eventBoardLocalResult.gameState;
+globalThis.localShowcaseCashAfter = cashBalance(localShowcaseState);
+globalThis.localShowcaseBrandAfter = garageEventBrandValueV1(localShowcaseState);
+globalThis.localShowcaseTotalBrandAfter = brandValueV1(localShowcaseState);
+globalThis.localShowcaseRepAfter = garageReputationV1(localShowcaseState);
+globalThis.localShowcaseNetWorthAfter = netWorthV1(localShowcaseState);
+globalThis.localShowcaseFormulaAfter = cashBalance(localShowcaseState) + tofuBusinessValue(localShowcaseState) + projectCarValueV1(localShowcaseState) + brandValueV1(localShowcaseState);
+globalThis.localShowcaseLifetimeTipsAfter = localShowcaseState.shop.lifetimeTips;
+globalThis.localShowcaseSecond = completeGarageEvent("local_showcase", localShowcaseState, { activeDrive: false });
+globalThis.localShowcaseReload = normalizeGameState(JSON.parse(JSON.stringify(localShowcaseState)));
+globalThis.localShowcaseReloadCount = localShowcaseReload.shop.garageEvents.completedEventIds.filter((id) => id === "local_showcase").length;
+globalThis.localShowcaseBoardHtml = renderGarageEventBoardCard(localShowcaseState);
+globalThis.sponsorBeforeBrakes = garageEventRequirementStatus("sponsor_display", localShowcaseState);
+
+const sponsorReady = normalizeGameState(localShowcaseState);
+sponsorReady.shop.dreamBuild.brakesLevel = 2;
+sponsorReady.shop.tips = 100000000;
+globalThis.sponsorReadyRequirement = garageEventRequirementStatus("sponsor_display", sponsorReady);
+globalThis.sponsorReadyPinned = pinnedNearGoalForShop(sponsorReady);
+globalThis.sponsorReadyAction = nextBestAction(sponsorReady);
+globalThis.sponsorResult = completeGarageEvent("sponsor_display", sponsorReady, { activeDrive: false });
+globalThis.sponsorState = sponsorResult.gameState;
+
+const exhibitionReady = normalizeGameState(sponsorState);
+exhibitionReady.shop.dreamBuild.brakesLevel = 5;
+exhibitionReady.shop.tips = 250000000;
+globalThis.exhibitionReadyRequirement = garageEventRequirementStatus("closed_course_exhibition", exhibitionReady);
+globalThis.exhibitionResult = completeGarageEvent("closed_course_exhibition", exhibitionReady, { activeDrive: false });
+globalThis.exhibitionState = exhibitionResult.gameState;
+
+const collectorReady = normalizeGameState(exhibitionState);
+collectorReady.shop.tips = 200000000;
+globalThis.collectorReadyRequirement = garageEventRequirementStatus("collector_preview", collectorReady);
+globalThis.collectorResult = completeGarageEvent("collector_preview", collectorReady, { activeDrive: false });
+globalThis.allEventsState = collectorResult.gameState;
+globalThis.allEventsBoardHtml = renderGarageEventBoardCard(allEventsState);
+globalThis.allEventsPinned = pinnedNearGoalForShop(allEventsState);
+globalThis.allEventsAction = nextBestAction(allEventsState);
+
+appState.running = true;
+globalThis.activeEventBoardHtml = renderGarageEventBoardCard(unlocked);
+globalThis.activeEventAttempt = completeGarageEvent("local_showcase", unlocked, { activeDrive: true });
+appState.running = false;
+`, context);
+
+  assert.strictEqual(context.eventBoardEarlyHtml, '');
+  assert.strictEqual(context.eventBoardEarlyStatus.unlocked, false);
+  assert(context.eventBoardHighNetHtml.includes('Garage Event Board'));
+  assert(context.eventBoardHighNetHtml.includes('Reach Tires &amp; Rubber Level 5'));
+  assert.strictEqual(context.eventBoardHighNetStatus.netWorthReady, true);
+  assert.strictEqual(context.eventBoardHighNetStatus.tiresReady, false);
+  assert.strictEqual(context.eventBoardUnlockedLowCashStatus.unlocked, true);
+  assert(context.eventBoardUnlockedLowCashHtml.includes('Need $15M more Cash.'));
+  assert.strictEqual(context.localShowcaseLowCash.ok, false);
+
+  assert.strictEqual(context.eventBoardUnlockedStatus.unlocked, true);
+  assert(context.eventBoardUnlockedHtml.includes('Garage Event Board'));
+  assert(context.eventBoardUnlockedHtml.includes('Local Showcase'));
+  assert(context.eventBoardUnlockedHtml.includes('Enter Local Showcase'));
+  assert(context.eventBoardUnlockedHtml.includes('Sponsor Display'));
+  assert(context.eventBoardUnlockedHtml.includes('Complete Local Showcase first'));
+  assert(context.eventBoardOverviewSummary.includes('Garage Event Board: Local Showcase available.'));
+  assert(context.eventBoardOverviewPanel.includes('Garage Event Board: Local Showcase available.'));
+  assert(!context.eventBoardOverviewPanel.includes('data-garage-event'));
+  assert.strictEqual(context.eventBoardPinned.title, 'Enter Local Showcase');
+  assert.strictEqual(context.eventBoardAction.type, 'enter_garage_event');
+  assert.strictEqual(context.eventBoardAction.garageEventId, 'local_showcase');
+  assert(context.eventBoardNetWorthBefore <= context.eventBoardFormulaBefore);
+  assert(context.eventBoardNetWorthBefore >= context.eventBoardUnlockedStatus.netWorthRequirement);
+
+  assert.strictEqual(context.eventBoardLocalResult.ok, true);
+  assert.strictEqual(context.eventBoardLocalResult.feedback, 'Local Showcase complete: +$60M Cash, +$40M Brand Value, +25 Garage Reputation.');
+  assert.strictEqual(context.localShowcaseCashAfter, 135000000);
+  assert.strictEqual(context.localShowcaseBrandAfter, 40000000);
+  assert.strictEqual(context.localShowcaseTotalBrandAfter, 40000000);
+  assert.strictEqual(context.localShowcaseRepAfter, 25);
+  assert(context.localShowcaseNetWorthAfter <= context.localShowcaseFormulaAfter);
+  assert(context.localShowcaseNetWorthAfter >= context.localShowcaseBrandAfter);
+  assert.strictEqual(context.localShowcaseLifetimeTipsAfter, context.eventBoardLifetimeTipsBefore);
+  assert.strictEqual(context.localShowcaseState.totalXP, context.eventBoardXpBefore);
+  assert.strictEqual(context.localShowcaseState.perfectPourCount, context.eventBoardPerfectBefore);
+  assert.strictEqual(context.localShowcaseSecond.ok, false);
+  assert.strictEqual(context.localShowcaseReloadCount, 1);
+  assert(context.localShowcaseBoardHtml.includes('Badge: Local Showcase Debut'));
+  assert.strictEqual(context.sponsorBeforeBrakes.unlocked, false);
+  assert(context.sponsorBeforeBrakes.reason.includes('Brakes & Control Level 2'));
+
+  assert.strictEqual(context.sponsorReadyRequirement.unlocked, true);
+  assert.strictEqual(context.sponsorReadyPinned.title, 'Enter Sponsor Display');
+  assert.strictEqual(context.sponsorReadyAction.type, 'enter_garage_event');
+  assert.strictEqual(context.sponsorResult.ok, true);
+  assert.strictEqual(context.sponsorResult.feedback, 'Sponsor Display complete: +$150M Cash, +$250M Brand Value, +50 Garage Reputation.');
+  assert.strictEqual(context.sponsorState.shop.garageEvents.brandValue, 290000000);
+  assert.strictEqual(context.sponsorState.shop.garageEvents.garageReputation, 75);
+
+  assert.strictEqual(context.exhibitionReadyRequirement.unlocked, true);
+  assert.strictEqual(context.exhibitionResult.ok, true);
+  assert.strictEqual(context.exhibitionResult.feedback, 'Closed-Course Exhibition complete: +$500M Cash, +$750M Brand Value, +100 Garage Reputation.');
+  assert.strictEqual(context.exhibitionState.shop.garageEvents.brandValue, 1040000000);
+  assert.strictEqual(context.exhibitionState.shop.garageEvents.garageReputation, 175);
+
+  assert.strictEqual(context.collectorReadyRequirement.unlocked, true);
+  assert.strictEqual(context.collectorResult.ok, true);
+  assert.strictEqual(context.collectorResult.feedback, 'Collector Preview complete: +$250M Cash, +$1B Brand Value, +150 Garage Reputation.');
+  assert.strictEqual(context.allEventsState.shop.garageEvents.brandValue, 2040000000);
+  assert.strictEqual(context.allEventsState.shop.garageEvents.garageReputation, 325);
+  assert(context.allEventsBoardHtml.includes('Garage Event Board Complete'));
+  assert(context.allEventsBoardHtml.includes('Future Car Management'));
+  assert(context.allEventsBoardHtml.includes('Collector Preview'));
+  assert.strictEqual(context.allEventsPinned.title, 'Garage Event Board complete');
+  assert.notStrictEqual(context.allEventsAction.type, 'enter_garage_event');
+
+  assert.strictEqual(context.activeEventBoardHtml, '');
+  assert.strictEqual(context.activeEventAttempt.ok, false);
+  assert(context.activeEventAttempt.reason.includes('finish and park'));
+
+  const source = readNoSpillSource();
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+  assert(!source.includes('navigator.sendBeacon'));
+  assert(!context.eventBoardUnlockedHtml.includes('undefined'));
+  assert(!context.eventBoardUnlockedHtml.includes('NaN'));
+  assert(!context.eventBoardUnlockedHtml.includes('Infinity'));
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -6116,8 +6301,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619q'));
-  assert(html.includes('/static/nospill/app.css?v=20260619q'));
+  assert(html.includes('/static/nospill/app.js?v=20260619r'));
+  assert(html.includes('/static/nospill/app.css?v=20260619r'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -8772,8 +8957,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619q'));
-  assert(html.includes('/static/nospill/app.css?v=20260619q'));
+  assert(html.includes('/static/nospill/app.js?v=20260619r'));
+  assert(html.includes('/static/nospill/app.css?v=20260619r'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -10294,6 +10479,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-covered-car-teaser',
     'data-counter-service-action',
     'data-dream-build-action',
+    'data-garage-event',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',
@@ -12244,6 +12430,7 @@ const TESTS = [
   ["testResetExportAndImportProgressAreScopedAndValidated", testResetExportAndImportProgressAreScopedAndValidated],
   ["testTofuShopStatePackIdleAndUpgradeRules", testTofuShopStatePackIdleAndUpgradeRules],
   ["testDreamBuildTabAndSuspensionWorkV1", testDreamBuildTabAndSuspensionWorkV1],
+  ["testGarageEventBoardV1IsLocalParkedAndSafe", testGarageEventBoardV1IsLocalParkedAndSafe],
   ["testLiveIdleTickAndShopButtonReliability", testLiveIdleTickAndShopButtonReliability],
   ["testExpandedIdleShopLayerMechanics", testExpandedIdleShopLayerMechanics],
   ["testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault", testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault],

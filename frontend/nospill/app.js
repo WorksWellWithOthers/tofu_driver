@@ -344,7 +344,7 @@ const NET_WORTH_GOAL = 1000000000000;
 const NET_WORTH_MILESTONES = [
   { id: "net_worth_1m", amount: 1000000, label: "$1M Net Worth", reachedLabel: "First $1M", reward: "Local Showcase Interest" },
   { id: "net_worth_10m", amount: 10000000, label: "$10M Net Worth", reachedLabel: "First $10M", reward: "Future shop-era opportunity" },
-  { id: "net_worth_100m", amount: 100000000, label: "$100M Net Worth", reachedLabel: "First $100M", reward: "Future garage-era opportunity" },
+  { id: "net_worth_100m", amount: 100000000, label: "$100M Net Worth", reachedLabel: "First $100M", reward: "Garage Event Board after Tires & Rubber Level 5" },
   { id: "net_worth_1b", amount: 1000000000, label: "$1B Net Worth", reachedLabel: "First $1B", reward: "Future company-scale opportunity" },
   { id: "net_worth_1t", amount: NET_WORTH_GOAL, label: "$1T Net Worth", reachedLabel: "$1T Net Worth", reward: "Long-term goal" },
 ];
@@ -402,6 +402,53 @@ const SHOWCASE_PREP_VALUE = 300000;
 const SPONSOR_INQUIRY_CASH_REWARD = 250000;
 const SPONSOR_INQUIRY_BRAND_VALUE = 500000;
 const GARAGE_BUILD_VALUE_LABEL = "Garage Build Value";
+const GARAGE_EVENT_BOARD_NET_WORTH_REQUIREMENT = 100000000;
+const GARAGE_EVENTS = [
+  {
+    id: "local_showcase",
+    title: "Local Showcase",
+    badge: "Local Showcase Debut",
+    cost: 25000000,
+    cashReward: 60000000,
+    brandValueReward: 40000000,
+    garageReputationReward: 25,
+    copy: "Bring the build out for its first local showcase. The car finally has an audience.",
+    buttonLabel: "Enter Local Showcase",
+  },
+  {
+    id: "sponsor_display",
+    title: "Sponsor Display",
+    badge: "Sponsor Display",
+    cost: 75000000,
+    cashReward: 150000000,
+    brandValueReward: 250000000,
+    garageReputationReward: 50,
+    copy: "Put the build in front of people who care about the details.",
+    buttonLabel: "Enter Sponsor Display",
+  },
+  {
+    id: "closed_course_exhibition",
+    title: "Closed-Course Exhibition",
+    badge: "Closed-Course Exhibition",
+    cost: 200000000,
+    cashReward: 500000000,
+    brandValueReward: 750000000,
+    garageReputationReward: 100,
+    copy: "A fictional closed-course event for a build that has become more than a shop project.",
+    buttonLabel: "Enter Exhibition",
+  },
+  {
+    id: "collector_preview",
+    title: "Collector Preview",
+    badge: "Collector Preview",
+    cost: 150000000,
+    cashReward: 250000000,
+    brandValueReward: 1000000000,
+    garageReputationReward: 150,
+    copy: "A small collector circle gets a private look at the build.",
+    buttonLabel: "Enter Collector Preview",
+  },
+];
 const GARAGE_TUNING_CATALOG_CATEGORIES = [
   "Tires & Rubber",
   "Suspension & Chassis Geometry",
@@ -3096,6 +3143,13 @@ function defaultShopState() {
         brandValue: 0,
       },
     },
+    garageEvents: {
+      garageReputation: 0,
+      brandValue: 0,
+      completedEventIds: [],
+      seenEventRevealIds: [],
+      lastEventResult: null,
+    },
     lifetimeReputation: 0,
     lifetimeShopXP: 0,
     lifetimeRoutesCompleted: 0,
@@ -3233,6 +3287,45 @@ function normalizeDreamBuild(dreamBuild) {
   };
 }
 
+function normalizeGarageEvents(garageEvents) {
+  const source = garageEvents && typeof garageEvents === "object" ? garageEvents : {};
+  const knownEventIds = new Set(GARAGE_EVENTS.map((event) => event.id));
+  const completedEventIds = Array.isArray(source.completedEventIds)
+    ? source.completedEventIds
+        .filter((id) => typeof id === "string" && knownEventIds.has(id))
+        .filter((id, index, ids) => ids.indexOf(id) === index)
+        .slice(0, GARAGE_EVENTS.length)
+    : [];
+  const seenEventRevealIds = Array.isArray(source.seenEventRevealIds)
+    ? source.seenEventRevealIds
+        .filter((id) => typeof id === "string" && knownEventIds.has(id))
+        .filter((id, index, ids) => ids.indexOf(id) === index)
+        .slice(0, GARAGE_EVENTS.length)
+    : [];
+  const result = source.lastEventResult && typeof source.lastEventResult === "object"
+    ? source.lastEventResult
+    : null;
+  const eventId = result && typeof result.eventId === "string" && knownEventIds.has(result.eventId)
+    ? result.eventId
+    : "";
+  const event = eventId ? GARAGE_EVENTS.find((item) => item.id === eventId) : null;
+  return {
+    garageReputation: safeNonNegativeInteger(source.garageReputation, 0, SHOP_MAX_RESOURCE),
+    brandValue: safeNonNegativeInteger(source.brandValue, 0, SHOP_MAX_RESOURCE),
+    completedEventIds,
+    seenEventRevealIds,
+    lastEventResult: event ? {
+      eventId,
+      title: typeof result.title === "string" ? result.title.slice(0, 80) : event.title,
+      badge: typeof result.badge === "string" ? result.badge.slice(0, 80) : event.badge,
+      completedAt: typeof result.completedAt === "string" ? result.completedAt.slice(0, 40) : "",
+      cashReward: safeNonNegativeInteger(result.cashReward, event.cashReward, SHOP_MAX_RESOURCE),
+      brandValueReward: safeNonNegativeInteger(result.brandValueReward, event.brandValueReward, SHOP_MAX_RESOURCE),
+      garageReputationReward: safeNonNegativeInteger(result.garageReputationReward, event.garageReputationReward, SHOP_MAX_RESOURCE),
+    } : null,
+  };
+}
+
 function normalizeUpgradeLevels(upgrades) {
   const source = upgrades && typeof upgrades === "object" ? upgrades : {};
   return Object.fromEntries(
@@ -3338,6 +3431,7 @@ function normalizeShopState(shop) {
     coveredCarTeaserSeen: Boolean(source.coveredCarTeaserSeen),
     coveredCarTeaserFeedbackShown: Boolean(source.coveredCarTeaserFeedbackShown),
     dreamBuild: normalizeDreamBuild(source.dreamBuild),
+    garageEvents: normalizeGarageEvents(source.garageEvents),
     lifetimeReputation: Math.max(
       reputation,
       safeNonNegativeInteger(source.lifetimeReputation, defaults.lifetimeReputation),
@@ -5383,11 +5477,215 @@ function sponsorInquiryAccepted(gameState) {
 
 function brandValueV1(gameState) {
   const state = normalizeGameState(gameState);
-  return safeNonNegativeInteger(
+  const sponsorBrand = safeNonNegativeInteger(
     state.shop.dreamBuild.sponsor && state.shop.dreamBuild.sponsor.brandValue,
     0,
     SHOP_MAX_RESOURCE,
   );
+  const eventBrand = safeNonNegativeInteger(
+    state.shop.garageEvents && state.shop.garageEvents.brandValue,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+  return Math.min(SHOP_MAX_RESOURCE, sponsorBrand + eventBrand);
+}
+
+function garageEventBrandValueV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(
+    state.shop.garageEvents && state.shop.garageEvents.brandValue,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+}
+
+function garageReputationV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(
+    state.shop.garageEvents && state.shop.garageEvents.garageReputation,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+}
+
+function completedGarageEventIds(gameState) {
+  const state = normalizeGameState(gameState);
+  return new Set(state.shop.garageEvents.completedEventIds || []);
+}
+
+function garageEventById(eventId) {
+  return GARAGE_EVENTS.find((event) => event.id === eventId) || null;
+}
+
+function garageEventBoardStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const tiresReady = dreamBuildTiresLevel(state) >= 5;
+  const netWorthReady = netWorthV1(state) >= GARAGE_EVENT_BOARD_NET_WORTH_REQUIREMENT;
+  return {
+    visible: tiresReady || netWorthReady,
+    unlocked: tiresReady && netWorthReady,
+    tiresReady,
+    netWorthReady,
+    netWorth: netWorthV1(state),
+    netWorthRequirement: GARAGE_EVENT_BOARD_NET_WORTH_REQUIREMENT,
+  };
+}
+
+function allGarageEventsComplete(gameState) {
+  const completed = completedGarageEventIds(gameState);
+  return GARAGE_EVENTS.every((event) => completed.has(event.id));
+}
+
+function garageEventRequirementStatus(eventOrId, gameState) {
+  const event = typeof eventOrId === "string" ? garageEventById(eventOrId) : eventOrId;
+  const state = normalizeGameState(gameState);
+  const board = garageEventBoardStatus(state);
+  const completed = completedGarageEventIds(state);
+  if (!event) {
+    return { unlocked: false, completed: false, reason: "Unknown garage event." };
+  }
+  if (completed.has(event.id)) {
+    return { unlocked: true, completed: true, reason: `${event.badge} earned.` };
+  }
+  if (!board.unlocked) {
+    if (board.netWorthReady && !board.tiresReady) {
+      return {
+        unlocked: false,
+        completed: false,
+        reason: "Reach Tires & Rubber Level 5 to prepare the build for events.",
+      };
+    }
+    if (board.tiresReady && !board.netWorthReady) {
+      return {
+        unlocked: false,
+        completed: false,
+        reason: "Reach $100M Net Worth to unlock the first garage event board.",
+      };
+    }
+    return {
+      unlocked: false,
+      completed: false,
+      reason: "Reach $100M Net Worth and complete Tires & Rubber to unlock the first event board.",
+    };
+  }
+  if (event.id === "local_showcase") {
+    return { unlocked: true, completed: false, reason: "" };
+  }
+  if (event.id === "sponsor_display") {
+    if (!completed.has("local_showcase")) {
+      return { unlocked: false, completed: false, reason: "Complete Local Showcase first." };
+    }
+    if (dreamBuildBrakesLevel(state) < 2) {
+      return { unlocked: false, completed: false, reason: "Reach Brakes & Control Level 2." };
+    }
+    return { unlocked: true, completed: false, reason: "" };
+  }
+  if (event.id === "closed_course_exhibition") {
+    if (!completed.has("sponsor_display")) {
+      return { unlocked: false, completed: false, reason: "Complete Sponsor Display first." };
+    }
+    if (dreamBuildBrakesLevel(state) < 5) {
+      return { unlocked: false, completed: false, reason: "Complete Brakes & Control Level 5." };
+    }
+    return { unlocked: true, completed: false, reason: "" };
+  }
+  if (event.id === "collector_preview") {
+    if (!completed.has("closed_course_exhibition")) {
+      return { unlocked: false, completed: false, reason: "Complete Closed-Course Exhibition first." };
+    }
+    if (garageReputationV1(state) < 100) {
+      return { unlocked: false, completed: false, reason: "Reach 100 Garage Reputation." };
+    }
+    return { unlocked: true, completed: false, reason: "" };
+  }
+  return { unlocked: false, completed: false, reason: "Future garage event." };
+}
+
+function nextGarageEvent(gameState) {
+  const state = normalizeGameState(gameState);
+  return GARAGE_EVENTS.find((event) => {
+    const status = garageEventRequirementStatus(event, state);
+    return !status.completed;
+  }) || null;
+}
+
+function nextAvailableGarageEvent(gameState) {
+  const state = normalizeGameState(gameState);
+  return GARAGE_EVENTS.find((event) => {
+    const status = garageEventRequirementStatus(event, state);
+    return status.unlocked && !status.completed;
+  }) || null;
+}
+
+function garageEventAffordability(eventOrId, gameState) {
+  const event = typeof eventOrId === "string" ? garageEventById(eventOrId) : eventOrId;
+  const state = normalizeGameState(gameState);
+  if (!event) return { canEnter: false, missingCash: 0 };
+  const missingCash = Math.max(0, event.cost - cashBalance(state));
+  return {
+    canEnter: missingCash <= 0,
+    missingCash,
+  };
+}
+
+function garageEventResultText(event) {
+  return `${event.title} complete: +${formatCashCount(event.cashReward)} Cash, +${formatCashCount(event.brandValueReward)} Brand Value, +${formatShopCount(event.garageReputationReward)} Garage Reputation.`;
+}
+
+function completeGarageEvent(eventId, gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Garage Events unlock after you finish and park.", gameState: next };
+  }
+  const event = garageEventById(eventId);
+  if (!event) return { ok: false, reason: "That Garage Event is not available.", gameState: next };
+  const requirement = garageEventRequirementStatus(event, next);
+  if (requirement.completed) {
+    return { ok: false, reason: `${event.title} is already complete.`, gameState: next };
+  }
+  if (!requirement.unlocked) {
+    return { ok: false, reason: requirement.reason, gameState: next };
+  }
+  if (cashBalance(next) < event.cost) {
+    return { ok: false, reason: `Need ${formatCash(event.cost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - event.cost + event.cashReward, 0, SHOP_MAX_RESOURCE);
+  next.shop.garageEvents.brandValue = safeNonNegativeInteger(
+    next.shop.garageEvents.brandValue + event.brandValueReward,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+  next.shop.garageEvents.garageReputation = safeNonNegativeInteger(
+    next.shop.garageEvents.garageReputation + event.garageReputationReward,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+  next.shop.garageEvents.completedEventIds = [
+    ...completedGarageEventIds(next),
+    event.id,
+  ].slice(0, GARAGE_EVENTS.length);
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const completedAt = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.shop.garageEvents.lastEventResult = {
+    eventId: event.id,
+    title: event.title,
+    badge: event.badge,
+    completedAt,
+    cashReward: event.cashReward,
+    brandValueReward: event.brandValueReward,
+    garageReputationReward: event.garageReputationReward,
+  };
+  const feedback = garageEventResultText(event);
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  next = syncNetWorthMilestones(next).gameState;
+  return {
+    ok: true,
+    reason: "",
+    feedback,
+    event,
+    gameState: next,
+  };
 }
 
 function sponsorInquiryStatus(gameState) {
@@ -11618,6 +11916,20 @@ function nextBestAction(gameState, options = {}) {
           disabled: false,
         };
       }
+      const availableGarageEvent = nextAvailableGarageEvent(state);
+      if (availableGarageEvent) {
+        const affordable = garageEventAffordability(availableGarageEvent, state);
+        return {
+          type: affordable.canEnter ? "enter_garage_event" : "garage_event_target",
+          title: affordable.canEnter
+            ? `Next: Enter ${availableGarageEvent.title}`
+            : `Next: Grow Cash for ${availableGarageEvent.title}`,
+          copy: "The current build is ready for a parked fictional garage event.",
+          buttonLabel: affordable.canEnter ? availableGarageEvent.buttonLabel : "View Garage Event Board",
+          disabled: false,
+          garageEventId: availableGarageEvent.id,
+        };
+      }
       const brakesWork = nextDreamBuildBrakesWork(state);
       if (brakesWork) {
         const ready = cashBalance(state) >= brakesWork.cost;
@@ -11626,6 +11938,27 @@ function nextBestAction(gameState, options = {}) {
           title: ready ? `Next: ${brakesWork.buttonLabel}` : `Next: Grow Cash for ${brakesWork.title}`,
           copy: ready ? brakesWork.copy : `${brakesWork.title} is the next Brakes & Control work when the shop can fund it.`,
           buttonLabel: brakesWork.buttonLabel,
+          disabled: false,
+        };
+      }
+      const eventBoard = garageEventBoardStatus(state);
+      if (eventBoard.visible && !eventBoard.unlocked) {
+        return {
+          type: "garage_event_target",
+          title: "Next: Unlock Garage Event Board",
+          copy: eventBoard.netWorthReady
+            ? "Reach Tires & Rubber Level 5 to prepare the build for events."
+            : "Reach $100M Net Worth to unlock the first garage event board.",
+          buttonLabel: "View Dream Build",
+          disabled: false,
+        };
+      }
+      if (allGarageEventsComplete(state)) {
+        return {
+          type: "garage_event_target",
+          title: "Next: Future Car Management",
+          copy: "The first Garage Event Board is complete. Repeatable events and multiple cars come later.",
+          buttonLabel: "View Event Board",
           disabled: false,
         };
       }
@@ -11763,6 +12096,7 @@ function renderGameDashboard(gameState = loadGameState()) {
       elements.gameCtaButton.dataset.nextOrderType = action.orderTypeId || "";
       elements.gameCtaButton.dataset.nextStation = action.stationId || "";
       elements.gameCtaButton.dataset.nextSpiritBoost = action.spiritBoostId || "";
+      elements.gameCtaButton.dataset.nextGarageEvent = action.garageEventId || "";
     }
   }
   if (elements.gameCertifiedCtaButton) {
@@ -12761,6 +13095,7 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
   const suspensionLabel = progress.suspensionLevel > 0 ? progress.suspensionStatus : "Next";
   const tiresLabel = progress.tiresLevel > 0 ? progress.tiresStatus : dreamBuildSuspensionLevel(state) >= 5 ? "Next" : "Future";
   const brakesLabel = progress.brakesLevel > 0 ? progress.brakesStatus : dreamBuildTiresLevel(state) >= 5 ? "Next" : "Future";
+  const eventSummary = garageEventBoardOverviewSummary(state);
   return renderIdleCard({
     title: "Dream Build",
     status: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
@@ -12773,6 +13108,7 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
         <small>Tires: ${escapeHtml(tiresLabel)}</small>
         <small>Brakes: ${escapeHtml(brakesLabel)}</small>
         <small>${GARAGE_BUILD_VALUE_LABEL}: ${escapeHtml(formatCashCount(projectCarValueV1(state)))}</small>
+        ${eventSummary ? `<small>Garage Event Board: ${escapeHtml(eventSummary)}</small>` : ""}
       </div>
     `,
     actions: dreamBuildTabUnlocked(state)
@@ -12863,6 +13199,108 @@ function renderGarageTuningCatalogPreviewCard(gameState) {
   });
 }
 
+function garageEventBoardOverviewSummary(gameState) {
+  const state = normalizeGameState(gameState);
+  const board = garageEventBoardStatus(state);
+  if (!board.visible) return "";
+  if (!board.unlocked) {
+    return board.netWorthReady
+      ? "Tires & Rubber Level 5 needed."
+      : "$100M Net Worth needed.";
+  }
+  if (allGarageEventsComplete(state)) return "First board complete.";
+  const available = nextAvailableGarageEvent(state);
+  if (available) {
+    const afford = garageEventAffordability(available, state);
+    return afford.canEnter ? `${available.title} available.` : `Grow Cash for ${available.title}.`;
+  }
+  const nextEvent = nextGarageEvent(state);
+  return nextEvent ? `${nextEvent.title} preparing.` : "Future events preparing.";
+}
+
+function renderGarageEventCard(event, gameState) {
+  const state = normalizeGameState(gameState);
+  const requirement = garageEventRequirementStatus(event, state);
+  const afford = garageEventAffordability(event, state);
+  if (requirement.completed) {
+    return `
+      <article class="nospill-idle-card">
+        <header>
+          <strong>${escapeHtml(event.title)}</strong>
+          <small>Complete</small>
+        </header>
+        <small>Badge: ${escapeHtml(event.badge)}</small>
+      </article>
+    `;
+  }
+  const rewardLine = `Reward: +${formatCashCount(event.cashReward)} Cash · +${formatCashCount(event.brandValueReward)} Brand Value · +${formatShopCount(event.garageReputationReward)} Garage Reputation`;
+  const buttonDisabled = !requirement.unlocked || !afford.canEnter;
+  const disabledReason = !requirement.unlocked
+    ? requirement.reason
+    : `Need ${formatCash(afford.missingCash)} more Cash.`;
+  return `
+    <article class="nospill-idle-card ${requirement.unlocked ? "" : "is-locked"}">
+      <header>
+        <strong>${escapeHtml(event.title)}</strong>
+        <small>${requirement.unlocked ? `${formatCash(event.cost)} entry` : "Locked"}</small>
+      </header>
+      <small>${escapeHtml(event.copy)}</small>
+      <div class="nospill-afford-progress">
+        <small>${escapeHtml(rewardLine)}</small>
+        ${requirement.unlocked ? `<small>Entry Cost: ${escapeHtml(formatCash(event.cost))} Cash</small>` : `<small>${escapeHtml(requirement.reason)}</small>`}
+        ${requirement.unlocked && !afford.canEnter ? `<small>Need ${escapeHtml(formatCash(afford.missingCash))} more Cash.</small>` : ""}
+      </div>
+      <div class="nospill-idle-actions">
+        ${actionButton(event.buttonLabel, "data-garage-event", event.id, buttonDisabled, "nospill-primary", disabledReason)}
+      </div>
+    </article>
+  `;
+}
+
+function renderGarageEventBoardCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  const board = garageEventBoardStatus(state);
+  if (!board.visible) return "";
+  if (!board.unlocked) {
+    const copy = board.netWorthReady
+      ? "Reach Tires & Rubber Level 5 to prepare the build for events."
+      : "Reach $100M Net Worth to unlock the first garage event board.";
+    return renderIdleCard({
+      title: "Garage Event Board",
+      status: "Preparing",
+      copy,
+    });
+  }
+  const completed = completedGarageEventIds(state);
+  const last = state.shop.garageEvents.lastEventResult;
+  const lastLine = last
+    ? `<small>Recent: ${escapeHtml(last.title)} complete.</small>`
+    : "";
+  const completeCopy = allGarageEventsComplete(state)
+    ? `<p class="nospill-panel-helper"><strong>Garage Event Board Complete</strong> · The first event board is complete. Future Car Management will add repeatable events, multiple cars, offers, and deeper garage operations.</p>`
+    : "";
+  return `
+    <section class="nospill-idle-card" data-garage-event-board>
+      <header>
+        <strong>Garage Event Board</strong>
+        <small>${completed.size} / ${GARAGE_EVENTS.length} complete</small>
+      </header>
+      <small>Send the current build to parked fictional events. Events use build progress, ${GARAGE_BUILD_VALUE_LABEL}, Brand Value, and Garage Reputation.</small>
+      <div class="nospill-afford-progress">
+        <small>Garage Reputation: ${escapeHtml(formatShopCount(garageReputationV1(state)))}</small>
+        <small>Event Brand Value: ${escapeHtml(formatCashCount(garageEventBrandValueV1(state)))}</small>
+        <small>Tofu Garage events are fictional game events. They do not affect Don't Spill the Cup scoring.</small>
+        ${lastLine}
+      </div>
+      ${completeCopy}
+      <div class="nospill-idle-grid">
+        ${GARAGE_EVENTS.map((event) => renderGarageEventCard(event, state)).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderDreamBuildPanel(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -12879,6 +13317,7 @@ function renderDreamBuildPanel(gameState) {
     <div class="nospill-idle-grid">
       ${renderDreamBuildProgressCard(state)}
       ${renderDreamBuildTracksCard(state)}
+      ${renderGarageEventBoardCard(state)}
       ${renderDreamInvestmentTargetCard(state)}
       ${renderProjectCarValueCard(state)}
       ${renderBuilderNoteCard(state)}
@@ -13860,6 +14299,8 @@ function goalStackTargetForAction(action) {
     || action.type === "prepare_showcase"
     || action.type === "showcase_prep_target"
     || action.type === "accept_sponsor_inquiry"
+    || action.type === "enter_garage_event"
+    || action.type === "garage_event_target"
   ) {
     return "dream-build";
   }
@@ -13975,6 +14416,42 @@ function pinnedNearGoalForShop(gameState) {
         isFutureOnly: false,
       };
     }
+    const eventBoard = garageEventBoardStatus(state);
+    if (eventBoard.visible && !eventBoard.unlocked) {
+      const body = eventBoard.netWorthReady
+        ? "Reach Tires & Rubber Level 5 to prepare the build for events."
+        : "Reach $100M Net Worth and complete Tires & Rubber to unlock the first event board.";
+      return {
+        id: "garage_event_board_unlock",
+        title: "Garage Event Board",
+        body,
+        progressCurrent: eventBoard.netWorth,
+        progressTarget: eventBoard.netWorthRequirement,
+        progressLabel: `${formatCashCount(eventBoard.netWorth)} / $100M Net Worth`,
+        reward: "Unlocks parked fictional garage events",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
+    const availableEvent = nextAvailableGarageEvent(state);
+    if (availableEvent) {
+      const afford = garageEventAffordability(availableEvent, state);
+      return {
+        id: availableEvent.id,
+        title: afford.canEnter ? `Enter ${availableEvent.title}` : `Grow Cash for ${availableEvent.title}`,
+        body: availableEvent.id === "local_showcase"
+          ? "The current build is ready for its first parked event."
+          : "The next parked Garage Event is ready.",
+        progressCurrent: cashBalance(state),
+        progressTarget: availableEvent.cost,
+        progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(availableEvent.cost)} Cash`,
+        reward: `+${formatCashCount(availableEvent.cashReward)} Cash, +${formatCashCount(availableEvent.brandValueReward)} Brand Value, +${formatShopCount(availableEvent.garageReputationReward)} Garage Reputation`,
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: false,
+      };
+    }
     const brakesWork = nextDreamBuildBrakesWork(state);
     if (brakesWork) {
       return {
@@ -13990,6 +14467,21 @@ function pinnedNearGoalForShop(gameState) {
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: false,
+      };
+    }
+    if (allGarageEventsComplete(state)) {
+      const progress = dreamBuildProgressSummary(state);
+      return {
+        id: "garage_event_board_complete",
+        title: "Garage Event Board complete",
+        body: "Future Car Management will expand events and multiple cars.",
+        progressCurrent: progress.completed,
+        progressTarget: progress.total,
+        progressLabel: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} Core Build Progress`,
+        reward: "Future repeatable events and deeper garage operations",
+        ctaLabel: "",
+        ctaTarget: "",
+        isFutureOnly: true,
       };
     }
     if (dreamBuildBrakesLevel(state) >= 5) {
@@ -16716,6 +17208,24 @@ function handleDreamBuildBrakes(action) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleGarageEvent(eventId) {
+  const result = completeGarageEvent(eventId, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "dream_build";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -16883,6 +17393,10 @@ function handleTofuShopPanelClick(event) {
     saveGameState(result.gameState);
     renderGamePanels(result.gameState);
     setSummaryStatusMessage(result.note ? "Builder Note saved locally." : "Builder Note cleared.");
+    return;
+  }
+  if (target.dataset.garageEvent) {
+    handleGarageEvent(target.dataset.garageEvent);
     return;
   }
   if (target.dataset.dreamBuildAction) {
@@ -17517,6 +18031,20 @@ function handleNextBestAction() {
     } else {
       setSummaryStatusMessage("Induction & Cooling comes in a future garage pass.");
     }
+    return;
+  }
+  if (actionType === "enter_garage_event") {
+    const eventId = elements.gameCtaButton && elements.gameCtaButton.dataset
+      ? elements.gameCtaButton.dataset.nextGarageEvent || ""
+      : "";
+    handleGarageEvent(eventId);
+    return;
+  }
+  if (actionType === "garage_event_target") {
+    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+    appState.shopTab = "dream_build";
+    renderGamePanels(currentGameState());
+    setSummaryStatusMessage("Review the Garage Event Board while parked.");
     return;
   }
   if (actionType === "prepare_showcase") {

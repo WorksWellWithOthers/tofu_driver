@@ -69,10 +69,11 @@ or car assets.
 | Dream Build Tab V1 + Suspension/Tires/Brakes Tracks | Implemented | Earned Dream Build tab appears after the build starts; Suspension levels 1-5 unlock after Exhaust level 5, Tires & Rubber levels 1-5 unlock after Suspension level 5, and Brakes & Control levels 1-5 unlock after Tires level 5. |
 | Tofu Garage Tuning Catalog V1 | Implemented docs + preview | `TOFU_GARAGE_TUNING_CATALOG.md` is the canonical future parts source; Dream Build tab shows a collapsed category-only preview and does not dump the full list into Overview. |
 | Core Build Progress V2 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + Suspension Level + Tires Level + Brakes Level against `40` planned core work stages; current maximum is `23 / 40`; Induction & Cooling and later tracks remain locked/deferred. |
+| Garage Event Board V1 | Implemented | Unlocks in the Dream Build tab at `$100M Net Worth` plus Tires & Rubber Level 5; Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector Preview are one-time parked fictional events with local Cash, Brand Value, Garage Reputation, and badge rewards. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
-| Dream Garage / car parts | Documented only | Teaser exists; full Dream Garage, car parts, valuation, and garage events are not implemented. |
+| Dream Garage / car parts | Partial | Dream Build tracks and Garage Event Board V1 exist; full Dream Garage, full car inventory, repeatable events, valuation, and Car Management are not implemented. |
 | Net Worth V1 | Implemented V1 | Compact line can appear after later milestones; formula is Cash + Tofu Business Value + Garage Build Value + Brand Value. Full valuation remains future. |
 
 ## 3. Missing Or Weak Tofu Garage Mechanics
@@ -194,6 +195,9 @@ Current code status:
 - Core Build Progress V2 shows the project as `40` planned core work stages. Current implemented
   stages are Wheels levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, and
   Brakes levels 1-5, for a current maximum of `23 / 40`.
+- Garage Event Board V1 makes the first `$100M` garage-era reward real once Tires & Rubber Level 5
+  is complete. It is one-time and parked-only; repeatable events, multiple cars, collector offers,
+  auctions, and full Car Management remain future.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 

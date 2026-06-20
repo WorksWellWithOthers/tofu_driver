@@ -227,8 +227,14 @@
   `+$47M Garage Build Value`.
 - Tires & Rubber Track V1 and Brakes & Control Track V1 are implemented after Suspension Level 5.
   Tires adds `+$505M Garage Build Value`; Brakes adds `+$4.05B Garage Build Value`. Induction &
-  Cooling, full parts inventory, completed build events, Car Management, and full valuation remain
-  future.
+  Cooling, full parts inventory, repeatable completed-build events, Car Management, and full
+  valuation remain future.
+- Garage Event Board V1 is implemented inside the Dream Build tab as the first parked event bridge.
+  It unlocks at `$100M Net Worth` plus Tires & Rubber Level 5 and resolves four one-time fictional
+  events instantly: Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector
+  Preview. Events cost Cash and grant defined local Cash, Brand Value, Garage Reputation, and badge
+  rewards. Full Car Management, multiple cars, auctions, collector-sale offers, public profiles,
+  uploads, and network calls remain future.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, and Brakes levels against a planned `40` stage core build, shows current part labels,
   points to the next dream step, and keeps future tracks locked/deferred. The current implemented
@@ -343,16 +349,19 @@ Canonical references:
    Exhaust Level 5, Tires and Brakes continue in stable order, Garage Build Value and `23 / 40`
    progress totals stay clear, Induction & Cooling remains future-only, and urgent shop bottlenecks
    still win.
-12. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
+12. Playtest Garage Event Board V1: verify `$100M Net Worth` plus Tires Level 5 unlock, event
+   reward pacing, Garage Reputation clarity, Brand Value/Net Worth changes, badge status, repeat
+   prevention, and that full Car Management still feels like a future layer.
+13. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
    `$1M` timing, Showcase Prep affordability, Sponsor reward pacing, one-time feedback, Brand Value
    visibility, and that urgent shop bottlenecks still override distant Net Worth goals.
-13. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
+14. Run the Tofu Garage V1 completion gate from `TOFU_GARAGE_V1_COMPLETION_AUDIT.md`: fresh
    3-minute flow, high-progress responsiveness, Manager Desk/Wholesale usefulness, and Shop Spirit
    usefulness.
-14. Tune Overview Glance Mode V1, the retained Next Milestone helper, and Station Milestone Boosts
+15. Tune Overview Glance Mode V1, the retained Next Milestone helper, and Station Milestone Boosts
    V1 against playtest behavior before adding higher station thresholds. Confirm Pinned Goal stays
    stable, Details remain discoverable on mobile, and Goal Stack copy stays honest without dead CTAs.
-15. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
+16. Add novelty only when playtesting shows repetition: candidate order is Managed Shop tuning,
    Shop Spirit tuning, covered-car teaser timing, then Regular Customers V1.
    Do not jump to License prestige, Shop Trials, social systems, Dream Garage mechanics, or Net
    Worth systems until the local shop loop keeps a player engaged.

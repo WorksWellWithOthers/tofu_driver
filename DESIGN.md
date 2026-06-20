@@ -85,6 +85,13 @@ Reliability, Comfort, Control, Grip, Power, Response, Cooling, Durability, Event
 Readiness, Collector Appeal, Race Class, Garage Reputation, Brand Value, prize potential, and future
 car-management outcomes.
 
+Garage Event Board V1 is the first runtime bridge from part buying into fictional garage events.
+It unlocks in the Dream Build tab at `$100M Net Worth` plus Tires & Rubber Level 5, then offers
+one-time parked events: Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector
+Preview. These events resolve instantly in V1, cost Cash, and can grant Cash, Brand Value, Garage
+Reputation, and local event badges. They are not full Car Management, repeatable event timers,
+multiple cars, auctions, sell/prestige choices, backend play, or public sharing.
+
 Boundary rule:
 
 ```text
@@ -677,10 +684,15 @@ Design rules:
 - Brakes & Control Track V1 is implemented after Tires Level 5. Sports Brake Pads, Sports Brake
   Kit, Racing Brake Kit, Carbon Ceramic Big Brake Kit, and Brake Balance & Control Package cost
   Cash, add `+$4.05B Garage Build Value`, and advance Core Build Progress to `23 / 40`.
+- Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
+  in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
+  Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
+  Garage Reputation, and badge rewards, but do not implement full Car Management, multiple cars,
+  auctions, collector-sale offers, public profiles, or networked play.
 - Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
   and Brakes levels. Induction & Cooling, Drivetrain & Transmission, Aero/Styling/Weight
-  Reduction, completed-build events, and full Dream Garage remain future.
+  Reduction, repeatable events, and full Dream Garage remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.

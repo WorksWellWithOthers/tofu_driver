@@ -399,6 +399,10 @@ Examples:
   Suspension Level 5. Tires levels 1-5 add `+$505M Garage Build Value`; Brakes levels 1-5 add
   `+$4.05B Garage Build Value`. They are fictional garage/event-fit upgrades and do not affect
   Don't Spill the Cup scoring, certification, route proof, or Driver XP.
+- Garage Event Board V1 is the first parked event bridge after Tires & Rubber Level 5 and `$100M`
+  Net Worth. It lives in the Dream Build tab, resolves events instantly in V1, and grants defined
+  local Cash, Brand Value, Garage Reputation, and local badge rewards. It does not create repeatable
+  timers, multiple cars, auctions, collector-sale offers, Car Management, or networked/social play.
 - Core Build Progress V2 summarizes current build completion as work stages. The planned core
   build size is 40 stages: eight tracks times five levels. Current implemented stages are Wheels
   levels 1-3, Exhaust levels 1-5, Suspension levels 1-5, Tires levels 1-5, and Brakes levels 1-5.
@@ -457,8 +461,9 @@ single overloaded milestone presentation and visible explanation wall with three
 The Pinned Goal should update when a meaningful milestone completes, not because Cash crosses
 an affordability threshold, the order queue briefly fills, or ETA text changes. After Exhaust Level
 5, it may point through the implemented Suspension track. After Suspension Level 5, it points
-through Tires & Rubber; after Tires Level 5, it points through Brakes & Control. After Brakes Level
-5, Induction & Cooling is shown as the next future/target-only build track.
+through Tires & Rubber. After Tires Level 5, it can point to the Garage Event Board when an event
+is available, otherwise through Brakes & Control. After the V1 event board is complete and Brakes
+Level 5 is complete, Induction & Cooling is shown as the next future/target-only build track.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -1900,7 +1905,7 @@ Net Worth Milestone Ladder V1:
 | --- | --- | --- |
 | `$1M Net Worth` | Local Showcase Interest after early Dream Build progress | Implemented |
 | `$10M Net Worth` | Future shop-era opportunity marker | Implemented as milestone target only |
-| `$100M Net Worth` | Future garage-era opportunity marker | Implemented as milestone target only |
+| `$100M Net Worth` | Garage Event Board after Tires & Rubber Level 5 | Implemented |
 | `$1B Net Worth` | Future company-scale opportunity marker | Implemented as milestone target only |
 | `$1T Net Worth` | Long-term goal | Implemented as target only |
 
@@ -1909,6 +1914,19 @@ Showcase Interest V1 unlocks only after early Dream Build progress and the first
 Sponsor Inquiry V1 then unlocks as a one-time parked opportunity: accepting it grants `$250K Cash`
 and `$500K Brand Value`. It is a proof of car-investment value, not a completed-car event, recurring
 sponsor system, route system, auction, racing mode, or full Dream Garage.
+
+Garage Event Board V1 unlocks at `$100M Net Worth` plus Tires & Rubber Level 5. V1 events are
+one-time, parked, fictional, and instant:
+
+| Event | Requirements | Entry Cost | Rewards |
+| --- | --- | --- | --- |
+| Local Showcase | Event Board unlocked | `$25M Cash` | `+$60M Cash`, `+$40M Brand Value`, `+25 Garage Reputation`, Local Showcase Debut badge |
+| Sponsor Display | Local Showcase complete, Brakes & Control Level 2 | `$75M Cash` | `+$150M Cash`, `+$250M Brand Value`, `+50 Garage Reputation`, Sponsor Display badge |
+| Closed-Course Exhibition | Sponsor Display complete, Brakes & Control Level 5 | `$200M Cash` | `+$500M Cash`, `+$750M Brand Value`, `+100 Garage Reputation`, Closed-Course Exhibition badge |
+| Collector Preview | Closed-Course Exhibition complete, Garage Reputation `>= 100` | `$150M Cash` | `+$250M Cash`, `+$1B Brand Value`, `+150 Garage Reputation`, Collector Preview badge |
+
+Garage Reputation is local fictional Tofu Garage status. Event Brand Value contributes through the
+existing Brand Value component in Net Worth V1; the Net Worth formula itself does not change.
 
 Future full formula:
 

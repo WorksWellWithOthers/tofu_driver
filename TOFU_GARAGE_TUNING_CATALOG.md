@@ -315,6 +315,11 @@ Track V1 are now implemented as the next runtime slices. Induction & Cooling is 
 build track and should be pulled from this catalog only when that runtime slice is intentionally
 scoped.
 
+Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
+Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
+progress, Garage Build Value, Brand Value, and Garage Reputation. Repeatable events, multiple cars,
+collector-sale offers, and full Car Management remain future.
+
 ## Future Runtime Guidance
 
 Pull this catalog into runtime gradually. Do not dump the full list into the Tofu Garage Overview.
