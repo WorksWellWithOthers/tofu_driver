@@ -313,13 +313,15 @@ Use more authentic language for Suspension while keeping runtime purchases narro
 Suspension Track Completion V1 implements Levels 1-5. Tires & Rubber Track V1, Brakes & Control
 Track V1, Induction & Cooling Track V1, Drivetrain & Transmission Track V1, Aero/Styling Track V1,
 and First Complete Build V1 are now implemented as runtime slices. Final Detail and Shakedown
-Complete finish the first core build at `40 / 40`; Car Management, multiple cars, and repeatable
-events remain future.
+Complete finish the first core build at `40 / 40`; Car Management V1 now uses the completed car in
+one-active-assignment parked showcase/demo/exhibition loops. Multiple cars and repeatable event
+board expansion remain future.
 
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
-progress, Garage Build Value, Brand Value, and Garage Reputation. Repeatable events, multiple cars,
-collector-sale offers, and full Car Management remain future.
+progress, Garage Build Value, Brand Value, and Garage Reputation. It stays separate from Car
+Management V1. Repeatable event-board expansion, multiple cars, and collector-sale offers remain
+future.
 
 ## Future Runtime Guidance
 

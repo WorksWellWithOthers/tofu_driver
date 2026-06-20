@@ -237,21 +237,24 @@
 - Tires & Rubber Track V1 and Brakes & Control Track V1 are implemented after Suspension Level 5.
   Tires adds `+$505M Garage Build Value`; Brakes adds `+$4.05B Garage Build Value`.
 - Induction & Cooling Track V1 is implemented after Brakes Level 5 plus Local Showcase completion.
-  It adds Sports Intercooler through Anti-Lag & Cooling Package, adds `+$35.25B Garage Build
-  Value`, and keeps Drivetrain & Transmission, full parts inventory, repeatable completed-build
-  events, Car Management, and full valuation future.
+  It adds Sports Intercooler through Anti-Lag & Cooling Package and `+$35.25B Garage Build Value`.
 - Garage Event Board V1 is implemented inside the Dream Build tab as the first parked event bridge.
   It unlocks at `$100M Net Worth` plus Tires & Rubber Level 5 and resolves four one-time fictional
   events instantly: Local Showcase, Sponsor Display, Closed-Course Exhibition, and Collector
   Preview. Events cost Cash and grant defined local Cash, Brand Value, Garage Reputation, and badge
-  rewards. Full Car Management, multiple cars, auctions, collector-sale offers, public profiles,
-  uploads, and network calls remain future.
+  rewards. It stays separate from Car Management. Multiple cars, auctions, collector-sale offers,
+  public profiles, uploads, and network calls remain future.
+- Car Management V1 is implemented after First Complete Build. It creates one local managed-car
+  snapshot and adds one-active-assignment parked timers for Showcase Rotation, Sponsor Demo Day,
+  and Closed-Course Exhibition Booking. Rewards are collected explicitly as Cash, Brand Value, and
+  Garage Reputation. Multiple cars, auctions, collector/sell offers, backend/uploads, and network
+  calls remain future.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
   planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
   future tracks locked/deferred.
-  The current implemented maximum is `40 / 40` with First Complete Build. Goal Stack also uses this status as the stable
-  mid-term target so players know whether more implemented car work exists.
+  The current implemented maximum is `40 / 40` with First Complete Build. Goal Stack then points
+  to Car Management assignment states so the completed car has a managed-asset loop.
 - Dream Garage / Project Car progression is documented as a future long-term emotional arc:
   Tofu Shop funds the dream car, the garage is the dream, and Don't Spill the Cup remains the
   smooth-control philosophy/proof.
@@ -362,10 +365,10 @@ Canonical references:
    Dream Build tab appears only after build start, Suspension work appears in stable order after
    Exhaust Level 5, Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown
    continue in stable order, Garage Build Value and `40 / 40` progress totals stay clear, Car
-   Management remains future-only, and urgent shop bottlenecks still win.
+   Management unlocks after First Complete Build, and urgent shop bottlenecks still win.
 12. Playtest Garage Event Board V1: verify `$100M Net Worth` plus Tires Level 5 unlock, event
    reward pacing, Garage Reputation clarity, Brand Value/Net Worth changes, badge status, repeat
-   prevention, and that full Car Management still feels like a future layer.
+   prevention, and separation from Car Management assignments.
 13. Playtest Net Worth Milestone Ladder V1, Showcase Prep V1, and Sponsor Inquiry V1: verify first
    `$1M` timing, Showcase Prep affordability, Sponsor reward pacing, one-time feedback, Brand Value
    visibility, and that urgent shop bottlenecks still override distant Net Worth goals.
@@ -452,12 +455,12 @@ Future Dream Garage milestone sequence:
    Upgrade, Big Turbo Kit, Anti-Lag & Cooling Package, Drivetrain through `$135B` Sequential
    Transmission Package, Aero through `$1T` Carbon Body & Roll Cage, Final Detail, Shakedown
    Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
-2. Playtest First Complete Build pacing and design Car Management V1 as the next parked layer.
-3. Design the first parked event/showcase expansion loop.
-4. Implement Car Management V1 only after the first part tracks are fun.
-6. Add multiple cars.
-7. Add the next era unlock.
-8. Much later connect completed builds to business expansion, collector networks, and scalable
+2. Playtest Car Management V1 assignment durations/rewards and whether one active assignment is
+   enough for the first completed car.
+3. Design the next parked event/showcase expansion loop.
+4. Add multiple cars.
+5. Add the next era unlock.
+6. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car events are not immediate scope. Keep Showcase, Closed-Course Exhibition, Auction,

@@ -414,7 +414,12 @@ Examples:
 - Garage Event Board V1 is the first parked event bridge after Tires & Rubber Level 5 and `$100M`
   Net Worth. It lives in the Dream Build tab, resolves events instantly in V1, and grants defined
   local Cash, Brand Value, Garage Reputation, and local badge rewards. It does not create repeatable
-  timers, multiple cars, auctions, collector-sale offers, Car Management, or networked/social play.
+  event-board timers, multiple cars, auctions, collector-sale offers, or networked/social play.
+- Car Management V1 unlocks after First Complete Build. It snapshots the first completed car and
+  adds one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and
+  Closed-Course Exhibition Booking. Assignment entry costs and Cash/Brand Value rewards are based
+  on the car value at completion; Garage Reputation rewards unlock later assignments. Rewards are
+  local and collected explicitly.
 - Core Build Progress V2 summarizes current build completion as work stages. The planned core
   build size is 40 stages. Current implemented stages are Wheels levels 1-3, Exhaust levels 1-5,
   Suspension levels 1-5, Tires levels 1-5, Brakes levels 1-5, Induction levels 1-5, Drivetrain
@@ -479,7 +484,8 @@ is available, otherwise through Brakes & Control. After Brakes Level 5 and Local
 complete, it points through Induction & Cooling. After Induction Level 5, it points through
 Drivetrain & Transmission. After Drivetrain Level 5, it points through Aero, Styling & Weight
 Reduction. After Aero Level 5, it points through Final Detail and Shakedown Complete. After the
-first complete build, it points to future Car Management as target-only.
+first complete build, it points through Car Management assignment states: available, active,
+ready to collect, and first-car-managed.
 
 Overview details should be progressive-disclosure by default. Long stock/order explanations, Net
 Worth formulas, Garage Build formulas, optional boost explanations, and saved Builder Note editing
@@ -521,8 +527,9 @@ Rules:
   `Seal Joints`, `Tuned Note`, `Heat Wrapped`, or `Showcase Finish` when no urgent shop goal is
   more useful. After Exhaust level 5, it may point through Suspension, Tires & Rubber, Brakes &
   Control, Induction & Cooling, Drivetrain & Transmission, Aero, Styling & Weight Reduction, Final
-  Detail, and Shakedown Complete. After the first complete build, Car Management remains
-  target-only/future.
+  Detail, and Shakedown Complete. After the first complete build, it may point through Car
+  Management assignment availability, active assignments, ready-to-collect rewards, and first-car
+  managed status.
 - no full asset valuation, car valuation, company valuation, or social system is implemented by
   this bar
 - current status: Implemented V1
@@ -1642,9 +1649,20 @@ Implemented First Complete Build V1 values:
 | 39 / 40 | Final Detail | `$1.5T` | `+$1.2T` |
 | 40 / 40 | Shakedown Complete / First Complete Build | `$2.5T` | `+$2T` |
 
-The First Complete Build status is local Tofu Garage progression only. It does not add Car
-Management, multiple cars, auctions, collector offers, repeatable events, backend sync, or Cup Test
-effects.
+The First Complete Build status is local Tofu Garage progression only. It unlocks Car Management
+V1 but does not add multiple cars, auctions, collector offers, sell choices, backend sync, or Cup
+Test effects.
+
+Implemented Car Management V1 assignment values:
+
+| Assignment | Duration | Entry Cost | Rewards |
+| --- | --- | --- | --- |
+| Showcase Rotation | `15m` | `0.25%` of car value at completion | `0.75%` Cash, `0.5%` Brand Value, `+25` Garage Reputation |
+| Sponsor Demo Day | `30m` | `0.5%` of car value at completion | `1.5%` Cash, `1%` Brand Value, `+75` Garage Reputation |
+| Closed-Course Exhibition Booking | `60m` | `1%` of car value at completion | `3%` Cash, `2%` Brand Value, `+150` Garage Reputation |
+
+Only one Car Management assignment can be active at a time. Assignment rewards are not granted
+until the player collects them, and assignment history is capped.
 
 Possible level effects:
 

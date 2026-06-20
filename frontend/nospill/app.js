@@ -483,6 +483,43 @@ const GARAGE_EVENTS = [
     buttonLabel: "Enter Collector Preview",
   },
 ];
+const CAR_MANAGEMENT_HISTORY_LIMIT = 20;
+const CAR_MANAGEMENT_CURRENT_CAR_ID = "first_complete_build";
+const CAR_ASSIGNMENTS = [
+  {
+    id: "showcase_rotation",
+    title: "Showcase Rotation",
+    buttonLabel: "Start Showcase Rotation",
+    durationMs: 15 * 60 * 1000,
+    entryCostRate: 0.0025,
+    cashRewardRate: 0.0075,
+    brandValueRewardRate: 0.005,
+    garageReputationReward: 25,
+    copy: "Put the completed build into a local showcase rotation.",
+  },
+  {
+    id: "sponsor_demo_day",
+    title: "Sponsor Demo Day",
+    buttonLabel: "Start Sponsor Demo",
+    durationMs: 30 * 60 * 1000,
+    entryCostRate: 0.005,
+    cashRewardRate: 0.015,
+    brandValueRewardRate: 0.01,
+    garageReputationReward: 75,
+    copy: "Bring the completed build to a sponsor-facing demo day.",
+  },
+  {
+    id: "closed_course_exhibition_booking",
+    title: "Closed-Course Exhibition Booking",
+    buttonLabel: "Start Exhibition Booking",
+    durationMs: 60 * 60 * 1000,
+    entryCostRate: 0.01,
+    cashRewardRate: 0.03,
+    brandValueRewardRate: 0.02,
+    garageReputationReward: 150,
+    copy: "Book the completed build for a fictional closed-course exhibition.",
+  },
+];
 const GARAGE_TUNING_CATALOG_CATEGORIES = [
   "Tires & Rubber",
   "Suspension & Chassis Geometry",
@@ -2897,6 +2934,20 @@ function defaultGameState() {
     routeMastery: {},
     shop: defaultShopState(),
     collection: defaultCollectionState(),
+    carManagement: defaultCarManagementState(),
+  };
+}
+
+function defaultCarManagementState() {
+  return {
+    unlocked: false,
+    currentCar: null,
+    activeAssignment: null,
+    assignmentCompletions: {},
+    assignmentHistory: [],
+    lastAssignmentResult: null,
+    brandValue: 0,
+    garageReputation: 0,
   };
 }
 
@@ -3447,6 +3498,105 @@ function normalizeGarageEvents(garageEvents) {
   };
 }
 
+function carAssignmentById(assignmentId) {
+  return CAR_ASSIGNMENTS.find((assignment) => assignment.id === assignmentId) || null;
+}
+
+function createCurrentCarSnapshot(gameState, currentCar = {}) {
+  const state = gameState && typeof gameState === "object" ? gameState : { shop: defaultShopState() };
+  const build = state.shop && state.shop.dreamBuild ? state.shop.dreamBuild : defaultShopState().dreamBuild;
+  return {
+    id: CAR_MANAGEMENT_CURRENT_CAR_ID,
+    name: "First Complete Build",
+    completedAt: typeof currentCar.completedAt === "string" ? currentCar.completedAt.slice(0, 40) : "",
+    buildValueAtCompletion: safeNonNegativeInteger(
+      currentCar.buildValueAtCompletion,
+      projectCarValueFromDreamBuild(build),
+      SHOP_MAX_RESOURCE,
+    ),
+    coreProgressAtCompletion: typeof currentCar.coreProgressAtCompletion === "string"
+      ? currentCar.coreProgressAtCompletion.slice(0, 20)
+      : "40 / 40",
+    builderNote: sanitizeBuilderNote(currentCar.builderNote || build.builderNote),
+    status: "managed",
+  };
+}
+
+function normalizeCarAssignmentCompletions(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return Object.fromEntries(CAR_ASSIGNMENTS.map((assignment) => [
+    assignment.id,
+    safeNonNegativeInteger(source[assignment.id], 0, 100000),
+  ]));
+}
+
+function normalizeCarAssignmentResult(value) {
+  const source = value && typeof value === "object" ? value : null;
+  const assignment = source && carAssignmentById(source.assignmentId);
+  if (!assignment) return null;
+  return {
+    assignmentId: assignment.id,
+    title: typeof source.title === "string" ? source.title.slice(0, 80) : assignment.title,
+    completedAt: typeof source.completedAt === "string" ? source.completedAt.slice(0, 40) : "",
+    cashReward: safeNonNegativeInteger(source.cashReward, 0, SHOP_MAX_RESOURCE),
+    brandValueReward: safeNonNegativeInteger(source.brandValueReward, 0, SHOP_MAX_RESOURCE),
+    garageReputationReward: safeNonNegativeInteger(source.garageReputationReward, 0, SHOP_MAX_RESOURCE),
+  };
+}
+
+function normalizeCarAssignmentHistory(value) {
+  return (Array.isArray(value) ? value : [])
+    .map(normalizeCarAssignmentResult)
+    .filter(Boolean)
+    .slice(0, CAR_MANAGEMENT_HISTORY_LIMIT);
+}
+
+function normalizeCarActiveAssignment(value, currentCar) {
+  const source = value && typeof value === "object" ? value : null;
+  const assignment = source && carAssignmentById(source.id);
+  if (!assignment || !currentCar) return null;
+  return {
+    id: assignment.id,
+    startedAt: typeof source.startedAt === "string" ? source.startedAt.slice(0, 40) : "",
+    durationMs: assignment.durationMs,
+    entryCost: safeNonNegativeInteger(source.entryCost, 0, SHOP_MAX_RESOURCE),
+    rewardPreview: source.rewardPreview && typeof source.rewardPreview === "object"
+      ? {
+          cashReward: safeNonNegativeInteger(source.rewardPreview.cashReward, 0, SHOP_MAX_RESOURCE),
+          brandValueReward: safeNonNegativeInteger(source.rewardPreview.brandValueReward, 0, SHOP_MAX_RESOURCE),
+          garageReputationReward: safeNonNegativeInteger(source.rewardPreview.garageReputationReward, 0, SHOP_MAX_RESOURCE),
+        }
+      : {},
+    carId: CAR_MANAGEMENT_CURRENT_CAR_ID,
+  };
+}
+
+function normalizeCarManagement(carManagement, gameState) {
+  const defaults = defaultCarManagementState();
+  const source = carManagement && typeof carManagement === "object" ? carManagement : {};
+  const unlockedByBuild = Boolean(
+    gameState
+    && gameState.shop
+    && gameState.shop.dreamBuild
+    && safeNonNegativeInteger(gameState.shop.dreamBuild.finalBuildLevel, 0, 2) >= 2,
+  );
+  const sourceCar = source.currentCar && typeof source.currentCar === "object" ? source.currentCar : null;
+  const currentCar = unlockedByBuild
+    ? createCurrentCarSnapshot(gameState, sourceCar || {})
+    : null;
+  return {
+    ...defaults,
+    unlocked: unlockedByBuild || Boolean(source.unlocked),
+    currentCar,
+    activeAssignment: normalizeCarActiveAssignment(source.activeAssignment, currentCar),
+    assignmentCompletions: normalizeCarAssignmentCompletions(source.assignmentCompletions),
+    assignmentHistory: normalizeCarAssignmentHistory(source.assignmentHistory),
+    lastAssignmentResult: normalizeCarAssignmentResult(source.lastAssignmentResult),
+    brandValue: safeNonNegativeInteger(source.brandValue, 0, SHOP_MAX_RESOURCE),
+    garageReputation: safeNonNegativeInteger(source.garageReputation, 0, SHOP_MAX_RESOURCE),
+  };
+}
+
 function normalizeCounterContracts(counterContracts) {
   const source = counterContracts && typeof counterContracts === "object" ? counterContracts : {};
   const purchasedIds = Array.isArray(source.purchasedIds)
@@ -3767,6 +3917,7 @@ function normalizeGameState(stored) {
     shop: normalizeShopState(source.shop),
     collection: normalizeCollectionState(source.collection),
   };
+  normalized.carManagement = normalizeCarManagement(source.carManagement, normalized);
   normalized.level = levelForXP(normalized.totalXP);
   syncShopGenerators(normalized);
   normalized.merchProgress.nospillClubGear.dates = [
@@ -5634,17 +5785,17 @@ function dreamBuildProgressiveValue(level, values) {
   return values.slice(0, count).reduce((total, value) => total + value, 0);
 }
 
-function projectCarValueV1(gameState) {
-  const state = normalizeGameState(gameState);
-  const wheelsLevel = dreamBuildWheelsLevel(state);
-  const exhaustLevel = dreamBuildExhaustLevel(state);
-  const suspensionLevel = dreamBuildSuspensionLevel(state);
-  const tiresLevel = dreamBuildTiresLevel(state);
-  const brakesLevel = dreamBuildBrakesLevel(state);
-  const inductionLevel = dreamBuildInductionLevel(state);
-  const drivetrainLevel = dreamBuildDrivetrainLevel(state);
-  const aeroLevel = dreamBuildAeroLevel(state);
-  const finalBuildLevel = dreamBuildFinalBuildLevel(state);
+function projectCarValueFromDreamBuild(dreamBuild) {
+  const build = dreamBuild && typeof dreamBuild === "object" ? dreamBuild : {};
+  const wheelsLevel = safeNonNegativeInteger(build.wheelsLevel, 0, 5);
+  const exhaustLevel = safeNonNegativeInteger(build.exhaustLevel, 0, 5);
+  const suspensionLevel = safeNonNegativeInteger(build.suspensionLevel, 0, 5);
+  const tiresLevel = safeNonNegativeInteger(build.tiresLevel, 0, 5);
+  const brakesLevel = safeNonNegativeInteger(build.brakesLevel, 0, 5);
+  const inductionLevel = safeNonNegativeInteger(build.inductionLevel, 0, 5);
+  const drivetrainLevel = safeNonNegativeInteger(build.drivetrainLevel, 0, 5);
+  const aeroLevel = safeNonNegativeInteger(build.aeroLevel, 0, 5);
+  const finalBuildLevel = safeNonNegativeInteger(build.finalBuildLevel, 0, 2);
   let value = 0;
   if (wheelsLevel >= 3) {
     value += DREAM_BUILD_WHEELS_VALUE + DREAM_BUILD_WHEELS_POLISH_VALUE + DREAM_BUILD_WHEELS_FITMENT_VALUE;
@@ -5671,7 +5822,7 @@ function projectCarValueV1(gameState) {
   } else if (exhaustLevel >= 1) {
     value += DREAM_BUILD_EXHAUST_VALUE;
   }
-  if (state.shop.dreamBuild.showcaseDisplayPrepared) {
+  if (build.showcaseDisplayPrepared) {
     value += SHOWCASE_PREP_VALUE;
   }
   if (suspensionLevel >= 5) {
@@ -5736,6 +5887,11 @@ function projectCarValueV1(gameState) {
   return value;
 }
 
+function projectCarValueV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return projectCarValueFromDreamBuild(state.shop.dreamBuild);
+}
+
 function showcaseInterestUnlocked(gameState) {
   const state = normalizeGameState(gameState);
   return dreamBuildProgressSummary(state).completed >= 5
@@ -5778,7 +5934,12 @@ function brandValueV1(gameState) {
     0,
     SHOP_MAX_RESOURCE,
   );
-  return Math.min(SHOP_MAX_RESOURCE, sponsorBrand + eventBrand);
+  const carManagementBrand = safeNonNegativeInteger(
+    state.carManagement && state.carManagement.brandValue,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+  return Math.min(SHOP_MAX_RESOURCE, sponsorBrand + eventBrand + carManagementBrand);
 }
 
 function garageEventBrandValueV1(gameState) {
@@ -5792,11 +5953,17 @@ function garageEventBrandValueV1(gameState) {
 
 function garageReputationV1(gameState) {
   const state = normalizeGameState(gameState);
-  return safeNonNegativeInteger(
+  const eventReputation = safeNonNegativeInteger(
     state.shop.garageEvents && state.shop.garageEvents.garageReputation,
     0,
     SHOP_MAX_RESOURCE,
   );
+  const carManagementReputation = safeNonNegativeInteger(
+    state.carManagement && state.carManagement.garageReputation,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+  return Math.min(SHOP_MAX_RESOURCE, eventReputation + carManagementReputation);
 }
 
 function completedGarageEventIds(gameState) {
@@ -5977,6 +6144,241 @@ function completeGarageEvent(eventId, gameState, options = {}) {
     event,
     gameState: next,
   };
+}
+
+function carManagementUnlocked(gameState) {
+  const state = normalizeGameState(gameState);
+  return Boolean(
+    state.carManagement
+    && state.carManagement.currentCar
+    && dreamBuildFinalBuildLevel(state) >= 2,
+  );
+}
+
+function carManagementBrandValueV1(gameState) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(
+    state.carManagement && state.carManagement.brandValue,
+    0,
+    SHOP_MAX_RESOURCE,
+  );
+}
+
+function carAssignmentCompletions(gameState, assignmentId) {
+  const state = normalizeGameState(gameState);
+  return safeNonNegativeInteger(
+    state.carManagement && state.carManagement.assignmentCompletions
+      ? state.carManagement.assignmentCompletions[assignmentId]
+      : 0,
+    0,
+    100000,
+  );
+}
+
+function carValueBase(gameState) {
+  const state = normalizeGameState(gameState);
+  const currentCar = state.carManagement && state.carManagement.currentCar;
+  return safeNonNegativeInteger(
+    currentCar && currentCar.buildValueAtCompletion,
+    projectCarValueV1(state),
+    SHOP_MAX_RESOURCE,
+  );
+}
+
+function carAssignmentEconomics(assignmentOrId, gameState) {
+  const assignment = typeof assignmentOrId === "string"
+    ? carAssignmentById(assignmentOrId)
+    : assignmentOrId;
+  const base = carValueBase(gameState);
+  if (!assignment) {
+    return {
+      carValueBase: base,
+      entryCost: 0,
+      cashReward: 0,
+      brandValueReward: 0,
+      garageReputationReward: 0,
+    };
+  }
+  return {
+    carValueBase: base,
+    entryCost: safeNonNegativeInteger(Math.round(base * assignment.entryCostRate), 0, SHOP_MAX_RESOURCE),
+    cashReward: safeNonNegativeInteger(Math.round(base * assignment.cashRewardRate), 0, SHOP_MAX_RESOURCE),
+    brandValueReward: safeNonNegativeInteger(Math.round(base * assignment.brandValueRewardRate), 0, SHOP_MAX_RESOURCE),
+    garageReputationReward: assignment.garageReputationReward,
+  };
+}
+
+function carAssignmentRequirementStatus(assignmentOrId, gameState) {
+  const assignment = typeof assignmentOrId === "string"
+    ? carAssignmentById(assignmentOrId)
+    : assignmentOrId;
+  const state = normalizeGameState(gameState);
+  if (!assignment) return { unlocked: false, reason: "Unknown Car Management assignment." };
+  if (!carManagementUnlocked(state)) {
+    return { unlocked: false, reason: "Complete the first build to unlock Car Management." };
+  }
+  if (assignment.id === "showcase_rotation") return { unlocked: true, reason: "" };
+  if (assignment.id === "sponsor_demo_day") {
+    if (carAssignmentCompletions(state, "showcase_rotation") < 1) {
+      return { unlocked: false, reason: "Complete Showcase Rotation once." };
+    }
+    if (garageReputationV1(state) < 25) {
+      return { unlocked: false, reason: "Reach 25 Garage Reputation." };
+    }
+    return { unlocked: true, reason: "" };
+  }
+  if (assignment.id === "closed_course_exhibition_booking") {
+    if (carAssignmentCompletions(state, "sponsor_demo_day") < 1) {
+      return { unlocked: false, reason: "Complete Sponsor Demo Day once." };
+    }
+    if (garageReputationV1(state) < 100) {
+      return { unlocked: false, reason: "Reach 100 Garage Reputation." };
+    }
+    return { unlocked: true, reason: "" };
+  }
+  return { unlocked: false, reason: "Future Car Management assignment." };
+}
+
+function allCarAssignmentsCompletedOnce(gameState) {
+  return CAR_ASSIGNMENTS.every((assignment) => carAssignmentCompletions(gameState, assignment.id) >= 1);
+}
+
+function nextCarAssignment(gameState) {
+  const state = normalizeGameState(gameState);
+  return CAR_ASSIGNMENTS.find((assignment) => carAssignmentCompletions(state, assignment.id) < 1)
+    || CAR_ASSIGNMENTS[0]
+    || null;
+}
+
+function nextAvailableCarAssignment(gameState) {
+  const state = normalizeGameState(gameState);
+  return CAR_ASSIGNMENTS.find((assignment) => {
+    const status = carAssignmentRequirementStatus(assignment, state);
+    return status.unlocked && carAssignmentCompletions(state, assignment.id) < 1;
+  }) || CAR_ASSIGNMENTS.find((assignment) => carAssignmentRequirementStatus(assignment, state).unlocked) || null;
+}
+
+function carAssignmentRemainingMs(activeAssignment, options = {}) {
+  if (!activeAssignment) return 0;
+  const nowMs = options.now instanceof Date
+    ? options.now.getTime()
+    : Number.isFinite(Date.parse(options.now || "")) ? Date.parse(options.now) : Date.now();
+  const startedMs = Date.parse(activeAssignment.startedAt || "");
+  if (!Number.isFinite(startedMs)) return 0;
+  return Math.max(0, startedMs + safeNonNegativeInteger(activeAssignment.durationMs, 0, 24 * 60 * 60 * 1000) - nowMs);
+}
+
+function activeCarAssignmentStatus(gameState, options = {}) {
+  const state = normalizeGameState(gameState);
+  const active = state.carManagement && state.carManagement.activeAssignment;
+  if (!active) return { active: null, assignment: null, ready: false, remainingMs: 0 };
+  const assignment = carAssignmentById(active.id);
+  const remainingMs = carAssignmentRemainingMs(active, options);
+  return {
+    active,
+    assignment,
+    ready: remainingMs <= 0,
+    remainingMs,
+  };
+}
+
+function formatAssignmentDuration(ms) {
+  const minutes = Math.max(1, Math.ceil(safeNonNegativeInteger(ms, 0, 24 * 60 * 60 * 1000) / 60000));
+  if (minutes < 60) return `${formatShopCount(minutes)}m`;
+  const hours = Math.floor(minutes / 60);
+  const rest = minutes % 60;
+  return rest ? `${formatShopCount(hours)}h ${formatShopCount(rest)}m` : `${formatShopCount(hours)}h`;
+}
+
+function carAssignmentResultText(assignment, economics) {
+  return `${assignment.title} complete: +${formatCashCount(economics.cashReward)} Cash, +${formatCashCount(economics.brandValueReward)} Brand Value, +${formatShopCount(economics.garageReputationReward)} Garage Reputation.`;
+}
+
+function startCarAssignment(assignmentId, gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Car Management unlocks after you finish and park.", gameState: next };
+  }
+  if (!carManagementUnlocked(next)) {
+    return { ok: false, reason: "Complete the first build to unlock Car Management.", gameState: next };
+  }
+  if (next.carManagement.activeAssignment) {
+    return { ok: false, reason: "One Car Management assignment is already active.", gameState: next };
+  }
+  const assignment = carAssignmentById(assignmentId);
+  if (!assignment) return { ok: false, reason: "That Car Management assignment is not available.", gameState: next };
+  const requirement = carAssignmentRequirementStatus(assignment, next);
+  if (!requirement.unlocked) return { ok: false, reason: requirement.reason, gameState: next };
+  const economics = carAssignmentEconomics(assignment, next);
+  if (cashBalance(next) < economics.entryCost) {
+    return { ok: false, reason: `Need ${formatCash(economics.entryCost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const startedAt = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - economics.entryCost, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.activeAssignment = {
+    id: assignment.id,
+    startedAt,
+    durationMs: assignment.durationMs,
+    entryCost: economics.entryCost,
+    rewardPreview: {
+      cashReward: economics.cashReward,
+      brandValueReward: economics.brandValueReward,
+      garageReputationReward: economics.garageReputationReward,
+    },
+    carId: CAR_MANAGEMENT_CURRENT_CAR_ID,
+  };
+  next.carManagement.lastAssignmentResult = null;
+  const feedback = `${assignment.title} started. Return in ${formatAssignmentDuration(assignment.durationMs)} to collect.`;
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  return { ok: true, reason: "", feedback, assignment, economics, gameState: next };
+}
+
+function collectCarAssignment(gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Car Management unlocks after you finish and park.", gameState: next };
+  }
+  const status = activeCarAssignmentStatus(next, options);
+  if (!status.active || !status.assignment) {
+    return { ok: false, reason: "No Car Management assignment is ready.", gameState: next };
+  }
+  if (!status.ready) {
+    return {
+      ok: false,
+      reason: `${status.assignment.title} is still in progress: ${formatAssignmentDuration(status.remainingMs)} remaining.`,
+      gameState: next,
+    };
+  }
+  const preview = status.active.rewardPreview || {};
+  const economics = {
+    cashReward: safeNonNegativeInteger(preview.cashReward, carAssignmentEconomics(status.assignment, next).cashReward, SHOP_MAX_RESOURCE),
+    brandValueReward: safeNonNegativeInteger(preview.brandValueReward, carAssignmentEconomics(status.assignment, next).brandValueReward, SHOP_MAX_RESOURCE),
+    garageReputationReward: safeNonNegativeInteger(preview.garageReputationReward, status.assignment.garageReputationReward, SHOP_MAX_RESOURCE),
+  };
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const completedAt = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips + economics.cashReward, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.brandValue = safeNonNegativeInteger(next.carManagement.brandValue + economics.brandValueReward, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.garageReputation = safeNonNegativeInteger(next.carManagement.garageReputation + economics.garageReputationReward, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.assignmentCompletions[status.assignment.id] = carAssignmentCompletions(next, status.assignment.id) + 1;
+  const result = {
+    assignmentId: status.assignment.id,
+    title: status.assignment.title,
+    completedAt,
+    cashReward: economics.cashReward,
+    brandValueReward: economics.brandValueReward,
+    garageReputationReward: economics.garageReputationReward,
+  };
+  next.carManagement.lastAssignmentResult = result;
+  next.carManagement.assignmentHistory = [result, ...next.carManagement.assignmentHistory].slice(0, CAR_MANAGEMENT_HISTORY_LIMIT);
+  next.carManagement.activeAssignment = null;
+  const feedback = carAssignmentResultText(status.assignment, economics);
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  next = syncNetWorthMilestones(next).gameState;
+  return { ok: true, reason: "", feedback, assignment: status.assignment, economics, gameState: next };
 }
 
 function sponsorInquiryStatus(gameState) {
@@ -6936,7 +7338,7 @@ function nextDreamBuildStep(gameState) {
   if (dreamBuildFinalBuildLevel(state) >= 2) {
     return {
       title: "First Complete Build",
-      copy: "The first Tofu Garage build is complete. Car Management comes in a future garage pass.",
+      copy: "The first Tofu Garage build is complete. Car Management is unlocked.",
       future: true,
     };
   }
@@ -7260,6 +7662,18 @@ function buyDreamBuildFinal(action, gameState, options = {}) {
   }
   next.shop.tips = safeNonNegativeInteger(next.shop.tips - work.cost, 0, SHOP_MAX_RESOURCE);
   next.shop.dreamBuild.finalBuildLevel = work.nextLevel;
+  if (work.nextLevel >= 2) {
+    const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+    const completedAt = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+    next.carManagement = normalizeCarManagement({
+      ...(next.carManagement || {}),
+      unlocked: true,
+      currentCar: {
+        ...((next.carManagement && next.carManagement.currentCar) || {}),
+        completedAt,
+      },
+    }, next);
+  }
   next.shop.counterService.lastResult = work.feedback;
   return {
     ok: true,
@@ -12328,6 +12742,55 @@ function affordableShopStation(gameState, stationId = "") {
   }) || null;
 }
 
+function nextCarManagementAction(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!carManagementUnlocked(state)) return null;
+  const active = activeCarAssignmentStatus(state);
+  if (active.assignment) {
+    return {
+      type: active.ready ? "collect_car_assignment" : "car_assignment_active",
+      title: active.ready ? "Next: Collect Assignment Result" : "Next: Assignment in Progress",
+      copy: active.ready
+        ? "The completed build returned with rewards."
+        : `${active.assignment.title} is in progress. Collect rewards when the car returns.`,
+      buttonLabel: active.ready ? "Collect Assignment" : "Assignment Running",
+      disabled: !active.ready,
+      carAssignmentId: active.assignment.id,
+    };
+  }
+  if (allCarAssignmentsCompletedOnce(state)) {
+    return {
+      type: "car_management_target",
+      title: "Next: First Car Managed",
+      copy: "Future garage pass: multiple cars and deeper Car Management.",
+      buttonLabel: "View Car Management",
+      disabled: false,
+    };
+  }
+  const assignment = nextAvailableCarAssignment(state);
+  if (!assignment) {
+    return {
+      type: "car_management_target",
+      title: "Next: Car Management",
+      copy: "Send the completed build to its first parked assignment.",
+      buttonLabel: "View Car Management",
+      disabled: false,
+    };
+  }
+  const economics = carAssignmentEconomics(assignment, state);
+  const affordable = cashBalance(state) >= economics.entryCost;
+  return {
+    type: affordable ? "start_car_assignment" : "car_management_target",
+    title: affordable ? `Next: ${assignment.title}` : `Next: Grow Cash for ${assignment.title}`,
+    copy: assignment.id === "showcase_rotation"
+      ? "The first completed build is ready to manage."
+      : "The next parked Car Management assignment is ready.",
+    buttonLabel: affordable ? assignment.buttonLabel : "View Car Management",
+    disabled: false,
+    carAssignmentId: assignment.id,
+  };
+}
+
 function nextBestAction(gameState, options = {}) {
   const state = normalizeGameState(gameState);
   const activeDrive = Boolean(options.activeDrive);
@@ -12388,6 +12851,16 @@ function nextBestAction(gameState, options = {}) {
       buttonLabel: "Driving",
       disabled: true,
     };
+  }
+  const earlyCarManagementAction = nextCarManagementAction(state);
+  if (
+    shopUnlocked
+    && earlyCarManagementAction
+    && counterIncome.status !== "waiting_stock"
+    && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
+    && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
+  ) {
+    return earlyCarManagementAction;
   }
   if (shopUnlocked && counterIncome.status === "waiting_stock") {
     if (
@@ -12649,6 +13122,16 @@ function nextBestAction(gameState, options = {}) {
       disabled: false,
     };
   }
+  const carManagementAction = nextCarManagementAction(state);
+  if (
+    shopUnlocked
+    && carManagementAction
+    && counterIncome.status !== "waiting_stock"
+    && readyDeliveryOrders(state.shop) < deliveryOrderQueueCapacity()
+    && !(isCounterServiceUnlocked(state) && !state.shop.counterService.running && readyPileup)
+  ) {
+    return carManagementAction;
+  }
   if (
     shopUnlocked
     && prep.ready > 0
@@ -12898,8 +13381,8 @@ function nextBestAction(gameState, options = {}) {
       if (allGarageEventsComplete(state)) {
         return {
           type: "garage_event_target",
-          title: "Next: Future Car Management",
-          copy: "The first Garage Event Board is complete. Repeatable events and multiple cars come later.",
+          title: "Next: Future Event Board",
+          copy: "The first Garage Event Board is complete. Repeatable event boards and multiple cars come later.",
           buttonLabel: "View Event Board",
           disabled: false,
         };
@@ -12940,7 +13423,7 @@ function nextBestAction(gameState, options = {}) {
       return {
         type: "dream_investment_target",
         title: "Next: Grow toward the next build step",
-        copy: "First Complete Build is finished. Car Management comes in a future garage pass.",
+        copy: "First Complete Build is finished. Car Management is unlocked.",
         buttonLabel: "View Dream Target",
         disabled: false,
       };
@@ -13039,6 +13522,7 @@ function renderGameDashboard(gameState = loadGameState()) {
       elements.gameCtaButton.dataset.nextStation = action.stationId || "";
       elements.gameCtaButton.dataset.nextSpiritBoost = action.spiritBoostId || "";
       elements.gameCtaButton.dataset.nextGarageEvent = action.garageEventId || "";
+      elements.gameCtaButton.dataset.nextCarAssignment = action.carAssignmentId || "";
     }
   }
   if (elements.gameCertifiedCtaButton) {
@@ -13504,6 +13988,11 @@ function dreamBuildTabUnlocked(gameState) {
   return dreamBuildInvestmentStarted(gameState);
 }
 
+function carManagementTabUnlocked(gameState) {
+  if (appState.running || appState.calibrating) return false;
+  return carManagementUnlocked(gameState);
+}
+
 const SHOP_TABS = [
   { id: "overview", label: "Overview", unlock: () => true },
   { id: "production", label: "Production", unlock: () => true },
@@ -13514,6 +14003,7 @@ const SHOP_TABS = [
   { id: "spirit", label: "Shop Spirit", unlock: (state) => hasAdvancedShopStation(state) && fulfilledShopOrderCount(state) >= 50 },
   { id: "upgrades", label: "Upgrades", unlock: (state) => visibleRelevantStationUpgrades(state).length > 0 },
   { id: "dream_build", label: "Dream Build", unlock: (state) => dreamBuildTabUnlocked(state) },
+  { id: "car_management", label: "Car Management", unlock: (state) => carManagementTabUnlocked(state) },
   { id: "rivals", label: "Rivals", unlock: (state) => routeGameplayEnabled() && hasRouteStoryBeat(state) && Object.values(state.shop.rivals).some(Boolean) },
   { id: "passport", label: "Passport", unlock: (state) => isPassportTabUnlocked(state) },
   { id: "license", label: "License", unlock: (state) => state.shop.licenseStars > 0 || (routeGameplayEnabled() && hasRouteStoryBeat(state) && licenseExamStatus(state).ready) },
@@ -13539,6 +14029,7 @@ function shopTabLockedCopy(tab) {
     passport: "The passport opens after your first stamp-worthy shop moment.",
     license: "License Exams appear after early shop progress.",
     ledger: "The Delivery Ledger fills as the shop does things.",
+    car_management: "Car Management unlocks after the First Complete Build.",
   };
   return copy[tab.id] || "Keep growing the Tofu Shop to unlock this panel.";
 }
@@ -13578,6 +14069,7 @@ function renderShopTabPanel(tabId, state) {
   if (tabId === "spirit") return renderSpiritPanel(state);
   if (tabId === "upgrades") return renderExpandedUpgradePanel(state);
   if (tabId === "dream_build") return renderDreamBuildPanel(state);
+  if (tabId === "car_management") return renderCarManagementPanel(state);
   if (tabId === "rivals") return renderRivalsPanel(state);
   if (tabId === "passport") return renderPassportPanel(state);
   if (tabId === "license") return renderLicensePanel(state);
@@ -14221,7 +14713,7 @@ function renderDreamBuildProgressCard(gameState) {
       ? `Core Build Complete · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`
       : `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: finalComplete
-      ? "The first Tofu Garage build is complete. Car Management comes later."
+      ? "The first Tofu Garage build is complete. Car Management is unlocked."
       : "Fictional Tofu Garage build value. Does not affect Cup Test scoring.",
     extra: `
       <div class="nospill-afford-progress">
@@ -14296,7 +14788,7 @@ function renderDreamBuildOverviewSummaryCard(gameState) {
       ? "First Complete Build"
       : `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} work stages`,
     copy: progress.finalBuildLevel >= 2
-      ? "First build complete. Next Era: Car Management, future."
+      ? "First build complete. Car Management is unlocked."
       : "The covered build now has its own tab. Overview stays focused on the next shop move.",
     extra: `
       <div class="nospill-afford-progress">
@@ -14385,7 +14877,7 @@ function renderDreamBuildTracksCard(gameState) {
       ? `Final Detail & Shakedown · Future Step · ${finalStatus.reason || "Complete Aero, Styling & Weight Reduction first."}`
       : finalWork
         ? `Final Detail & Shakedown · Next Work: ${finalWork.title} · ${formatCash(finalWork.cost)} Cash · +${formatCashCount(finalWork.valueAdded)} ${GARAGE_BUILD_VALUE_LABEL}`
-        : "First Complete Build · Core Build Complete · 40 / 40 · Next Era: Car Management, future garage pass.",
+        : "First Complete Build · Core Build Complete · 40 / 40 · Next Era: Car Management.",
   ];
   return renderIdleCard({
     title: "Work Tracks",
@@ -14407,15 +14899,15 @@ function renderDreamBuildTracksCard(gameState) {
 function renderFutureGarageManagementCard() {
   if (appState.running || appState.calibrating) return "";
   return renderIdleCard({
-    title: "Future Garage Management",
+    title: "Future Garage Operations",
     status: "Future",
-    copy: "Complete builds will later unlock parked showcases, closed-course exhibitions, collector offers, and future cars.",
+    copy: "Future updates will add multiple cars, collector offers, repeatable boards, and larger garage operations.",
   });
 }
 
 function garageTuningCatalogFocusLabel(gameState) {
   const state = normalizeGameState(gameState);
-  if (dreamBuildFinalBuildLevel(state) >= 2) return "Car Management, future";
+  if (dreamBuildFinalBuildLevel(state) >= 2) return "Car Management";
   if (dreamBuildAeroLevel(state) >= 5 || dreamBuildFinalBuildLevel(state) > 0) return "Final Detail & Shakedown";
   if (dreamBuildDrivetrainLevel(state) >= 5 || dreamBuildAeroLevel(state) > 0) return "Aero, Styling & Weight Reduction";
   if (dreamBuildInductionLevel(state) >= 5 || dreamBuildDrivetrainLevel(state) > 0) return "Drivetrain & Transmission";
@@ -14521,7 +15013,7 @@ function renderGarageEventBoardCard(gameState) {
     ? `<small>Recent: ${escapeHtml(last.title)} complete.</small>`
     : "";
   const completeCopy = allGarageEventsComplete(state)
-    ? `<p class="nospill-panel-helper"><strong>Garage Event Board Complete</strong> · The first event board is complete. Future Car Management will add repeatable events, multiple cars, offers, and deeper garage operations.</p>`
+    ? `<p class="nospill-panel-helper"><strong>Garage Event Board Complete</strong> · The first event board is complete. Future event-board expansion will add repeatable boards, multiple cars, offers, and deeper garage operations.</p>`
     : "";
   return `
     <section class="nospill-idle-card" data-garage-event-board>
@@ -14542,6 +15034,151 @@ function renderGarageEventBoardCard(gameState) {
       </div>
     </section>
   `;
+}
+
+function renderManagedCarCard(gameState) {
+  const state = normalizeGameState(gameState);
+  const currentCar = state.carManagement && state.carManagement.currentCar;
+  if (!currentCar) return "";
+  const note = sanitizeBuilderNote(currentCar.builderNote);
+  return renderIdleCard({
+    title: currentCar.name || "First Complete Build",
+    status: `Core Build Complete · ${escapeHtml(currentCar.coreProgressAtCompletion || "40 / 40")}`,
+    copy: "The first completed build is now a managed garage asset.",
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>${GARAGE_BUILD_VALUE_LABEL} at completion: ${escapeHtml(formatCashCount(currentCar.buildValueAtCompletion))}</small>
+        <small>Builder Note: ${escapeHtml(note ? `"${note}"` : "No Builder Note saved.")}</small>
+        <small>Car Management is fictional Tofu Garage gameplay and does not affect Don't Spill the Cup.</small>
+      </div>
+    `,
+  });
+}
+
+function renderCarAssignmentCard(assignment, gameState) {
+  const state = normalizeGameState(gameState);
+  const requirement = carAssignmentRequirementStatus(assignment, state);
+  const economics = carAssignmentEconomics(assignment, state);
+  const activeStatus = activeCarAssignmentStatus(state);
+  const active = activeStatus.assignment && activeStatus.assignment.id === assignment.id;
+  const anotherActive = Boolean(activeStatus.assignment && activeStatus.assignment.id !== assignment.id);
+  const completions = carAssignmentCompletions(state, assignment.id);
+  const canStart = requirement.unlocked
+    && !activeStatus.assignment
+    && cashBalance(state) >= economics.entryCost
+    && !appState.running
+    && !appState.calibrating;
+  const disabledReason = !requirement.unlocked
+    ? requirement.reason
+    : anotherActive
+      ? "Another assignment is active."
+      : cashBalance(state) < economics.entryCost
+        ? `Need ${formatCash(economics.entryCost - cashBalance(state))} more Cash.`
+        : "";
+  if (active) {
+    return renderIdleCard({
+      title: assignment.title,
+      status: activeStatus.ready
+        ? "Ready to collect"
+        : `In progress · ${formatAssignmentDuration(activeStatus.remainingMs)} remaining`,
+      copy: assignment.copy,
+      extra: `
+        <div class="nospill-afford-progress">
+          <small>Reward: +${escapeHtml(formatCashCount(economics.cashReward))} Cash · +${escapeHtml(formatCashCount(economics.brandValueReward))} Brand Value · +${escapeHtml(formatShopCount(economics.garageReputationReward))} Garage Reputation</small>
+          <small>One active assignment at a time.</small>
+        </div>
+      `,
+      actions: [
+        actionButton("Collect", "data-car-assignment-collect", assignment.id, !activeStatus.ready, "nospill-primary", `Ready in ${formatAssignmentDuration(activeStatus.remainingMs)}.`),
+      ],
+    });
+  }
+  return renderIdleCard({
+    title: assignment.title,
+    status: requirement.unlocked
+      ? `${formatAssignmentDuration(assignment.durationMs)} · ${formatCash(economics.entryCost)} entry`
+      : "Locked",
+    copy: requirement.unlocked ? assignment.copy : requirement.reason,
+    locked: !requirement.unlocked,
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>Completions: ${escapeHtml(formatShopCount(completions))}</small>
+        <small>Reward: +${escapeHtml(formatCashCount(economics.cashReward))} Cash · +${escapeHtml(formatCashCount(economics.brandValueReward))} Brand Value · +${escapeHtml(formatShopCount(economics.garageReputationReward))} Garage Reputation</small>
+        <small>Entry cost and rewards use the car's ${GARAGE_BUILD_VALUE_LABEL} at completion.</small>
+      </div>
+    `,
+    actions: [
+      actionButton(assignment.buttonLabel, "data-car-assignment-start", assignment.id, !canStart, "nospill-primary", disabledReason),
+    ],
+  });
+}
+
+function renderCarManagementPanel(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  if (!carManagementTabUnlocked(state)) {
+    return `
+      <h4>Car Management</h4>
+      <p class="nospill-panel-helper">Car Management unlocks after First Complete Build.</p>
+    `;
+  }
+  const last = state.carManagement.lastAssignmentResult;
+  const lastLine = last
+    ? `<p class="nospill-panel-helper">Recent: ${escapeHtml(last.title)} complete.</p>`
+    : "";
+  const loopComplete = allCarAssignmentsCompletedOnce(state)
+    ? `<p class="nospill-panel-helper"><strong>First Car Management Loop Complete</strong> · The first completed build is now a managed garage asset. Future updates will add repeatable boards, multiple cars, collector offers, and larger garage operations.</p>`
+    : "";
+  return `
+    <h4>Car Management</h4>
+    <p class="nospill-panel-helper">Send the completed build to parked fictional assignments. Assignments earn Cash, Brand Value, and Garage Reputation.</p>
+    <div class="nospill-idle-grid">
+      ${renderManagedCarCard(state)}
+      <section class="nospill-idle-card" data-car-management-board>
+        <header>
+          <strong>Assignment Board</strong>
+          <small>${formatShopCount(garageReputationV1(state))} Garage Reputation</small>
+        </header>
+        <small>Car Management is fictional Tofu Garage gameplay and does not affect Don't Spill the Cup.</small>
+        <div class="nospill-afford-progress">
+          <small>Managed Brand Value: ${escapeHtml(formatCashCount(carManagementBrandValueV1(state)))}</small>
+          <small>One active assignment at a time. Rewards are granted only when collected.</small>
+        </div>
+        ${lastLine}
+        ${loopComplete}
+      </section>
+      ${CAR_ASSIGNMENTS.map((assignment) => renderCarAssignmentCard(assignment, state)).join("")}
+    </div>
+  `;
+}
+
+function carManagementOverviewSummary(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!carManagementUnlocked(state)) return "";
+  const active = activeCarAssignmentStatus(state);
+  if (active.assignment) {
+    return active.ready
+      ? `${active.assignment.title} ready to collect.`
+      : `${active.assignment.title} in progress · ${formatAssignmentDuration(active.remainingMs)} remaining.`;
+  }
+  if (allCarAssignmentsCompletedOnce(state)) return "First car management loop complete.";
+  const nextAssignment = nextAvailableCarAssignment(state);
+  return nextAssignment ? `${nextAssignment.title} available.` : "Assignments preparing.";
+}
+
+function renderCarManagementOverviewCard(gameState) {
+  if (appState.running || appState.calibrating) return "";
+  const state = normalizeGameState(gameState);
+  const summary = carManagementOverviewSummary(state);
+  if (!summary) return "";
+  return renderIdleCard({
+    title: "Car Management",
+    status: "Completed car",
+    copy: summary,
+    actions: carManagementTabUnlocked(state)
+      ? [actionButton("Open Car Management", "data-shop-tab", "car_management", false, "nospill-secondary")]
+      : [],
+  });
 }
 
 function renderDreamBuildPanel(gameState) {
@@ -15597,6 +16234,14 @@ function goalStackTargetForAction(action) {
   ) {
     return "dream-build";
   }
+  if (
+    action.type === "start_car_assignment"
+    || action.type === "collect_car_assignment"
+    || action.type === "car_assignment_active"
+    || action.type === "car_management_target"
+  ) {
+    return "car-management";
+  }
   if (action.type === "net_worth_milestone") return "net-worth";
   if (action.type === "covered_car_teaser") return "overview";
   return "";
@@ -15618,6 +16263,82 @@ function dreamBuildImplementedCapReached(gameState) {
     && dreamBuildDrivetrainLevel(state) >= 5
     && dreamBuildAeroLevel(state) >= 5
     && dreamBuildFinalBuildLevel(state) >= 2;
+}
+
+function carManagementPinnedGoal(gameState) {
+  const state = normalizeGameState(gameState);
+  if (!carManagementUnlocked(state)) return null;
+  const active = activeCarAssignmentStatus(state);
+  if (active.assignment) {
+    return {
+      id: active.ready ? "collect_car_assignment" : "car_assignment_active",
+      title: active.ready ? "Collect Assignment Result" : "Assignment in progress",
+      body: active.ready
+        ? "The completed build returned with rewards."
+        : "Collect rewards when the car returns.",
+      progressCurrent: active.ready ? 1 : Math.max(0, active.active.durationMs - active.remainingMs),
+      progressTarget: active.ready ? 1 : active.active.durationMs,
+      progressLabel: active.ready
+        ? "Ready to collect"
+        : `${formatAssignmentDuration(active.remainingMs)} remaining`,
+      reward: active.ready ? "Cash, Brand Value, and Garage Reputation" : "Assignment rewards pending",
+      ctaLabel: "",
+      ctaTarget: "",
+      isFutureOnly: false,
+    };
+  }
+  if (allCarAssignmentsCompletedOnce(state)) {
+    return {
+      id: "first_car_managed",
+      title: "First car managed",
+      body: "Future garage pass: multiple cars and deeper Car Management.",
+      progressCurrent: CAR_ASSIGNMENTS.length,
+      progressTarget: CAR_ASSIGNMENTS.length,
+      progressLabel: `${formatShopCount(CAR_ASSIGNMENTS.length)} / ${formatShopCount(CAR_ASSIGNMENTS.length)} assignments introduced`,
+      reward: "Future multiple-car garage systems",
+      ctaLabel: "",
+      ctaTarget: "",
+      isFutureOnly: true,
+    };
+  }
+  const assignment = nextAvailableCarAssignment(state) || nextCarAssignment(state);
+  if (!assignment) {
+    return {
+      id: "car_management",
+      title: "Car Management",
+      body: "Send the completed build to its first parked assignment.",
+      progressCurrent: 0,
+      progressTarget: 1,
+      progressLabel: "First Complete Build ready",
+      reward: "Cash, Brand Value, and Garage Reputation",
+      ctaLabel: "",
+      ctaTarget: "",
+      isFutureOnly: false,
+    };
+  }
+  const economics = carAssignmentEconomics(assignment, state);
+  const status = carAssignmentRequirementStatus(assignment, state);
+  const affordable = cashBalance(state) >= economics.entryCost;
+  return {
+    id: assignment.id,
+    title: status.unlocked
+      ? affordable ? assignment.title : `Grow Cash for ${assignment.title}`
+      : "Car Management",
+    body: status.unlocked
+      ? assignment.id === "showcase_rotation"
+        ? "The first completed build is ready to manage."
+        : "The next parked assignment is ready."
+      : status.reason,
+    progressCurrent: cashBalance(state),
+    progressTarget: economics.entryCost,
+    progressLabel: status.unlocked
+      ? `${formatCashCount(cashBalance(state))} / ${formatCashCount(economics.entryCost)} Cash`
+      : status.reason,
+    reward: `+${formatCashCount(economics.cashReward)} Cash, +${formatCashCount(economics.brandValueReward)} Brand Value, +${formatShopCount(economics.garageReputationReward)} Garage Reputation`,
+    ctaLabel: "",
+    ctaTarget: "",
+    isFutureOnly: false,
+  };
 }
 
 function pinnedNearGoalForShop(gameState) {
@@ -15649,6 +16370,8 @@ function pinnedNearGoalForShop(gameState) {
       isFutureOnly: false,
     };
   }
+  const carGoal = carManagementPinnedGoal(state);
+  if (carGoal) return carGoal;
   if (dreamInvestmentTargetVisible(state)) {
     const target = dreamInvestmentTargetProgress(state);
     if (!target.purchased) {
@@ -15848,14 +16571,14 @@ function pinnedNearGoalForShop(gameState) {
         return {
           id: "first_complete_build",
           title: "First Complete Build",
-          body: "Car Management comes in a future garage pass.",
+          body: "Car Management is unlocked.",
           progressCurrent: progress.completed,
           progressTarget: progress.total,
           progressLabel: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} Core Build Progress`,
           reward: "First Complete Build local status",
           ctaLabel: "",
           ctaTarget: "",
-          isFutureOnly: true,
+          isFutureOnly: false,
         };
       }
     const inductionStatus = inductionUnlockStatus(state);
@@ -15911,14 +16634,14 @@ function pinnedNearGoalForShop(gameState) {
       return {
         id: "dream_build_current_cap",
         title: "First Complete Build",
-        body: "Car Management comes in a future garage pass.",
+        body: "Car Management is unlocked.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
         progressLabel: `${progress.finalBuildStatus} · ${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)}`,
-        reward: "Car Management is future/target-only",
+        reward: "Unlocked Car Management",
         ctaLabel: "",
         ctaTarget: "",
-        isFutureOnly: true,
+        isFutureOnly: false,
       };
     }
     const availableEvent = nextAvailableGarageEvent(state);
@@ -15961,7 +16684,7 @@ function pinnedNearGoalForShop(gameState) {
       return {
         id: "garage_event_board_complete",
         title: "Garage Event Board complete",
-        body: "Future Car Management will expand events and multiple cars.",
+        body: "Future event-board expansion will add repeatable boards and multiple cars.",
         progressCurrent: progress.completed,
         progressTarget: progress.total,
         progressLabel: `${formatShopCount(progress.completed)} / ${formatShopCount(progress.total)} Core Build Progress`,
@@ -16318,6 +17041,7 @@ function renderOverviewPanel(state) {
       ${renderOverviewOperationalCard(state)}
       ${renderCoveredCarTeaserCard(state)}
       ${dreamBuildInvestmentStarted(state) ? renderDreamBuildOverviewSummaryCard(state) : renderDreamInvestmentTargetCard(state)}
+      ${renderCarManagementOverviewCard(state)}
     </div>
     ${renderOverviewHowItWorks(state, bestOrder, runway, bottleneck)}
     ${compactDetails("overview_more_status", "More status", `<div class="nospill-idle-grid">${hiddenOverviewCards}</div>`)}
@@ -18846,6 +19570,42 @@ function handleGarageEvent(eventId) {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleStartCarAssignment(assignmentId) {
+  const result = startCarAssignment(assignmentId, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "car_management";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
+function handleCollectCarAssignment() {
+  const result = collectCarAssignment(currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "car_management";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -19013,6 +19773,14 @@ function handleTofuShopPanelClick(event) {
     saveGameState(result.gameState);
     renderGamePanels(result.gameState);
     setSummaryStatusMessage(result.note ? "Builder Note saved locally." : "Builder Note cleared.");
+    return;
+  }
+  if (target.dataset.carAssignmentStart) {
+    handleStartCarAssignment(target.dataset.carAssignmentStart);
+    return;
+  }
+  if (target.dataset.carAssignmentCollect) {
+    handleCollectCarAssignment();
     return;
   }
   if (target.dataset.garageEvent) {
@@ -19239,6 +20007,7 @@ function handleGoalStackTarget(target) {
     overview: "overview",
     "dream-build": "overview",
     "net-worth": "overview",
+    "car-management": "car_management",
   };
   const tabId = tabTargets[target] || "overview";
   setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
@@ -19249,6 +20018,8 @@ function handleGoalStackTarget(target) {
   renderGamePanels(state);
   if (target === "dream-build") {
     setSummaryStatusMessage("Review Dream Build progress. Future build tracks stay target-only until implemented.");
+  } else if (target === "car-management") {
+    setSummaryStatusMessage("Review the managed completed car and assignment board while parked.");
   } else if (target === "net-worth") {
     setSummaryStatusMessage("Review Net Worth progress toward the era goal.");
   } else if (target === "spirit") {
@@ -19730,7 +20501,7 @@ function handleNextBestAction() {
     if (work) {
       handleDreamBuildFinal(work.action);
     } else {
-      setSummaryStatusMessage("First Complete Build is finished. Car Management comes later.");
+      setSummaryStatusMessage("First Complete Build is finished. Car Management is unlocked.");
     }
     return;
   }
@@ -19746,6 +20517,24 @@ function handleNextBestAction() {
     appState.shopTab = "dream_build";
     renderGamePanels(currentGameState());
     setSummaryStatusMessage("Review the Garage Event Board while parked.");
+    return;
+  }
+  if (actionType === "start_car_assignment") {
+    const assignmentId = elements.gameCtaButton && elements.gameCtaButton.dataset
+      ? elements.gameCtaButton.dataset.nextCarAssignment || ""
+      : "";
+    handleStartCarAssignment(assignmentId);
+    return;
+  }
+  if (actionType === "collect_car_assignment") {
+    handleCollectCarAssignment();
+    return;
+  }
+  if (actionType === "car_assignment_active" || actionType === "car_management_target") {
+    setAppSurface("shop", { updateHash: true, scroll: true, target: "actions", focus: true });
+    appState.shopTab = "car_management";
+    renderGamePanels(currentGameState());
+    setSummaryStatusMessage("Review the Car Management assignment board while parked.");
     return;
   }
   if (actionType === "prepare_showcase") {

@@ -4781,7 +4781,7 @@ appState.running = false;
   assert(!context.suspensionFivePanelHtml.includes('High-Flow Fuel Injectors'));
   assert(!context.suspensionFivePanelHtml.includes('Anti-Lag System'));
   assert(!context.suspensionFivePanelHtml.includes('Nitrous System'));
-  assert(context.suspensionFivePanelHtml.includes('Future Garage Management'));
+  assert(context.suspensionFivePanelHtml.includes('Future Garage Operations'));
   assert(!context.suspensionFivePanelHtml.includes('Car Management'));
   assert(!context.suspensionFivePanelHtml.includes('Auction'));
   assert(!context.suspensionFivePanelHtml.includes('race'));
@@ -5021,7 +5021,7 @@ appState.running = false;
   assert(context.drivetrainFivePanelHtml.includes('Next Work: Front Splitter &amp; Side Skirts'));
   assert(!context.drivetrainFivePanelHtml.includes('Car Management'));
   assert(!context.drivetrainFivePanelHtml.includes('Auction'));
-  assert(!context.drivetrainFivePanelHtml.includes('multiple cars'));
+  assert(!context.drivetrainFivePanelHtml.includes('data-shop-tab="car_management"'));
   assert.strictEqual(context.drivetrainFivePinnedAfter.title, 'Front Splitter & Side Skirts');
   assert.strictEqual(context.drivetrainFiveTickPinned.title, 'Front Splitter & Side Skirts');
   assert.notStrictEqual(context.drivetrainFiveActionAfter.type, 'buy_dream_drivetrain_work');
@@ -5103,7 +5103,7 @@ appState.running = false;
   assert(!context.aeroFivePanelHtml.includes('Shakedown</button>'));
   assert(!context.aeroFivePanelHtml.includes('Car Management'));
   assert(!context.aeroFivePanelHtml.includes('Auction'));
-  assert(!context.aeroFivePanelHtml.includes('multiple cars'));
+  assert(!context.aeroFivePanelHtml.includes('data-shop-tab="car_management"'));
   assert.strictEqual(context.aeroFivePinnedAfter.title, 'Final Detail');
   assert.strictEqual(context.aeroFiveTickPinned.title, 'Final Detail');
   assert.notStrictEqual(context.aeroFiveActionAfter.type, 'buy_dream_aero_work');
@@ -5143,13 +5143,13 @@ appState.running = false;
   assert(context.shakedownCardHtml.includes('Next Era: Car Management'));
   assert(context.shakedownPanelHtml.includes('First Complete Build'));
   assert(context.shakedownPanelHtml.includes('Core Build Complete · 40 / 40'));
-  assert(context.shakedownPanelHtml.includes('Current focus: Car Management, future.'));
+  assert(context.shakedownPanelHtml.includes('Current focus: Car Management.'));
   assert(!context.shakedownPanelHtml.includes('Car Management</button>'));
   assert(!context.shakedownPanelHtml.includes('Auction'));
-  assert(!context.shakedownPanelHtml.includes('multiple cars'));
+  assert(!context.shakedownPanelHtml.includes('data-shop-tab="car_management"'));
   assert(context.shakedownOverviewHtml.includes('First Complete Build'));
-  assert(context.shakedownOverviewHtml.includes('Progress'));
-  assert.strictEqual(context.shakedownPinnedAfter.title, 'First Complete Build');
+  assert.strictEqual(context.shakedownPinnedAfter.title, 'Grow Cash for Showcase Rotation');
+  assert.strictEqual(context.shakedownActionAfter.type, 'car_management_target');
   assert.notStrictEqual(context.shakedownActionAfter.type, 'buy_dream_final_work');
   assert.strictEqual(context.shakedownSecondPurchase.ok, false);
   assert.strictEqual(context.normalizedInvalidFinalBuildLevel, 0);
@@ -5346,7 +5346,7 @@ appState.running = false;
   assert.strictEqual(context.allEventsState.shop.garageEvents.brandValue, 2040000000);
   assert.strictEqual(context.allEventsState.shop.garageEvents.garageReputation, 325);
   assert(context.allEventsBoardHtml.includes('Garage Event Board Complete'));
-  assert(context.allEventsBoardHtml.includes('Future Car Management'));
+  assert(context.allEventsBoardHtml.includes('Future event-board expansion'));
   assert(context.allEventsBoardHtml.includes('Collector Preview'));
   assert.strictEqual(context.allEventsPinned.title, 'Sports Intercooler');
   assert.notStrictEqual(context.allEventsAction.type, 'enter_garage_event');
@@ -5363,6 +5363,191 @@ appState.running = false;
   assert(!context.eventBoardUnlockedHtml.includes('undefined'));
   assert(!context.eventBoardUnlockedHtml.includes('NaN'));
   assert(!context.eventBoardUnlockedHtml.includes('Infinity'));
+}
+
+function testCarManagementV1IsLocalParkedAndSafe() {
+  const context = loadNoSpillContext({
+    window: { localStorage: makeLocalStorage() },
+  });
+  vm.runInContext(`
+function completedCarFixture(options = {}) {
+  const state = normalizeGameState(defaultGameState());
+  state.shop.tips = options.cash === undefined ? 1000000000000 : options.cash;
+  state.shop.lifetimeTips = 1000000000000;
+  state.shop.tofuStock = 1000000;
+  state.shop.deliveryOrders = 1000;
+  state.shop.dreamBuild.wheelsPurchased = true;
+  state.shop.dreamBuild.wheelsLevel = 3;
+  state.shop.dreamBuild.exhaustPurchased = true;
+  state.shop.dreamBuild.exhaustLevel = 5;
+  state.shop.dreamBuild.suspensionLevel = 5;
+  state.shop.dreamBuild.tiresLevel = 5;
+  state.shop.dreamBuild.brakesLevel = 5;
+  state.shop.dreamBuild.inductionLevel = 5;
+  state.shop.dreamBuild.drivetrainLevel = 5;
+  state.shop.dreamBuild.aeroLevel = 5;
+  state.shop.dreamBuild.finalBuildLevel = options.finalBuildLevel === undefined ? 2 : options.finalBuildLevel;
+  state.shop.dreamBuild.builderNote = options.builderNote || "Built after too many tofu shifts.";
+  return normalizeGameState(state);
+}
+
+const incomplete = completedCarFixture({ finalBuildLevel: 1 });
+globalThis.carManagementHiddenBefore = carManagementTabUnlocked(incomplete);
+globalThis.carManagementHiddenTabs = (() => {
+  const element = { innerHTML: "" };
+  elements.shopTabList = element;
+  elements.shopTabPanel = { innerHTML: "" };
+  renderShopTabs(incomplete);
+  return element.innerHTML;
+})();
+globalThis.carManagementHiddenPanel = renderCarManagementPanel(incomplete);
+
+const complete = completedCarFixture();
+const completeWithCash = normalizeGameState(complete);
+const showcaseEconomics = carAssignmentEconomics("showcase_rotation", completeWithCash);
+completeWithCash.shop.tips = showcaseEconomics.entryCost + 1000000;
+globalThis.carManagementTabReady = carManagementTabUnlocked(completeWithCash);
+globalThis.currentCarSnapshot = completeWithCash.carManagement.currentCar;
+globalThis.lazySnapshot = normalizeGameState({
+  shop: {
+    dreamBuild: {
+      wheelsPurchased: true,
+      wheelsLevel: 3,
+      exhaustPurchased: true,
+      exhaustLevel: 5,
+      suspensionLevel: 5,
+      tiresLevel: 5,
+      brakesLevel: 5,
+      inductionLevel: 5,
+      drivetrainLevel: 5,
+      aeroLevel: 5,
+      finalBuildLevel: 2,
+      builderNote: "Legacy note",
+    },
+  },
+});
+globalThis.carManagementPanel = renderCarManagementPanel(completeWithCash);
+globalThis.carManagementOverview = renderOverviewPanel(completeWithCash);
+globalThis.carManagementSummary = carManagementOverviewSummary(completeWithCash);
+globalThis.carManagementPinned = pinnedNearGoalForShop(completeWithCash);
+globalThis.carManagementAction = nextBestAction(completeWithCash);
+globalThis.showcaseEconomics = showcaseEconomics;
+globalThis.showcaseStart = startCarAssignment("showcase_rotation", completeWithCash, { activeDrive: false, now: "2026-06-20T12:00:00.000Z" });
+globalThis.showcaseStartCashAfter = cashBalance(showcaseStart.gameState);
+globalThis.showcaseStartPanel = renderCarManagementPanel(showcaseStart.gameState);
+globalThis.secondStart = startCarAssignment("sponsor_demo_day", showcaseStart.gameState, { activeDrive: false, now: "2026-06-20T12:01:00.000Z" });
+globalThis.halfwayStatus = activeCarAssignmentStatus(showcaseStart.gameState, { now: "2026-06-20T12:07:00.000Z" });
+globalThis.earlyCollect = collectCarAssignment(showcaseStart.gameState, { activeDrive: false, now: "2026-06-20T12:07:00.000Z" });
+globalThis.readyStatus = activeCarAssignmentStatus(showcaseStart.gameState, { now: "2026-06-20T12:16:00.000Z" });
+globalThis.readyOverview = renderOverviewPanel(showcaseStart.gameState);
+globalThis.showcaseCollect = collectCarAssignment(showcaseStart.gameState, { activeDrive: false, now: "2026-06-20T12:16:00.000Z" });
+globalThis.showcaseCollectedState = showcaseCollect.gameState;
+globalThis.showcaseCashAfterCollect = cashBalance(showcaseCollectedState);
+globalThis.showcaseBrandAfterCollect = carManagementBrandValueV1(showcaseCollectedState);
+globalThis.showcaseTotalBrandAfterCollect = brandValueV1(showcaseCollectedState);
+globalThis.showcaseRepAfterCollect = garageReputationV1(showcaseCollectedState);
+globalThis.showcaseCompletionCount = carAssignmentCompletions(showcaseCollectedState, "showcase_rotation");
+globalThis.showcaseReload = normalizeGameState(JSON.parse(JSON.stringify(showcaseCollectedState)));
+globalThis.showcaseReloadCollect = collectCarAssignment(showcaseReload, { activeDrive: false, now: "2026-06-20T12:20:00.000Z" });
+globalThis.sponsorRequirement = carAssignmentRequirementStatus("sponsor_demo_day", showcaseCollectedState);
+
+const sponsorReady = normalizeGameState(showcaseCollectedState);
+const sponsorEconomics = carAssignmentEconomics("sponsor_demo_day", sponsorReady);
+sponsorReady.shop.tips = sponsorEconomics.entryCost + 1000000;
+globalThis.sponsorStart = startCarAssignment("sponsor_demo_day", sponsorReady, { activeDrive: false, now: "2026-06-20T13:00:00.000Z" });
+globalThis.sponsorCollect = collectCarAssignment(sponsorStart.gameState, { activeDrive: false, now: "2026-06-20T13:31:00.000Z" });
+globalThis.sponsorCollectedState = sponsorCollect.gameState;
+globalThis.exhibitionRequirement = carAssignmentRequirementStatus("closed_course_exhibition_booking", sponsorCollectedState);
+
+const exhibitionReady = normalizeGameState(sponsorCollectedState);
+const exhibitionEconomics = carAssignmentEconomics("closed_course_exhibition_booking", exhibitionReady);
+exhibitionReady.shop.tips = exhibitionEconomics.entryCost + 1000000;
+globalThis.exhibitionStart = startCarAssignment("closed_course_exhibition_booking", exhibitionReady, { activeDrive: false, now: "2026-06-20T14:00:00.000Z" });
+globalThis.exhibitionCollect = collectCarAssignment(exhibitionStart.gameState, { activeDrive: false, now: "2026-06-20T15:01:00.000Z" });
+globalThis.allAssignmentsState = exhibitionCollect.gameState;
+globalThis.allAssignmentsPanel = renderCarManagementPanel(allAssignmentsState);
+globalThis.allAssignmentsPinned = pinnedNearGoalForShop(allAssignmentsState);
+globalThis.eventBoardStillWorks = completeGarageEvent("local_showcase", completeWithCash, { activeDrive: false, now: "2026-06-20T16:00:00.000Z" });
+
+appState.running = true;
+globalThis.activeCarManagementPanel = renderCarManagementPanel(completeWithCash);
+globalThis.activeCarAssignmentStart = startCarAssignment("showcase_rotation", completeWithCash, { activeDrive: true });
+appState.running = false;
+`, context);
+
+  assert.strictEqual(context.carManagementHiddenBefore, false);
+  assert(!context.carManagementHiddenTabs.includes('data-shop-tab="car_management"'));
+  assert(context.carManagementHiddenPanel.includes('Car Management unlocks after First Complete Build.'));
+
+  assert.strictEqual(context.carManagementTabReady, true);
+  assert.strictEqual(context.currentCarSnapshot.id, 'first_complete_build');
+  assert.strictEqual(context.currentCarSnapshot.name, 'First Complete Build');
+  assert.strictEqual(context.currentCarSnapshot.coreProgressAtCompletion, '40 / 40');
+  assert.strictEqual(context.currentCarSnapshot.builderNote, 'Built after too many tofu shifts.');
+  assert(context.currentCarSnapshot.buildValueAtCompletion > 0);
+  assert.strictEqual(context.lazySnapshot.carManagement.currentCar.builderNote, 'Legacy note');
+  assert(context.carManagementPanel.includes('Car Management'));
+  assert(context.carManagementPanel.includes('Assignment Board'));
+  assert(context.carManagementPanel.includes('Showcase Rotation'));
+  assert(context.carManagementPanel.includes('Sponsor Demo Day'));
+  assert(context.carManagementPanel.includes('Closed-Course Exhibition Booking'));
+  assert(context.carManagementPanel.includes('does not affect'));
+  assert(context.carManagementOverview.includes('Car Management'));
+  assert(context.carManagementOverview.includes('Showcase Rotation available.'));
+  assert(!context.carManagementOverview.includes('data-car-assignment-start'));
+  assert.strictEqual(context.carManagementSummary, 'Showcase Rotation available.');
+  assert.strictEqual(context.carManagementPinned.title, 'Showcase Rotation');
+  assert.strictEqual(context.carManagementAction.type, 'start_car_assignment');
+
+  assert.strictEqual(context.showcaseEconomics.entryCost, Math.round(context.currentCarSnapshot.buildValueAtCompletion * 0.0025));
+  assert.strictEqual(context.showcaseEconomics.cashReward, Math.round(context.currentCarSnapshot.buildValueAtCompletion * 0.0075));
+  assert.strictEqual(context.showcaseEconomics.brandValueReward, Math.round(context.currentCarSnapshot.buildValueAtCompletion * 0.005));
+  assert.strictEqual(context.showcaseStart.ok, true);
+  assert.strictEqual(context.showcaseStartCashAfter, 1000000);
+  assert(context.showcaseStartPanel.includes('Showcase Rotation'));
+  assert.strictEqual(context.secondStart.ok, false);
+  assert(context.secondStart.reason.includes('already active'));
+  assert.strictEqual(context.halfwayStatus.ready, false);
+  assert(context.halfwayStatus.remainingMs > 0);
+  assert.strictEqual(context.earlyCollect.ok, false);
+  assert(context.earlyCollect.reason.includes('still in progress'));
+  assert.strictEqual(context.readyStatus.ready, true);
+  assert(context.readyOverview.includes('Showcase Rotation ready to collect.'));
+
+  assert.strictEqual(context.showcaseCollect.ok, true);
+  assert(context.showcaseCollect.feedback.includes('Showcase Rotation complete'));
+  assert.strictEqual(context.showcaseCashAfterCollect, 1000000 + context.showcaseEconomics.cashReward);
+  assert.strictEqual(context.showcaseBrandAfterCollect, context.showcaseEconomics.brandValueReward);
+  assert.strictEqual(context.showcaseTotalBrandAfterCollect, context.showcaseEconomics.brandValueReward);
+  assert.strictEqual(context.showcaseRepAfterCollect, 25);
+  assert.strictEqual(context.showcaseCompletionCount, 1);
+  assert.strictEqual(context.showcaseReload.carManagement.assignmentHistory.length, 1);
+  assert.strictEqual(context.showcaseReloadCollect.ok, false);
+  assert.strictEqual(context.sponsorRequirement.unlocked, true);
+
+  assert.strictEqual(context.sponsorStart.ok, true);
+  assert.strictEqual(context.sponsorCollect.ok, true);
+  assert.strictEqual(context.exhibitionRequirement.unlocked, true);
+  assert.strictEqual(context.exhibitionStart.ok, true);
+  assert.strictEqual(context.exhibitionCollect.ok, true);
+  assert(context.allAssignmentsPanel.includes('First Car Management Loop Complete'));
+  assert.strictEqual(context.allAssignmentsPinned.title, 'First car managed');
+  assert.strictEqual(context.eventBoardStillWorks.ok, true);
+
+  assert.strictEqual(context.activeCarManagementPanel, '');
+  assert.strictEqual(context.activeCarAssignmentStart.ok, false);
+  assert(context.activeCarAssignmentStart.reason.includes('finish and park'));
+
+  const source = readNoSpillSource();
+  assert(!source.includes('fetch('));
+  assert(!source.includes('XMLHttpRequest'));
+  assert(!source.includes('sendBeacon'));
+  assert(!source.includes('navigator.sendBeacon'));
+  assert(!context.carManagementPanel.includes('undefined'));
+  assert(!context.carManagementPanel.includes('NaN'));
+  assert(!context.carManagementPanel.includes('Infinity'));
+  assert(!context.carManagementPanel.includes('multiple cars'));
+  assert(!context.carManagementPanel.includes('Auction'));
 }
 
 function testShopOrderTypeProgressionAndRewards() {
@@ -6878,8 +7063,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620c'));
-  assert(html.includes('/static/nospill/app.css?v=20260620c'));
+  assert(html.includes('/static/nospill/app.js?v=20260620d'));
+  assert(html.includes('/static/nospill/app.css?v=20260620d'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -9753,8 +9938,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620c'));
-  assert(html.includes('/static/nospill/app.css?v=20260620c'));
+  assert(html.includes('/static/nospill/app.js?v=20260620d'));
+  assert(html.includes('/static/nospill/app.css?v=20260620d'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -11276,6 +11461,8 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-counter-service-action',
     'data-dream-build-action',
     'data-garage-event',
+    'data-car-assignment-start',
+    'data-car-assignment-collect',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',
@@ -13228,6 +13415,7 @@ const TESTS = [
   ["testTofuShopStatePackIdleAndUpgradeRules", testTofuShopStatePackIdleAndUpgradeRules],
   ["testDreamBuildTabAndSuspensionWorkV1", testDreamBuildTabAndSuspensionWorkV1],
   ["testGarageEventBoardV1IsLocalParkedAndSafe", testGarageEventBoardV1IsLocalParkedAndSafe],
+  ["testCarManagementV1IsLocalParkedAndSafe", testCarManagementV1IsLocalParkedAndSafe],
   ["testLiveIdleTickAndShopButtonReliability", testLiveIdleTickAndShopButtonReliability],
   ["testExpandedIdleShopLayerMechanics", testExpandedIdleShopLayerMechanics],
   ["testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault", testSettingsTabConsolidatesProgressToolsAndHidesQaByDefault],

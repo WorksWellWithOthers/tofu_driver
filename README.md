@@ -145,7 +145,10 @@ The static app uses hash routing:
   Cooling, Drivetrain & Transmission, and Aero/Styling/Weight Reduction are implemented through
   their Level 5 completions; Final Detail and Shakedown Complete now finish the first core build at
   `40 / 40`; Garage Event Board V1 adds one-time parked fictional events after `$100M Net Worth`
-  plus Tires Level 5; Car Management remains future.
+  plus Tires Level 5; Car Management V1 unlocks after First Complete Build with one active parked
+  assignment at a time for Showcase Rotation, Sponsor Demo Day, and Closed-Course Exhibition
+  Booking. Multiple cars, auctions, collector offers, backend, uploads, and network calls remain
+  future.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
 - `CORE_GAME_SPINE_AUDIT.md`: evidence audit for what is real versus scaffolding in the current

@@ -712,15 +712,22 @@ Design rules:
 - First Complete Build V1 finishes the first core car after Aero Level 5. Final Detail costs
   `$1.5T Cash` and adds `+$1.2T Garage Build Value`; Shakedown Complete costs `$2.5T Cash`, adds
   `+$2T Garage Build Value`, and marks the local `First Complete Build` status at `40 / 40`.
+- Car Management V1 unlocks after `First Complete Build`. It creates one local managed-car
+  snapshot and adds a parked assignment board for Showcase Rotation, Sponsor Demo Day, and
+  Closed-Course Exhibition Booking. Assignments use one active timer at a time, cost Cash based on
+  the completed car value, and grant local Cash, Brand Value, and Garage Reputation only when
+  collected. Multiple cars, auctions, sell offers, collector offers, and repeatable board expansion
+  remain future.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
-  Garage Reputation, and badge rewards, but do not implement full Car Management, multiple cars,
-  auctions, collector-sale offers, public profiles, or networked play.
+  Garage Reputation, and badge rewards; it stays separate from Car Management and does not add
+  multiple cars, auctions, collector-sale offers, public profiles, or networked play.
 - Core Build Progress V2 summarizes the project as `8 tracks x 5 levels = 40 work stages`.
   Current runtime progress is Wheels level plus Exhaust level plus implemented Suspension, Tires,
-  Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion. Repeatable events,
-  multiple cars, auctions, collector offers, and full Car Management remain future.
+  Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion. Car Management V1
+  follows the first complete build; repeatable event expansion, multiple cars, auctions, and
+  collector offers remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.
@@ -808,7 +815,9 @@ Planned core build size = 40 work stages
 
 The Dream Build tab may show current Wheels, Exhaust, Suspension, Tires, Brakes, Induction,
 Drivetrain, Aero, and Final Build labels, the next dream step, Garage Build Value, Builder Note,
-and compact future track notes. It must not add Car Management or a full Dream Garage surface.
+Garage Event Board, and compact future notes. Car Management V1 lives in its own earned tab after
+First Complete Build; full Dream Garage, multiple cars, auctions, and collector offers remain
+future.
 
 Avoid:
 

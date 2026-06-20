@@ -245,6 +245,9 @@ Fix applied:
   Garage Build Value, and Builder Note rendering in an earned parked tab instead of expanding the
   Overview dashboard. Queue-full Now copy and Prep Counter headlines use stable categories so live
   ticks do not alternate between equivalent recommendation strings.
+- Car Management V1 keeps completed-car use bounded: one active parked assignment, timestamp-based
+  offline progress, explicit collection before rewards, capped assignment history, no service
+  worker/background timer, and no network calls.
 - High-Scale Counter Contracts V1 keeps late-game handoffs scalar and bounded. Wholesale Case,
   Event Catering Load, and Venue Supply Contract are larger order bundles, not per-order object
   queues; Counter Service batch floors rise to 100/250/1000 only through parked contracts, and
