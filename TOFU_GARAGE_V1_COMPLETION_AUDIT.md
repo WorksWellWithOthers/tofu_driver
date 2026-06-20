@@ -67,6 +67,7 @@ or car assets.
 | Wheels Work Levels V1 | Implemented | Existing Wheels purchases migrate to level 1; Polish Wheels costs `$75K` and raises Garage Build Value to `$65K`; Balanced Fitment costs `$150K` and raises Garage Build Value to `$150K`; levels 4-5 remain future. |
 | Exhaust Purchase + Work Level V1 | Implemented | Unlocks after Wheels level 3; Buy Exhaust costs `$250K` and raises combined Garage Build Value to `$275K`; Seal Joints costs `$375K` and raises it to `$475K`; Tuned Note costs `$600K` and raises it to `$825K`; Heat Wrapped costs `$1.1M` and raises it to `$1.475M`; Showcase Finish costs `$2M` and raises it to `$2.725M`. |
 | Dream Build Tab V1 + Suspension Level 1 | Implemented | Earned Dream Build tab appears after the build starts; Suspension Refreshed unlocks after Exhaust level 5, costs `$4M`, adds `+$2M Garage Build Value`, and keeps Ride Height Set future-only. |
+| Tofu Garage Tuning Catalog V1 | Implemented docs + preview | `TOFU_GARAGE_TUNING_CATALOG.md` is the canonical future parts source; Dream Build tab shows a collapsed category-only preview and does not dump the full list into Overview. |
 | Dream Build Progress V1 | Implemented | Summarizes current project completion as Wheels Level + Exhaust Level + implemented Suspension Level against `30` planned work stages; current maximum is `9 / 30`; later tracks remain locked/deferred. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
@@ -186,6 +187,8 @@ Current code status:
   starts, keeping detailed car content out of the Overview by default.
 - Suspension Level 1 V1 implements Suspension Refreshed after Exhaust Level 5. It costs `$4M Cash`,
   adds `+$2M Garage Build Value`, and keeps Ride Height Set future/target-only.
+- Tofu Garage Tuning Catalog V1 documents authentic future parts vocabulary for the standalone
+  garage game. Runtime only previews category names in a collapsed Dream Build card.
 - Dream Build Progress V1 shows the project as `30` planned work stages. Current implemented stages
   are Wheels levels 1-3, Exhaust levels 1-5, and Suspension level 1.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not

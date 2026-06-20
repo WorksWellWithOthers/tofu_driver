@@ -68,6 +68,35 @@ This resolves the older tension between "the shop is the base game" and "the cup
 default page": the Cup Test is the iconic first surface, while Tofu Garage is the base parked
 progression layer.
 
+## Product Split: Cup Test And Garage
+
+`Don't Spill the Cup` is the real-world smooth-driving challenge. Its safety/privacy contract stays
+strict: no speed rewards, no public-road competition, no unsafe road incentives, and no raw GPS,
+motion, speed, map, route trace, or street-level uploads.
+
+`Tofu Garage` is a fictional standalone idle, tuning, and garage-management game that can grow
+toward a future standalone Steam/console release. Authentic tuner vocabulary is allowed and
+desirable in this game layer: racing, track-day tires, slicks, anti-lag, nitrous, turbo,
+supercharger, drift, brake balance, LSD, sequential transmission, aero, downforce, and engine swaps
+are valid game terms when used as fictional garage systems.
+
+Tofu Garage parts may affect fictional systems such as Garage Build Value, Build Score, Style,
+Reliability, Comfort, Control, Grip, Power, Response, Cooling, Durability, Event Fit, Showcase
+Readiness, Collector Appeal, Race Class, Garage Reputation, Brand Value, prize potential, and future
+car-management outcomes.
+
+Boundary rule:
+
+```text
+Authentic parts, fictional consequences.
+Real vocabulary, game systems.
+Garage progression does not alter real-world Cup Test proof.
+```
+
+Tofu Garage parts must not affect Don't Spill the Cup scoring, certification, route-context
+achievements, Perfect Pour proof, Driver XP, real-driving rewards, route validation, speed, or
+share-proof integrity. The canonical future parts source is `TOFU_GARAGE_TUNING_CATALOG.md`.
+
 ## Progression Ownership
 
 Delivery Driver progression belongs to Don't Spill the Cup. Driver XP, Driver Level, Driver License
@@ -635,7 +664,9 @@ Design rules:
   Finish.
 - Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It holds
   Wheels, Exhaust, Suspension, Dream Build Progress, Garage Build Value, Builder Note, and
-  future-only garage management notes so the Overview does not become a full build dashboard.
+  future-only garage management notes so the Overview does not become a full build dashboard. It
+  may show a collapsed Garage Tuning Catalog category preview, but the full parts list lives in
+  `TOFU_GARAGE_TUNING_CATALOG.md`.
 - Suspension Level 1 V1 is implemented after Exhaust Level 5. Suspension Refreshed costs `$4M`
   Cash, adds `+$2M Garage Build Value`, advances Dream Build Progress to `9 / 30`, and is framed
   as fictional garage/story value, not speed or real-world vehicle advice. Ride Height Set and
@@ -785,16 +816,18 @@ Safe language:
 - sponsor showcase
 - fictional closed-course event
 - track day as fictional game content
+- authentic tuning catalog
+- race class as fictional game categorization
 - smooth control
 - reliability
 - style
 - event readiness
 
-Avoid copy that implies public-road competition, speed optimization, aggressive road behavior, or
-real-world vehicle modification advice. Dream Build must never reward street racing, public-road
-competition, speed, high-G bragging, Cup Test scoring advantage, Cup Test qualification advantage,
-or real-world driving performance. Use closed-course, showcase, garage, smoothness, reliability,
-and fictional status wording only.
+Avoid copy that implies real public-road competition, real-world vehicle modification advice, legal
+or emissions guidance, or safety claims. Tofu Garage may use authentic tuning language as fictional
+game vocabulary, but Dream Build must never reward street racing, public-road competition, speed,
+high-G bragging, Cup Test scoring advantage, Cup Test qualification advantage, or real-world driving
+performance.
 
 ## Ultimate Net Worth Endgame
 

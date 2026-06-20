@@ -182,6 +182,7 @@ globalThis.dreamBuildProgressSummary = dreamBuildProgressSummary;
 globalThis.renderDreamBuildProgressCard = renderDreamBuildProgressCard;
 globalThis.renderDreamBuildOverviewSummaryCard = renderDreamBuildOverviewSummaryCard;
 globalThis.renderDreamBuildPanel = renderDreamBuildPanel;
+globalThis.renderGarageTuningCatalogPreviewCard = renderGarageTuningCatalogPreviewCard;
 globalThis.sanitizeBuilderNote = sanitizeBuilderNote;
 globalThis.builderNoteVisible = builderNoteVisible;
 globalThis.builderNoteValue = builderNoteValue;
@@ -4188,6 +4189,7 @@ globalThis.suspensionFormulaNetWorth = cashBalance(suspensionPurchase.gameState)
 globalThis.suspensionProgressAfter = dreamBuildProgressSummary(suspensionPurchase.gameState);
 globalThis.suspensionAfterCardHtml = renderDreamInvestmentTargetCard(suspensionPurchase.gameState);
 globalThis.suspensionAfterPanelHtml = renderDreamBuildPanel(suspensionPurchase.gameState);
+globalThis.tuningCatalogPreviewHtml = renderGarageTuningCatalogPreviewCard();
 globalThis.suspensionAfterPinned = pinnedNearGoalForShop(suspensionPurchase.gameState);
 globalThis.suspensionAfterAction = nextBestAction(suspensionPurchase.gameState);
 globalThis.secondSuspensionPurchase = buyDreamBuildSuspension("suspension-refreshed", suspensionPurchase.gameState, { activeDrive: false });
@@ -4196,6 +4198,9 @@ globalThis.activeSuspensionPurchase = buyDreamBuildSuspension("suspension-refres
 appState.shopTab = "overview";
 globalThis.dreamOverviewSummary = renderOverviewPanel(suspensionPurchase.gameState);
 globalThis.dreamSummaryCard = renderDreamBuildOverviewSummaryCard(suspensionPurchase.gameState);
+appState.running = true;
+globalThis.activeTuningCatalogPreviewHtml = renderGarageTuningCatalogPreviewCard();
+appState.running = false;
 `, context);
 
   assert.strictEqual(context.dreamFreshTabUnlocked, false);
@@ -4258,6 +4263,17 @@ globalThis.dreamSummaryCard = renderDreamBuildOverviewSummaryCard(suspensionPurc
   assert(context.suspensionAfterPanelHtml.includes('Current Build'));
   assert(context.suspensionAfterPanelHtml.includes('Garage Build Value'));
   assert(context.suspensionAfterPanelHtml.includes('Builder Note'));
+  assert(context.suspensionAfterPanelHtml.includes('Garage Tuning Catalog'));
+  assert(context.suspensionAfterPanelHtml.includes('Authentic tuning parts unlock across future garage eras.'));
+  assert(context.suspensionAfterPanelHtml.includes('<summary>Catalog categories</summary>'));
+  assert(context.suspensionAfterPanelHtml.includes('Tires &amp; Rubber'));
+  assert(context.suspensionAfterPanelHtml.includes('Suspension &amp; Chassis Geometry'));
+  assert(context.suspensionAfterPanelHtml.includes('Brakes &amp; Control'));
+  assert(context.suspensionAfterPanelHtml.includes('Airflow, Intake &amp; Exhaust'));
+  assert(context.suspensionAfterPanelHtml.includes('Utility, Restorations &amp; Swaps'));
+  assert(!context.suspensionAfterPanelHtml.includes('High-Flow Fuel Injectors'));
+  assert(!context.suspensionAfterPanelHtml.includes('Anti-Lag System'));
+  assert(!context.suspensionAfterPanelHtml.includes('Nitrous System'));
   assert(context.suspensionAfterPanelHtml.includes('Future Garage Management'));
   assert(!context.suspensionAfterPanelHtml.includes('Buy Ride Height Set'));
   assert(!context.suspensionAfterPanelHtml.includes('Car Management'));
@@ -4269,6 +4285,8 @@ globalThis.dreamSummaryCard = renderDreamBuildOverviewSummaryCard(suspensionPurc
   assert(context.dreamOverviewSummary.includes('Suspension: Suspension Refreshed'));
   assert(!context.dreamOverviewSummary.includes('data-builder-note-preset'));
   assert(!context.dreamOverviewSummary.includes('Future Garage Management'));
+  assert(!context.dreamOverviewSummary.includes('Garage Tuning Catalog'));
+  assert.strictEqual(context.activeTuningCatalogPreviewHtml, '');
   assert(context.dreamSummaryCard.includes('9 / 30 work stages'));
   assert(!context.dreamOverviewSummary.includes('undefined'));
   assert(!context.dreamOverviewSummary.includes('NaN'));
@@ -5774,8 +5792,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260619n'));
-  assert(html.includes('/static/nospill/app.css?v=20260619n'));
+  assert(html.includes('/static/nospill/app.js?v=20260619o'));
+  assert(html.includes('/static/nospill/app.css?v=20260619o'));
 }
 
 function testTofuGarageRoutesSurfaceIsDeferred() {
@@ -8430,8 +8448,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260619n'));
-  assert(html.includes('/static/nospill/app.css?v=20260619n'));
+  assert(html.includes('/static/nospill/app.js?v=20260619o'));
+  assert(html.includes('/static/nospill/app.css?v=20260619o'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));

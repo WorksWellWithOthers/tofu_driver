@@ -56,8 +56,8 @@
   edited, Counter Service shows only the relevant Start/Pause action, and offline summaries stay
   compact. Goal Stack buttons are suppressed unless they perform a concrete useful action, queue-full
   copy stays stable, and recommendations mention upgrades only when a visible implemented upgrade is
-  actually available. When the current implemented Dream Build track is capped, the Overview says so
-  directly and labels Suspension as future/target-only.
+  actually available. Detailed car work lives in the earned Dream Build tab, and future-only build
+  steps stay labeled without dead buttons.
 - First Stamp Celebration uses a dedicated parked-only fanfare layout with one wide Mika reward
   splash, compact reward cards, `Continue Tofu Shop`, and no character-slot/debug copy.
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
@@ -215,7 +215,13 @@
   current Exhaust track.
 - Dream Build Tab V1 is implemented as an earned Tofu Garage tab after the build starts. It carries
   detailed Wheels, Exhaust, Suspension, Dream Build Progress, Garage Build Value, and Builder Note
-  content so the Overview can stay compact.
+  content so the Overview can stay compact. It also contains a collapsed Garage Tuning Catalog
+  category preview; the full canonical parts list lives in `TOFU_GARAGE_TUNING_CATALOG.md`.
+- Tofu Garage is allowed to use authentic tuning vocabulary as fictional standalone garage-game
+  language. Garage parts may affect future Build Value, Build Score, Style, Reliability, Event Fit,
+  Race Class, Collector Appeal, Garage Reputation, Brand Value, prize potential, and
+  car-management outcomes, but never Don't Spill the Cup scoring, certification, route-context
+  achievements, Driver XP, or real-world proof.
 - Suspension Level 1 V1 is implemented after Exhaust Level 5. Suspension Refreshed costs `$4M Cash`,
   adds `+$2M Garage Build Value`, and advances Dream Build Progress to `9 / 30`. Ride Height Set,
   later Suspension work, full parts inventory, completed build events, Car Management, and full
@@ -407,20 +413,21 @@ features stay deferred until the first 10 minutes are playtested and tuned.
 
 Future Dream Garage milestone sequence:
 
-1. Verify Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work Level V1, Suspension
-   Level 1 V1, and Dream
-   Build Progress V1:
+1. Verify Dream Build Tab V1, Wheels purchase V1, Wheels Work Levels V1, Exhaust Purchase + Work
+   Level V1, Suspension Level 1 V1, and Dream Build Progress V1:
    `$50K Cash` Wheels Installed, `$75K` Polished Wheels, `$150K` Balanced Fitment, `$250K` Exhaust
    Fitted, `$375K` Sealed Joints, `$600K` Tuned Note, `$1.1M` Heat Wrapped, `$2M` Showcase Finish,
    `$4M` Suspension Refreshed, `9 / 30` progress, Garage Build Value totals, persistence, and
    priority rules.
-2. Playtest whether the next slice should add Ride Height Set, Wheels levels 4-5, or another
-   parked garage expression/status layer.
-3. Refine Dream Build progress across one-purchase part tracks; do not buy duplicate parts.
-4. Refine Garage Build Value from careful work levels after the first two tracks feel clear.
-5. Design the first completed-build event threshold and event choice requirements.
-6. Later implement Keep / Show / Auction choice only after part progression is proven.
-7. Much later connect completed builds to business expansion, collector networks, and scalable
+2. Implement Suspension Levels 2-5 gradually with authentic detail copy from
+   `TOFU_GARAGE_TUNING_CATALOG.md`.
+3. Add Tires & Rubber as the next standalone track.
+4. Add Brakes & Control after tire identity is clear.
+5. Design the first parked event/showcase loop.
+6. Implement Car Management V1 only after the first part tracks are fun.
+7. Add multiple cars.
+8. Add the next era unlock.
+9. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car events are not immediate scope. Keep Showcase, Closed-Course Exhibition, Auction,

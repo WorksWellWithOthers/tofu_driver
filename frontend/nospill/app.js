@@ -374,6 +374,19 @@ const SHOWCASE_PREP_VALUE = 300000;
 const SPONSOR_INQUIRY_CASH_REWARD = 250000;
 const SPONSOR_INQUIRY_BRAND_VALUE = 500000;
 const GARAGE_BUILD_VALUE_LABEL = "Garage Build Value";
+const GARAGE_TUNING_CATALOG_CATEGORIES = [
+  "Tires & Rubber",
+  "Suspension & Chassis Geometry",
+  "Brakes & Control",
+  "Airflow, Intake & Exhaust",
+  "Fueling Infrastructure",
+  "Induction & Cooling",
+  "ECUs & Electronics",
+  "Engine Internals & Reliability",
+  "Drivetrain & Transmission",
+  "Aero, Styling & Weight Reduction",
+  "Utility, Restorations & Swaps",
+];
 const COUNTER_SERVICE_HANDOFF_SECONDS = 10;
 const STARTER_TOFU_STOCK = 24;
 const TOFU_PRESS_BASE_PER_SECOND = 3 / 60;
@@ -12330,6 +12343,23 @@ function renderFutureGarageManagementCard() {
   });
 }
 
+function renderGarageTuningCatalogPreviewCard() {
+  if (appState.running || appState.calibrating) return "";
+  return renderIdleCard({
+    title: "Garage Tuning Catalog",
+    status: "Future catalog",
+    copy: "Authentic tuning parts unlock across future garage eras. Current focus: Suspension.",
+    extra: `
+      <details class="nospill-compact-details">
+        <summary>Catalog categories</summary>
+        <div class="nospill-afford-progress">
+          ${GARAGE_TUNING_CATALOG_CATEGORIES.map((category) => `<small>${escapeHtml(category)}</small>`).join("")}
+        </div>
+      </details>
+    `,
+  });
+}
+
 function renderDreamBuildPanel(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -12349,6 +12379,7 @@ function renderDreamBuildPanel(gameState) {
       ${renderDreamInvestmentTargetCard(state)}
       ${renderProjectCarValueCard(state)}
       ${renderBuilderNoteCard(state)}
+      ${renderGarageTuningCatalogPreviewCard()}
       ${renderFutureGarageManagementCard()}
     </div>
   `;

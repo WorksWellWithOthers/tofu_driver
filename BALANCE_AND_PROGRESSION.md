@@ -389,6 +389,9 @@ Examples:
   increase Car Asset Value and unlock future opportunities.
 - Dream Build Tab V1 appears after the build starts and holds detailed car work, Garage Build
   Value, Dream Build Progress, and Builder Note content outside the glance-first Overview.
+- Tofu Garage now has a canonical standalone tuning catalog in
+  `TOFU_GARAGE_TUNING_CATALOG.md`. It is source material for future Dream Build tracks and uses
+  authentic tuner vocabulary as fictional game language, not real installation advice.
 - Suspension Level 1 V1 proves the third part track after Exhaust Level 5. Suspension Refreshed
   costs `$4M Cash`, adds `+$2M Garage Build Value`, and is fictional garage/story value, not speed
   or real-world vehicle advice.
@@ -1509,6 +1512,23 @@ Implemented Suspension Level 1 V1:
 | --- | --- | --- | --- | --- |
 | 0 | Not Started | none | `$2.725M` with Wheels level 3 and Exhaust level 5 | Implemented as post-Exhaust target state |
 | 1 | Suspension Refreshed | `$4M` | `$4.725M` with Wheels level 3 and Exhaust level 5 | Implemented |
+
+Planned Suspension vocabulary:
+
+| Suspension Level | Planned Work | Catalog Framing |
+| --- | --- | --- |
+| 1 | Suspension Refreshed | Sports suspension, refreshed bushings, and a basic alignment foundation |
+| 2 | Ride Height Set | Height-adjustable sports suspension |
+| 3 | Alignment Dialed | Camber/toe arms and sway-bar setup |
+| 4 | Corner Balance | Fully customizable coilover setup and chassis geometry |
+| 5 | Showcase Stance | Final geometry, bracing, fitment, and presentation |
+
+The full future parts vocabulary is maintained in `TOFU_GARAGE_TUNING_CATALOG.md`. Future Tofu
+Garage parts may affect fictional stats such as Garage Build Value, Build Score, Style,
+Reliability, Comfort, Control, Grip, Power, Response, Cooling, Durability, Event Fit, Showcase
+Readiness, Collector Appeal, Race Class, Garage Reputation, Brand Value, prize potential, and
+future car-management outcomes. They must not affect Don't Spill the Cup scoring, certification,
+route-context achievements, Perfect Pour proof, Driver XP, real-driving rewards, or share proof.
 
 Dream Build Progress V1:
 

@@ -8,6 +8,12 @@ Tofu Driver is a static browser app with two connected experiences:
 The Cup Test can provide optional certified smooth-delivery boosts for the shop, but ordinary Tofu
 Garage progression is playable at home without sensors or location.
 
+The product split is intentional. `Don't Spill the Cup` keeps the strict real-world safety/privacy
+contract. `Tofu Garage` is the fictional standalone idle/tuning/garage-management game and may use
+authentic tuning vocabulary for game systems. The canonical future parts source is
+`TOFU_GARAGE_TUNING_CATALOG.md`; garage parts must never alter Cup Test scoring, certification,
+route-context proof, Driver XP, or real-driving rewards.
+
 Cup-first visitors can reach Tofu Garage from the landing page and from parked Cup Test results.
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
 Route Smoothness Outline when usable local route data exists, Abstract Cup Trail as the
