@@ -329,7 +329,7 @@ const DRIVER_LICENSES = [
   { minLevel: 30, label: "Delivery Legend" },
 ];
 
-const SHOP_MAX_RESOURCE = 10000000000000;
+const SHOP_MAX_RESOURCE = 1000000000000000;
 const SHOP_DELIVERY_ORDER_QUEUE_CAP = 1000000;
 const SHOP_OFFLINE_BASE_CAP_HOURS = 24;
 const SHOP_OFFLINE_MANAGED_CAP_HOURS = 72;
@@ -491,9 +491,14 @@ const SECOND_BAY_OPEN_REPUTATION_COST = 250;
 const SECOND_PROJECT_CAR_COST = 1000000000000;
 const SECOND_PROJECT_CAR_REPUTATION_COST = 500;
 const SECOND_PROJECT_CAR_GARAGE_VALUE = 750000000000;
-const SECOND_CAR_DIRECTION_WORK_COST = 2000000000000;
-const SECOND_CAR_DIRECTION_WORK_REPUTATION_COST = 250;
-const SECOND_CAR_DIRECTION_WORK_VALUE = 1250000000000;
+const SECOND_CAR_DIRECTION_WORK_SCHEDULE = [
+  { level: 1, cashCost: 2000000000000, reputationCost: 250, garageBuildValue: 1250000000000 },
+  { level: 2, cashCost: 4000000000000, reputationCost: 400, garageBuildValue: 2500000000000 },
+  { level: 3, cashCost: 7000000000000, reputationCost: 700, garageBuildValue: 4500000000000 },
+  { level: 4, cashCost: 11000000000000, reputationCost: 1000, garageBuildValue: 7500000000000 },
+  { level: 5, cashCost: 17000000000000, reputationCost: 1500, garageBuildValue: 12000000000000 },
+];
+const SECOND_CAR_DIRECTION_WORK_MAX_LEVEL = 5;
 const SECOND_CAR_BUILD_DIRECTIONS = [
   {
     id: "showcase_build",
@@ -533,39 +538,199 @@ const SECOND_CAR_BUILD_DIRECTIONS = [
 ];
 const SECOND_CAR_DIRECTION_WORK_PACKAGES = {
   showcase_build: {
-    name: "Presentation Package",
-    buttonLabel: "Start Presentation Package",
-    copy: "Begin the second car as a presence-first build with finish, stance, and visual identity.",
-    detail: "Early focus: wheels, stance, exterior finish, panel fitment, aero details, lighting presence, and presentation quality.",
-    future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+    levels: [
+      {
+        name: "Presentation Package",
+        buttonLabel: "Start Presentation Package",
+        copy: "Begin the second car as a presence-first build with finish, stance, and visual identity.",
+        detail: "Early focus: wheels, stance, exterior finish, panel fitment, aero details, lighting presence, and presentation quality.",
+        future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+      },
+      {
+        name: "Fitment & Finish Plan",
+        buttonLabel: "Refine Fitment",
+        copy: "Refine the stance, finish, and panel details so the second car starts to look intentional.",
+        detail: "Wheels, fitment, stance, panel alignment, finish quality, and exterior detail become the foundation of this showcase build.",
+        future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+      },
+      {
+        name: "Lighting & Display Details",
+        buttonLabel: "Add Display Details",
+        copy: "Add the small visual details that make the car read well under lights.",
+        detail: "Lighting presence, display preparation, body accents, and presentation details push the build toward collector attention.",
+        future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+      },
+      {
+        name: "Show Floor Prep",
+        buttonLabel: "Prep Show Floor",
+        copy: "Prepare the car for a proper show-floor moment.",
+        detail: "Final paint correction, wheel presentation, aero touch points, and booth-ready detailing define the showcase identity.",
+        future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+      },
+      {
+        name: "Showcase Build Ready",
+        buttonLabel: "Complete Showcase Setup",
+        copy: "Lock in the second car as a presence-first showcase build.",
+        detail: "The second car is now positioned for future Brand Value, Collector Appeal, and Showcase Readiness systems.",
+        future: "Future path: Brand Value, Collector Appeal, Showcase Readiness.",
+      },
+    ],
   },
   track_build: {
-    name: "Event Prep Package",
-    buttonLabel: "Start Event Prep",
-    copy: "Begin the second car as a closed-course event build with serious hardware and event fit.",
-    detail: "Early focus: R-compounds, brake cooling, safety prep, aero balance, drivetrain response, and event setup.",
-    future: "Future path: Garage Reputation, event rewards, Race Class.",
+    levels: [
+      {
+        name: "Event Prep Package",
+        buttonLabel: "Start Event Prep",
+        copy: "Begin the second car as a closed-course event build with serious hardware and event fit.",
+        detail: "Early focus: R-compounds, brake cooling, safety prep, aero balance, drivetrain response, and event setup.",
+        future: "Future path: Garage Reputation, event rewards, Race Class.",
+      },
+      {
+        name: "Brake Cooling Package",
+        buttonLabel: "Add Brake Cooling",
+        copy: "Prepare the car for longer fictional closed-course sessions with better control hardware.",
+        detail: "Brake cooling, high-temperature pads, fluid, lines, and heat management define the first serious track layer.",
+        future: "Future path: Garage Reputation, event rewards, Race Class.",
+      },
+      {
+        name: "Aero Balance Setup",
+        buttonLabel: "Balance Aero",
+        copy: "Balance the body and aero so the car has a clearer event identity.",
+        detail: "Splitter, diffuser, wing balance, underbody airflow, and setup notes become fictional event-fit details.",
+        future: "Future path: Garage Reputation, event rewards, Race Class.",
+      },
+      {
+        name: "Tire Compound Program",
+        buttonLabel: "Plan Tire Program",
+        copy: "Build a tire program around the car's event class.",
+        detail: "R-compounds, slicks, intermediates, full wets, and tire strategy language become fictional track-build identity.",
+        future: "Future path: Garage Reputation, event rewards, Race Class.",
+      },
+      {
+        name: "Track Build Ready",
+        buttonLabel: "Complete Track Setup",
+        copy: "Lock in the second car as a serious closed-course track build.",
+        detail: "The second car is now positioned for future Race Class, Garage Reputation, and event reward systems.",
+        future: "Future path: Garage Reputation, event rewards, Race Class.",
+      },
+    ],
   },
   drift_build: {
-    name: "Angle Setup Package",
-    buttonLabel: "Start Angle Setup",
-    copy: "Begin the second car as a style-heavy exhibition build with angle, smoke, and attitude.",
-    detail: "Early focus: steering angle adapters, hydraulic handbrake, differential setup, cooling, tire wear, and visual style.",
-    future: "Future path: Style, sponsor appeal, exhibition rewards.",
+    levels: [
+      {
+        name: "Angle Setup Package",
+        buttonLabel: "Start Angle Setup",
+        copy: "Begin the second car as a style-heavy exhibition build with angle, smoke, and attitude.",
+        detail: "Early focus: steering angle adapters, hydraulic handbrake, differential setup, cooling, tire wear, and visual style.",
+        future: "Future path: Style, sponsor appeal, exhibition rewards.",
+      },
+      {
+        name: "Differential Setup",
+        buttonLabel: "Set Differential",
+        copy: "Set the car up around controlled slip and exhibition attitude.",
+        detail: "LSD setup, gearing behavior, clutch feel, and driveline response become the core of this drift identity.",
+        future: "Future path: Style, sponsor appeal, exhibition rewards.",
+      },
+      {
+        name: "Cooling & Tire Wear Prep",
+        buttonLabel: "Prep Cooling",
+        copy: "Prepare the car for heat, smoke, and tire-heavy exhibition work.",
+        detail: "Cooling, tire wear, spare wheel planning, and durability details become fictional exhibition-readiness stats.",
+        future: "Future path: Style, sponsor appeal, exhibition rewards.",
+      },
+      {
+        name: "Style & Smoke Package",
+        buttonLabel: "Add Style Package",
+        copy: "Commit to the look and attitude of the drift build.",
+        detail: "Aero style, livery direction, stance, steering angle hardware, and smoke-show identity define this branch.",
+        future: "Future path: Style, sponsor appeal, exhibition rewards.",
+      },
+      {
+        name: "Drift Build Ready",
+        buttonLabel: "Complete Drift Setup",
+        copy: "Lock in the second car as a style-heavy exhibition build.",
+        detail: "The second car is now positioned for future Style, sponsor appeal, and exhibition reward systems.",
+        future: "Future path: Style, sponsor appeal, exhibition rewards.",
+      },
+    ],
   },
   rally_build: {
-    name: "Gravel Prep Package",
-    buttonLabel: "Start Gravel Prep",
-    copy: "Begin the second car as a rough-surface build with weather, grip, and resilience in mind.",
-    detail: "Early focus: dirt tires, wet tires, suspension travel, underbody protection, cooling, reliability, and recovery prep.",
-    future: "Future path: Reliability, weather fit, special event access.",
+    levels: [
+      {
+        name: "Gravel Prep Package",
+        buttonLabel: "Start Gravel Prep",
+        copy: "Begin the second car as a rough-surface build with weather, grip, and resilience in mind.",
+        detail: "Early focus: dirt tires, wet tires, suspension travel, underbody protection, cooling, reliability, and recovery prep.",
+        future: "Future path: Reliability, weather fit, special event access.",
+      },
+      {
+        name: "Protection & Travel Setup",
+        buttonLabel: "Add Protection",
+        copy: "Give the car the protection and travel it needs for rough fictional event surfaces.",
+        detail: "Suspension travel, underbody protection, mud flaps, and gravel setup define the rough-surface foundation.",
+        future: "Future path: Reliability, weather fit, special event access.",
+      },
+      {
+        name: "Weather Tire Program",
+        buttonLabel: "Plan Weather Tires",
+        copy: "Prepare the car for dirt, wet, and changing fictional conditions.",
+        detail: "Dirt tires, full wet tires, intermediate setups, and weather-fit planning define the rally path.",
+        future: "Future path: Reliability, weather fit, special event access.",
+      },
+      {
+        name: "Reliability Kit",
+        buttonLabel: "Add Reliability Kit",
+        copy: "Build reliability into the second car before the future event calendar gets rougher.",
+        detail: "Cooling, mounts, bushings, skid protection, and serviceability become fictional Reliability and event access stats.",
+        future: "Future path: Reliability, weather fit, special event access.",
+      },
+      {
+        name: "Rally Build Ready",
+        buttonLabel: "Complete Rally Setup",
+        copy: "Lock in the second car as a resilient rough-surface build.",
+        detail: "The second car is now positioned for future Reliability, weather-fit, and special event access systems.",
+        future: "Future path: Reliability, weather fit, special event access.",
+      },
+    ],
   },
   restoration_build: {
-    name: "Restoration Foundation",
-    buttonLabel: "Start Restoration",
-    copy: "Begin the second car as a craftsmanship build focused on history, documentation, and long-term value.",
-    detail: "Early focus: chassis refresh, new body planning, engine health, documentation, interior detail, and clean presentation.",
-    future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+    levels: [
+      {
+        name: "Restoration Foundation",
+        buttonLabel: "Start Restoration",
+        copy: "Begin the second car as a craftsmanship build focused on history, documentation, and long-term value.",
+        detail: "Early focus: chassis refresh, new body planning, engine health, documentation, interior detail, and clean presentation.",
+        future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+      },
+      {
+        name: "Chassis Documentation",
+        buttonLabel: "Document Chassis",
+        copy: "Document the chassis and turn the project into a proper restoration story.",
+        detail: "Chassis notes, condition records, body alignment, service records, and restoration planning become collector-value context.",
+        future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+      },
+      {
+        name: "Period Detail Package",
+        buttonLabel: "Add Period Details",
+        copy: "Choose details that make the build feel cared for, not just rebuilt.",
+        detail: "Trim, wheels, interior detail, period-correct touches, and finish quality define the restoration identity.",
+        future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+      },
+      {
+        name: "Engine & Body Refresh",
+        buttonLabel: "Refresh Engine & Body",
+        copy: "Refresh the major pieces that make the car feel alive again.",
+        detail: "Engine health, body refresh, seals, mounts, cooling, and clean bay presentation become long-term restoration value.",
+        future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+      },
+      {
+        name: "Restoration Build Ready",
+        buttonLabel: "Complete Restoration Setup",
+        copy: "Lock in the second car as a craftsmanship-first restoration build.",
+        detail: "The second car is now positioned for future Collector Appeal, Garage Build Value, and prestige paths.",
+        future: "Future path: Collector Appeal, Garage Build Value, prestige paths.",
+      },
+    ],
   },
 };
 const CAR_ASSIGNMENTS = [
@@ -3615,6 +3780,33 @@ function secondCarDirectionWorkPackageById(directionId) {
   return SECOND_CAR_DIRECTION_WORK_PACKAGES[directionId] || null;
 }
 
+function secondCarDirectionWorkEconomics(level) {
+  return SECOND_CAR_DIRECTION_WORK_SCHEDULE.find((entry) => entry.level === level) || null;
+}
+
+function secondCarDirectionWorkValueThroughLevel(level) {
+  const cappedLevel = Math.max(0, Math.min(SECOND_CAR_DIRECTION_WORK_MAX_LEVEL, safeNonNegativeInteger(level, 0, SECOND_CAR_DIRECTION_WORK_MAX_LEVEL)));
+  return SECOND_CAR_DIRECTION_WORK_SCHEDULE
+    .filter((entry) => entry.level <= cappedLevel)
+    .reduce((sum, entry) => safeNonNegativeInteger(sum + entry.garageBuildValue, 0, SHOP_MAX_RESOURCE), 0);
+}
+
+function secondCarDirectionWorkForLevel(directionId, level) {
+  const packageGroup = secondCarDirectionWorkPackageById(directionId);
+  const economics = secondCarDirectionWorkEconomics(level);
+  const work = packageGroup && Array.isArray(packageGroup.levels)
+    ? packageGroup.levels[level - 1]
+    : null;
+  if (!work || !economics) return null;
+  return {
+    ...work,
+    level,
+    cashCost: economics.cashCost,
+    reputationCost: economics.reputationCost,
+    garageBuildValue: economics.garageBuildValue,
+  };
+}
+
 function secondCarDirectionWorkStatus(gameState) {
   const state = gameState && gameState.shop && gameState.carManagement
     ? gameState
@@ -3623,7 +3815,9 @@ function secondCarDirectionWorkStatus(gameState) {
     ? state.carManagement.secondCarProject
     : defaultSecondCarProjectState();
   const direction = secondCarBuildDirectionById(project.buildDirection);
-  const work = direction ? secondCarDirectionWorkPackageById(direction.id) : null;
+  const currentLevel = Math.max(0, Math.min(SECOND_CAR_DIRECTION_WORK_MAX_LEVEL, safeNonNegativeInteger(project.directionWorkLevel, 0, SECOND_CAR_DIRECTION_WORK_MAX_LEVEL)));
+  const nextLevel = currentLevel < SECOND_CAR_DIRECTION_WORK_MAX_LEVEL ? currentLevel + 1 : null;
+  const work = direction && nextLevel ? secondCarDirectionWorkForLevel(direction.id, nextLevel) : null;
   const reputation = garageReputationV1(state);
   const cash = cashBalance(state);
   return {
@@ -3632,19 +3826,22 @@ function secondCarDirectionWorkStatus(gameState) {
     work,
     acquired: Boolean(project.acquired),
     directionSelected: Boolean(direction && project.directionLocked),
-    complete: Boolean(project.directionWorkLevel >= 1),
+    currentLevel,
+    nextLevel,
+    complete: Boolean(currentLevel >= SECOND_CAR_DIRECTION_WORK_MAX_LEVEL),
     cash,
     reputation,
     canComplete: Boolean(
       project.acquired
       && direction
       && project.directionLocked
-      && project.directionWorkLevel < 1
-      && cash >= SECOND_CAR_DIRECTION_WORK_COST
-      && reputation >= SECOND_CAR_DIRECTION_WORK_REPUTATION_COST
+      && work
+      && currentLevel < SECOND_CAR_DIRECTION_WORK_MAX_LEVEL
+      && cash >= work.cashCost
+      && reputation >= work.reputationCost
     ),
-    missingCash: Math.max(0, SECOND_CAR_DIRECTION_WORK_COST - cash),
-    missingReputation: Math.max(0, SECOND_CAR_DIRECTION_WORK_REPUTATION_COST - reputation),
+    missingCash: work ? Math.max(0, work.cashCost - cash) : 0,
+    missingReputation: work ? Math.max(0, work.reputationCost - reputation) : 0,
   };
 }
 
@@ -3735,10 +3932,10 @@ function normalizeSecondCarProject(value, gameState) {
     ? secondCarBuildDirectionById(source.buildDirection)
     : null;
   const directionWorkLevel = direction
-    ? Math.max(0, Math.min(1, safeNonNegativeInteger(source.directionWorkLevel, 0, 1)))
+    ? Math.max(0, Math.min(SECOND_CAR_DIRECTION_WORK_MAX_LEVEL, safeNonNegativeInteger(source.directionWorkLevel, 0, SECOND_CAR_DIRECTION_WORK_MAX_LEVEL)))
     : 0;
   const minimumGarageValue = acquired
-    ? SECOND_PROJECT_CAR_GARAGE_VALUE + (directionWorkLevel >= 1 ? SECOND_CAR_DIRECTION_WORK_VALUE : 0)
+    ? SECOND_PROJECT_CAR_GARAGE_VALUE + secondCarDirectionWorkValueThroughLevel(directionWorkLevel)
     : 0;
   return {
     ...defaults,
@@ -6868,37 +7065,41 @@ function completeSecondCarDirectionWork(gameState, options = {}) {
   if (!status.acquired) {
     return { ok: false, reason: "Acquire the Second Project Car before starting second-car work.", gameState: next };
   }
-  if (!status.directionSelected || !status.direction || !status.work) {
+  if (!status.directionSelected || !status.direction) {
     return { ok: false, reason: "Choose a Build Direction before starting second-car work.", gameState: next };
   }
   if (status.complete) {
-    return { ok: false, reason: `${status.work.name} is already complete.`, gameState: next };
+    return { ok: false, reason: `${status.direction.title} direction track is already complete.`, gameState: next };
   }
-  if (cashBalance(next) < SECOND_CAR_DIRECTION_WORK_COST) {
-    return { ok: false, reason: `Need ${formatCash(SECOND_CAR_DIRECTION_WORK_COST - cashBalance(next))} more Cash.`, gameState: next };
+  if (!status.work) {
+    return { ok: false, reason: "Choose a Build Direction before starting second-car work.", gameState: next };
   }
-  if (garageReputationV1(next) < SECOND_CAR_DIRECTION_WORK_REPUTATION_COST) {
-    return { ok: false, reason: `Need ${formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST - garageReputationV1(next))} more Garage Reputation.`, gameState: next };
+  if (cashBalance(next) < status.work.cashCost) {
+    return { ok: false, reason: `Need ${formatCash(status.work.cashCost - cashBalance(next))} more Cash.`, gameState: next };
   }
-  const spend = spendGarageReputation(next, SECOND_CAR_DIRECTION_WORK_REPUTATION_COST);
+  if (garageReputationV1(next) < status.work.reputationCost) {
+    return { ok: false, reason: `Need ${formatShopCount(status.work.reputationCost - garageReputationV1(next))} more Garage Reputation.`, gameState: next };
+  }
+  const spend = spendGarageReputation(next, status.work.reputationCost);
   if (!spend.ok) {
-    return { ok: false, reason: `Need ${formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST)} Garage Reputation.`, gameState: next };
+    return { ok: false, reason: `Need ${formatShopCount(status.work.reputationCost)} Garage Reputation.`, gameState: next };
   }
   next = spend.gameState;
   const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
   const now = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
   const project = secondCarProjectState(next);
-  next.shop.tips = safeNonNegativeInteger(next.shop.tips - SECOND_CAR_DIRECTION_WORK_COST, 0, SHOP_MAX_RESOURCE);
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - status.work.cashCost, 0, SHOP_MAX_RESOURCE);
+  const nextLevel = Math.max(1, Math.min(SECOND_CAR_DIRECTION_WORK_MAX_LEVEL, status.nextLevel || 1));
   next.carManagement.secondCarProject = {
     ...project,
-    directionWorkLevel: 1,
+    directionWorkLevel: nextLevel,
     directionWorkCompletedAt: now,
     garageBuildValue: Math.max(
-      SECOND_PROJECT_CAR_GARAGE_VALUE + SECOND_CAR_DIRECTION_WORK_VALUE,
-      safeNonNegativeInteger(project.garageBuildValue, SECOND_PROJECT_CAR_GARAGE_VALUE, SHOP_MAX_RESOURCE) + SECOND_CAR_DIRECTION_WORK_VALUE,
+      SECOND_PROJECT_CAR_GARAGE_VALUE + secondCarDirectionWorkValueThroughLevel(nextLevel),
+      safeNonNegativeInteger(project.garageBuildValue, SECOND_PROJECT_CAR_GARAGE_VALUE, SHOP_MAX_RESOURCE) + status.work.garageBuildValue,
     ),
   };
-  const feedback = `${status.work.name} complete: +${formatCashCount(SECOND_CAR_DIRECTION_WORK_VALUE)} ${GARAGE_BUILD_VALUE_LABEL}.`;
+  const feedback = `${status.work.name} complete: +${formatCashCount(status.work.garageBuildValue)} ${GARAGE_BUILD_VALUE_LABEL}.`;
   next.shop.counterService.lastResult = feedback;
   next = addLedgerEntry(next, "story", feedback);
   next = syncNetWorthMilestones(next).gameState;
@@ -13340,9 +13541,9 @@ function nextCarManagementAction(gameState) {
       if (workStatus.work && !workStatus.complete) {
         return {
           type: workStatus.canComplete ? "complete_second_car_work" : "car_management_target",
-          title: workStatus.canComplete ? "Next: Start Second Car Work" : "Next: Grow Cash for Second Car Work",
+          title: workStatus.canComplete ? `Next: Continue ${selected.title}` : `Next: Grow Cash for ${selected.title}`,
           copy: workStatus.canComplete
-            ? `Begin the ${selected.title} direction with ${workStatus.work.name}.`
+            ? `${workStatus.work.name} is the next second-car work.`
             : "Garage Reputation and Cash fund the first direction package.",
           buttonLabel: workStatus.canComplete ? workStatus.work.buttonLabel : "View Car Management",
           disabled: false,
@@ -13350,8 +13551,8 @@ function nextCarManagementAction(gameState) {
       }
       return {
         type: "car_management_target",
-        title: "Next: Second Car Work Started",
-        copy: "Future second-car tracks come in a later garage pass.",
+        title: "Next: Second Car Direction Complete",
+        copy: "Future second-car assignments come in a later garage pass.",
         buttonLabel: "View Car Management",
         disabled: false,
       };
@@ -16070,7 +16271,7 @@ function renderSecondCarWorkCard(gameState) {
       locked: true,
     });
   }
-  if (!status.directionSelected || !status.direction || !status.work) {
+  if (!status.directionSelected || !status.direction) {
     return renderIdleCard({
       title: "Second Car Work",
       status: "Waiting for direction",
@@ -16080,16 +16281,23 @@ function renderSecondCarWorkCard(gameState) {
   }
   if (status.complete) {
     return renderIdleCard({
-      title: "Second Car Work",
-      status: "First work complete",
-      copy: `${status.work.name} complete.`,
+      title: "Second Car Direction Track Complete",
+      status: `${status.direction.title} · Level 5 / 5`,
+      copy: "Future second-car assignments come in a later garage pass.",
       extra: `
         <div class="nospill-afford-progress">
-          <small>${escapeHtml(status.direction.title)} · first direction work complete.</small>
-          <small>Future ${escapeHtml(status.direction.title)} levels come in a later garage pass.</small>
-          <small>The first completed build stays managed. The second car is becoming a new project identity.</small>
+          <small>${escapeHtml(status.direction.title)} complete.</small>
+          <small>The first completed build stays managed. The second car is developing its own identity.</small>
         </div>
       `,
+    });
+  }
+  if (!status.work) {
+    return renderIdleCard({
+      title: "Second Car Work",
+      status: "Waiting",
+      copy: "Second-car work is preparing.",
+      locked: true,
     });
   }
   const missingLines = [
@@ -16099,12 +16307,13 @@ function renderSecondCarWorkCard(gameState) {
   const disabledReason = missingLines.join(" ");
   return renderIdleCard({
     title: "Second Car Work",
-    status: `${status.direction.title} · ${status.work.name}`,
+    status: `${status.direction.title} · Level ${formatShopCount(status.nextLevel)} / ${formatShopCount(SECOND_CAR_DIRECTION_WORK_MAX_LEVEL)}`,
     copy: status.work.copy,
     extra: `
       <div class="nospill-afford-progress">
-        <small>Cost: ${escapeHtml(formatCash(SECOND_CAR_DIRECTION_WORK_COST))} Cash + ${escapeHtml(formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST))} Garage Reputation</small>
-        <small>${GARAGE_BUILD_VALUE_LABEL}: +${escapeHtml(formatCashCount(SECOND_CAR_DIRECTION_WORK_VALUE))}</small>
+        <small>Next Work: ${escapeHtml(status.work.name)}</small>
+        <small>Cost: ${escapeHtml(formatCash(status.work.cashCost))} Cash + ${escapeHtml(formatShopCount(status.work.reputationCost))} Garage Reputation</small>
+        <small>${GARAGE_BUILD_VALUE_LABEL}: +${escapeHtml(formatCashCount(status.work.garageBuildValue))}</small>
         <small>${missingLines.length ? escapeHtml(missingLines.join(" ")) : "Ready"}</small>
       </div>
       <details data-details-key="second_car_work_${escapeHtml(status.direction.id)}">
@@ -16172,12 +16381,12 @@ function carManagementOverviewSummary(gameState) {
   const secondBay = secondBayStatus(state);
   if (secondBay.acquired) {
     const selected = secondCarBuildDirectionById(secondBay.project.buildDirection);
-    const work = selected ? secondCarDirectionWorkPackageById(selected.id) : null;
-    if (selected && secondBay.project.directionWorkLevel >= 1) {
-      return `Second Car: ${selected.title} · first work complete. Future tracks coming.`;
+    const workStatus = selected ? secondCarDirectionWorkStatus(state) : null;
+    if (selected && workStatus && workStatus.complete) {
+      return `Second Car: ${selected.title} complete. Future assignments coming.`;
     }
     return selected
-      ? `Second Car: ${selected.title} · ${work ? work.name : "first package"} next.`
+      ? `Second Car: ${selected.title} · Level ${formatShopCount(workStatus.nextLevel)} / ${formatShopCount(SECOND_CAR_DIRECTION_WORK_MAX_LEVEL)} · ${workStatus.work ? workStatus.work.name : "next package"} next.`
       : "Second Project Car acquired. Choose its build direction.";
   }
   if (secondBay.bayOpened) return "Second Bay open. Second Project Car available.";
@@ -17333,14 +17542,14 @@ function carManagementPinnedGoal(gameState) {
         const canComplete = workStatus.canComplete;
         return {
           id: "second_car_first_work",
-          title: canComplete ? "Start Second Car Work" : "Grow Cash for Second Car Work",
+          title: canComplete ? `Continue ${selected.title}` : `Grow Cash for ${selected.title}`,
           body: canComplete
-            ? `Begin the ${selected.title} direction with ${workStatus.work.name}.`
-            : "Garage Reputation and Cash fund the first direction package.",
-          progressCurrent: Math.min(cashBalance(state), SECOND_CAR_DIRECTION_WORK_COST),
-          progressTarget: SECOND_CAR_DIRECTION_WORK_COST,
-          progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(SECOND_CAR_DIRECTION_WORK_COST)} Cash · ${formatShopCount(workStatus.reputation)} / ${formatShopCount(SECOND_CAR_DIRECTION_WORK_REPUTATION_COST)} Garage Reputation`,
-          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(SECOND_CAR_DIRECTION_WORK_VALUE)}`,
+            ? `${workStatus.work.name} is the next second-car work.`
+            : "Cash and Garage Reputation fund the next second-car package.",
+          progressCurrent: Math.min(cashBalance(state), workStatus.work.cashCost),
+          progressTarget: workStatus.work.cashCost,
+          progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(workStatus.work.cashCost)} Cash · ${formatShopCount(workStatus.reputation)} / ${formatShopCount(workStatus.work.reputationCost)} Garage Reputation`,
+          reward: `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(workStatus.work.garageBuildValue)}`,
           ctaLabel: "",
           ctaTarget: "",
           isFutureOnly: false,
@@ -17348,12 +17557,12 @@ function carManagementPinnedGoal(gameState) {
       }
       return {
         id: "second_car_work_started",
-        title: "Second Car Work Started",
-        body: "Future second-car tracks come in a later garage pass.",
-        progressCurrent: 1,
-        progressTarget: 1,
-        progressLabel: selected.title,
-        reward: "Future second car build tracks",
+        title: "Second Car Direction Complete",
+        body: "Future second-car assignments come in a later garage pass.",
+        progressCurrent: SECOND_CAR_DIRECTION_WORK_MAX_LEVEL,
+        progressTarget: SECOND_CAR_DIRECTION_WORK_MAX_LEVEL,
+        progressLabel: `${selected.title} Level 5 / 5`,
+        reward: "Future second car assignments",
         ctaLabel: "",
         ctaTarget: "",
         isFutureOnly: true,

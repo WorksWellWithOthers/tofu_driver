@@ -105,8 +105,9 @@ Closed-Course Exhibition Booking. Assignment rewards grant local Cash, Brand Val
 Reputation only when collected. Assignment Explainability V1 makes the loop legible with state
 labels, cost/reward previews, ready-to-collect copy, a first-loop checklist, and capped recent
 history. Second Car Project / Second Bay V1 now opens a second bay and acquires a rolling shell
-after the first loop. Full multi-car management, second-car build tracks, auctions, collector
-offers, and repeatable board expansion remain future.
+after the first loop. Second Car Direction Track V1 develops only the selected second-car branch
+through five local parked work levels. Full multi-car management, second-car assignments, auctions,
+collector offers, and repeatable board expansion remain future.
 
 Second Car Project / Second Bay V1 is now the bridge after that first loop: complete all three
 assignments, reach/spend Garage Reputation, open Second Bay, and acquire a Second Project Car as a
@@ -117,11 +118,10 @@ Second Car Identity / Build Direction V1 adds a one-time locked direction after 
 Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build. It is identity setup
 only and does not add second-car tracks, assignments, fleet controls, or economy rewards.
 
-Second Car First Track V1 adds the first actual second-car work step after that identity choice.
-Each direction gets one package name and flavor hook, shares the same `$2T Cash + 250 Garage
-Reputation` cost, and adds `+$1.25T Garage Build Value`. It confirms the shell is becoming a
-project without adding five-level direction trees, second-car assignments, full fleet management, or
-market systems.
+Second Car Direction Track V1 adds the first full second-car work branch after that identity
+choice. Only the selected branch renders, and it advances from Level 1 to Level 5 with shared
+Cash/Garage Reputation costs and Garage Build Value gains. It confirms the shell is becoming a
+distinct project without adding second-car assignments, full fleet management, or market systems.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category

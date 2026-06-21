@@ -1692,24 +1692,32 @@ Implemented Second Car Project / Second Bay V1 values:
 
 Second Car Identity / Build Direction V1 unlocks after the rolling shell is acquired. The one-time
 locked choices are Showcase Build, Track Build, Drift Build, Rally Build, and Restoration Build.
-This is narrative/strategic setup only: it grants no Cash, Brand Value, Garage Reputation, Garage
-Build Value, or Net Worth change. Second Car Build Tracks remain future-only. There is no second-car
-assignment system or fleet management in V1.
+The choice itself grants no Cash, Brand Value, Garage Reputation, Garage Build Value, or Net Worth
+change.
 
-Implemented Second Car First Track V1 values:
+Implemented Second Car Direction Track V1 values:
 
-| Build Direction | First Work Package | Cash Cost | Garage Reputation Cost | Garage Build Value |
-| --- | --- | --- | --- | --- |
-| Showcase Build | Presentation Package | `$2T` | `250` | `+$1.25T` |
-| Track Build | Event Prep Package | `$2T` | `250` | `+$1.25T` |
-| Drift Build | Angle Setup Package | `$2T` | `250` | `+$1.25T` |
-| Rally Build | Gravel Prep Package | `$2T` | `250` | `+$1.25T` |
-| Restoration Build | Restoration Foundation | `$2T` | `250` | `+$1.25T` |
+| Level | Cash Cost | Garage Reputation Cost | Garage Build Value |
+| --- | --- | --- | --- |
+| 1 | `$2T` | `250` | `+$1.25T` |
+| 2 | `$4T` | `400` | `+$2.5T` |
+| 3 | `$7T` | `700` | `+$4.5T` |
+| 4 | `$11T` | `1,000` | `+$7.5T` |
+| 5 | `$17T` | `1,500` | `+$12T` |
 
-This is one local parked step after direction selection. It spends Garage Reputation using the same
-spendable convention as Second Bay, adds Garage Build Value through the existing component, and does
-not grant Cash, Brand Value, Garage Reputation, assignments, Cup Test rewards, or formula changes.
-Full second-car tracks remain future-only.
+The shared schedule applies to the selected direction only. Showcase Build uses Presentation
+Package, Fitment & Finish Plan, Lighting & Display Details, Show Floor Prep, and Showcase Build
+Ready. Track Build uses Event Prep Package, Brake Cooling Package, Aero Balance Setup, Tire
+Compound Program, and Track Build Ready. Drift Build uses Angle Setup Package, Differential Setup,
+Cooling & Tire Wear Prep, Style & Smoke Package, and Drift Build Ready. Rally Build uses Gravel
+Prep Package, Protection & Travel Setup, Weather Tire Program, Reliability Kit, and Rally Build
+Ready. Restoration Build uses Restoration Foundation, Chassis Documentation, Period Detail Package,
+Engine & Body Refresh, and Restoration Build Ready.
+
+The track spends Garage Reputation using the same spendable convention as Second Bay, adds Garage
+Build Value through the existing component, and does not grant Cash, Brand Value, Garage Reputation,
+assignments, Cup Test rewards, or formula changes. Second-car assignments and full fleet management
+remain future.
 
 Possible level effects:
 

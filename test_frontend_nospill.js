@@ -172,6 +172,7 @@ globalThis.SECOND_CAR_BUILD_DIRECTIONS = SECOND_CAR_BUILD_DIRECTIONS;
 globalThis.SECOND_CAR_DIRECTION_WORK_PACKAGES = SECOND_CAR_DIRECTION_WORK_PACKAGES;
 globalThis.secondCarBuildDirectionById = secondCarBuildDirectionById;
 globalThis.secondCarDirectionWorkPackageById = secondCarDirectionWorkPackageById;
+globalThis.secondCarDirectionWorkForLevel = secondCarDirectionWorkForLevel;
 globalThis.secondCarDirectionWorkStatus = secondCarDirectionWorkStatus;
 globalThis.garageEventBoardStatus = garageEventBoardStatus;
 globalThis.garageEventRequirementStatus = garageEventRequirementStatus;
@@ -5614,17 +5615,53 @@ globalThis.secondWorkAgain = completeSecondCarDirectionWork(secondWorkState, { a
 globalThis.secondWorkReload = normalizeGameState(JSON.parse(JSON.stringify(secondWorkState)));
 globalThis.secondWorkAssignmentStart = startCarAssignment("showcase_rotation", secondWorkState, { activeDrive: false, now: "2026-06-20T19:12:00.000Z" });
 globalThis.secondWorkActiveCarId = secondWorkAssignmentStart.gameState.carManagement.activeAssignment && secondWorkAssignmentStart.gameState.carManagement.activeAssignment.carId;
+const levelTwoReady = normalizeGameState(JSON.parse(JSON.stringify(secondWorkState)));
+levelTwoReady.shop.tips = 6000000000000;
+levelTwoReady.carManagement.garageReputation = 400;
+globalThis.levelTwoValueBefore = projectCarValueV1(levelTwoReady);
+globalThis.levelTwoResult = completeSecondCarDirectionWork(levelTwoReady, { activeDrive: false, now: "2026-06-20T19:20:00.000Z" });
+globalThis.levelTwoState = levelTwoResult.gameState;
+globalThis.levelTwoPanel = renderCarManagementPanel(levelTwoState);
+globalThis.levelTwoOverview = carManagementOverviewSummary(levelTwoState);
+globalThis.levelTwoPinned = pinnedNearGoalForShop(levelTwoState);
+const levelThreeReady = normalizeGameState(JSON.parse(JSON.stringify(levelTwoState)));
+levelThreeReady.shop.tips = 9000000000000;
+levelThreeReady.carManagement.garageReputation = 700;
+globalThis.levelThreeValueBefore = projectCarValueV1(levelThreeReady);
+globalThis.levelThreeResult = completeSecondCarDirectionWork(levelThreeReady, { activeDrive: false, now: "2026-06-20T19:30:00.000Z" });
+globalThis.levelThreeState = levelThreeResult.gameState;
+globalThis.levelThreePanel = renderCarManagementPanel(levelThreeState);
+globalThis.levelThreeOverview = carManagementOverviewSummary(levelThreeState);
+const levelFourReady = normalizeGameState(JSON.parse(JSON.stringify(levelThreeState)));
+levelFourReady.shop.tips = 13000000000000;
+levelFourReady.carManagement.garageReputation = 1000;
+globalThis.levelFourValueBefore = projectCarValueV1(levelFourReady);
+globalThis.levelFourResult = completeSecondCarDirectionWork(levelFourReady, { activeDrive: false, now: "2026-06-20T19:40:00.000Z" });
+globalThis.levelFourState = levelFourResult.gameState;
+globalThis.levelFourPanel = renderCarManagementPanel(levelFourState);
+const levelFiveReady = normalizeGameState(JSON.parse(JSON.stringify(levelFourState)));
+levelFiveReady.shop.tips = 20000000000000;
+levelFiveReady.carManagement.garageReputation = 1500;
+globalThis.levelFiveValueBefore = projectCarValueV1(levelFiveReady);
+globalThis.levelFiveResult = completeSecondCarDirectionWork(levelFiveReady, { activeDrive: false, now: "2026-06-20T19:50:00.000Z" });
+globalThis.levelFiveState = levelFiveResult.gameState;
+globalThis.levelFivePanel = renderCarManagementPanel(levelFiveState);
+globalThis.levelFiveOverview = carManagementOverviewSummary(levelFiveState);
+globalThis.levelFivePinned = pinnedNearGoalForShop(levelFiveState);
+globalThis.levelFiveAction = nextBestAction(levelFiveState);
+globalThis.levelFiveAgain = completeSecondCarDirectionWork(levelFiveState, { activeDrive: false, now: "2026-06-20T19:51:00.000Z" });
 globalThis.directionResults = Object.fromEntries(SECOND_CAR_BUILD_DIRECTIONS.map((direction) => {
   const fixture = normalizeGameState(secondProjectState);
   const result = selectSecondCarBuildDirection(direction.id, fixture, { activeDrive: false, now: "2026-06-20T18:45:00.000Z" });
   const panel = renderCarManagementPanel(result.gameState);
-  const work = secondCarDirectionWorkPackageById(direction.id);
+  const work = secondCarDirectionWorkForLevel(direction.id, 1);
   return [direction.id, {
     ok: result.ok,
     buildDirection: result.gameState.carManagement.secondCarProject.buildDirection,
     directionLocked: result.gameState.carManagement.secondCarProject.directionLocked,
     workName: work && work.name,
     workPanelIncludesName: work ? panel.includes(work.name) : false,
+    levelNames: [1, 2, 3, 4, 5].map((level) => secondCarDirectionWorkForLevel(direction.id, level).name),
     cash: cashBalance(result.gameState),
     brand: brandValueV1(result.gameState),
     carBrand: carManagementBrandValueV1(result.gameState),
@@ -5810,15 +5847,15 @@ appState.running = false;
   assert(context.trackDirectionPanel.includes('Garage Build Value: +$1.25T'));
   assert(!context.trackDirectionPanel.includes('Choose Showcase Build'));
   assert(!context.trackDirectionPanel.includes('Change Direction'));
-  assert.strictEqual(context.trackDirectionOverview, 'Second Car: Track Build · Event Prep Package next.');
-  assert.strictEqual(context.trackDirectionPinned.title, 'Grow Cash for Second Car Work');
-  assert.strictEqual(context.trackDirectionAction.title, 'Next: Grow Cash for Second Car Work');
+  assert.strictEqual(context.trackDirectionOverview, 'Second Car: Track Build · Level 1 / 5 · Event Prep Package next.');
+  assert.strictEqual(context.trackDirectionPinned.title, 'Grow Cash for Track Build');
+  assert.strictEqual(context.trackDirectionAction.title, 'Next: Grow Cash for Track Build');
   assert.strictEqual(context.trackDirectionReload.carManagement.secondCarProject.buildDirection, 'track_build');
   assert.strictEqual(context.trackDirectionSecondSelect.ok, false);
   assert(context.trackDirectionSecondSelect.reason.includes('already locked'));
   assert.strictEqual(context.trackDirectionAssignmentStart.ok, true);
   assert.strictEqual(context.trackDirectionActiveCarId, 'first_complete_build');
-  assert.strictEqual(context.invalidWorkLevelImport.carManagement.secondCarProject.directionWorkLevel, 1);
+  assert.strictEqual(context.invalidWorkLevelImport.carManagement.secondCarProject.directionWorkLevel, 5);
   assert(context.workLowCashPanel.includes('Need $2T more Cash.'));
   assert(context.workLowCashPanel.includes('Need 1 more Garage Reputation.'));
   assert.strictEqual(context.workLowCashResult.ok, false);
@@ -5833,16 +5870,48 @@ appState.running = false;
   assert.strictEqual(context.carManagementBrandValueV1(context.secondWorkState), context.workCarBrandBefore);
   assert.strictEqual(context.garageReputationV1(context.secondWorkState), context.workRepBefore - 250);
   assert.strictEqual(context.secondWorkNetWorth, context.secondWorkFormula);
-  assert(context.secondWorkPanel.includes('Event Prep Package complete.'));
-  assert(context.secondWorkPanel.includes('Future Track Build levels come in a later garage pass.'));
-  assert.strictEqual(context.secondWorkOverview, 'Second Car: Track Build · first work complete. Future tracks coming.');
-  assert.strictEqual(context.secondWorkPinned.title, 'Second Car Work Started');
-  assert.strictEqual(context.secondWorkAction.title, 'Next: Second Car Work Started');
+  assert(context.secondWorkPanel.includes('Track Build · Level 2 / 5'));
+  assert(context.secondWorkPanel.includes('Brake Cooling Package'));
+  assert.strictEqual(context.secondWorkOverview, 'Second Car: Track Build · Level 2 / 5 · Brake Cooling Package next.');
+  assert.strictEqual(context.secondWorkPinned.title, 'Grow Cash for Track Build');
+  assert.strictEqual(context.secondWorkAction.title, 'Next: Grow Cash for Track Build');
   assert.strictEqual(context.secondWorkAgain.ok, false);
-  assert(context.secondWorkAgain.reason.includes('already complete'));
+  assert(context.secondWorkAgain.reason.includes('Need'));
   assert.strictEqual(context.secondWorkReload.carManagement.secondCarProject.directionWorkLevel, 1);
   assert.strictEqual(context.secondWorkAssignmentStart.ok, true);
   assert.strictEqual(context.secondWorkActiveCarId, 'first_complete_build');
+  assert.strictEqual(context.levelTwoResult.ok, true);
+  assert.strictEqual(context.levelTwoResult.feedback, 'Brake Cooling Package complete: +$2.5T Garage Build Value.');
+  assert.strictEqual(context.levelTwoState.carManagement.secondCarProject.directionWorkLevel, 2);
+  assert.strictEqual(context.projectCarValueV1(context.levelTwoState), context.levelTwoValueBefore + 2500000000000);
+  assert(context.levelTwoPanel.includes('Track Build · Level 3 / 5'));
+  assert(context.levelTwoPanel.includes('Aero Balance Setup'));
+  assert.strictEqual(context.levelTwoOverview, 'Second Car: Track Build · Level 3 / 5 · Aero Balance Setup next.');
+  assert.strictEqual(context.levelTwoPinned.title, 'Grow Cash for Track Build');
+  assert.strictEqual(context.levelThreeResult.ok, true);
+  assert.strictEqual(context.levelThreeResult.feedback, 'Aero Balance Setup complete: +$4.5T Garage Build Value.');
+  assert.strictEqual(context.levelThreeState.carManagement.secondCarProject.directionWorkLevel, 3);
+  assert.strictEqual(context.projectCarValueV1(context.levelThreeState), context.levelThreeValueBefore + 4500000000000);
+  assert(context.levelThreePanel.includes('Track Build · Level 4 / 5'));
+  assert(context.levelThreePanel.includes('Tire Compound Program'));
+  assert.strictEqual(context.levelThreeOverview, 'Second Car: Track Build · Level 4 / 5 · Tire Compound Program next.');
+  assert.strictEqual(context.levelFourResult.ok, true);
+  assert.strictEqual(context.levelFourResult.feedback, 'Tire Compound Program complete: +$7.5T Garage Build Value.');
+  assert.strictEqual(context.levelFourState.carManagement.secondCarProject.directionWorkLevel, 4);
+  assert.strictEqual(context.projectCarValueV1(context.levelFourState), context.levelFourValueBefore + 7500000000000);
+  assert(context.levelFourPanel.includes('Track Build · Level 5 / 5'));
+  assert(context.levelFourPanel.includes('Track Build Ready'));
+  assert.strictEqual(context.levelFiveResult.ok, true);
+  assert.strictEqual(context.levelFiveResult.feedback, 'Track Build Ready complete: +$12T Garage Build Value.');
+  assert.strictEqual(context.levelFiveState.carManagement.secondCarProject.directionWorkLevel, 5);
+  assert.strictEqual(context.projectCarValueV1(context.levelFiveState), context.levelFiveValueBefore + 12000000000000);
+  assert(context.levelFivePanel.includes('Second Car Direction Track Complete'));
+  assert(context.levelFivePanel.includes('Track Build · Level 5 / 5'));
+  assert.strictEqual(context.levelFiveOverview, 'Second Car: Track Build complete. Future assignments coming.');
+  assert.strictEqual(context.levelFivePinned.title, 'Second Car Direction Complete');
+  assert.strictEqual(context.levelFiveAction.title, 'Next: Second Car Direction Complete');
+  assert.strictEqual(context.levelFiveAgain.ok, false);
+  assert(context.levelFiveAgain.reason.includes('already complete'));
   for (const directionId of context.secondCarDirectionIds) {
     const result = context.directionResults[directionId];
     assert.strictEqual(result.ok, true);
@@ -5857,6 +5926,45 @@ appState.running = false;
     assert.strictEqual(result.netWorth, context.secondDirectionBeforeNetWorth);
     assert(result.feedback.includes('Second Car Direction Selected'));
   }
+  assert.deepStrictEqual(Array.from(context.directionResults.showcase_build.levelNames), [
+    'Presentation Package',
+    'Fitment & Finish Plan',
+    'Lighting & Display Details',
+    'Show Floor Prep',
+    'Showcase Build Ready',
+  ]);
+  assert.deepStrictEqual(Array.from(context.directionResults.track_build.levelNames), [
+    'Event Prep Package',
+    'Brake Cooling Package',
+    'Aero Balance Setup',
+    'Tire Compound Program',
+    'Track Build Ready',
+  ]);
+  assert.deepStrictEqual(Array.from(context.directionResults.drift_build.levelNames), [
+    'Angle Setup Package',
+    'Differential Setup',
+    'Cooling & Tire Wear Prep',
+    'Style & Smoke Package',
+    'Drift Build Ready',
+  ]);
+  assert.deepStrictEqual(Array.from(context.directionResults.rally_build.levelNames), [
+    'Gravel Prep Package',
+    'Protection & Travel Setup',
+    'Weather Tire Program',
+    'Reliability Kit',
+    'Rally Build Ready',
+  ]);
+  assert.deepStrictEqual(Array.from(context.directionResults.restoration_build.levelNames), [
+    'Restoration Foundation',
+    'Chassis Documentation',
+    'Period Detail Package',
+    'Engine & Body Refresh',
+    'Restoration Build Ready',
+  ]);
+  assert(!context.trackDirectionPanel.includes('Fitment & Finish Plan'));
+  assert(!context.trackDirectionPanel.includes('Differential Setup'));
+  assert(!context.trackDirectionPanel.includes('Protection & Travel Setup'));
+  assert(!context.trackDirectionOverview.includes('Showcase Build'));
   assert.strictEqual(context.invalidDirectionSelect.ok, false);
   assert(context.invalidDirectionSelect.reason.includes('not available'));
   assert.strictEqual(context.activeDirectionSelect.ok, false);
@@ -7398,8 +7506,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620i'));
-  assert(html.includes('/static/nospill/app.css?v=20260620i'));
+  assert(html.includes('/static/nospill/app.js?v=20260620j'));
+  assert(html.includes('/static/nospill/app.css?v=20260620j'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -10316,8 +10424,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620i'));
-  assert(html.includes('/static/nospill/app.css?v=20260620i'));
+  assert(html.includes('/static/nospill/app.js?v=20260620j'));
+  assert(html.includes('/static/nospill/app.css?v=20260620j'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
