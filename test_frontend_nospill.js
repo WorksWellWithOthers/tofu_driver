@@ -179,6 +179,10 @@ globalThis.secondCarAssignmentById = secondCarAssignmentById;
 globalThis.secondCarAssignmentForDirection = secondCarAssignmentForDirection;
 globalThis.secondCarAssignmentStatus = secondCarAssignmentStatus;
 globalThis.startSecondCarAssignment = startSecondCarAssignment;
+globalThis.GARAGE_EXPANSION_PROJECTS = GARAGE_EXPANSION_PROJECTS;
+globalThis.garageExpansionProjectById = garageExpansionProjectById;
+globalThis.garageExpansionStatus = garageExpansionStatus;
+globalThis.completeGarageExpansionProject = completeGarageExpansionProject;
 globalThis.garageEventBoardStatus = garageEventBoardStatus;
 globalThis.garageEventRequirementStatus = garageEventRequirementStatus;
 globalThis.nextGarageEvent = nextGarageEvent;
@@ -5700,6 +5704,84 @@ globalThis.secondAssignmentCollectedPanel = renderCarManagementPanel(secondAssig
 globalThis.secondAssignmentCollectedOverview = carManagementOverviewSummary(secondAssignmentCollectedState);
 globalThis.secondAssignmentCollectedPinned = pinnedNearGoalForShop(secondAssignmentCollectedState);
 globalThis.secondAssignmentCollectedAction = nextBestAction(secondAssignmentCollectedState);
+globalThis.garageExpansionUnlockedStatus = garageExpansionStatus(secondAssignmentCollectedState);
+globalThis.garageExpansionUnlockedPanel = renderCarManagementPanel(secondAssignmentCollectedState);
+globalThis.garageExpansionUnlockedOverview = carManagementOverviewSummary(secondAssignmentCollectedState);
+globalThis.garageExpansionUnlockedChoices = renderActionChoiceBoard(secondAssignmentCollectedState);
+const garageExpansionLowCash = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+garageExpansionLowCash.shop.tips = 1000;
+garageExpansionLowCash.carManagement.garageReputation = 100000;
+globalThis.garageExpansionLowCashPanel = renderCarManagementPanel(garageExpansionLowCash);
+globalThis.garageExpansionLowCashPinned = pinnedNearGoalForShop(garageExpansionLowCash);
+globalThis.garageExpansionLowCashAction = nextBestAction(garageExpansionLowCash);
+globalThis.garageExpansionLowCashResult = completeGarageExpansionProject("thirdBayFoundation", garageExpansionLowCash, { activeDrive: false, now: "2026-06-20T22:00:00.000Z" });
+const garageExpansionLowRep = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+garageExpansionLowRep.shop.tips = 20000000000000;
+garageExpansionLowRep.carManagement.garageReputation = 100;
+garageExpansionLowRep.shop.garageEvents.garageReputation = 0;
+globalThis.garageExpansionLowRepPanel = renderCarManagementPanel(garageExpansionLowRep);
+globalThis.garageExpansionLowRepResult = completeGarageExpansionProject("thirdBayFoundation", garageExpansionLowRep, { activeDrive: false, now: "2026-06-20T22:00:00.000Z" });
+const garageExpansionThirdReady = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+garageExpansionThirdReady.shop.tips = 20000000000000;
+garageExpansionThirdReady.carManagement.garageReputation = 5000;
+globalThis.garageExpansionThirdValueBefore = projectCarValueV1(garageExpansionThirdReady);
+globalThis.garageExpansionThirdCashBefore = cashBalance(garageExpansionThirdReady);
+globalThis.garageExpansionThirdRepBefore = garageReputationV1(garageExpansionThirdReady);
+globalThis.garageExpansionThirdBrandBefore = brandValueV1(garageExpansionThirdReady);
+globalThis.garageExpansionThirdResult = completeGarageExpansionProject("thirdBayFoundation", garageExpansionThirdReady, { activeDrive: false, now: "2026-06-20T22:00:00.000Z" });
+globalThis.garageExpansionThirdState = garageExpansionThirdResult.gameState;
+globalThis.garageExpansionThirdPanel = renderCarManagementPanel(garageExpansionThirdState);
+globalThis.garageExpansionThirdOverview = carManagementOverviewSummary(garageExpansionThirdState);
+globalThis.garageExpansionThirdPinned = pinnedNearGoalForShop(garageExpansionThirdState);
+globalThis.garageExpansionThirdAgain = completeGarageExpansionProject("thirdBayFoundation", garageExpansionThirdState, { activeDrive: false, now: "2026-06-20T22:01:00.000Z" });
+globalThis.garageExpansionThirdReload = normalizeGameState(JSON.parse(JSON.stringify(garageExpansionThirdState)));
+const garageExpansionEventReady = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+garageExpansionEventReady.shop.tips = 10000000000000;
+garageExpansionEventReady.carManagement.garageReputation = 5000;
+globalThis.garageExpansionEventBrandBefore = brandValueV1(garageExpansionEventReady);
+globalThis.garageExpansionEventValueBefore = projectCarValueV1(garageExpansionEventReady);
+globalThis.garageExpansionEventResult = completeGarageExpansionProject("eventOffice", garageExpansionEventReady, { activeDrive: false, now: "2026-06-20T22:10:00.000Z" });
+globalThis.garageExpansionEventState = garageExpansionEventResult.gameState;
+const garageExpansionFabReady = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+garageExpansionFabReady.shop.tips = 8000000000000;
+garageExpansionFabReady.carManagement.garageReputation = 5000;
+globalThis.garageExpansionFabValueBefore = projectCarValueV1(garageExpansionFabReady);
+globalThis.garageExpansionFabResult = completeGarageExpansionProject("fabricationCorner", garageExpansionFabReady, { activeDrive: false, now: "2026-06-20T22:20:00.000Z" });
+globalThis.garageExpansionFabState = garageExpansionFabResult.gameState;
+let garageExpansionAllReady = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+garageExpansionAllReady.shop.tips = 50000000000000;
+garageExpansionAllReady.carManagement.garageReputation = 10000;
+garageExpansionAllReady = completeGarageExpansionProject("fabricationCorner", garageExpansionAllReady, { activeDrive: false, now: "2026-06-20T22:30:00.000Z" }).gameState;
+garageExpansionAllReady.shop.tips = 50000000000000;
+garageExpansionAllReady.carManagement.garageReputation = 10000;
+garageExpansionAllReady = completeGarageExpansionProject("eventOffice", garageExpansionAllReady, { activeDrive: false, now: "2026-06-20T22:31:00.000Z" }).gameState;
+garageExpansionAllReady.shop.tips = 50000000000000;
+garageExpansionAllReady.carManagement.garageReputation = 10000;
+globalThis.garageExpansionAllResult = completeGarageExpansionProject("thirdBayFoundation", garageExpansionAllReady, { activeDrive: false, now: "2026-06-20T22:32:00.000Z" });
+globalThis.garageExpansionAllState = garageExpansionAllResult.gameState;
+globalThis.garageExpansionAllOverview = carManagementOverviewSummary(garageExpansionAllState);
+globalThis.garageExpansionAllPinned = pinnedNearGoalForShop(garageExpansionAllState);
+globalThis.garageExpansionInvalidProject = completeGarageExpansionProject("not_real_project", secondAssignmentCollectedState, { activeDrive: false });
+const invalidGarageExpansionImport = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+invalidGarageExpansionImport.carManagement.garageExpansion = {
+  unlockedAt: 1234,
+  projects: {
+    thirdBayFoundation: { completed: true, completedAt: "2026-06-20T22:00:00.000Z" },
+    eventOffice: { completed: "yes", completedAt: 55 },
+    badProject: { completed: true, completedAt: "bad" },
+  },
+};
+globalThis.invalidGarageExpansionImport = normalizeGameState(invalidGarageExpansionImport);
+const oldGarageExpansionSave = JSON.parse(JSON.stringify(secondAssignmentCollectedState));
+delete oldGarageExpansionSave.carManagement.garageExpansion;
+globalThis.oldGarageExpansionSave = normalizeGameState(oldGarageExpansionSave);
+globalThis.garageExpansionActiveDrivePanel = (() => {
+  appState.running = true;
+  const html = renderCarManagementPanel(secondAssignmentCollectedState);
+  appState.running = false;
+  return html;
+})();
+globalThis.garageExpansionActiveDriveResult = completeGarageExpansionProject("thirdBayFoundation", secondAssignmentCollectedState, { activeDrive: true });
 globalThis.secondAssignmentReload = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
 globalThis.secondAssignmentReloadCollect = collectCarAssignment(secondAssignmentReload, { activeDrive: false, now: "2026-06-20T21:02:00.000Z" });
 globalThis.secondAssignmentRestart = startSecondCarAssignment(secondAssignmentCollectedState, { activeDrive: false, now: "2026-06-20T21:03:00.000Z" });
@@ -6057,9 +6139,65 @@ appState.running = false;
   assert.strictEqual(context.secondAssignmentCollectedState.carManagement.secondCarProject.assignmentBoard.completedAssignmentId, 'second_track_test_session');
   assert.strictEqual(context.secondAssignmentCollectedState.carManagement.activeAssignment, null);
   assert(context.secondAssignmentCollectedPanel.includes('Second Car Assignment Complete'));
-  assert.strictEqual(context.secondAssignmentCollectedOverview, 'Second Car assignment complete. Future chains coming.');
-  assert.strictEqual(context.secondAssignmentCollectedPinned.title, 'Second Car Assignment Complete');
-  assert.strictEqual(context.secondAssignmentCollectedAction.title, 'Next: Second Car Assignment Complete');
+  assert(context.secondAssignmentCollectedPanel.includes('Garage Expansion Board'));
+  assert.strictEqual(context.secondAssignmentCollectedOverview, 'Garage Expansion: Three facility projects available: Third Bay, Event Office, Fabrication Corner.');
+  assert.strictEqual(context.secondAssignmentCollectedPinned.title, 'Grow Garage Expansion Funds');
+  assert.strictEqual(context.secondAssignmentCollectedAction.title, 'Next: Grow Garage Expansion Funds');
+  assert.strictEqual(context.garageExpansionUnlockedStatus.unlocked, true);
+  assert.strictEqual(context.garageExpansionUnlockedStatus.completedCount, 0);
+  assert(context.garageExpansionUnlockedPanel.includes('Third Bay Foundation'));
+  assert(context.garageExpansionUnlockedPanel.includes('Event Office'));
+  assert(context.garageExpansionUnlockedPanel.includes('Fabrication Corner'));
+  assert(context.garageExpansionUnlockedPanel.includes('Cost: $12T Cash + 1.5K Garage Reputation'));
+  assert(context.garageExpansionUnlockedPanel.includes('Cost: $8T Cash + 2K Garage Reputation'));
+  assert(context.garageExpansionUnlockedPanel.includes('Cost: $6T Cash + 1K Garage Reputation'));
+  assert(context.garageExpansionUnlockedPanel.includes('Reward: +$15T Garage Build Value'));
+  assert(context.garageExpansionUnlockedPanel.includes('Reward: +$10T Brand Value'));
+  assert(context.garageExpansionUnlockedPanel.includes('Reward: +$8T Garage Build Value'));
+  assert(context.garageExpansionUnlockedPanel.includes('Future unlock path: Third Project Car.'));
+  assert(!context.garageExpansionUnlockedOverview.includes('Build Third Bay Foundation'));
+  assert(context.garageExpansionUnlockedChoices.includes('Garage Expansion'));
+  assert(context.garageExpansionUnlockedChoices.includes('Fabrication Corner'));
+  assert(context.garageExpansionLowCashPanel.includes('Need $12T more Cash.'));
+  assert.strictEqual(context.garageExpansionLowCashPinned.title, 'Grow Garage Expansion Funds');
+  assert.strictEqual(context.garageExpansionLowCashAction.title, 'Next: Grow Garage Expansion Funds');
+  assert.strictEqual(context.garageExpansionLowCashResult.ok, false);
+  assert(context.garageExpansionLowCashResult.reason.includes('Need $12T more Cash'));
+  assert(context.garageExpansionLowRepPanel.includes('Need 1.4K more Garage Reputation.'));
+  assert.strictEqual(context.garageExpansionLowRepResult.ok, false);
+  assert(context.garageExpansionLowRepResult.reason.includes('Garage Reputation'));
+  assert.strictEqual(context.garageExpansionThirdResult.ok, true);
+  assert.strictEqual(context.garageExpansionThirdResult.feedback, 'Third Bay Foundation complete: +$15T Garage Build Value.');
+  assert.strictEqual(context.projectCarValueV1(context.garageExpansionThirdState), context.garageExpansionThirdValueBefore + 15000000000000);
+  assert.strictEqual(context.cashBalance(context.garageExpansionThirdState), context.garageExpansionThirdCashBefore - 12000000000000);
+  assert.strictEqual(context.garageReputationV1(context.garageExpansionThirdState), context.garageExpansionThirdRepBefore - 1500);
+  assert.strictEqual(context.brandValueV1(context.garageExpansionThirdState), context.garageExpansionThirdBrandBefore);
+  assert.strictEqual(context.garageExpansionThirdState.carManagement.garageExpansion.projects.thirdBayFoundation.completed, true);
+  assert(context.garageExpansionThirdPanel.includes('Third Bay Foundation complete. The garage is ready for a future third project car.'));
+  assert.strictEqual(context.garageExpansionThirdOverview, 'Garage Expansion: 1 / 3 facility projects complete.');
+  assert.strictEqual(context.garageExpansionThirdAgain.ok, false);
+  assert(context.garageExpansionThirdAgain.reason.includes('already complete'));
+  assert.strictEqual(context.garageExpansionThirdReload.carManagement.garageExpansion.projects.thirdBayFoundation.completed, true);
+  assert.strictEqual(context.garageExpansionEventResult.ok, true);
+  assert.strictEqual(context.garageExpansionEventResult.feedback, 'Event Office complete: +$10T Brand Value.');
+  assert.strictEqual(context.brandValueV1(context.garageExpansionEventState), context.garageExpansionEventBrandBefore + 10000000000000);
+  assert.strictEqual(context.projectCarValueV1(context.garageExpansionEventState), context.garageExpansionEventValueBefore);
+  assert.strictEqual(context.garageExpansionFabResult.ok, true);
+  assert.strictEqual(context.garageExpansionFabResult.feedback, 'Fabrication Corner complete: +$8T Garage Build Value.');
+  assert.strictEqual(context.projectCarValueV1(context.garageExpansionFabState), context.garageExpansionFabValueBefore + 8000000000000);
+  assert.strictEqual(context.garageExpansionAllResult.ok, true);
+  assert.strictEqual(context.garageExpansionAllOverview, 'Garage Expansion: 3 / 3 facility projects complete. Future garage expansion paths unlocked.');
+  assert.strictEqual(context.garageExpansionAllPinned.title, 'Garage Expansion Complete');
+  assert.strictEqual(context.garageExpansionInvalidProject.ok, false);
+  assert.strictEqual(context.invalidGarageExpansionImport.carManagement.garageExpansion.projects.thirdBayFoundation.completed, true);
+  assert.strictEqual(context.invalidGarageExpansionImport.carManagement.garageExpansion.projects.eventOffice.completed, false);
+  assert.strictEqual(context.invalidGarageExpansionImport.carManagement.garageExpansion.projects.badProject, undefined);
+  assert.strictEqual(context.oldGarageExpansionSave.carManagement.garageExpansion.projects.thirdBayFoundation.completed, false);
+  assert.strictEqual(context.oldGarageExpansionSave.carManagement.garageExpansion.projects.eventOffice.completed, false);
+  assert.strictEqual(context.oldGarageExpansionSave.carManagement.garageExpansion.projects.fabricationCorner.completed, false);
+  assert.strictEqual(context.garageExpansionActiveDrivePanel, '');
+  assert.strictEqual(context.garageExpansionActiveDriveResult.ok, false);
+  assert(context.garageExpansionActiveDriveResult.reason.includes('parked') || context.garageExpansionActiveDriveResult.reason.includes('after the drive'));
   assert.strictEqual(context.secondAssignmentReloadCollect.ok, false);
   assert(context.secondAssignmentReloadCollect.reason.includes('No Car Management assignment'));
   assert.strictEqual(context.secondAssignmentRestart.ok, false);
@@ -7672,8 +7810,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620k'));
-  assert(html.includes('/static/nospill/app.css?v=20260620k'));
+  assert(html.includes('/static/nospill/app.js?v=20260620l'));
+  assert(html.includes('/static/nospill/app.css?v=20260620l'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -10590,8 +10728,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620k'));
-  assert(html.includes('/static/nospill/app.css?v=20260620k'));
+  assert(html.includes('/static/nospill/app.js?v=20260620l'));
+  assert(html.includes('/static/nospill/app.css?v=20260620l'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -12120,6 +12258,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-second-car-direction',
     'data-second-car-work',
     'data-second-car-assignment-start',
+    'data-garage-expansion-project',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',

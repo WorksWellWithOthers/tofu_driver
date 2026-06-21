@@ -1732,6 +1732,21 @@ Only the selected direction assignment renders. It is one-time in V1, grants rew
 collected, adds no Garage Build Value, and shares the global one-active-car-assignment rule with
 the first completed build. Full fleet management and second-car assignment chains remain future.
 
+Implemented Garage Expansion Board V1 values:
+
+| Facility Project | Cash Cost | Garage Reputation Cost | Immediate Reward | Future Path |
+| --- | --- | --- | --- | --- |
+| Third Bay Foundation | `$12T` | `1,500` | `+$15T Garage Build Value` | Third Project Car |
+| Event Office | `$8T` | `2,000` | `+$10T Brand Value` | assignment chains and event scheduling |
+| Fabrication Corner | `$6T` | `1,000` | `+$8T Garage Build Value` | parallel build choices and parts-prep systems |
+
+Garage Expansion unlocks only after the second-car proof assignment has been collected. Projects
+are one-time in V1 and can be built in any order. Third Bay Foundation and Fabrication Corner flow
+through the existing Garage Build Value component; Event Office flows through existing Car
+Management Brand Value. Net Worth remains `Cash + Tofu Business Value + Garage Build Value + Brand
+Value`. No third car, fleet management, repeatable event-board expansion, backend, uploads, or
+network calls are added.
+
 Possible level effects:
 
 - Cash decreases.

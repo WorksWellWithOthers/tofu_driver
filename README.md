@@ -157,8 +157,12 @@ The static app uses hash routing:
   Test effects. Second Car Direction Track V1 renders only the selected branch and adds five parked
   direction work levels with shared Cash/Reputation costs and Garage Build Value gains. Second Car
   Assignment Board V1 adds one selected-direction payoff assignment with manual collection rewards.
-  Multiple active cars, assignment chains, auctions, collector offers, backend, uploads, and network
-  calls remain future.
+  Garage Expansion Board V1 unlocks after that payoff assignment is collected and adds three
+  one-time facility projects: Third Bay Foundation, Event Office, and Fabrication Corner. They
+  spend Cash plus Garage Reputation, add Garage Build Value or Brand Value through existing
+  components, and leave third cars, fleet management, backend/uploads, and network play future.
+  Multiple active cars, assignment chains, auctions, collector offers, backend, uploads, and
+  network calls remain future.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing
 - `CORE_GAME_SPINE_AUDIT.md`: evidence audit for what is real versus scaffolding in the current

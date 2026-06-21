@@ -758,6 +758,13 @@ Design rules:
   collection, and is one-time in V1. First- and second-car assignments share one global active
   assignment slot; full fleet management, assignment chains, auctions, sell/collector offers,
   backend, uploads, and network play remain future.
+- Garage Expansion Board V1 unlocks after the second-car proof assignment is collected. It adds
+  three one-time facility projects that can be built in any order: Third Bay Foundation
+  (`$12T Cash + 1,500 Garage Reputation`, `+$15T Garage Build Value`), Event Office
+  (`$8T Cash + 2,000 Garage Reputation`, `+$10T Brand Value`), and Fabrication Corner
+  (`$6T Cash + 1,000 Garage Reputation`, `+$8T Garage Build Value`). These are facility-level
+  choices for future third-car, assignment-chain, and build-choice paths; they do not add a third
+  car, fleet management, repeatable events, auctions, backend, uploads, or network play.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
@@ -769,8 +776,8 @@ Design rules:
   follows the first complete build, and Second Bay V1 adds a rolling-shell bridge toward the next
   project. Second Car Direction Track V1 develops the selected second-car identity through five
   parked work levels; Second Car Assignment Board V1 then adds one proof assignment for that
-  identity. Repeatable event expansion, full multi-car management, auctions, and collector offers
-  remain future.
+  identity. Garage Expansion Board V1 follows with three facility investments. Repeatable event
+  expansion, full multi-car management, auctions, and collector offers remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.

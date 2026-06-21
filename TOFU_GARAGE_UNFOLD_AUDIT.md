@@ -107,8 +107,10 @@ labels, cost/reward previews, ready-to-collect copy, a first-loop checklist, and
 history. Second Car Project / Second Bay V1 now opens a second bay and acquires a rolling shell
 after the first loop. Second Car Direction Track V1 develops only the selected second-car branch
 through five local parked work levels. Second Car Assignment Board V1 adds the selected branch's
-first one-time proof assignment after Level 5. Full multi-car management, second-car assignment
-chains, auctions, collector offers, and repeatable board expansion remain future.
+first one-time proof assignment after Level 5. Garage Expansion Board V1 then adds three one-time
+facility projects after that proof assignment is collected. Full multi-car management, third-car
+acquisition, second-car assignment chains, auctions, collector offers, and repeatable board
+expansion remain future.
 
 Second Car Project / Second Bay V1 is now the bridge after that first loop: complete all three
 assignments, reach/spend Garage Reputation, open Second Bay, and acquire a Second Project Car as a
@@ -125,6 +127,11 @@ Cash/Garage Reputation costs and Garage Build Value gains. Second Car Assignment
 adds one selected-direction payoff assignment with a `60 min`, `$1T Cash` parked loop and manual
 collection. It confirms the shell is becoming a distinct project without adding assignment chains,
 full fleet management, or market systems.
+
+Garage Expansion Board V1 is the facility-level choice after the second car proves its identity.
+Third Bay Foundation, Event Office, and Fabrication Corner can be built in any order and point to
+future third-car, assignment-chain, and build-choice paths without implementing those future
+systems.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category

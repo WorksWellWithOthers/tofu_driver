@@ -342,6 +342,13 @@ Cash, lasts `60 min`, and grants local Cash, Brand Value, and Garage Reputation 
 collection. It adds no Garage Build Value and does not add assignment chains, fleet management,
 backend, uploads, or network calls.
 
+Garage Expansion Board V1 follows after that proof assignment is collected. It is a facility layer,
+not a new car track: Third Bay Foundation points to a future third project car, Event Office points
+to future assignment chains and event scheduling, and Fabrication Corner points to future parallel
+build-choice and parts-prep systems. These projects use the existing Garage Build Value or Brand
+Value components and do not add third-car acquisition, fleet controls, backend, uploads, or network
+calls.
+
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build
 progress, Garage Build Value, Brand Value, and Garage Reputation. It stays separate from Car

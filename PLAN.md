@@ -275,6 +275,13 @@
   Cash, Brand Value, and Garage Reputation on manual collection, adds no Garage Build Value, and is
   one-time in V1. Assignment chains, fleet management, auctions, collector offers, backend/uploads,
   and network calls remain future.
+- Garage Expansion Board V1 is implemented after the selected second-car assignment is collected.
+  It adds three one-time facility projects that can be built in any order: Third Bay Foundation
+  (`$12T Cash + 1,500 Garage Reputation`, `+$15T Garage Build Value`), Event Office (`$8T Cash +
+  2,000 Garage Reputation`, `+$10T Brand Value`), and Fabrication Corner (`$6T Cash + 1,000 Garage
+  Reputation`, `+$8T Garage Build Value`). These open future third-car, assignment-chain, and
+  build-choice paths without adding a third car, fleet management, backend/uploads, or network
+  calls.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
   planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
@@ -485,14 +492,18 @@ Future Dream Garage milestone sequence:
 2. Playtest Car Management V1 assignment durations/rewards, readable state labels, first-loop
    closure, and whether one active assignment is enough for the first completed car.
 3. Playtest Second Bay costs, Garage Reputation spending, locked Build Direction, selected
-   second-car direction track pacing, and the one-time Second Car Assignment payoff.
-4. Design Second Car Assignment Chains V1 as a separate project-car use loop, not fleet management.
-5. Design the next parked event/showcase expansion loop without replacing the existing one-car
+   second-car direction track pacing, one-time Second Car Assignment payoff, and Garage Expansion
+   Board facility choices.
+4. Design the Third Project Car path from Third Bay Foundation without turning it into full fleet
+   management.
+5. Design Second Car Assignment Chains V1 from Event Office as a separate project-car use loop.
+6. Design the next parked event/showcase expansion loop without replacing the existing one-car
    assignment board.
-6. Add second-car assignment chains only after the selected one-time proof assignment feels readable.
-7. Add multiple-car management only after the second project build loop works.
-8. Add the next era unlock.
-9. Much later connect completed builds to business expansion, collector networks, and scalable
+7. Add parallel build-choice systems from Fabrication Corner only after the current focused build
+   path remains readable.
+8. Add multiple-car management only after the second project build loop works.
+9. Add the next era unlock.
+10. Much later connect completed builds to business expansion, collector networks, and scalable
    garage/company paths.
 
 Completed-car management has a V1 loop now: Showcase Rotation, Sponsor Demo Day, and

@@ -270,6 +270,10 @@ Fix applied:
   the selected direction assignment, and keeps the assignment one-time in V1. It adds no fleet
   array, no multiple active assignments, no service worker, no backend sync, no uploads, and no
   unbounded history.
+- Garage Expansion Board V1 adds one bounded `garageExpansion` object with exactly three project
+  records. It renders three facility cards only after unlock, has no timers, no fleet array, no
+  third-car state, no multiple active assignments, no service worker, no backend sync, no uploads,
+  and no unbounded history.
 - High-Scale Counter Contracts V1 keeps late-game handoffs scalar and bounded. Wholesale Case,
   Event Catering Load, and Venue Supply Contract are larger order bundles, not per-order object
   queues; Counter Service batch floors rise to 100/250/1000 only through parked contracts, and

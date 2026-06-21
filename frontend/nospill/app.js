@@ -828,6 +828,44 @@ const SECOND_CAR_ASSIGNMENTS = [
     future: "Future path: Collector Appeal, provenance, and prestige paths.",
   },
 ];
+const GARAGE_EXPANSION_PROJECTS = [
+  {
+    id: "thirdBayFoundation",
+    title: "Third Bay Foundation",
+    buttonLabel: "Build Third Bay Foundation",
+    cashCost: 12000000000000,
+    reputationCost: 1500,
+    garageBuildValue: 15000000000000,
+    brandValue: 0,
+    copy: "Lay the foundation for a future third project car.",
+    future: "Future unlock path: Third Project Car.",
+    completeCopy: "Third Bay Foundation complete. The garage is ready for a future third project car.",
+  },
+  {
+    id: "eventOffice",
+    title: "Event Office",
+    buttonLabel: "Build Event Office",
+    cashCost: 8000000000000,
+    reputationCost: 2000,
+    garageBuildValue: 0,
+    brandValue: 10000000000000,
+    copy: "Create a small office for invitations, sponsorship calls, booking notes, and assignment planning.",
+    future: "Future unlock path: assignment chains and event scheduling.",
+    completeCopy: "Event Office complete. Future assignment chains can build from here.",
+  },
+  {
+    id: "fabricationCorner",
+    title: "Fabrication Corner",
+    buttonLabel: "Build Fabrication Corner",
+    cashCost: 6000000000000,
+    reputationCost: 1000,
+    garageBuildValue: 8000000000000,
+    brandValue: 0,
+    copy: "Set up a practical corner for parts prep, mockups, repairs, and future build-path choices.",
+    future: "Future unlock path: parallel build choices and parts-prep systems.",
+    completeCopy: "Fabrication Corner complete. Future build-choice systems can build from here.",
+  },
+];
 const GARAGE_TUNING_CATALOG_CATEGORIES = [
   "Tires & Rubber",
   "Suspension & Chassis Geometry",
@@ -3257,6 +3295,7 @@ function defaultCarManagementState() {
     brandValue: 0,
     garageReputation: 0,
     secondCarProject: defaultSecondCarProjectState(),
+    garageExpansion: defaultGarageExpansionState(),
   };
 }
 
@@ -3289,6 +3328,19 @@ function defaultSecondCarAssignmentBoardState() {
     completedAssignmentId: null,
     completedAt: null,
     collectedAt: null,
+  };
+}
+
+function defaultGarageExpansionState() {
+  return {
+    unlockedAt: null,
+    projects: Object.fromEntries(GARAGE_EXPANSION_PROJECTS.map((project) => [
+      project.id,
+      {
+        completed: false,
+        completedAt: null,
+      },
+    ])),
   };
 }
 
@@ -3999,6 +4051,32 @@ function normalizeSecondCarAssignmentBoard(value) {
   };
 }
 
+function garageExpansionProjectById(projectId) {
+  return GARAGE_EXPANSION_PROJECTS.find((project) => project.id === projectId) || null;
+}
+
+function normalizeGarageExpansion(value) {
+  const defaults = defaultGarageExpansionState();
+  const source = value && typeof value === "object" ? value : {};
+  const sourceProjects = source.projects && typeof source.projects === "object" ? source.projects : {};
+  return {
+    unlockedAt: typeof source.unlockedAt === "string" ? source.unlockedAt.slice(0, 40) : null,
+    projects: Object.fromEntries(GARAGE_EXPANSION_PROJECTS.map((project) => {
+      const projectSource = sourceProjects[project.id] && typeof sourceProjects[project.id] === "object"
+        ? sourceProjects[project.id]
+        : {};
+      const completed = projectSource.completed === true;
+      return [project.id, {
+        ...defaults.projects[project.id],
+        completed,
+        completedAt: completed && typeof projectSource.completedAt === "string"
+          ? projectSource.completedAt.slice(0, 40)
+          : null,
+      }];
+    })),
+  };
+}
+
 function normalizeCarActiveAssignment(value, currentCar, secondCarProject = null) {
   const source = value && typeof value === "object" ? value : null;
   const assignment = source && managedCarAssignmentById(source.id);
@@ -4103,6 +4181,7 @@ function normalizeCarManagement(carManagement, gameState) {
     lastAssignmentResult: normalizeCarAssignmentResult(source.lastAssignmentResult),
     brandValue: safeNonNegativeInteger(source.brandValue, 0, SHOP_MAX_RESOURCE),
     garageReputation: safeNonNegativeInteger(source.garageReputation, 0, SHOP_MAX_RESOURCE),
+    garageExpansion: normalizeGarageExpansion(source.garageExpansion),
   };
   normalized.secondCarProject = normalizeSecondCarProject(source.secondCarProject, {
     ...gameState,
@@ -6440,7 +6519,9 @@ function projectCarValueV1(gameState) {
   const state = normalizeGameState(gameState);
   return Math.min(
     SHOP_MAX_RESOURCE,
-    projectCarValueFromDreamBuild(state.shop.dreamBuild) + secondCarProjectGarageValue(state),
+    projectCarValueFromDreamBuild(state.shop.dreamBuild)
+      + secondCarProjectGarageValue(state)
+      + garageExpansionGarageBuildValue(state),
   );
 }
 
@@ -6452,6 +6533,16 @@ function secondCarProjectGarageValue(gameState) {
     0,
     SHOP_MAX_RESOURCE,
   );
+}
+
+function garageExpansionGarageBuildValue(gameState) {
+  const state = gameState && gameState.carManagement ? gameState : normalizeGameState(gameState);
+  const expansion = state.carManagement && state.carManagement.garageExpansion;
+  const projects = expansion && expansion.projects ? expansion.projects : {};
+  return GARAGE_EXPANSION_PROJECTS.reduce((total, project) => {
+    const record = projects[project.id];
+    return total + (record && record.completed ? project.garageBuildValue : 0);
+  }, 0);
 }
 
 function showcaseInterestUnlocked(gameState) {
@@ -6996,6 +7087,106 @@ function secondCarAssignmentStatus(gameState, options = {}) {
     missingCash: Math.max(0, economics.entryCost - cashBalance(state)),
     economics,
   };
+}
+
+function garageExpansionStatus(gameState) {
+  const state = normalizeGameState(gameState);
+  const secondAssignment = secondCarAssignmentStatus(state);
+  const expansion = state.carManagement && state.carManagement.garageExpansion
+    ? state.carManagement.garageExpansion
+    : defaultGarageExpansionState();
+  const projects = GARAGE_EXPANSION_PROJECTS.map((project) => {
+    const record = expansion.projects && expansion.projects[project.id]
+      ? expansion.projects[project.id]
+      : { completed: false, completedAt: null };
+    const missingCash = Math.max(0, project.cashCost - cashBalance(state));
+    const missingReputation = Math.max(0, project.reputationCost - garageReputationV1(state));
+    return {
+      ...project,
+      completed: Boolean(record.completed),
+      completedAt: record.completedAt || null,
+      missingCash,
+      missingReputation,
+      affordable: missingCash <= 0 && missingReputation <= 0,
+    };
+  });
+  const completedCount = projects.filter((project) => project.completed).length;
+  const unlocked = Boolean(
+    secondAssignment.project.acquired
+    && secondAssignment.project.directionLocked
+    && safeNonNegativeInteger(secondAssignment.project.directionWorkLevel, 0, SECOND_CAR_DIRECTION_WORK_MAX_LEVEL) >= SECOND_CAR_DIRECTION_WORK_MAX_LEVEL
+    && secondAssignment.board.completedAssignmentId
+    && secondAssignment.board.collectedAt
+  );
+  const readyToCollect = Boolean(secondAssignment.activeForSecond && secondAssignment.ready);
+  const affordablePriority = projects.find((project) => !project.completed && project.affordable) || null;
+  const cheapestIncomplete = projects
+    .filter((project) => !project.completed)
+    .sort((a, b) => a.cashCost - b.cashCost)[0] || null;
+  return {
+    unlocked,
+    readyToCollect,
+    secondAssignment,
+    expansion,
+    projects,
+    completedCount,
+    totalCount: GARAGE_EXPANSION_PROJECTS.length,
+    complete: completedCount >= GARAGE_EXPANSION_PROJECTS.length,
+    nextProject: affordablePriority || cheapestIncomplete,
+    affordableProject: affordablePriority,
+  };
+}
+
+function completeGarageExpansionProject(projectId, gameState, options = {}) {
+  let next = normalizeGameState(gameState);
+  if (options.activeDrive || appState.running || appState.calibrating) {
+    return { ok: false, reason: "Garage Expansion unlocks while parked after the drive.", gameState: next };
+  }
+  const project = garageExpansionProjectById(projectId);
+  if (!project) return { ok: false, reason: "That Garage Expansion project is not available.", gameState: next };
+  const status = garageExpansionStatus(next);
+  if (!status.unlocked) {
+    return { ok: false, reason: "Complete and collect the second car assignment to unlock garage expansion.", gameState: next };
+  }
+  const projectStatus = status.projects.find((item) => item.id === project.id);
+  if (projectStatus && projectStatus.completed) {
+    return { ok: false, reason: `${project.title} is already complete.`, gameState: next };
+  }
+  if (cashBalance(next) < project.cashCost) {
+    return { ok: false, reason: `Need ${formatCash(project.cashCost - cashBalance(next))} more Cash.`, gameState: next };
+  }
+  if (garageReputationV1(next) < project.reputationCost) {
+    return { ok: false, reason: `Need ${formatShopCount(project.reputationCost - garageReputationV1(next))} more Garage Reputation.`, gameState: next };
+  }
+  const spend = spendGarageReputation(next, project.reputationCost);
+  if (!spend.ok) {
+    return { ok: false, reason: `Need ${formatShopCount(project.reputationCost)} Garage Reputation.`, gameState: next };
+  }
+  next = spend.gameState;
+  const nowMs = options.now instanceof Date ? options.now.getTime() : Date.parse(options.now || "");
+  const completedAt = Number.isFinite(nowMs) ? new Date(nowMs).toISOString() : new Date().toISOString();
+  const expansion = next.carManagement.garageExpansion || defaultGarageExpansionState();
+  next.shop.tips = safeNonNegativeInteger(next.shop.tips - project.cashCost, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.brandValue = safeNonNegativeInteger(next.carManagement.brandValue + project.brandValue, 0, SHOP_MAX_RESOURCE);
+  next.carManagement.garageExpansion = {
+    ...expansion,
+    unlockedAt: expansion.unlockedAt || completedAt,
+    projects: {
+      ...(expansion.projects || {}),
+      [project.id]: {
+        completed: true,
+        completedAt,
+      },
+    },
+  };
+  const reward = project.garageBuildValue > 0
+    ? `+${formatCashCount(project.garageBuildValue)} ${GARAGE_BUILD_VALUE_LABEL}`
+    : `+${formatCashCount(project.brandValue)} Brand Value`;
+  const feedback = `${project.title} complete: ${reward}.`;
+  next.shop.counterService.lastResult = feedback;
+  next = addLedgerEntry(next, "story", feedback);
+  next = syncNetWorthMilestones(next).gameState;
+  return { ok: true, reason: "", feedback, project, gameState: next };
 }
 
 function carAssignmentRewardPreviewLine(economics) {
@@ -13854,6 +14045,31 @@ function nextCarManagementAction(gameState) {
           carAssignmentId: assignmentStatus.assignment.id,
         };
       }
+      const expansionStatus = garageExpansionStatus(state);
+      if (expansionStatus.unlocked) {
+        if (expansionStatus.complete) {
+          return {
+            type: "car_management_target",
+            title: "Next: Garage Expansion Complete",
+            copy: "Future third-car and event-chain systems can build from here.",
+            buttonLabel: "View Car Management",
+            disabled: false,
+          };
+        }
+        const target = expansionStatus.affordableProject || expansionStatus.nextProject;
+        if (target) {
+          return {
+            type: target.affordable ? "build_garage_expansion" : "car_management_target",
+            title: target.affordable ? `Next: Build ${target.title}` : "Next: Grow Garage Expansion Funds",
+            copy: target.affordable
+              ? `${target.title} opens ${target.future.replace(/^Future unlock path: /, "").replace(/\.$/, "")}.`
+              : "Cash and Garage Reputation fund the next facility project.",
+            buttonLabel: target.affordable ? target.buttonLabel : "View Car Management",
+            disabled: false,
+            garageExpansionProjectId: target.id,
+          };
+        }
+      }
       return {
         type: "car_management_target",
         title: "Next: Second Car Assignment Complete",
@@ -14655,6 +14871,7 @@ function renderGameDashboard(gameState = loadGameState()) {
       elements.gameCtaButton.dataset.nextSpiritBoost = action.spiritBoostId || "";
       elements.gameCtaButton.dataset.nextGarageEvent = action.garageEventId || "";
       elements.gameCtaButton.dataset.nextCarAssignment = action.carAssignmentId || "";
+      elements.gameCtaButton.dataset.nextGarageExpansionProject = action.garageExpansionProjectId || "";
     }
   }
   if (elements.gameCertifiedCtaButton) {
@@ -16707,6 +16924,62 @@ function renderSecondCarAssignmentBoardCard(gameState) {
   });
 }
 
+function renderGarageExpansionProjectCard(project) {
+  const rewardLine = project.garageBuildValue > 0
+    ? `Reward: +${formatCashCount(project.garageBuildValue)} ${GARAGE_BUILD_VALUE_LABEL}`
+    : `Reward: +${formatCashCount(project.brandValue)} Brand Value`;
+  const missingLines = [
+    project.missingCash > 0 ? `Need ${formatCash(project.missingCash)} more Cash.` : "",
+    project.missingReputation > 0 ? `Need ${formatShopCount(project.missingReputation)} more Garage Reputation.` : "",
+  ].filter(Boolean);
+  const disabledReason = missingLines.join(" ");
+  return renderIdleCard({
+    title: project.title,
+    status: project.completed ? "Complete" : project.affordable ? "Ready" : "Funding",
+    copy: project.completed ? project.completeCopy : project.copy,
+    extra: `
+      <div class="nospill-afford-progress">
+        <small>Cost: ${escapeHtml(formatCash(project.cashCost))} Cash + ${escapeHtml(formatShopCount(project.reputationCost))} Garage Reputation</small>
+        <small>${escapeHtml(rewardLine)}</small>
+        <small>${escapeHtml(project.future)}</small>
+        ${project.completed ? "<small>Complete</small>" : missingLines.length ? missingLines.map((line) => `<small>${escapeHtml(line)}</small>`).join("") : "<small>Ready</small>"}
+      </div>
+    `,
+    actions: !project.completed && project.affordable
+      ? [actionButton(project.buttonLabel, "data-garage-expansion-project", project.id, false, "nospill-primary")]
+      : [],
+  });
+}
+
+function renderGarageExpansionBoardCard(gameState) {
+  const state = normalizeGameState(gameState);
+  const status = garageExpansionStatus(state);
+  if (!status.unlocked) {
+    return renderIdleCard({
+      title: "Garage Expansion Board",
+      status: status.readyToCollect ? "Collect assignment first" : "Locked",
+      copy: "Complete and collect the second car assignment to unlock garage expansion.",
+      locked: true,
+    });
+  }
+  return `
+    <section class="nospill-idle-card" data-garage-expansion-board>
+      <header>
+        <strong>Garage Expansion Board</strong>
+        <small>${escapeHtml(formatShopCount(status.completedCount))} / ${escapeHtml(formatShopCount(status.totalCount))} complete</small>
+      </header>
+      <small>Choose the next facility investment for Tofu Garage.</small>
+      <div class="nospill-afford-progress">
+        <small>The first car stays managed. The second car proved its identity. The garage itself is now expanding.</small>
+        <small>Projects can be built in any order. No third car or fleet controls are added in V1.</small>
+      </div>
+      <div class="nospill-idle-grid">
+        ${status.projects.map(renderGarageExpansionProjectCard).join("")}
+      </div>
+    </section>
+  `;
+}
+
 function renderCarManagementPanel(gameState) {
   if (appState.running || appState.calibrating) return "";
   const state = normalizeGameState(gameState);
@@ -16743,6 +17016,7 @@ function renderCarManagementPanel(gameState) {
       ${renderSecondCarDirectionCard(state)}
       ${renderSecondCarWorkCard(state)}
       ${renderSecondCarAssignmentBoardCard(state)}
+      ${renderGarageExpansionBoardCard(state)}
       ${renderCarManagementHistory(state)}
       ${CAR_ASSIGNMENTS.map((assignment) => renderCarAssignmentCard(assignment, state)).join("")}
     </div>
@@ -16769,7 +17043,14 @@ function carManagementOverviewSummary(gameState) {
     const workStatus = selected ? secondCarDirectionWorkStatus(state) : null;
     if (selected && workStatus && workStatus.complete) {
       const assignmentStatus = secondCarAssignmentStatus(state);
-      if (assignmentStatus.completed) return "Second Car assignment complete. Future chains coming.";
+      if (assignmentStatus.completed) {
+        const expansion = garageExpansionStatus(state);
+        if (expansion.complete) return "Garage Expansion: 3 / 3 facility projects complete. Future garage expansion paths unlocked.";
+        if (expansion.completedCount > 0) {
+          return `Garage Expansion: ${formatShopCount(expansion.completedCount)} / ${formatShopCount(expansion.totalCount)} facility projects complete.`;
+        }
+        return "Garage Expansion: Three facility projects available: Third Bay, Event Office, Fabrication Corner.";
+      }
       if (assignmentStatus.activeForSecond) {
         return assignmentStatus.ready
           ? "Second Car assignment ready to collect."
@@ -17863,6 +18144,7 @@ function goalStackTargetForAction(action) {
     || action.type === "car_assignment_active"
     || action.type === "complete_second_car_work"
     || action.type === "start_second_car_assignment"
+    || action.type === "build_garage_expansion"
     || action.type === "car_management_target"
   ) {
     return "car-management";
@@ -18000,6 +18282,42 @@ function carManagementPinnedGoal(gameState) {
           ctaTarget: "",
           isFutureOnly: false,
         };
+      }
+      const expansionStatus = garageExpansionStatus(state);
+      if (expansionStatus.unlocked) {
+        if (expansionStatus.complete) {
+          return {
+            id: "garage_expansion_complete",
+            title: "Garage Expansion Complete",
+            body: "Future third-car and event-chain systems can build from here.",
+            progressCurrent: expansionStatus.completedCount,
+            progressTarget: expansionStatus.totalCount,
+            progressLabel: `${formatShopCount(expansionStatus.completedCount)} / ${formatShopCount(expansionStatus.totalCount)} facility projects`,
+            reward: "Future garage expansion paths",
+            ctaLabel: "",
+            ctaTarget: "",
+            isFutureOnly: true,
+          };
+        }
+        const target = expansionStatus.affordableProject || expansionStatus.nextProject;
+        if (target) {
+          return {
+            id: target.affordable ? `garage_expansion_${target.id}` : "garage_expansion_funds",
+            title: target.affordable ? `Build ${target.title}` : "Grow Garage Expansion Funds",
+            body: target.affordable
+              ? target.future
+              : "Cash and Garage Reputation fund the next facility project.",
+            progressCurrent: Math.min(cashBalance(state), target.cashCost),
+            progressTarget: target.cashCost,
+            progressLabel: `${formatCashCount(cashBalance(state))} / ${formatCashCount(target.cashCost)} Cash · ${formatShopCount(garageReputationV1(state))} / ${formatShopCount(target.reputationCost)} Garage Reputation`,
+            reward: target.garageBuildValue > 0
+              ? `${GARAGE_BUILD_VALUE_LABEL} +${formatCashCount(target.garageBuildValue)}`
+              : `Brand Value +${formatCashCount(target.brandValue)}`,
+            ctaLabel: "",
+            ctaTarget: "",
+            isFutureOnly: false,
+          };
+        }
       }
       return {
         id: "second_car_assignment_complete",
@@ -18822,6 +19140,35 @@ function renderActionChoiceBoard(gameState) {
           ? [actionButton(secondAssignment.assignment.buttonLabel, "data-second-car-assignment-start", secondAssignment.assignment.id, false, "nospill-primary")]
           : [],
     }));
+  }
+
+  const expansion = garageExpansionStatus(state);
+  if (expansion.unlocked && !expansion.complete) {
+    const target = expansion.affordableProject || expansion.nextProject;
+    if (target) {
+      const rewardLine = target.garageBuildValue > 0
+        ? `Reward: +${formatCashCount(target.garageBuildValue)} ${GARAGE_BUILD_VALUE_LABEL}`
+        : `Reward: +${formatCashCount(target.brandValue)} Brand Value`;
+      cards.push(renderActionChoiceCard({
+        title: "Garage Expansion",
+        status: target.title,
+        copy: target.copy,
+        extra: `
+          <div class="nospill-afford-progress">
+            <small>Cost: ${escapeHtml(formatCash(target.cashCost))} Cash + ${escapeHtml(formatShopCount(target.reputationCost))} Garage Reputation</small>
+            <small>${escapeHtml(rewardLine)}</small>
+            <small>${escapeHtml(target.future)}</small>
+            ${actionChoiceResourceLine("Cash", cashBalance(state), target.cashCost, formatCashCount)}
+            ${actionChoiceResourceLine("Garage Reputation", garageReputationV1(state), target.reputationCost, formatShopCount)}
+            ${target.missingCash > 0 ? `<small>Need ${escapeHtml(formatCash(target.missingCash))} more Cash.</small>` : ""}
+            ${target.missingReputation > 0 ? `<small>Need ${escapeHtml(formatShopCount(target.missingReputation))} more Garage Reputation.</small>` : ""}
+          </div>
+        `,
+        actions: target.affordable
+          ? [actionButton(target.buttonLabel, "data-garage-expansion-project", target.id, false, "nospill-primary")]
+          : [],
+      }));
+    }
   }
 
   const offline = state.shop.offlineEarnings || {};
@@ -21608,6 +21955,24 @@ function handleSecondCarDirectionWork() {
   playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
 }
 
+function handleGarageExpansionProject(projectId) {
+  const result = completeGarageExpansionProject(projectId, currentGameState(), {
+    activeDrive: appState.running || appState.calibrating,
+    now: new Date(),
+  });
+  if (!result.ok) {
+    setSummaryStatusMessage(result.reason);
+    renderTofuShop(result.gameState);
+    return;
+  }
+  saveGameState(result.gameState);
+  appState.shopInlineResult = result.feedback;
+  appState.shopTab = "car_management";
+  renderGamePanels(result.gameState);
+  setSummaryStatusMessage(result.feedback);
+  playCosmeticSound("upgrade_purchased", result.gameState, { activeDrive: false });
+}
+
 function handleShowcasePrep() {
   const result = buyShowcasePrep(currentGameState(), {
     activeDrive: appState.running || appState.calibrating,
@@ -21783,6 +22148,10 @@ function handleTofuShopPanelClick(event) {
   }
   if (target.dataset.secondCarAssignmentStart) {
     handleStartSecondCarAssignment();
+    return;
+  }
+  if (target.dataset.garageExpansionProject) {
+    handleGarageExpansionProject(target.dataset.garageExpansionProject);
     return;
   }
   if (target.dataset.carAssignmentCollect) {
@@ -22562,6 +22931,13 @@ function handleNextBestAction() {
   }
   if (actionType === "start_second_car_assignment") {
     handleStartSecondCarAssignment();
+    return;
+  }
+  if (actionType === "build_garage_expansion") {
+    const projectId = elements.gameCtaButton && elements.gameCtaButton.dataset
+      ? elements.gameCtaButton.dataset.nextGarageExpansionProject || ""
+      : "";
+    handleGarageExpansionProject(projectId);
     return;
   }
   if (actionType === "car_assignment_active" || actionType === "car_management_target") {
