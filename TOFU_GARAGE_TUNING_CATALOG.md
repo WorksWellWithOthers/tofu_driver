@@ -317,8 +317,8 @@ Complete finish the first core build at `40 / 40`; Car Management V1 now uses th
 one-active-assignment parked showcase/demo/exhibition loops. Assignment Explainability V1 adds
 state labels, concrete cost/reward previews, ready-to-collect copy, a first-loop checklist, and
 capped recent history. Second Car Project / Second Bay V1 implements the first rolling-shell bridge
-toward another build. Full multi-car management, second-car build tracks, and repeatable event board
-expansion remain future.
+toward another build. Full multi-car management, second-car assignment chains, and repeatable event
+board expansion remain future.
 
 Second Car Project / Second Bay V1 now adds the first bridge toward multiple cars: after the first
 assignment loop and Garage Reputation threshold, the player can open a second bay and acquire a
@@ -333,8 +333,14 @@ Second Car Direction Track V1 is the first runtime use of those identity hooks a
 project loop. After a direction is locked, only the selected branch renders. Showcase Build,
 Track Build, Drift Build, Rally Build, or Restoration Build each gets five fictional garage work
 levels with authentic tuning vocabulary, shared Cash/Garage Reputation costs, and Garage Build
-Value gains. It does not add second-car assignments, fleet management, backend, uploads, or network
-calls.
+Value gains.
+
+Second Car Assignment Board V1 is the first payoff for completing that selected direction track.
+Only the selected direction assignment renders: Invitational Display, Closed-Course Test Session,
+Exhibition Night, Weather Trial, or Collector Review. The board is one-time in V1, costs `$1T`
+Cash, lasts `60 min`, and grants local Cash, Brand Value, and Garage Reputation only after manual
+collection. It adds no Garage Build Value and does not add assignment chains, fleet management,
+backend, uploads, or network calls.
 
 Garage Event Board V1 is the first runtime use of event-fit language. It unlocks after `$100M Net
 Worth` plus Tires & Rubber Level 5 and resolves one-time parked fictional events using build

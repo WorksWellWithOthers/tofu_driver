@@ -106,22 +106,25 @@ Reputation only when collected. Assignment Explainability V1 makes the loop legi
 labels, cost/reward previews, ready-to-collect copy, a first-loop checklist, and capped recent
 history. Second Car Project / Second Bay V1 now opens a second bay and acquires a rolling shell
 after the first loop. Second Car Direction Track V1 develops only the selected second-car branch
-through five local parked work levels. Full multi-car management, second-car assignments, auctions,
-collector offers, and repeatable board expansion remain future.
+through five local parked work levels. Second Car Assignment Board V1 adds the selected branch's
+first one-time proof assignment after Level 5. Full multi-car management, second-car assignment
+chains, auctions, collector offers, and repeatable board expansion remain future.
 
 Second Car Project / Second Bay V1 is now the bridge after that first loop: complete all three
 assignments, reach/spend Garage Reputation, open Second Bay, and acquire a Second Project Car as a
-Rolling Shell. The first completed car remains the managed assignment car. Second-car build tracks
-and fleet management remain future.
+Rolling Shell. The first completed car remains the managed assignment car while the second car
+becomes its own project identity. Full fleet management remains future.
 
 Second Car Identity / Build Direction V1 adds a one-time locked direction after the rolling shell:
 Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build. It is identity setup
-only and does not add second-car tracks, assignments, fleet controls, or economy rewards.
+only and does not add fleet controls or economy rewards.
 
 Second Car Direction Track V1 adds the first full second-car work branch after that identity
 choice. Only the selected branch renders, and it advances from Level 1 to Level 5 with shared
-Cash/Garage Reputation costs and Garage Build Value gains. It confirms the shell is becoming a
-distinct project without adding second-car assignments, full fleet management, or market systems.
+Cash/Garage Reputation costs and Garage Build Value gains. Second Car Assignment Board V1 then
+adds one selected-direction payoff assignment with a `60 min`, `$1T Cash` parked loop and manual
+collection. It confirms the shell is becoming a distinct project without adding assignment chains,
+full fleet management, or market systems.
 
 Tofu Garage Tuning Catalog V1 is canonical source material, not a live parts dump. The full list is
 documented in `TOFU_GARAGE_TUNING_CATALOG.md`; the Dream Build tab may show a collapsed category

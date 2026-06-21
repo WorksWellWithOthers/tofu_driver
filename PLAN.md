@@ -268,9 +268,13 @@
 - Second Car Direction Track V1 is implemented after the locked direction. Only the selected branch
   renders, and it now runs through five parked direction levels. Shared costs are `$2T`, `$4T`,
   `$7T`, `$11T`, and `$17T Cash` plus `250`, `400`, `700`, `1,000`, and `1,500` Garage Reputation;
-  rewards are `+$1.25T`, `+$2.5T`, `+$4.5T`, `+$7.5T`, and `+$12T Garage Build Value`. Second-car
-  assignments, fleet management, auctions, collector offers, backend/uploads, and network calls
-  remain future.
+  rewards are `+$1.25T`, `+$2.5T`, `+$4.5T`, `+$7.5T`, and `+$12T Garage Build Value`.
+- Second Car Assignment Board V1 is implemented after direction Level 5. Only the selected
+  direction assignment renders: Invitational Display, Closed-Course Test Session, Exhibition Night,
+  Weather Trial, or Collector Review. The assignment costs `$1T Cash`, lasts `60 min`, grants local
+  Cash, Brand Value, and Garage Reputation on manual collection, adds no Garage Build Value, and is
+  one-time in V1. Assignment chains, fleet management, auctions, collector offers, backend/uploads,
+  and network calls remain future.
 - Core Build Progress V2 counts current work stages as Wheels Level plus Exhaust, Suspension,
   Tires, Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion against a
   planned `40` stage core build, shows current part labels, points to the next dream step, and keeps
@@ -480,12 +484,12 @@ Future Dream Garage milestone sequence:
    Complete, `40 / 40` progress, Garage Build Value totals, persistence, and priority rules.
 2. Playtest Car Management V1 assignment durations/rewards, readable state labels, first-loop
    closure, and whether one active assignment is enough for the first completed car.
-3. Playtest Second Bay costs, Garage Reputation spending, locked Build Direction, and selected
-   second-car direction track pacing before second-car assignments.
-4. Design Second Car Assignment V1 as a separate project-car use loop, not fleet management.
+3. Playtest Second Bay costs, Garage Reputation spending, locked Build Direction, selected
+   second-car direction track pacing, and the one-time Second Car Assignment payoff.
+4. Design Second Car Assignment Chains V1 as a separate project-car use loop, not fleet management.
 5. Design the next parked event/showcase expansion loop without replacing the existing one-car
    assignment board.
-6. Add second-car assignments only after the selected direction track feels readable.
+6. Add second-car assignment chains only after the selected one-time proof assignment feels readable.
 7. Add multiple-car management only after the second project build loop works.
 8. Add the next era unlock.
 9. Much later connect completed builds to business expansion, collector networks, and scalable

@@ -263,9 +263,13 @@ Fix applied:
 - Second Car Direction Track V1 keeps that same bounded state shape: `directionWorkLevel` is
   normalized and clamped from `0` to `5`, and `directionWorkCompletedAt` records the latest parked
   completion. It renders only the selected direction branch and one current direction work card,
-  stores no history, adds no timers, no fleet array, no second-car assignment loop, and no network
-  behavior. The late-game scalar cap supports trillion-scale second-car costs without adding large
-  collections or per-frame work.
+  stores no history, adds no fleet array, and no network behavior. The late-game scalar cap
+  supports trillion-scale second-car costs without adding large collections or per-frame work.
+- Second Car Assignment Board V1 reuses the single `carManagement.activeAssignment` slot with a
+  `carId` marker, adds one bounded `assignmentBoard` object under `secondCarProject`, renders only
+  the selected direction assignment, and keeps the assignment one-time in V1. It adds no fleet
+  array, no multiple active assignments, no service worker, no backend sync, no uploads, and no
+  unbounded history.
 - High-Scale Counter Contracts V1 keeps late-game handoffs scalar and bounded. Wholesale Case,
   Event Catering Load, and Venue Supply Contract are larger order bundles, not per-order object
   queues; Counter Service batch floors rise to 100/250/1000 only through parked contracts, and

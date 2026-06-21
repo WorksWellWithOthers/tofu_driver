@@ -155,8 +155,9 @@ The static app uses hash routing:
   future-track target. Second Car Identity / Build Direction V1 adds locked Showcase, Track, Drift,
   Rally, and Restoration direction choices after shell acquisition without immediate economy or Cup
   Test effects. Second Car Direction Track V1 renders only the selected branch and adds five parked
-  direction work levels with shared Cash/Reputation costs and Garage Build Value gains. Multiple
-  active cars, second-car assignments, auctions, collector offers, backend, uploads, and network
+  direction work levels with shared Cash/Reputation costs and Garage Build Value gains. Second Car
+  Assignment Board V1 adds one selected-direction payoff assignment with manual collection rewards.
+  Multiple active cars, assignment chains, auctions, collector offers, backend, uploads, and network
   calls remain future.
 - `FIRST_LOOP_AUDIT.md`: current first-loop playtest audit and recommended next implementation
   slice for meaningful early upgrades and reveal timing

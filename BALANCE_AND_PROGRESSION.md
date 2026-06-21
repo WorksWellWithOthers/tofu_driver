@@ -1716,8 +1716,21 @@ Engine & Body Refresh, and Restoration Build Ready.
 
 The track spends Garage Reputation using the same spendable convention as Second Bay, adds Garage
 Build Value through the existing component, and does not grant Cash, Brand Value, Garage Reputation,
-assignments, Cup Test rewards, or formula changes. Second-car assignments and full fleet management
-remain future.
+assignments, Cup Test rewards, or formula changes.
+
+Implemented Second Car Assignment Board V1 values:
+
+| Build Direction | Assignment | Duration | Cash Cost | Cash Reward | Brand Value Reward | Garage Reputation Reward |
+| --- | --- | --- | --- | --- | --- | --- |
+| Showcase Build | Invitational Display | `60 min` | `$1T` | `+$2T` | `+$5T` | `+250` |
+| Track Build | Closed-Course Test Session | `60 min` | `$1T` | `+$6T` | `+$1T` | `+800` |
+| Drift Build | Exhibition Night | `60 min` | `$1T` | `+$4T` | `+$3T` | `+500` |
+| Rally Build | Weather Trial | `60 min` | `$1T` | `+$3T` | `+$1.5T` | `+900` |
+| Restoration Build | Collector Review | `60 min` | `$1T` | `+$2T` | `+$6T` | `+300` |
+
+Only the selected direction assignment renders. It is one-time in V1, grants rewards only when
+collected, adds no Garage Build Value, and shares the global one-active-car-assignment rule with
+the first completed build. Full fleet management and second-car assignment chains remain future.
 
 Possible level effects:
 

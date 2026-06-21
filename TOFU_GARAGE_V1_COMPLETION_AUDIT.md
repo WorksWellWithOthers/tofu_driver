@@ -74,7 +74,8 @@ or car assets.
 | Car Management V1 + Assignment Explainability V1 | Implemented | Unlocks after First Complete Build; creates one local managed-car snapshot and supports one active parked assignment at a time: Showcase Rotation, Sponsor Demo Day, and Closed-Course Exhibition Booking. Assignment cards show state labels, concrete cost/reward previews, active/ready states, capped recent history, and first-loop checklist closure. |
 | Second Car Project / Second Bay V1 | Implemented | Unlocks after the first Car Management loop and `250` Garage Reputation; opens Second Bay for `$500B Cash + 250 Garage Reputation`, then acquires the Second Project Car rolling shell for `$1T Cash + 500 Garage Reputation` and `+$750B Garage Build Value`. Second-car build tracks remain future-only. |
 | Second Car Identity / Build Direction V1 | Implemented | Unlocks after Second Project Car acquisition; locks one of Showcase Build, Track Build, Drift Build, Rally Build, or Restoration Build as future second-car identity. No immediate Cash, Brand Value, Garage Reputation, Garage Build Value, Net Worth, Cup Test, backend/upload, or network effect. |
-| Second Car Direction Track V1 | Implemented | Unlocks after Second Project Car acquisition plus locked direction selection; only the selected Showcase, Track, Drift, Rally, or Restoration branch renders. Levels 1-5 share costs of `$2T/$4T/$7T/$11T/$17T Cash` plus `250/400/700/1,000/1,500 Garage Reputation` and add `+$1.25T/+$2.5T/+$4.5T/+$7.5T/+$12T Garage Build Value`; second-car assignments, fleet management, backend/uploads, and network calls remain future. |
+| Second Car Direction Track V1 | Implemented | Unlocks after Second Project Car acquisition plus locked direction selection; only the selected Showcase, Track, Drift, Rally, or Restoration branch renders. Levels 1-5 share costs of `$2T/$4T/$7T/$11T/$17T Cash` plus `250/400/700/1,000/1,500 Garage Reputation` and add `+$1.25T/+$2.5T/+$4.5T/+$7.5T/+$12T Garage Build Value`. |
+| Second Car Assignment Board V1 | Implemented | Unlocks after the selected second-car direction track reaches Level 5; renders one selected-direction assignment only. Invitational Display, Closed-Course Test Session, Exhibition Night, Weather Trial, or Collector Review each costs `$1T Cash`, lasts `60 min`, grants direction-specific Cash, Brand Value, and Garage Reputation on manual collection, and adds no Garage Build Value. One active car assignment is allowed globally; assignment chains, fleet management, backend/uploads, and network calls remain future. |
 | Net Worth Milestone Ladder V1 | Implemented | Shows compact `$1M`, `$10M`, `$100M`, `$1B`, and `$1T Net Worth` stepping stones after Net Worth is visible. |
 | Showcase Interest / Showcase Prep V1 | Implemented | Unlocks after early Dream Build progress and first `$1M Net Worth`; spends `$500K Cash` to add `$300K Garage Build Value`. |
 | Sponsor Inquiry V1 | Implemented | Unlocks after Showcase Prep, Dream Build progress `5 / 30`, and first `$1M Net Worth`; one-time accept grants `$250K Cash` and `$500K Brand Value`; recurring sponsor packages remain future. |
@@ -208,11 +209,13 @@ Current code status:
   is complete. It is one-time and parked-only; Car Management V1 is now the separate completed-car
   assignment loop with explicit assignment states, reward previews, ready-to-collect feedback, and
   capped history. Second Car Project / Second Bay V1 adds the first post-loop expansion by opening
-  a second project bay and acquiring a rolling shell. Repeatable event boards, second-car build
-  assignments, full multi-car management, collector offers, and auctions remain future.
+  a second project bay and acquiring a rolling shell. Second Car Assignment Board V1 adds one
+  selected-direction proof assignment after the direction track reaches Level 5. Repeatable event
+  boards, second-car assignment chains, full multi-car management, collector offers, and auctions
+  remain future.
 - Second Car Project / Second Bay V1 implements the first post-loop expansion step without full
   fleet management. Second Bay and the rolling shell are local-only Tofu Garage progression, and
-  the first completed car remains the only assignment car.
+  Second Car Assignment Board V1 keeps assignments limited to one global active car assignment.
 - Full accounting with Car Asset Value, Garage Value, company value, or liabilities is not
   implemented.
 

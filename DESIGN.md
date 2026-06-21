@@ -738,8 +738,8 @@ Design rules:
   Garage Reputation reaches `250`. Opening Second Bay costs `$500B Cash + 250 Garage Reputation`;
   acquiring the Second Project Car costs `$1T Cash + 500 Garage Reputation`, adds `+$750B Garage
   Build Value`, and shows the car as a `Rolling Shell` ready for the locked direction track.
-  The first completed build remains the managed assignment car; no fleet controls, second-car
-  assignments, auctions, sell offers, collector offers, backend, uploads, or network play are added.
+  The first completed build remains the first managed assignment car; no fleet controls, auctions,
+  sell offers, collector offers, backend, uploads, or network play are added.
 - Second Car Identity / Build Direction V1 unlocks after the Second Project Car is acquired. The
   one-time locked direction choices are Showcase Build, Track Build, Drift Build, Rally Build, and
   Restoration Build. The choice adds identity and future tuning direction only: no Cash, Brand
@@ -750,9 +750,14 @@ Design rules:
   Restoration each have five direction-specific work levels, but the runtime never dumps all five
   trees at once. Level costs are shared across directions: `$2T`, `$4T`, `$7T`, `$11T`, and `$17T`
   Cash plus `250`, `400`, `700`, `1,000`, and `1,500` Garage Reputation. The levels add
-  `+$1.25T`, `+$2.5T`, `+$4.5T`, `+$7.5T`, and `+$12T Garage Build Value`. Second-car assignments,
-  fleet controls, auctions, sell/collector offers, backend, uploads, and network play remain
-  future.
+  `+$1.25T`, `+$2.5T`, `+$4.5T`, `+$7.5T`, and `+$12T Garage Build Value`.
+- Second Car Assignment Board V1 unlocks after the selected second-car direction track reaches
+  Level 5. It renders only one direction-specific proof assignment: Invitational Display,
+  Closed-Course Test Session, Exhibition Night, Weather Trial, or Collector Review. The assignment costs
+  `$1T Cash`, lasts `60 min`, grants local Cash, Brand Value, and Garage Reputation on manual
+  collection, and is one-time in V1. First- and second-car assignments share one global active
+  assignment slot; full fleet management, assignment chains, auctions, sell/collector offers,
+  backend, uploads, and network play remain future.
 - Garage Event Board V1 is implemented after `$100M Net Worth` and Tires & Rubber Level 5. It lives
   in the Dream Build tab and adds four one-time parked events: Local Showcase, Sponsor Display,
   Closed-Course Exhibition, and Collector Preview. Events grant defined local Cash, Brand Value,
@@ -763,8 +768,9 @@ Design rules:
   Brakes, Induction, Drivetrain, Aero, Final Detail, and Shakedown completion. Car Management V1
   follows the first complete build, and Second Bay V1 adds a rolling-shell bridge toward the next
   project. Second Car Direction Track V1 develops the selected second-car identity through five
-  parked work levels without adding second-car assignments. Repeatable event expansion, full
-  multi-car management, auctions, and collector offers remain future.
+  parked work levels; Second Car Assignment Board V1 then adds one proof assignment for that
+  identity. Repeatable event expansion, full multi-car management, auctions, and collector offers
+  remain future.
 - Buying car parts should feel like an investment decision: spending Cash slows liquid progress
   toward the $1T target, but can increase Project Car Value/Car Asset Value later, unlock higher
   earning paths, or create later sell/keep decisions.

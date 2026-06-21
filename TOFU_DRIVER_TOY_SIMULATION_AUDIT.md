@@ -9,9 +9,9 @@ frontend or tests.
 | Principle | Current Evidence | Status | Gaps / Risks | Recommended Next Slice | Priority |
 | --- | --- | --- | --- | --- | --- |
 | Design by constraint | `DESIGN.md` safety/privacy contract; Cup Test rewards smoothness, not speed; location is requested only after `Start Cup Test` to attempt certification; denied or insufficient location remains playable as a Local Result; shop/story/build actions are parked-only; tests reject speed/GPS/map/street/share leakage. | Strong | Constraints must keep applying as more expressive systems are added. | Keep every new toy local, parked, and no-speed by default. | P0 |
-| Toy-first design | Cup Trail, Tofu Garage living scene, Passport stamps, Dream Build progress, Garage Event Board V1, Car Management assignments, Second Bay / Second Project Car shell, Second Car Direction Track, local Builder Notes, Delivery Crew cosmetic surface, polished story-card previews, share cards, Result Story captions, Cargo Commentary, fanfares. | Partial | The garage now has a complete first-build toy and a selected five-level second-car identity branch, but captioning, generated commentary, story-card previews, and Builder Notes are still small story tools, not full open-ended creation. | Playtest local expression tools and the second-car direction track before adding larger editors or full fleet systems. | P1 |
-| Open-ended play | Tofu Garage can grow through shop scaling, Dream Build, Garage Event Board V1, Car Management V1, Second Bay, Second Car Direction Track, Net Worth, Brand Value, Garage Reputation, stamps, and cosmetics. | Partial | Runtime now reaches a managed first car and selected second-car project branch, but it still guides the player through predetermined upgrade paths, assignment choices, and one locked direction track. | Add second-car assignments only after the direction track is playtested. | P2 |
-| Creative leverage/customization | Delivery Crew selection, sound/character collections, Cup Trail result flavor, Dream Build identity, local Builder Notes, share-card output, local result captions, the standalone Tofu Garage tuning catalog, and the Second Project Car direction track. | Partial | Build choices remain mostly linear; the catalog is source material and category preview, not a full customization system yet; second-car assignments, shop/garage decoration, and multi-panel comic tools are not implemented. | Playtest Builder Note usefulness, first-car management, Second Bay, and Second Car Direction Track before scoping deeper customization. | P1 |
+| Toy-first design | Cup Trail, Tofu Garage living scene, Passport stamps, Dream Build progress, Garage Event Board V1, Car Management assignments, Second Bay / Second Project Car shell, Second Car Direction Track, Second Car Assignment Board, local Builder Notes, Delivery Crew cosmetic surface, polished story-card previews, share cards, Result Story captions, Cargo Commentary, fanfares. | Partial | The garage now has a complete first-build toy, a selected five-level second-car identity branch, and one proof assignment, but captioning, generated commentary, story-card previews, and Builder Notes are still small story tools, not full open-ended creation. | Playtest local expression tools and the second-car payoff before adding larger editors or full fleet systems. | P1 |
+| Open-ended play | Tofu Garage can grow through shop scaling, Dream Build, Garage Event Board V1, Car Management V1, Second Bay, Second Car Direction Track, Second Car Assignment Board, Net Worth, Brand Value, Garage Reputation, stamps, and cosmetics. | Partial | Runtime now reaches a managed first car and selected second-car project branch with one proof assignment, but it still guides the player through predetermined upgrade paths, assignment choices, and one locked direction track. | Add second-car assignment chains only after the one-time proof assignment is playtested. | P2 |
+| Creative leverage/customization | Delivery Crew selection, sound/character collections, Cup Trail result flavor, Dream Build identity, local Builder Notes, share-card output, local result captions, the standalone Tofu Garage tuning catalog, and the Second Project Car direction track plus proof assignment. | Partial | Build choices remain mostly linear; the catalog is source material and category preview, not a full customization system yet; second-car assignment chains, shop/garage decoration, and multi-panel comic tools are not implemented. | Playtest Builder Note usefulness, first-car management, Second Bay, and the second-car identity loop before scoping deeper customization. | P1 |
 | Simple start, layered complexity | First surface is Cup Test; Tofu Garage progressive reveal hides later tabs/systems; starter shop has one obvious loop; Next Best Action guides bottlenecks. | Strong | Future simulation systems could overload the first session if revealed too early. | Keep needs/probability systems locked behind explicit context. | P0 |
 | Emotional outcomes: pride, guilt, delight, relief, curiosity | Stamps/fanfares, Dream Build progress, Builder Notes, Net Worth milestones, covered-car reveal, living scene, coach recap, cargo condition, Cargo Commentary, and the local hidden sticker/shirt reveals create pride/relief/curiosity and some gentle embarrassment. | Partial | Builder Notes improve ownership, but broader authored result/build variety remains limited. Hidden merch is local-only and not backend verified. | Playtest note prompts and failure/commentary tone. | P2 |
 | Enjoyable failure | Cup Test gives outcome labels, coach recap, and deterministic Cargo Commentary; shop bottleneck copy names missing resources; failures are recoverable. | Partial | Failure flavor is now present, but there is not yet a broader library of authored result moments. | Playtest and expand only if it stays safe. | P2 |
@@ -31,11 +31,12 @@ stance are strong and tested.
 
 The toy/simulation direction is promising but still intentionally bounded. Cup Trail, living scene,
 Dream Build, Builder Notes, stamps, fanfares, compact result cards, share cards, Result Story
-captions, Cargo Commentary, Car Management assignments, Second Bay, Second Car Direction, and cosmetics give the player
-toy-like objects. Creative leverage is still narrow: the current game lets the player author one
-safe caption on a result card, save one local Dream Build note, complete and manage one car, and
-acquire and identify a second rolling shell. Broader story tools, second-car build tracks, and full
-fleet management remain future.
+captions, Cargo Commentary, Car Management assignments, Second Bay, Second Car Direction, Second
+Car Assignment Board, and cosmetics give the player toy-like objects. Creative leverage is still
+narrow: the current game lets the player author one safe caption on a result card, save one local
+Dream Build note, complete and manage one car, and acquire, identify, build, and prove one second
+rolling shell. Broader story tools, second-car assignment chains, and full fleet management remain
+future.
 
 ## Top Gaps
 
@@ -69,10 +70,11 @@ fleet management remain future.
    - Keep probability out of Cup Test qualification and safety-sensitive outcomes.
 
 Result Story Card / Mini Comic Caption V1, Failure Flavor V1, Result Card Visual Polish V1,
-Garage Pride / Builder Note V1, Car Management V1, Second Bay V1, and Second Car Direction Track V1
-are implemented as narrow local expression/progression tools. The next best step is to playtest
-whether these small toys create enough player-authored story before adding second-car assignments,
-larger editors, decoration systems, full fleet management, or simulation complexity.
+Garage Pride / Builder Note V1, Car Management V1, Second Bay V1, Second Car Direction Track V1,
+and Second Car Assignment Board V1 are implemented as narrow local expression/progression tools.
+The next best step is to playtest whether these small toys create enough player-authored story
+before adding second-car assignment chains, larger editors, decoration systems, full fleet
+management, or simulation complexity.
 
 ## Safety And Privacy Boundaries
 

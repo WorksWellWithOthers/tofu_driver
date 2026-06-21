@@ -170,10 +170,15 @@ globalThis.garageReputationV1 = garageReputationV1;
 globalThis.carManagementBrandValueV1 = carManagementBrandValueV1;
 globalThis.SECOND_CAR_BUILD_DIRECTIONS = SECOND_CAR_BUILD_DIRECTIONS;
 globalThis.SECOND_CAR_DIRECTION_WORK_PACKAGES = SECOND_CAR_DIRECTION_WORK_PACKAGES;
+globalThis.SECOND_CAR_ASSIGNMENTS = SECOND_CAR_ASSIGNMENTS;
 globalThis.secondCarBuildDirectionById = secondCarBuildDirectionById;
 globalThis.secondCarDirectionWorkPackageById = secondCarDirectionWorkPackageById;
 globalThis.secondCarDirectionWorkForLevel = secondCarDirectionWorkForLevel;
 globalThis.secondCarDirectionWorkStatus = secondCarDirectionWorkStatus;
+globalThis.secondCarAssignmentById = secondCarAssignmentById;
+globalThis.secondCarAssignmentForDirection = secondCarAssignmentForDirection;
+globalThis.secondCarAssignmentStatus = secondCarAssignmentStatus;
+globalThis.startSecondCarAssignment = startSecondCarAssignment;
 globalThis.garageEventBoardStatus = garageEventBoardStatus;
 globalThis.garageEventRequirementStatus = garageEventRequirementStatus;
 globalThis.nextGarageEvent = nextGarageEvent;
@@ -5650,6 +5655,89 @@ globalThis.levelFiveOverview = carManagementOverviewSummary(levelFiveState);
 globalThis.levelFivePinned = pinnedNearGoalForShop(levelFiveState);
 globalThis.levelFiveAction = nextBestAction(levelFiveState);
 globalThis.levelFiveAgain = completeSecondCarDirectionWork(levelFiveState, { activeDrive: false, now: "2026-06-20T19:51:00.000Z" });
+globalThis.secondAssignmentStatusReady = secondCarAssignmentStatus(levelFiveState);
+globalThis.secondAssignmentPanelReady = renderCarManagementPanel(levelFiveState);
+globalThis.secondAssignmentOverviewReady = carManagementOverviewSummary(levelFiveState);
+globalThis.secondAssignmentPinnedReady = pinnedNearGoalForShop(levelFiveState);
+globalThis.secondAssignmentActionReady = nextBestAction(levelFiveState);
+globalThis.secondAssignmentChoicesReady = renderActionChoiceBoard(levelFiveState);
+const secondAssignmentLowCash = normalizeGameState(JSON.parse(JSON.stringify(levelFiveState)));
+secondAssignmentLowCash.shop.tips = SECOND_CAR_ASSIGNMENT_COST - 1;
+globalThis.secondAssignmentLowCashPanel = renderCarManagementPanel(secondAssignmentLowCash);
+globalThis.secondAssignmentLowCashStart = startSecondCarAssignment(secondAssignmentLowCash, { activeDrive: false, now: "2026-06-20T20:00:00.000Z" });
+const firstAssignmentBlockingState = normalizeGameState(JSON.parse(JSON.stringify(levelFiveState)));
+firstAssignmentBlockingState.shop.tips = 2000000000000;
+globalThis.firstAssignmentBlockingStart = startCarAssignment("showcase_rotation", firstAssignmentBlockingState, { activeDrive: false, now: "2026-06-20T20:01:00.000Z" });
+globalThis.secondAssignmentBlockedByFirstPanel = renderCarManagementPanel(firstAssignmentBlockingStart.gameState);
+globalThis.secondAssignmentBlockedByFirst = startSecondCarAssignment(firstAssignmentBlockingStart.gameState, { activeDrive: false, now: "2026-06-20T20:02:00.000Z" });
+globalThis.secondAssignmentBlockedPinned = pinnedNearGoalForShop(firstAssignmentBlockingStart.gameState);
+const secondAssignmentReadyState = normalizeGameState(JSON.parse(JSON.stringify(levelFiveState)));
+secondAssignmentReadyState.shop.tips = 3000000000000;
+globalThis.secondAssignmentValueBefore = projectCarValueV1(secondAssignmentReadyState);
+globalThis.secondAssignmentBrandBefore = brandValueV1(secondAssignmentReadyState);
+globalThis.secondAssignmentCarBrandBefore = carManagementBrandValueV1(secondAssignmentReadyState);
+globalThis.secondAssignmentRepBefore = garageReputationV1(secondAssignmentReadyState);
+globalThis.secondAssignmentCashBefore = cashBalance(secondAssignmentReadyState);
+globalThis.secondAssignmentStart = startSecondCarAssignment(secondAssignmentReadyState, { activeDrive: false, now: "2026-06-20T20:00:00.000Z" });
+globalThis.secondAssignmentActiveState = secondAssignmentStart.gameState;
+const secondAssignmentActiveRenderState = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentActiveState)));
+secondAssignmentActiveRenderState.carManagement.activeAssignment.startedAt = new Date().toISOString();
+globalThis.secondAssignmentActivePanel = renderCarManagementPanel(secondAssignmentActiveRenderState);
+globalThis.secondAssignmentActiveOverview = carManagementOverviewSummary(secondAssignmentActiveRenderState);
+globalThis.secondAssignmentActivePinned = pinnedNearGoalForShop(secondAssignmentActiveRenderState);
+globalThis.secondAssignmentActiveAction = nextBestAction(secondAssignmentActiveRenderState);
+globalThis.firstAssignmentBlockedBySecond = startCarAssignment("showcase_rotation", secondAssignmentActiveState, { activeDrive: false, now: "2026-06-20T20:01:00.000Z" });
+globalThis.secondAssignmentEarlyCollect = collectCarAssignment(secondAssignmentActiveState, { activeDrive: false, now: "2026-06-20T20:30:00.000Z" });
+globalThis.secondAssignmentReadyStatus = activeCarAssignmentStatus(secondAssignmentActiveState, { now: "2026-06-20T21:01:00.000Z" });
+const secondAssignmentReadyRenderState = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentActiveState)));
+secondAssignmentReadyRenderState.carManagement.activeAssignment.startedAt = new Date(Date.now() - 61 * 60 * 1000).toISOString();
+globalThis.secondAssignmentReadyPanel = renderCarManagementPanel(secondAssignmentReadyRenderState);
+globalThis.secondAssignmentReadyOverview = carManagementOverviewSummary(secondAssignmentReadyRenderState);
+globalThis.secondAssignmentReadyPinned = pinnedNearGoalForShop(secondAssignmentReadyRenderState);
+globalThis.secondAssignmentCollect = collectCarAssignment(secondAssignmentActiveState, { activeDrive: false, now: "2026-06-20T21:01:00.000Z" });
+globalThis.secondAssignmentCollectedState = secondAssignmentCollect.gameState;
+globalThis.secondAssignmentCollectedPanel = renderCarManagementPanel(secondAssignmentCollectedState);
+globalThis.secondAssignmentCollectedOverview = carManagementOverviewSummary(secondAssignmentCollectedState);
+globalThis.secondAssignmentCollectedPinned = pinnedNearGoalForShop(secondAssignmentCollectedState);
+globalThis.secondAssignmentCollectedAction = nextBestAction(secondAssignmentCollectedState);
+globalThis.secondAssignmentReload = normalizeGameState(JSON.parse(JSON.stringify(secondAssignmentCollectedState)));
+globalThis.secondAssignmentReloadCollect = collectCarAssignment(secondAssignmentReload, { activeDrive: false, now: "2026-06-20T21:02:00.000Z" });
+globalThis.secondAssignmentRestart = startSecondCarAssignment(secondAssignmentCollectedState, { activeDrive: false, now: "2026-06-20T21:03:00.000Z" });
+globalThis.secondAssignmentActiveDrivePanel = (() => {
+  appState.running = true;
+  const html = renderCarManagementPanel(levelFiveState);
+  appState.running = false;
+  return html;
+})();
+globalThis.secondAssignmentActiveDriveStart = startSecondCarAssignment(levelFiveState, { activeDrive: true });
+globalThis.secondAssignmentDirectionResults = Object.fromEntries(SECOND_CAR_BUILD_DIRECTIONS.map((direction) => {
+  const fixture = normalizeGameState(JSON.parse(JSON.stringify(secondProjectState)));
+  const selectedResult = selectSecondCarBuildDirection(direction.id, fixture, { activeDrive: false, now: "2026-06-20T18:45:00.000Z" });
+  const selected = normalizeGameState(selectedResult.gameState);
+  selected.carManagement.secondCarProject.directionWorkLevel = 5;
+  selected.carManagement.secondCarProject.garageBuildValue = SECOND_PROJECT_CAR_GARAGE_VALUE + secondCarDirectionWorkValueThroughLevel(5);
+  selected.shop.tips = 2000000000000;
+  const panel = renderCarManagementPanel(selected);
+  const assignment = secondCarAssignmentForDirection(direction.id);
+  return [direction.id, {
+    assignmentId: assignment && assignment.id,
+    title: assignment && assignment.title,
+    panelIncludesTitle: assignment ? panel.includes(assignment.title) : false,
+    panel,
+  }];
+}));
+const invalidSecondAssignmentImport = normalizeGameState(JSON.parse(JSON.stringify(levelFiveState)));
+invalidSecondAssignmentImport.carManagement.secondCarProject.assignmentBoard = {
+  completedAssignmentId: "not_real_assignment",
+  completedAt: "2026-06-20T00:00:00.000Z",
+  collectedAt: "2026-06-20T00:00:00.000Z",
+};
+invalidSecondAssignmentImport.carManagement.activeAssignment = {
+  id: "not_real_assignment",
+  carId: "second_project_car",
+  startedAt: "2026-06-20T00:00:00.000Z",
+};
+globalThis.invalidSecondAssignmentImport = normalizeGameState(invalidSecondAssignmentImport);
 globalThis.directionResults = Object.fromEntries(SECOND_CAR_BUILD_DIRECTIONS.map((direction) => {
   const fixture = normalizeGameState(secondProjectState);
   const result = selectSecondCarBuildDirection(direction.id, fixture, { activeDrive: false, now: "2026-06-20T18:45:00.000Z" });
@@ -5907,11 +5995,77 @@ appState.running = false;
   assert.strictEqual(context.projectCarValueV1(context.levelFiveState), context.levelFiveValueBefore + 12000000000000);
   assert(context.levelFivePanel.includes('Second Car Direction Track Complete'));
   assert(context.levelFivePanel.includes('Track Build · Level 5 / 5'));
-  assert.strictEqual(context.levelFiveOverview, 'Second Car: Track Build complete. Future assignments coming.');
-  assert.strictEqual(context.levelFivePinned.title, 'Second Car Direction Complete');
-  assert.strictEqual(context.levelFiveAction.title, 'Next: Second Car Direction Complete');
+  assert.strictEqual(context.levelFiveOverview, 'Second Car: Track Build assignment ready.');
+  assert.strictEqual(context.levelFivePinned.title, 'Start Second Car Assignment');
+  assert.strictEqual(context.levelFiveAction.title, 'Next: Start Second Car Assignment');
   assert.strictEqual(context.levelFiveAgain.ok, false);
   assert(context.levelFiveAgain.reason.includes('already complete'));
+  assert.strictEqual(context.secondAssignmentStatusReady.unlocked, true);
+  assert.strictEqual(context.secondAssignmentStatusReady.assignment.title, 'Closed-Course Test Session');
+  assert(context.secondAssignmentPanelReady.includes('Second Car Assignment Board'));
+  assert(context.secondAssignmentPanelReady.includes('Track Build · Closed-Course Test Session'));
+  assert(context.secondAssignmentPanelReady.includes('Duration: 60 min'));
+  assert(context.secondAssignmentPanelReady.includes('Cost: $1T Cash'));
+  assert(context.secondAssignmentPanelReady.includes('Rewards: +$6T Cash · +$1T Brand Value · +800 Garage Reputation'));
+  assert(context.secondAssignmentPanelReady.includes('Start Test Session'));
+  assert(!context.secondAssignmentPanelReady.includes('Invitational Display'));
+  assert(!context.secondAssignmentPanelReady.includes('Exhibition Night'));
+  assert.strictEqual(context.secondAssignmentOverviewReady, 'Second Car: Track Build assignment ready.');
+  assert.strictEqual(context.secondAssignmentPinnedReady.title, 'Start Second Car Assignment');
+  assert.strictEqual(context.secondAssignmentActionReady.type, 'start_second_car_assignment');
+  assert(context.secondAssignmentChoicesReady.includes('Second Car Assignment'));
+  assert(context.secondAssignmentChoicesReady.includes('Closed-Course Test Session'));
+  assert(context.secondAssignmentChoicesReady.includes('Start Test Session'));
+  assert(context.secondAssignmentLowCashPanel.includes('Need $1 more Cash.'));
+  assert.strictEqual(context.secondAssignmentLowCashStart.ok, false);
+  assert(context.secondAssignmentLowCashStart.reason.includes('Need $1 more Cash'));
+  assert.strictEqual(context.firstAssignmentBlockingStart.ok, true);
+  assert(context.secondAssignmentBlockedByFirstPanel.includes('Another car assignment is already active'));
+  assert.strictEqual(context.secondAssignmentBlockedByFirst.ok, false);
+  assert(context.secondAssignmentBlockedByFirst.reason.includes('Only one car assignment'));
+  assert.strictEqual(context.secondAssignmentBlockedPinned.title, 'Finish Active Car Assignment');
+  assert.strictEqual(context.secondAssignmentStart.ok, true);
+  assert.strictEqual(context.secondAssignmentStart.feedback, 'Closed-Course Test Session started. Return in 60 min to collect.');
+  assert.strictEqual(context.secondAssignmentActiveState.carManagement.activeAssignment.carId, 'second_project_car');
+  assert.strictEqual(context.secondAssignmentActiveState.carManagement.activeAssignment.id, 'second_track_test_session');
+  assert.strictEqual(context.cashBalance(context.secondAssignmentActiveState), context.secondAssignmentCashBefore - 1000000000000);
+  assert.strictEqual(context.brandValueV1(context.secondAssignmentActiveState), context.secondAssignmentBrandBefore);
+  assert.strictEqual(context.garageReputationV1(context.secondAssignmentActiveState), context.secondAssignmentRepBefore);
+  assert.strictEqual(context.projectCarValueV1(context.secondAssignmentActiveState), context.secondAssignmentValueBefore);
+  assert(context.secondAssignmentActivePanel.includes('Second Car Assignment Active'));
+  assert(context.secondAssignmentActivePanel.includes('Closed-Course Test Session'));
+  assert(context.secondAssignmentActivePanel.includes('Expected Rewards: +$6T Cash · +$1T Brand Value · +800 Garage Reputation'));
+  assert.strictEqual(context.secondAssignmentActiveOverview, 'Second Car assignment active: Closed-Course Test Session.');
+  assert.strictEqual(context.secondAssignmentActivePinned.title, 'Finish Active Car Assignment');
+  assert.strictEqual(context.secondAssignmentActiveAction.title, 'Next: Second Car Assignment Active');
+  assert.strictEqual(context.firstAssignmentBlockedBySecond.ok, false);
+  assert(context.firstAssignmentBlockedBySecond.reason.includes('already active') || context.firstAssignmentBlockedBySecond.reason.includes('Only one car assignment'));
+  assert.strictEqual(context.secondAssignmentEarlyCollect.ok, false);
+  assert(context.secondAssignmentEarlyCollect.reason.includes('still in progress'));
+  assert.strictEqual(context.secondAssignmentReadyStatus.ready, true);
+  assert(context.secondAssignmentReadyPanel.includes('Second Car Assignment Ready'));
+  assert(context.secondAssignmentReadyPanel.includes('Collect Rewards'));
+  assert.strictEqual(context.secondAssignmentReadyOverview, 'Second Car assignment ready to collect.');
+  assert.strictEqual(context.secondAssignmentReadyPinned.title, 'Collect Second Car Assignment');
+  assert.strictEqual(context.secondAssignmentCollect.ok, true);
+  assert.strictEqual(context.secondAssignmentCollect.feedback, 'Closed-Course Test Session complete: +$6T Cash, +$1T Brand Value, +800 Garage Reputation.');
+  assert.strictEqual(context.cashBalance(context.secondAssignmentCollectedState), context.secondAssignmentCashBefore - 1000000000000 + 6000000000000);
+  assert.strictEqual(context.carManagementBrandValueV1(context.secondAssignmentCollectedState), context.secondAssignmentCarBrandBefore + 1000000000000);
+  assert.strictEqual(context.brandValueV1(context.secondAssignmentCollectedState), context.secondAssignmentBrandBefore + 1000000000000);
+  assert.strictEqual(context.garageReputationV1(context.secondAssignmentCollectedState), context.secondAssignmentRepBefore + 800);
+  assert.strictEqual(context.projectCarValueV1(context.secondAssignmentCollectedState), context.secondAssignmentValueBefore);
+  assert.strictEqual(context.secondAssignmentCollectedState.carManagement.secondCarProject.assignmentBoard.completedAssignmentId, 'second_track_test_session');
+  assert.strictEqual(context.secondAssignmentCollectedState.carManagement.activeAssignment, null);
+  assert(context.secondAssignmentCollectedPanel.includes('Second Car Assignment Complete'));
+  assert.strictEqual(context.secondAssignmentCollectedOverview, 'Second Car assignment complete. Future chains coming.');
+  assert.strictEqual(context.secondAssignmentCollectedPinned.title, 'Second Car Assignment Complete');
+  assert.strictEqual(context.secondAssignmentCollectedAction.title, 'Next: Second Car Assignment Complete');
+  assert.strictEqual(context.secondAssignmentReloadCollect.ok, false);
+  assert(context.secondAssignmentReloadCollect.reason.includes('No Car Management assignment'));
+  assert.strictEqual(context.secondAssignmentRestart.ok, false);
+  assert(context.secondAssignmentRestart.reason.includes('already complete'));
+  assert.strictEqual(context.secondAssignmentActiveDrivePanel, '');
+  assert.strictEqual(context.secondAssignmentActiveDriveStart.ok, false);
   for (const directionId of context.secondCarDirectionIds) {
     const result = context.directionResults[directionId];
     assert.strictEqual(result.ok, true);
@@ -5961,6 +6115,18 @@ appState.running = false;
     'Engine & Body Refresh',
     'Restoration Build Ready',
   ]);
+  assert.strictEqual(context.secondAssignmentDirectionResults.showcase_build.title, 'Invitational Display');
+  assert.strictEqual(context.secondAssignmentDirectionResults.track_build.title, 'Closed-Course Test Session');
+  assert.strictEqual(context.secondAssignmentDirectionResults.drift_build.title, 'Exhibition Night');
+  assert.strictEqual(context.secondAssignmentDirectionResults.rally_build.title, 'Weather Trial');
+  assert.strictEqual(context.secondAssignmentDirectionResults.restoration_build.title, 'Collector Review');
+  for (const directionId of context.secondCarDirectionIds) {
+    assert.strictEqual(context.secondAssignmentDirectionResults[directionId].panelIncludesTitle, true);
+  }
+  assert(!context.secondAssignmentDirectionResults.track_build.panel.includes('Invitational Display'));
+  assert(!context.secondAssignmentDirectionResults.track_build.panel.includes('Weather Trial'));
+  assert.strictEqual(context.invalidSecondAssignmentImport.carManagement.secondCarProject.assignmentBoard.completedAssignmentId, null);
+  assert.strictEqual(context.invalidSecondAssignmentImport.carManagement.activeAssignment, null);
   assert(!context.trackDirectionPanel.includes('Fitment & Finish Plan'));
   assert(!context.trackDirectionPanel.includes('Differential Setup'));
   assert(!context.trackDirectionPanel.includes('Protection & Travel Setup'));
@@ -7506,8 +7672,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620j'));
-  assert(html.includes('/static/nospill/app.css?v=20260620j'));
+  assert(html.includes('/static/nospill/app.js?v=20260620k'));
+  assert(html.includes('/static/nospill/app.css?v=20260620k'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -10424,8 +10590,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620j'));
-  assert(html.includes('/static/nospill/app.css?v=20260620j'));
+  assert(html.includes('/static/nospill/app.js?v=20260620k'));
+  assert(html.includes('/static/nospill/app.css?v=20260620k'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -11953,6 +12119,7 @@ globalThis.shopTimerId = appState.shopGeneratorTimer;
     'data-second-car-action',
     'data-second-car-direction',
     'data-second-car-work',
+    'data-second-car-assignment-start',
     'data-rival-challenge',
     'data-license-exam',
     'data-license-perk',
