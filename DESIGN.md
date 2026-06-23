@@ -606,6 +606,12 @@ Current design principles:
   Upgrades controls; station buying belongs in Production and upgrade buying belongs in Upgrades.
 - Normal parked shop-order fulfillment is inline and non-interrupting. Full result screens are for
   Cup Test runs and major fanfare moments such as the first Passport stamp.
+- Cup Test result screens should keep the main Result Card prominent, then show a visible compact
+  `Progress Shelf` for collectible/status tracks before collapsed `Run Details`. The shelf may show
+  Passport, No-Spill Club, Perfect Pour, Delivery Crew, hidden reward teasers, and route-context
+  achievement progress as 4-6 compact cards with progress bars or locked teasers. Dense XP,
+  skill-XP, selected-crew, signal-quality, shop-accounting, route-warning, coach-breakdown, and
+  eligibility details stay collapsed under `Run Details`.
 - Don't Spill the Cup is an optional certified boost and should not override normal shop
   bottleneck recommendations when Delivery Orders are ready, an order is being prepared, or Cash
   are needed.

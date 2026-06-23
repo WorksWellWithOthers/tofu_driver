@@ -13778,6 +13778,177 @@ function summaryMetric(label, value, className = "") {
   return `<div><span>${escapeHtml(label)}</span><strong class="${className}">${escapeHtml(value)}</strong></div>`;
 }
 
+function progressShelfBarHtml(title, current, total) {
+  const max = Math.max(1, safeNonNegativeNumber(total, 1, 1000000));
+  const value = Math.min(max, safeNonNegativeNumber(current, 0, max));
+  const percent = clampPercent((value / max) * 100);
+  return `
+    <div
+      class="nospill-progress-shelf-bar"
+      role="progressbar"
+      aria-label="${escapeHtml(title)} progress"
+      aria-valuemin="0"
+      aria-valuemax="${escapeHtml(String(max))}"
+      aria-valuenow="${escapeHtml(String(value))}"
+    >
+      <span style="width: ${percent}%"></span>
+    </div>
+  `;
+}
+
+function renderProgressShelfCard(item) {
+  return `
+    <article class="nospill-progress-shelf-card" data-progress-shelf-card="${escapeHtml(item.id)}">
+      <strong>${escapeHtml(item.title)}</strong>
+      <span>${escapeHtml(item.status)}</span>
+      ${item.total ? progressShelfBarHtml(item.title, item.current, item.total) : ""}
+      ${item.label ? `<small>${escapeHtml(item.label)}</small>` : ""}
+    </article>
+  `;
+}
+
+function hiddenRewardShelfStatus(state) {
+  const unlocks = normalizeGameState(state).merchUnlocks;
+  const sticker = unlocks[HIDDEN_STICKER_ID];
+  const shirt = unlocks[HIDDEN_SHIRT_ID];
+  if (shirt && shirt.unlocked) {
+    return {
+      title: "Hidden Tee",
+      status: "Certified reward revealed",
+      current: 1,
+      total: 1,
+      label: "Unlocked",
+    };
+  }
+  if (sticker && sticker.unlocked) {
+    return {
+      title: "Hidden Tee",
+      status: "Certified Perfect Pour required",
+      current: 0,
+      total: 1,
+      label: "Secret",
+    };
+  }
+  return {
+    title: "Hidden Sticker",
+    status: "Certified Result required",
+    current: 0,
+    total: 1,
+    label: "Secret",
+  };
+}
+
+function buildResultProgressShelfItems(summary) {
+  const rewards = summary && summary.deliveryRewards ? summary.deliveryRewards : {};
+  const state = normalizeGameState(rewards.gameState || loadGameState());
+  const passport = rewards.passport || deliveryPassportSummary(state);
+  const merch = rewards.merchProgress || state.merchProgress;
+  const collectionUnlocks = rewards.collectionUnlocks || {};
+  const newUnlocks = [
+    ...(Array.isArray(rewards.stampLabels) ? rewards.stampLabels : []),
+    ...(Array.isArray(rewards.hiddenMerchUnlocks)
+      ? rewards.hiddenMerchUnlocks
+          .filter((unlock) => unlock && unlock.unlockedThisRun)
+          .map((unlock) => unlock.label)
+      : []),
+    ...(Array.isArray(collectionUnlocks.newCharacterUnlocks)
+      ? collectionUnlocks.newCharacterUnlocks.map((unlock) => unlock.label)
+      : []),
+    ...(Array.isArray(collectionUnlocks.newSoundUnlocks)
+      ? collectionUnlocks.newSoundUnlocks.map((unlock) => unlock.label)
+      : []),
+  ].filter(Boolean);
+  const routeAchievements = routeContextAchievementIds(summary || {});
+  const hiddenReward = hiddenRewardShelfStatus(state);
+  const cards = [];
+  if (newUnlocks.length) {
+    cards.push({
+      id: "new_reward",
+      title: "New Reward",
+      status: newUnlocks.slice(0, 2).join(", "),
+      label: "Advanced",
+    });
+  }
+  cards.push(
+    {
+      id: "perfect_pour",
+      title: "Perfect Pour",
+      status: merch.perfectPourDrop.unlocked ? "Drop unlocked" : "100% cargo condition needed",
+      current: merch.perfectPourDrop.unlocked ? 1 : 0,
+      total: 1,
+      label: merch.perfectPourDrop.unlocked ? "Unlocked" : "Locked teaser",
+    },
+    {
+      id: "nospill_club",
+      title: "No-Spill Club",
+      status: `${formatShopCount(merch.nospillClubGear.count)} / ${formatShopCount(merch.nospillClubGear.target)} smooth qualified runs`,
+      current: merch.nospillClubGear.count,
+      total: merch.nospillClubGear.target,
+      label: merch.nospillClubGear.unlocked ? "Unlocked" : "Progress",
+    },
+    {
+      id: "passport",
+      title: "Passport",
+      status: `${formatShopCount(passport.total)} / ${formatShopCount(passport.totalAvailable)} stamps`,
+      current: passport.total,
+      total: passport.totalAvailable,
+      label: "Stamps",
+    },
+    {
+      id: "delivery_crew",
+      title: "Delivery Crew",
+      status: `${formatShopCount(merch.deliveryCrew.count)} / ${formatShopCount(merch.deliveryCrew.target)} crew moments`,
+      current: merch.deliveryCrew.count,
+      total: merch.deliveryCrew.target,
+      label: merch.deliveryCrew.unlocked ? "Unlocked" : "Mascot progress",
+    },
+    {
+      id: "hidden_reward",
+      ...hiddenReward,
+    },
+  );
+  if (routeAchievements.length) {
+    cards.push({
+      id: "route_context",
+      title: "Route Achievement",
+      status: stampLabels(routeAchievements).slice(0, 2).join(", "),
+      label: "Route context",
+    });
+  }
+  if (!cards.length) {
+    cards.push({
+      id: "progress_teaser",
+      title: "Progress Shelf",
+      status: "Keep driving smooth routes to reveal stamps, club progress, and hidden rewards.",
+      label: "Teaser",
+    });
+  }
+  return cards.slice(0, 6);
+}
+
+function renderResultProgressShelf(summary) {
+  if (!elements.resultProgressShelf) return;
+  const hidden = appState.running || appState.calibrating;
+  elements.resultProgressShelf.classList.toggle("is-hidden", hidden);
+  if (hidden) {
+    elements.resultProgressShelf.innerHTML = "";
+    return;
+  }
+  const cards = buildResultProgressShelfItems(summary);
+  elements.resultProgressShelf.innerHTML = `
+    <div class="nospill-progress-shelf-head">
+      <div>
+        <p class="nospill-kicker">Progress Shelf</p>
+        <h3 id="result-progress-shelf-title">Progress Shelf</h3>
+      </div>
+      <p>Collectible and status progress from this result. Dense scoring details stay in Run Details.</p>
+    </div>
+    <div class="nospill-progress-shelf-grid" aria-label="Result progress cards">
+      ${cards.map(renderProgressShelfCard).join("")}
+    </div>
+  `;
+}
+
 function normalizedDiscordConfig(config = DISCORD_CONFIG) {
   const source = config && typeof config === "object" ? config : {};
   const inviteUrl = typeof source.inviteUrl === "string" ? source.inviteUrl.trim() : "";
@@ -21013,6 +21184,7 @@ function renderSummary(summary) {
   renderMerchPanel(loadClubState(), summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderGamePanels(summary.deliveryRewards ? summary.deliveryRewards.gameState : loadGameState());
   renderDeliverySummary(summary);
+  renderResultProgressShelf(summary);
   if (elements.runDetailsSection) elements.runDetailsSection.open = false;
   renderHiddenShirtReveal(summary);
   renderCargoCommentary(summary);
@@ -23287,6 +23459,7 @@ function cacheElements() {
     hiddenShirtLink: document.getElementById("hidden-shirt-link"),
     hiddenShirtLater: document.getElementById("hidden-shirt-later"),
     summaryGrid: document.getElementById("summary-grid"),
+    resultProgressShelf: document.getElementById("result-progress-shelf"),
     routeContext: document.getElementById("route-context"),
     routeGrid: document.getElementById("route-grid"),
     milestoneOutput: document.getElementById("milestone-output"),

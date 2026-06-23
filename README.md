@@ -18,7 +18,9 @@ Cup-first visitors can reach Tofu Garage from the landing page and from parked C
 Cup Test result cards include safe local summaries such as Cargo Type, Trip Time, Drive Shape,
 Route Smoothness Outline when usable local route data exists, Abstract Cup Trail as the
 privacy/fallback view, Daily Delivery Credit, concise Coach Recap labels, local Cargo Commentary,
-Result Card, and optional player Story Captions. These are derived from summarized motion and
+Result Card, optional player Story Captions, and a compact Progress Shelf for Passport,
+No-Spill Club, Perfect Pour, Delivery Crew, and hidden reward/status progress. Dense XP/accounting
+and route-signal details stay collapsed in Run Details. These are derived from summarized motion and
 normalized route shape only and must not expose speed, distance, GPS coordinates, maps, street
 names, raw route traces, or racing/performance-driving technique. Tapping `Start Cup Test` attempts
 certification automatically: usable local route data can produce a Certified Result, while denied or

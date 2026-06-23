@@ -7810,8 +7810,8 @@ globalThis.offlineSummaryText = elements.shopOfflineEarnings.textContent;
   assert(html.includes('Tofu Garage'));
   assert(html.includes('Prep Capacity'));
   assert(!html.includes('Prep Slots'));
-  assert(html.includes('/static/nospill/app.js?v=20260620l'));
-  assert(html.includes('/static/nospill/app.css?v=20260620l'));
+  assert(html.includes('/static/nospill/app.js?v=20260622a'));
+  assert(html.includes('/static/nospill/app.css?v=20260622a'));
 }
 
 function testHighScaleCounterContractsV1() {
@@ -10728,8 +10728,8 @@ function testDreamBuildBuilderNoteV1IsLocalSafeAndCosmetic() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const css = fs.readFileSync(NOSPILL_CSS, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
-  assert(html.includes('/static/nospill/app.js?v=20260620l'));
-  assert(html.includes('/static/nospill/app.css?v=20260620l'));
+  assert(html.includes('/static/nospill/app.js?v=20260622a'));
+  assert(html.includes('/static/nospill/app.css?v=20260622a'));
   assert(css.includes('.nospill-builder-note-card'));
   assert(css.includes('overflow-wrap: anywhere'));
   assert(source.includes('function sanitizeBuilderNote'));
@@ -13673,6 +13673,7 @@ function testResultScreenShowsGameSummarySections() {
   const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
   const source = fs.readFileSync(NOSPILL_JS, 'utf8');
   assert(html.includes('id="delivery-summary-grid"'));
+  assert(html.includes('id="result-progress-shelf"'));
   assert(html.includes('id="summary-title"'));
   assert(html.includes('Result Details'));
   assert(html.includes('id="return-dashboard-button"'));
@@ -13692,9 +13693,12 @@ function testResultScreenShowsGameSummarySections() {
   assert(!summaryHtml.includes('id="milestone-output"'));
   assert(!summaryHtml.includes('id="merch-grid"'));
   assert(summaryHtml.includes('Result Card'));
+  assert(source.includes('Progress Shelf'));
   assert(summaryHtml.includes('id="run-details-section"'));
   assert(summaryHtml.includes('Run Details'));
   assert(summaryHtml.indexOf('id="story-card-preview-section"') < summaryHtml.indexOf('id="run-details-section"'));
+  assert(summaryHtml.indexOf('id="result-progress-shelf"') < summaryHtml.indexOf('id="run-details-section"'));
+  assert(summaryHtml.indexOf('id="result-progress-shelf"') > summaryHtml.indexOf('nospill-result-actions'));
   assert.strictEqual((summaryHtml.match(/Certified Result/g) || []).length, 1);
   [
     '"Cargo Condition"',
@@ -13710,6 +13714,158 @@ function testResultScreenShowsGameSummarySections() {
     '"Next Delivery Goal"',
     '"No new stamp"',
   ].forEach((needle) => assert(source.includes(needle), `${needle} missing`));
+}
+
+function testResultProgressShelfIsVisibleCompactAndSafe() {
+  const html = fs.readFileSync(NOSPILL_HTML, 'utf8');
+  const source = fs.readFileSync(NOSPILL_JS, 'utf8');
+  const summaryStart = html.indexOf('id="summary-view"');
+  const shelfIndex = html.indexOf('id="result-progress-shelf"', summaryStart);
+  const runDetailsIndex = html.indexOf('id="run-details-section"', summaryStart);
+  assert(shelfIndex > summaryStart);
+  assert(runDetailsIndex > shelfIndex);
+  assert(source.includes('function buildResultProgressShelfItems'));
+  assert(source.includes('function renderResultProgressShelf'));
+  assert(source.includes('data-progress-shelf-card'));
+  assert(!source.includes('HIDDEN_SHIRT_URL') || source.indexOf('renderResultProgressShelf') > source.indexOf('HIDDEN_SHIRT_URL'));
+
+  const context = loadNoSpillContext();
+  vm.runInContext(`
+function makeNode() {
+  const classes = new Set();
+  const node = {
+    textContent: "",
+    innerHTML: "",
+    disabled: null,
+    dataset: {},
+    value: "",
+    open: true,
+    classList: {
+      add(className) { classes.add(className); },
+      remove(className) { classes.delete(className); },
+      toggle(className, force) {
+        const active = force === undefined ? !classes.has(className) : Boolean(force);
+        if (active) classes.add(className);
+        else classes.delete(className);
+      },
+      contains(className) { return classes.has(className); },
+    },
+    querySelector: () => null,
+  };
+  return node;
+}
+const shelfState = defaultGameState();
+shelfState.stamps.first_delivery = { label: "First Delivery", date: "2026-06-14T12:00:00.000Z" };
+shelfState.stamps.daily_delivery_complete = { label: "Daily Delivery Complete", date: "2026-06-14T12:00:00.000Z" };
+shelfState.merchProgress.nospillClubGear.count = 2;
+shelfState.merchProgress.nospillClubGear.target = 3;
+shelfState.merchProgress.deliveryCrew.count = 1;
+shelfState.merchProgress.deliveryCrew.target = 7;
+const shelfSession = {
+  date: "2026-06-15T12:00:00.000Z",
+  mode: "qualified",
+  qualificationStatus: "qualified",
+  waterLeft: 100,
+  cargoCondition: 100,
+  durationSeconds: 720,
+  distanceMiles: 4,
+  harshInputCount: 0,
+  harshBraking: 0,
+  harshAcceleration: 0,
+  harshLateral: 0,
+  lateralJerk: 0,
+  abruptTransitions: 0,
+  turnDensityScore: 0.8,
+  curvatureScore: 0.8,
+  routeDifficultyScore: 0.8,
+  routeContext: {
+    status: "usable",
+    routeContextLabel: "Technical Route",
+    signalQuality: "Good",
+  },
+};
+const rewards = calculateDeliveryRewards(shelfSession, shelfState);
+const shelfSummary = {
+  ...shelfSession,
+  rank: displayRankForSession(shelfSession),
+  routeType: rewards.routeType,
+  deliveryRewards: rewards,
+  unlockedBadges: [],
+};
+elements = {
+  summaryView: makeNode(),
+  summaryStatusLabel: makeNode(),
+  summaryTitle: makeNode(),
+  summaryWater: makeNode(),
+  summaryCharacterCameo: makeNode(),
+  resultProgressShelf: makeNode(),
+  routeContext: makeNode(),
+  routeGrid: makeNode(),
+  deliverySummaryGrid: makeNode(),
+  coachRecapCard: makeNode(),
+  cupTrailCard: makeNode(),
+  commuteMasteryCopy: makeNode(),
+  shareCardSection: makeNode(),
+  shareButton: makeNode(),
+  copyButton: makeNode(),
+  downloadButton: makeNode(),
+  saveButton: makeNode(),
+  shareCanvas: null,
+  summaryDiscordCta: makeNode(),
+  returnDashboardButton: makeNode(),
+  newRunButton: makeNode(),
+  backSimulatorButton: makeNode(),
+  runDetailsSection: makeNode(),
+  storyCardPreviewSection: makeNode(),
+  storyCardPreviewStatus: makeNode(),
+  storyCardPreviewCondition: makeNode(),
+  storyCardPreviewCargo: makeNode(),
+  storyCardPreviewRank: makeNode(),
+  storyCardPreviewRouteMode: makeNode(),
+  storyCardPreviewRouteContext: makeNode(),
+  storyCardPreviewRouteVisual: makeNode(),
+  storyCardPreviewCommentary: makeNode(),
+  storyCardPreviewCoach: makeNode(),
+  storyCardPreviewCaptionBox: makeNode(),
+  storyCardPreviewCaption: makeNode(),
+  storyCardPreviewFooter: makeNode(),
+};
+appState.running = false;
+appState.calibrating = false;
+renderSummary(shelfSummary);
+globalThis.resultShelfHtml = elements.resultProgressShelf.innerHTML;
+globalThis.resultShelfHidden = elements.resultProgressShelf.classList.contains("is-hidden");
+globalThis.resultDetailsOpen = elements.runDetailsSection.open;
+globalThis.resultDetailsHtml = elements.deliverySummaryGrid.innerHTML + elements.coachRecapCard.innerHTML;
+globalThis.resultShelfCardCount = (elements.resultProgressShelf.innerHTML.match(/data-progress-shelf-card=/g) || []).length;
+appState.running = true;
+renderResultProgressShelf(shelfSummary);
+globalThis.activeShelfHidden = elements.resultProgressShelf.classList.contains("is-hidden");
+globalThis.activeShelfHtml = elements.resultProgressShelf.innerHTML;
+`, context);
+
+  assert.strictEqual(context.resultShelfHidden, false);
+  assert.strictEqual(context.resultDetailsOpen, false);
+  assert(context.resultShelfHtml.includes('Progress Shelf'));
+  assert(context.resultShelfHtml.includes('Passport'));
+  assert(context.resultShelfHtml.includes('No-Spill Club'));
+  assert(context.resultShelfHtml.includes('Perfect Pour'));
+  assert(context.resultShelfHtml.includes('Delivery Crew'));
+  assert(context.resultShelfHtml.includes('Hidden'));
+  assert(context.resultShelfHtml.includes('role="progressbar"'));
+  assert(context.resultShelfCardCount >= 4 && context.resultShelfCardCount <= 6);
+  assert(!context.resultShelfHtml.includes('No new unlock'));
+  assert(!context.resultShelfHtml.includes('Driver XP Gained'));
+  assert(!context.resultShelfHtml.includes('Skill XP Gained'));
+  assert(!context.resultShelfHtml.includes('Signal Quality'));
+  assert(!context.resultShelfHtml.includes('Brake Feather'));
+  assert(!context.resultShelfHtml.includes('supercutecollectibles.com'));
+  assert(!/undefined|NaN|Infinity/.test(context.resultShelfHtml));
+  assert(context.resultDetailsHtml.includes('Driver XP Gained'));
+  assert(context.resultDetailsHtml.includes('Skill XP Gained'));
+  assert(context.resultDetailsHtml.includes('Coach Recap'));
+  assert.strictEqual(context.activeShelfHidden, true);
+  assert.strictEqual(context.activeShelfHtml, '');
 }
 
 function testPostRunNavigationReturnsToUpdatedDashboard() {
@@ -14225,6 +14381,7 @@ const TESTS = [
   ["testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails", testShareOutputIncludesDeliveryLayerAndExcludesSensitiveDetails],
   ["testShopOrderFulfillmentStaysInlineAndKeepsFanfare", testShopOrderFulfillmentStaysInlineAndKeepsFanfare],
   ["testResultScreenShowsGameSummarySections", testResultScreenShowsGameSummarySections],
+  ["testResultProgressShelfIsVisibleCompactAndSafe", testResultProgressShelfIsVisibleCompactAndSafe],
   ["testPostRunNavigationReturnsToUpdatedDashboard", testPostRunNavigationReturnsToUpdatedDashboard],
   ["testAutomaticResultStatusModel", testAutomaticResultStatusModel],
   ["testLocationPermissionFlowRemainsOptIn", testLocationPermissionFlowRemainsOptIn],

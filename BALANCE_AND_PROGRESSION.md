@@ -1451,6 +1451,8 @@ Certified smooth result:
 - possible certified stamps
 - possible certified merch progress
 - result/report flavor
+- visible compact Progress Shelf cards for collectible/status progress; dense XP/accounting,
+  route-signal, eligibility, and coach detail remain collapsed under Run Details
 
 Boost magnitude should depend on Cargo Condition, qualification status, daily caps, and safe
 summarized criteria. It must not improve with speed, exact distance, route risk, street names, maps,

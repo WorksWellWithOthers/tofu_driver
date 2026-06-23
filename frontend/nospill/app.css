@@ -2453,6 +2453,83 @@
   display: block;
 }
 
+.nospill-progress-shelf {
+  display: grid;
+  gap: 12px;
+}
+
+.nospill-progress-shelf-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.nospill-progress-shelf-head h3 {
+  margin: 0;
+}
+
+.nospill-progress-shelf-head p {
+  max-width: 34rem;
+  margin: 0;
+  color: #bbc7c0;
+  font-size: 0.9rem;
+}
+
+.nospill-progress-shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.nospill-progress-shelf-card {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid rgba(244, 247, 239, 0.12);
+  border-radius: 8px;
+  background: rgba(244, 247, 239, 0.045);
+}
+
+.nospill-progress-shelf-card strong,
+.nospill-progress-shelf-card span,
+.nospill-progress-shelf-card small {
+  min-width: 0;
+}
+
+.nospill-progress-shelf-card strong {
+  color: #f4f7ef;
+  font-size: 0.95rem;
+}
+
+.nospill-progress-shelf-card span {
+  color: #dfe7e2;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.nospill-progress-shelf-card small {
+  color: #93a099;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nospill-progress-shelf-bar {
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(244, 247, 239, 0.1);
+}
+
+.nospill-progress-shelf-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9ee9bf, #f4c56b);
+}
+
 .nospill-run-details summary {
   min-height: 44px;
   display: flex;

@@ -69,8 +69,11 @@
 - Post-run result screens are story-card-first. The primary card shows status, cargo/rank,
   commentary, concise Mika coach summary, Route Smoothness Outline when usable local route data
   exists, Abstract Cup Trail as the privacy/fallback view, and the share/take-another/garage
-  actions; XP, rewards, merch, passport, route context, signal quality, and full Coach Recap are
-  collapsed under Run Details by default.
+  actions. A visible compact Progress Shelf now sits below the Result Card and above collapsed Run
+  Details with 4-6 collectible/status cards for Passport, No-Spill Club, Perfect Pour, Delivery
+  Crew, hidden reward teasers, and route-context achievement progress. Dense XP, skill accounting,
+  signal quality, route warnings, eligibility detail, and full Coach Recap remain collapsed under
+  Run Details by default.
 - Counter Service V1 is the starter automation layer. It is available from the first session, runs
   by default on fresh saves, auto-fulfills Best Available prepared orders every 10 seconds only
   while parked and the page is open, shows supplied/blocked shop-income status, can be upgraded
