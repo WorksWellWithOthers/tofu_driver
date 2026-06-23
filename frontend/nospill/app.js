@@ -19445,25 +19445,6 @@ function renderOverviewPanel(state) {
   const runway = tofuStockRunway(state);
   const bestOrder = bestFulfillableShopOrderType(state) || bestUnlockedShopOrderType(state);
   const recentReward = renderRecentShopRewardCard(state);
-  const hiddenOverviewCards = `
-    ${renderPreparingOrderCard(state)}
-    ${bestOrder ? renderShopOrderCard(bestOrder, state, { compact: true, hideActions: true }) : ""}
-    ${renderOverviewImprovementCard(state)}
-    ${renderCounterServiceCard(state)}
-    ${renderShowcaseInterestCard(state)}
-    ${renderSponsorInquiryCard(state)}
-    ${renderNetWorthCard(state)}
-    ${renderNetWorthMilestoneCard(state)}
-    ${renderDriverBonusCard(state)}
-    ${renderPassportTeaserCard(state)}
-    ${renderStoryTeaserCard()}
-    ${renderIdleCard({
-      title: "Optional Certified Boost",
-      status: "Don't Spill the Cup",
-      copy: "Available when you want a smooth-driving bonus. It is not required for shop progress.",
-      actions: [actionButton("Take Don't Spill the Cup", "data-surface-target", "cup-test", false)],
-    })}
-  `;
   return `
     <h4>Overview</h4>
     ${renderGoalStackCard(state)}
@@ -19477,7 +19458,6 @@ function renderOverviewPanel(state) {
       ${renderCarManagementOverviewCard(state)}
     </div>
     ${renderOverviewHowItWorks(state, bestOrder, runway, bottleneck)}
-    ${compactDetails("overview_more_status", "More status", `<div class="nospill-idle-grid">${hiddenOverviewCards}</div>`)}
   `;
 }
 

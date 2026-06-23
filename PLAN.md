@@ -49,8 +49,9 @@
   empty upgrade panels are hidden, and early upgrade cards show before/after impact.
 - Tofu Shop Overview is now a glance-first play surface: it defaults to Goal Stack, one compact
   operational shop card, one compact build-status card, and Recent/While Away feedback. Detailed
-  prep/order math, order cards, Counter Service detail, formulas, and reward/status surfaces live
-  behind Details or in their specific tabs.
+  prep/order math, order cards, Counter Service detail, formulas, and reward/status surfaces live in
+  their specific tabs or focused Details; the old catch-all `More status` shelf is no longer part of
+  the default Overview.
 - Tofu Shop Overview now uses Overview Glance Mode V1. It separates Now, a stable Pinned Goal, and
   the long-term Era Goal so a large Net Worth target does not hide the next meaningful shop or Dream
   Build target. Long explanations/formulas move behind stable keyed Details that stay open across
