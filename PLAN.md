@@ -50,13 +50,13 @@
 - Tofu Shop Overview is now a glance-first play surface: it defaults to Goal Stack, one compact
   operational shop card, one compact build-status card, and Recent/While Away feedback. Detailed
   prep/order math, order cards, Counter Service detail, formulas, and reward/status surfaces can
-  appear in a visible compact `More status` shelf when they make the game state feel rewarding; the
+  appear in a visible compact status shelf when they make the game state feel rewarding; the
   shelf should not be hidden behind a catch-all collapsed disclosure.
 - Tofu Shop Overview now uses Overview Glance Mode V1. It separates Now, a stable Pinned Goal, and
   the long-term Era Goal so a large Net Worth target does not hide the next meaningful shop or Dream
   Build target. Long explanations/formulas move behind stable keyed Details that stay open across
   live ticks, saved Builder Notes collapse until edited, Counter Service shows only the relevant
-  Start/Pause action, and offline summaries stay compact with a real Ledger CTA. Goal Stack buttons
+  Start/Pause action, and offline summaries stay compact with an inline Ledger link. Goal Stack buttons
   are suppressed unless they perform a concrete useful action, queue-full copy stays stable, and
   recommendations mention upgrades only when a visible implemented upgrade is actually available.
   Detailed car work lives in the earned Dream Build tab, and future-only build steps stay labeled

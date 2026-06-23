@@ -236,10 +236,15 @@
 }
 
 .nospill-inline-ledger {
-  display: inline-flex;
-  min-height: 34px;
-  margin-left: 8px;
-  padding: 7px 10px;
+  display: inline;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  color: #edf2e9;
+  background: transparent;
+  text-decoration: underline;
+  text-underline-offset: 3px;
   vertical-align: middle;
 }
 

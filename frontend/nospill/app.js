@@ -19477,11 +19477,7 @@ function renderOverviewPanel(state) {
       ${renderCarManagementOverviewCard(state)}
     </div>
     ${renderOverviewHowItWorks(state, bestOrder, runway, bottleneck)}
-    <section class="nospill-more-status-shelf" aria-label="More status">
-      <div class="nospill-next-milestone-head">
-        <span>More status</span>
-        <strong>Visible</strong>
-      </div>
+    <section class="nospill-more-status-shelf" aria-label="Overview status shelf">
       <div class="nospill-idle-grid">${moreStatusCards}</div>
     </section>
   `;
@@ -20254,10 +20250,10 @@ function renderTofuShop(gameState = loadGameState()) {
     const compactSuggestions = offlineSuggestions.slice(0, 2);
     const showLedgerCta = hasOfflineEarnings && (compactSuggestions.length > 0 || hasMeaningfulLedgerHistory(state));
     const offlineText = hasOfflineEarnings && showOfflineSummary
-      ? `While away: ${compactOffline.concat(compactNotes).join(" · ")}${compactSuggestions.length ? ` · Next: ${compactSuggestions.join(" · ")}` : ""}${showLedgerCta ? " · View Ledger" : ""}`
+      ? `While away: ${compactOffline.concat(compactNotes).join(" · ")}${compactSuggestions.length ? ` · Next: ${compactSuggestions.join(" · ")}` : ""}${showLedgerCta ? " · Ledger" : ""}`
       : "";
     const offlineHtml = hasOfflineEarnings && showOfflineSummary
-      ? `While away: ${escapeHtml(compactOffline.concat(compactNotes).join(" · "))}${compactSuggestions.length ? ` · Next: ${escapeHtml(compactSuggestions.join(" · "))}` : ""}${showLedgerCta ? ` <button type="button" class="nospill-secondary nospill-inline-ledger" data-shop-tab="ledger">View Ledger</button>` : ""}`
+      ? `While away: ${escapeHtml(compactOffline.concat(compactNotes).join(" · "))}${compactSuggestions.length ? ` · Next: ${escapeHtml(compactSuggestions.join(" · "))}` : ""}${showLedgerCta ? ` · <button type="button" class="nospill-inline-ledger" data-shop-tab="ledger">Ledger</button>` : ""}`
       : "";
     setTextIfChanged(elements.shopOfflineEarnings, offlineText);
     if (elements.shopOfflineEarnings.querySelector && elements.shopOfflineEarnings.innerHTML !== offlineHtml) {
