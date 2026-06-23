@@ -335,8 +335,9 @@
 - Result Card Visual Polish V1 is implemented as parked post-run UI polish: Result Card combines
   result status, cargo facts, Cargo Commentary, concise coach summary, optional Story Caption, Route
   Smoothness Outline when usable local route data exists, Abstract Cup Trail fallback, and
-  `Not faster. Smoother.` before collapsed Run Details, and the downloaded card uses the same mini
-  story hierarchy.
+  `Not faster. Smoother.` before a visible compact Progress Shelf and collapsed Run Details.
+  Downloaded cards keep the same mini story hierarchy while dense scoring/accounting details stay
+  in Run Details.
 - Garage Pride / Builder Note V1 is implemented on parked Tofu Garage Overview after the Dream
   Build starts. It lets the player save one sanitized local note about the current build; it is not
   shown on Cup Test share cards and does not change scoring, rewards, Net Worth, Garage Build Value,

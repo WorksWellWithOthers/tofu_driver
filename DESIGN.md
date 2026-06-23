@@ -1200,7 +1200,9 @@ Result Card Visual Polish V1 makes those post-run story pieces read as a compact
 The parked result screen now prioritizes result status, rank/cargo condition, cargo type, one Cargo
 Commentary line, optional player Story Caption, concise Mika coach summary, Route Smoothness Outline
 when usable local route data exists, Abstract Cup Trail as the privacy/fallback view, and the
-`Not faster. Smoother.` tagline. XP, rewards, merch, passport, selected crew, route-context
+`Not faster. Smoother.` tagline. The visible Progress Shelf restores compact collectible/status
+progress for Passport, No-Spill Club, Perfect Pour, Delivery Crew, hidden reward teasers, and
+route-context achievements. Dense XP, skill XP, shop accounting, selected crew, route-context
 eligibility, signal quality, and the full Coach Recap live in collapsed Run Details by default.
 Downloaded share cards should keep the same story-card hierarchy without adding a full comic
 editor, stickers, uploads, backend sharing, accounts, public profiles, scoring changes, reward
