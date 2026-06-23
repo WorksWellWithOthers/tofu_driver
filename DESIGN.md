@@ -549,9 +549,10 @@ Current design principles:
 - Tofu Garage Overview uses a stricter default-visible set after Glance Mode tuning: Goal Stack,
   one compact operational Tofu Shop card, one compact build-status card, and Recent/While Away
   feedback. Prep/order math, Counter Service detail, Net Worth formulas, showcase/sponsor/passport
-  detail, and optional boost copy belong in their specific tabs or focused Details, not in a
-  catch-all `More status` shelf. Details open state is runtime UI state and should survive live shop
-  ticks without localStorage persistence.
+  detail, and optional boost copy can live in a visible compact `More status` shelf when they are
+  part of the game reward/status layer; they should not be hidden behind a catch-all collapsed
+  disclosure. Details open state is runtime UI state and should survive live shop ticks without
+  localStorage persistence.
 - Action Choice Board V1 now sits immediately after Goal Stack as the compact answer to "what can I
   press or wait for next?" It shows up to three stable cards, such as Cash Conversion through a
   Counter Contract, the current Dream Build target with Cash progress, and contextual recent
